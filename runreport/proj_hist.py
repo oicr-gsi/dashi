@@ -1,13 +1,11 @@
 import json
 import pandas
-import dash
 import numpy
-# import dash_table
 import dash_html_components as html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output
-import plotly.graph_objs as go
 import plotly.figure_factory as ff
+
 
 idx = pandas.IndexSlice
 
@@ -24,10 +22,7 @@ run_list = list(
     rr.loc[idx[proj_top, :], :].index.get_level_values('Run').unique()
 )
 
-
-app = dash.Dash()
-
-app.layout = html.Div([
+layout = html.Div([
     dcc.Dropdown(
         id='project',
         options=[
@@ -48,6 +43,14 @@ app.layout = html.Div([
     ),
     html.Pre(id='click-data'),
 ])
+
+
+try:
+    from app import app
+except ModuleNotFoundError:
+    import dash
+    app = dash.Dash(__name__)
+    app.layout = layout
 
 
 # When a project is selected
@@ -132,43 +135,3 @@ def display_click_data(clickData):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-
-"""
-@app.callback(
-    Output('coverage_hist', 'figure'),
-    [Input('project', 'value'), Input('focused_run', 'value')]
-)
-def create_coverage_hist(project, run_to_focus):
-    highlight = (
-        rr.loc[idx[project, run_to_focus], 'Coverage (collapsed)']
-    )
-
-    other_runs = rr.index.get_level_values(
-        'Run'
-    ).difference(
-        highlight.index.get_level_values('Run')
-    )
-
-    other_runs_data = rr.loc[idx[project, other_runs], 'Coverage (collapsed)']
-
-    return {
-        'data': [
-            go.Histogram(
-                x=list(highlight),
-                histnorm='probability',
-                opacity=0.75,
-                name='Selected Run'
-            ),
-            go.Histogram(
-                x=list(other_runs_data),
-                histnorm='probability',
-                opacity=0.75,
-                name='All Other Runs'
-            )
-        ],
-        'layout': go.Layout(barmode='overlay'),
-    }
-"""
-
-

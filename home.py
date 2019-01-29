@@ -19,4 +19,12 @@ layout = html.Div([
             'RNASeQC stats over time', href='/rnaseqc/over_time'
         )
     ),
+
+    html.H2('Run Report'),
+
+    html.H3(
+        dcc.Link(
+            'Project Histograms', href='/runreport/proj_hist'
+        )
+    ),
 ])

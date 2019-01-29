@@ -7,6 +7,7 @@ from app import app, server
 from home import layout as home_layout
 from bamqc.gbovertime import layout as gbovertime_layout
 from rnaseqc.over_time import layout as rnaseqc_overtime_layout
+from runreport.proj_hist import layout as runreport_projhist_layout
 
 app.layout = html.Div([
         dcc.Location(id='url', refresh=False),
@@ -24,6 +25,8 @@ def display_page(pathname):
         return gbovertime_layout
     elif pathname == '/rnaseqc/over_time':
         return rnaseqc_overtime_layout
+    elif pathname == '/runreport/proj_hist':
+        return runreport_projhist_layout
     else:
         return '404'
 
