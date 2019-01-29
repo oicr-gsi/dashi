@@ -2,7 +2,8 @@ import dash_html_components as html
 import dash_core_components as dcc
 import dash.dependencies as dep
 
-from app import app
+# The server is necessary, as gunicorn calls this to start Flask instance
+from app import app, server
 from home import layout as home_layout
 from bamqc.gbovertime import layout as gbovertime_layout
 from rnaseqc.over_time import layout as rnaseqc_overtime_layout
