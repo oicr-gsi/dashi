@@ -6,7 +6,7 @@ import plotly.graph_objs as go
 
 from app import app
 
-bamqc = pd.read_hdf('./bamqc_cache.hd5', 'bamqc')
+bamqc = pd.read_hdf('./data/bamqc_cache.hd5', 'bamqc')
 bamqc['total bases'] = bamqc['total reads'] * bamqc['average read length']
 bamqc['run date'] = pd.to_datetime(bamqc['run name'].str[0:6], format='%y%m%d')
 

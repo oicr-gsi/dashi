@@ -47,7 +47,7 @@ def machines_to_dispaly(df: pandas.DataFrame) -> bool:
 
 
 app = dash.Dash()
-rs = pandas.read_csv('./runscanner.csv')
+rs = pandas.read_csv('./data/runscanner.csv')
 rs = rs.groupby('run_alias').filter(
     machines_to_dispaly
 )

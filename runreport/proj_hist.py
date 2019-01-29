@@ -9,7 +9,7 @@ import plotly.figure_factory as ff
 
 idx = pandas.IndexSlice
 
-rr = pandas.read_hdf('./run_report_cache.hd5')
+rr = pandas.read_hdf('./data/run_report_cache.hd5')
 rr['Project'] = rr['Library'].apply(lambda x: x.split('_', 1)[0])
 rr.set_index(['Project', 'Run'], inplace=True)
 rr.sort_values(['Run', 'Project'], ascending=False, inplace=True)
