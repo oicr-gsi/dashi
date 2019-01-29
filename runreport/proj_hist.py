@@ -14,6 +14,14 @@ rr['Project'] = rr['Library'].apply(lambda x: x.split('_', 1)[0])
 rr.set_index(['Project', 'Run'], inplace=True)
 rr.sort_values(['Run', 'Project'], ascending=False, inplace=True)
 
+# Count how many runs per project
+runs_per_proj_count = rr.reset_index().groupby('Project')['Run'].nunique()
+proj_with_multi_run = runs_per_proj_count[runs_per_proj_count > 1].index
+# Only display project that have more than one run
+rr = rr.loc[idx[proj_with_multi_run, :], :]
+
+rr = rr.groupby(['Project', 'Run']).filter(lambda x: len(x) > 1)
+
 proj_list = list(rr.index.get_level_values('Project').unique())
 proj_top = proj_list[0]
 proj_list.sort()
