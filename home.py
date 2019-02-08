@@ -27,4 +27,12 @@ layout = html.Div([
             'Project Histograms', href='/runreport/proj_hist'
         )
     ),
+
+    html.H2('Run Scanner'),
+
+    html.H3(
+        dcc.Link(
+            'Pass filter yield over time', href='/runscanner/sum_over_time'
+        )
+    ),
 ])
