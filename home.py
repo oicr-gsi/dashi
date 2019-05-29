@@ -12,6 +12,14 @@ layout = html.Div([
         )
     ),
 
+    html.H2('bcl2fastq'),
+
+    html.H3(
+        dcc.Link(
+            'Known and unknown indexes per run', href='/bcl2fastq/indexinfo'
+        )
+    ),
+
     html.H2('RNASeQC'),
 
     html.H3(
