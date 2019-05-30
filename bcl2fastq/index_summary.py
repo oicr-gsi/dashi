@@ -101,7 +101,8 @@ def update_known_index_bar(run_json):
     for inx, d in run.groupby('index'):
         data.append({
             'x': list(d['library']),
-            'y': list(d['SampleNumberReads']),
+            # One library can be run on multiple lanes. Sum them together.
+            'y': list(d.groupby('library')['SampleNumberReads'].sum()),
             'type': 'bar',
             'name': inx,
         })
@@ -110,7 +111,7 @@ def update_known_index_bar(run_json):
         'data': data,
         'layout': {
             'barmode': 'stack',
-            'title': 'Sample Indexes',
+            'title': 'Sample Indices',
             'xaxis': {'title': 'Library'},
             'yaxis': {'title': 'Clusters'},
             'margin': {'b': 160}
@@ -143,7 +144,7 @@ def update_unknown_index_pie(run_json):
         'data': data,
         'layout': {
             'barmode': 'stack',
-            'title': 'Unknown Indexes',
+            'title': 'Unknown Indices',
             'xaxis': {'title': 'Index'},
             'yaxis': {'title': 'Clusters'},
         }
@@ -174,9 +175,10 @@ def update_pie_chart(run_alias, known_json, unknown_json):
             'labels': ['Known', 'Unknown'],
             'values': [known_count, pruned_count],
             'type': 'pie',
+            'marker': {'colors': ['#349600', '#ef963b']},
         }],
         'layout': {
-            'title': 'Flow Cell Composition of Known/Unknown Indexes'
+            'title': 'Flow Cell Composition of Known/Unknown Indices'
         }
     }, 'Predicted clusters / produced clusters: {}%'.format(
         str(round(fraction, 1))
