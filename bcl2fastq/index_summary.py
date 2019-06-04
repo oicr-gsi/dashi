@@ -105,6 +105,10 @@ def update_known_index_bar(run_json):
             'y': list(d.groupby('library')['SampleNumberReads'].sum()),
             'type': 'bar',
             'name': inx,
+            'marker': {'line': {
+                'width': 1,
+                'color': 'rgb(0, 0, 0)'
+            }}
         })
 
     return {
@@ -112,9 +116,8 @@ def update_known_index_bar(run_json):
         'layout': {
             'barmode': 'stack',
             'title': 'Sample Indices',
-            'xaxis': {'title': 'Library'},
+            'xaxis': {'title': 'Library', 'automargin': True},
             'yaxis': {'title': 'Clusters'},
-            'margin': {'b': 160}
         }
     }
 
