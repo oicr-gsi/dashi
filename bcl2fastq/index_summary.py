@@ -10,7 +10,7 @@ index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
 )
-
+#set variable index(referring to all indices of the run) to data file in module 
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
     './data/bcl2fastq_cache.hd5'
