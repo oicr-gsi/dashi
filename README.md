@@ -28,3 +28,13 @@ A list of links to all available visualizations is started by
 ```
 python index.py
 ```
+
+## Development
+
+If your development environment doesn't already automatically use PEP8 for formatting, you can 
+install a git hook to automatically format Python files as part of the commit process. To do so,
+run this once:
+
+    ```
+    git config core.hooksPath .githooks
+    ```
