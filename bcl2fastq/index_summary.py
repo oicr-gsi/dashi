@@ -27,6 +27,7 @@ layout = html.Div(children=[
         id='run_select',
         options=all_runs,
         value=all_runs[0]['value'],
+        clearable=False
     ),
 #           Dropdown option's label set to all_runs(combination of unknown and known)
 #           Dropdown multi set to false (default) - only single select possible 
@@ -72,8 +73,8 @@ layout = html.Div(children=[
 ])
 
 try:
-    from app import app #From package app import app in which case the first instance of the word is the package
-except ModuleNotFoundError: #When module not found, terminate
+    from app import app 
+except ModuleNotFoundError: 
     import dash
     app = dash.Dash(__name__) 
     app.layout = layout
@@ -84,12 +85,13 @@ except ModuleNotFoundError: #When module not found, terminate
     [dep.Input('run_select', 'value')]
 #           Whenever input(drop down) changes, app.callback re-runs and updates     
 )
-def update_sample_run_hidden(run_alias):        #Unsure
+def update_sample_run_hidden(run_alias):        
     run = index[index['Run'] == run_alias]
     run = run[run['ReadNumber'] == 1]
     run = run[~run['SampleID'].isna()]
     run = run.drop_duplicates(['SampleID', 'LaneNumber'])
     return run.to_json(date_format='iso', orient='split')
+#           Replace run variable iteratively 
 
 
 @app.callback(
@@ -111,7 +113,7 @@ def update_known_index_bar(run_json):
     run = pandas.read_json(run_json, orient='split')
         # convert a Json string into a panda object where orient is the expected format of json 
     run['library'] = run['SampleID'].str.extract(   # create DataFrame via str.extract 
-        'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_' #this parameter of the column that will be creted
+        'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_' 
     )
         #replace index library with index sampleID as a string
     run['index'] = run['Index1'].str.cat(
