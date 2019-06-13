@@ -18,19 +18,31 @@ all_runs = index['Run'].sort_values(ascending=False).unique()
 
 all_runs = [{'label': r, 'value': r} for r in all_runs]
 
-# Within the main layout division there are 4 groups:
-#           1. the section with the 100% bar graph
-#           2.  Nested subdivision of:
-#                   a) pie graph at 24%
-#                   b) bar graph at 76%
-#           3. Sample Run hidden
-#           4. Pruned  Unknown Hidden
-# Note: span can be used for inline setting
+""" Sample_run_hidden holds json split format of "Known"
+        columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
+                 "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
+                 "SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+                   
+
+     pruned_unknown_hidden holds json split format of "unknown"
+        columns:  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
+               
+         """
+
+"""Within the main layout division there are 4 groups:
+          1. the section with the 100% bar graph
+          2.  Nested subdivision of:
+                  a) pie graph at 24%
+                  b) bar graph at 76%
+          3. Sample Run hidden
+          4. Pruned  Unknown Hidden
+            Note: span can be used for inline setting
 
 
-#           Dropdown option's label set to all_runs(combination of unknown and known)
-#           Dropdown multi set to false (default) - only single select possible
-#                 -  multiple select gives error due to inconsistent values
+          Dropdown option's label set to all_runs(combination of unknown and known)
+          Dropdown multi set to false (default) - only single select possible
+                -  multiple select gives error due to inconsistent values
+          """
 layout = html.Div(children=[
     dcc.Dropdown(
         id='run_select',
@@ -63,18 +75,9 @@ layout = html.Div(children=[
         ),
         html.Div(
             [dcc.Graph(id='unknown_index_bar')],
-            style={'width': '76%', 'display': 'inline-block', 'float': 'center'}
+            style={'width': '76%', 'display': 'inline-block', 'float': 'right'}
         ),
     ]),
-    #           Sample_run_hidden holds json split format of "Known"
-    #               columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
-    #                   "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
-    #                   "SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
-    #               Index: 6761 - 8307
-
-    #           pruned_unknown_hidden holds json split format of "unknown"
-    #               columns:  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID"
-    #               Index: 218463 - 227804
 
     html.Div(id='sample_run_hidden', style={'display': 'none'}),
     html.Div(id='pruned_unknown_hidden', style={'display': 'none'}),
@@ -96,23 +99,23 @@ except ModuleNotFoundError:
     [dep.Input('run_select', 'value')]
 
 )
-#           Replace run variable iteratively
 def update_sample_run_hidden(run_alias):
     """ When input (run_select) is changed, function is rerun to get json data for selected run
 
         Attributes:
-            run(list): run number
 
         Parameters:
-            run_alias(list): alias of the run
+            run_alias(str): alias of the run
 
         Returns:
              json object with columns, indices, and data, from run variable
+             updates json string "sample_run_hidden"
 """
     run = index[index['Run'] == run_alias]
     run = run[run['ReadNumber'] == 1]
     run = run[~run['SampleID'].isna()]
     run = run.drop_duplicates(['SampleID', 'LaneNumber'])
+
     return run.to_json(date_format='iso', orient='split')
 
 
@@ -125,12 +128,13 @@ def update_pruned_unknown_hidden(run_alias):
         update_pruned_unknown_hidden to get json data for selected run
 
         Attributes:
-            pruned(list): select run_alias'
+            pruned(str): holds function with parameters (run_alias, index, unknown)
         Parameters:
-            run_alias(list): alias of the run
+            run_alias(str): alias of the run
 
         Returns:
              json object with columns, indices, and data, from pruned variable
+             updates json string "pruned_unknown_hidden"
     """
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
@@ -146,13 +150,13 @@ def update_known_index_bar(run_json):
     """ When input (sample_run_hidden) is changed, function is rerun to get update bar graph of sample indices
 
            Attributes:
-               run(list): name of run
-               data(list): empty list appended with values from "For" function
+               data(list): hold values for graphing known (sample) indices
            Parameters:
-               run_json(list): json format of run variable
+               run_json(str): json format of run data
 
            Returns:
-                stacked bar graph of sample indices
+              data and values for the layout of stacked bar graph of sample indices
+              updates bar graph "known_index_bar"
        """
     run = pandas.read_json(run_json, orient='split')
     run['library'] = run['SampleID'].str.extract(
@@ -191,24 +195,24 @@ def update_known_index_bar(run_json):
     [dep.Input('pruned_unknown_hidden', 'children')]
 )
 def update_unknown_index_pie(run_json):
-    """ When input (sample_run_hidden) is changed, function is rerun to get update bar graph unknown indices
+    """ When input (sample_run_hidden) is changed, function is rerun to get updated bar graph of known and unknown indices
 
                Attributes:
-                   pruned(list): select run_alias'
-                   data(list): empty list appended with parameters of "For" function
+                   pruned(str): holds first 30 unknown indices
+                   data(list): holds values to create pie chart to compare unknown and known indices
                Parameters:
-                   run_json(list): json format of run variable
+                   run_json(str): json format of run data
 
-               Returns: stacked bar graph of descending 30 unknown indices
-
+               Returns:
+                   data and layout values for stacked bar graph for unknown indices
+                   updates unknown_index_bar bar graph
            """
     pruned = pandas.read_json(run_json, orient='split')
     pruned['index'] = pruned['Index1'].str.cat(
         pruned['Index2'].fillna(''), sep=' '
     )
     pruned = pruned.sort_values('Count', ascending=False)
-    pruned = pruned.head(30)  # Amount of data visible in graph, largest 30 shown
-
+    pruned = pruned.head(30)
     data = []
     for lane, d in pruned.groupby('LaneNumber'):
         data.append({
@@ -217,7 +221,6 @@ def update_unknown_index_pie(run_json):
             'type': 'bar',
             'name': lane,
         })
-
     return {
         'data': data,
         'layout': {
@@ -237,18 +240,26 @@ def update_unknown_index_pie(run_json):
      dep.Input('pruned_unknown_hidden', 'children')]
 )
 def update_pie_chart(run_alias, known_json, unknown_json):
-    """ When inputs are changed function os rerun to get updated pie chart
+    """ When inputs are changed function is rerun to get updated pie chart
             Attributes:
-                known(list): json format of known indices
-                pruned(list): json format of unknown indices
+                known(list): known indices
+                pruned(list): unknown indices
                 known_count(int): number of known indices
                 pruned_count(int): number of unknown indices
                 total_clusters(int): total number of clusters
                 fraction(int): percentage of known and unknown indices of total clusters
+            Parameters:
+                run_alias(str): alias of run
+                Known_json: json format of known indices data
+                unknown_json: json format of unknown indices data
+            Returns:
+                updated pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
+                updates value of known_fraction
     """
     known = pandas.read_json(known_json, orient='split')
     pruned = pandas.read_json(unknown_json, orient='split')
-
+    print(type(known))
+    print(type(pruned))
     known_count = known['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
 
