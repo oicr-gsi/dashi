@@ -93,6 +93,7 @@ def update_known_index_bar(run_json):
     run['library'] = run['SampleID'].str.extract(
         'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_'
     )
+    run['Index1'] = run['Index1'].astype('str')
     run['index'] = run['Index1'].str.cat(
         run['Index2'].fillna(''), sep=' '
     )
