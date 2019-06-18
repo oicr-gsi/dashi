@@ -115,8 +115,8 @@ def update_sample_run_hidden(run_alias):
     run = run[~run['SampleID'].isna()]
     run = run.drop_duplicates(['SampleID', 'LaneNumber'])
 
-    return str(run.to_json(date_format='iso', orient='split')
-               )
+    return run.to_json(date_format='iso', orient='split')
+
 
 
 @app.callback(
@@ -139,8 +139,8 @@ def update_pruned_unknown_hidden(run_alias):
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
-    return str(pruned.to_json(date_format='iso', orient='split')
-               )
+    return pruned.to_json(date_format='iso', orient='split')
+
 
 
 @app.callback(
@@ -262,7 +262,7 @@ def update_pie_chart(run_alias, known_json, unknown_json):
                 unknown_json: json format of unknown indices data
             Returns:
                 updated pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
-                updates value of known
+                updates value of known_fraction
 
     """
 
