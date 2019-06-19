@@ -238,8 +238,6 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     """
     known = pandas.read_json(known_json, orient='split')
     pruned = pandas.read_json(unknown_json, orient='split')
-    print(type(known))
-    print(type(pruned))
     known_count = known['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
 
