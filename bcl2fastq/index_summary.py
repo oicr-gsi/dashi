@@ -5,11 +5,14 @@ import dash_html_components as html
 import dash.dependencies as dep
 import pandas
 
-
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
 )
+# If both Index1 and Index2 are NaN, this will filter out those indexes. This is to prevent run
+# 180810_M00753_0053_000000000-D4HKJ from crashing 
+if type(index[index['Index1'].notna()]) == float and type(index[index['Index2'].nota()]) == float:
+    index = index[~index["Index1"].isna()]
 
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
@@ -56,6 +59,7 @@ try:
     from app import app
 except ModuleNotFoundError:
     import dash
+
     app = dash.Dash(__name__)
     app.layout = layout
 
@@ -67,7 +71,6 @@ except ModuleNotFoundError:
 def update_sample_run_hidden(run_alias):
     run = index[index['Run'] == run_alias]
     run = run[run['ReadNumber'] == 1]
-    run = run[~run['SampleID'].isna()]
     run = run.drop_duplicates(['SampleID', 'LaneNumber'])
     return run.to_json(date_format='iso', orient='split')
 
@@ -175,16 +178,16 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     fraction = (known_count + pruned_count) / total_clusters * 100
 
     return {
-        'data': [{
-            'labels': ['Known', 'Unknown'],
-            'values': [known_count, pruned_count],
-            'type': 'pie',
-            'marker': {'colors': ['#349600', '#ef963b']},
-        }],
-        'layout': {
-            'title': 'Flow Cell Composition of Known/Unknown Indices'
-        }
-    }, 'Predicted clusters / produced clusters: {}%'.format(
+               'data': [{
+                   'labels': ['Known', 'Unknown'],
+                   'values': [known_count, pruned_count],
+                   'type': 'pie',
+                   'marker': {'colors': ['#349600', '#ef963b']},
+               }],
+               'layout': {
+                   'title': 'Flow Cell Composition of Known/Unknown Indices'
+               }
+           }, 'Predicted clusters / produced clusters: {}%'.format(
         str(round(fraction, 1))
     )
 
