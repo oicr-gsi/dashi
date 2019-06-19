@@ -94,16 +94,12 @@ except ModuleNotFoundError:
 
 
 @app.callback(
-
     dep.Output('sample_run_hidden', 'children'),
     [dep.Input('run_select', 'value')]
 
 )
 def update_sample_run_hidden(run_alias):
     """ When input (run_select) is changed, function is rerun to get json data for selected run
-
-        Attributes:
-
         Parameters:
             run_alias(str): alias of the run
 
@@ -126,9 +122,6 @@ def update_sample_run_hidden(run_alias):
 def update_pruned_unknown_hidden(run_alias):
     """ When input (run_select) is changed, function prune_unknown_index_from_run is run within
         update_pruned_unknown_hidden to get json data for selected run
-
-        Attributes:
-            pruned(str): holds function with parameters (run_alias, index, unknown)
         Parameters:
             run_alias(str): alias of the run
 
@@ -148,9 +141,6 @@ def update_pruned_unknown_hidden(run_alias):
 )
 def update_known_index_bar(run_json):
     """ When input (sample_run_hidden) is changed, function is rerun to get update bar graph of sample indices
-
-           Attributes:
-               data(list): hold values for graphing known (sample) indices
            Parameters:
                run_json(str): json format of run data
 
@@ -196,10 +186,6 @@ def update_known_index_bar(run_json):
 )
 def update_unknown_index_pie(run_json):
     """ When input (sample_run_hidden) is changed, function is rerun to get updated bar graph of known and unknown indices
-
-               Attributes:
-                   pruned(str): holds first 30 unknown indices
-                   data(list): holds values to create pie chart to compare unknown and known indices
                Parameters:
                    run_json(str): json format of run data
 
@@ -207,6 +193,7 @@ def update_unknown_index_pie(run_json):
                    data and layout values for stacked bar graph for unknown indices
                    updates unknown_index_bar bar graph
            """
+    # pruned(str): holds first 30 unknown indices
     pruned = pandas.read_json(run_json, orient='split')
     pruned['index'] = pruned['Index1'].str.cat(
         pruned['Index2'].fillna(''), sep=' '
@@ -241,13 +228,6 @@ def update_unknown_index_pie(run_json):
 )
 def update_pie_chart(run_alias, known_json, unknown_json):
     """ When inputs are changed function is rerun to get updated pie chart
-            Attributes:
-                known(list): known indices
-                pruned(list): unknown indices
-                known_count(int): number of known indices
-                pruned_count(int): number of unknown indices
-                total_clusters(int): total number of clusters
-                fraction(int): percentage of known and unknown indices of total clusters
             Parameters:
                 run_alias(str): alias of run
                 Known_json: json format of known indices data
