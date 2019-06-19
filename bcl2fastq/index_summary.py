@@ -4,15 +4,16 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import pandas
+import math
 
-index = gsiqcetl.bcl2fastq.parse.load_cache(
+index1 = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
 )
+
 # If both Index1 and Index2 are NaN, this will filter out those indexes. This is to prevent run
-# 180810_M00753_0053_000000000-D4HKJ from crashing 
-if type(index[index['Index1'].notna()]) == float and type(index[index['Index2'].nota()]) == float:
-    index = index[~index["Index1"].isna()]
+# 180810_M00753_0053_000000000-D4HKJ from crashing
+index = index1.dropna(subset=('Index1','Index2'), thresh = 1)
 
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
@@ -173,7 +174,7 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     pruned_count = pruned['Count'].sum()
 
     total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
-        run_alias, index
+        run_alias, index1
     )
     fraction = (known_count + pruned_count) / total_clusters * 100
 
