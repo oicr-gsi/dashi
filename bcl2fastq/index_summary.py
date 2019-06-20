@@ -5,10 +5,12 @@ import dash_html_components as html
 import dash.dependencies as dep
 import pandas
 
+
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
 )
+
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
     './data/bcl2fastq_cache.hd5'
@@ -50,12 +52,14 @@ layout = html.Div(children=[
         value=all_runs[0]['value'],
         clearable=False
     ),
-
+    dcc.Location(
+        id='url',
+        refresh=False
+    ),
     dcc.Graph(
         id='known_index_bar',
 
     ),
-    # Bar graph with defaults set, no change in colour etc
     html.Div([
         html.Div(
             [dcc.Graph(id='known_unknown_pie'),
@@ -75,7 +79,7 @@ layout = html.Div(children=[
         ),
         html.Div(
             [dcc.Graph(id='unknown_index_bar')],
-            style={'width': '76%', 'display': 'inline-block', 'float': 'right'}
+            style={'width': '74%', 'display': 'inline-block', 'float': 'right'}
         ),
     ]),
 
@@ -91,6 +95,16 @@ except ModuleNotFoundError:
 
     app = dash.Dash(__name__)
     app.layout = layout
+
+
+@app.callback(
+    dep.Output('url', 'pathname'),
+    [dep.Input('run_select', 'value')]
+)
+def change_url(dropdown_value):
+    """Allows user to enter Run name in URL which will update dropdown automatically, and the graphs
+    """
+    return dropdown_value
 
 
 @app.callback(
@@ -149,12 +163,14 @@ def update_known_index_bar(run_json):
               updates bar graph "known_index_bar"
        """
     run = pandas.read_json(run_json, orient='split')
+
     run['library'] = run['SampleID'].str.extract(
         'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_'
     )
     run['index'] = run['Index1'].str.cat(
         run['Index2'].fillna(''), sep=' '
     )
+
     data = []
     for inx, d in run.groupby('index'):
         data.append({
@@ -200,6 +216,7 @@ def update_unknown_index_bar(run_json):
     )
     pruned = pruned.sort_values('Count', ascending=False)
     pruned = pruned.head(30)
+
     data = []
     for lane, d in pruned.groupby('LaneNumber'):
         data.append({
@@ -208,6 +225,7 @@ def update_unknown_index_bar(run_json):
             'type': 'bar',
             'name': lane,
         })
+
     return {
         'data': data,
         'layout': {
@@ -238,6 +256,7 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     """
     known = pandas.read_json(known_json, orient='split')
     pruned = pandas.read_json(unknown_json, orient='split')
+
     known_count = known['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
 
