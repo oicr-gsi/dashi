@@ -5,7 +5,6 @@ import dash_html_components as html
 import dash.dependencies as dep
 import pandas
 
-
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
@@ -56,6 +55,10 @@ layout = html.Div(children=[
         id='url',
         refresh=False
     ),
+    dcc.Location(
+        id='url',
+        refresh=False
+    ),
     dcc.Graph(
         id='known_index_bar',
 
@@ -87,7 +90,6 @@ layout = html.Div(children=[
     html.Div(id='pruned_unknown_hidden', style={'display': 'none'}),
 
 ])
-
 try:
     from app import app
 except ModuleNotFoundError:
