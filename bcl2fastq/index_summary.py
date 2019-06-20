@@ -5,7 +5,6 @@ import dash_html_components as html
 import dash.dependencies as dep
 import pandas
 
-
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
@@ -24,6 +23,10 @@ layout = html.Div(children=[
         id='run_select',
         options=all_runs,
         value=all_runs[0]['value'],
+    ),
+    dcc.Location(
+        id='url',
+        refresh=False
     ),
     dcc.Graph(
         id='known_index_bar',
@@ -51,13 +54,23 @@ layout = html.Div(children=[
     html.Div(id='sample_run_hidden', style={'display': 'none'}),
     html.Div(id='pruned_unknown_hidden', style={'display': 'none'}),
 ])
-
 try:
     from app import app
 except ModuleNotFoundError:
     import dash
+
     app = dash.Dash(__name__)
     app.layout = layout
+
+
+@app.callback(
+    dep.Output('url', 'pathname'),
+    [dep.Input('run_select', 'value')]
+)
+def change_url(dropdown_value):
+    """Allows user to enter Run name in URL which will update dropdown automatically, and the graphs
+    """
+    return dropdown_value
 
 
 @app.callback(
@@ -174,16 +187,16 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     fraction = (known_count + pruned_count) / total_clusters * 100
 
     return {
-        'data': [{
-            'labels': ['Known', 'Unknown'],
-            'values': [known_count, pruned_count],
-            'type': 'pie',
-            'marker': {'colors': ['#349600', '#ef963b']},
-        }],
-        'layout': {
-            'title': 'Flow Cell Composition of Known/Unknown Indices'
-        }
-    }, 'Predicted clusters / produced clusters: {}%'.format(
+               'data': [{
+                   'labels': ['Known', 'Unknown'],
+                   'values': [known_count, pruned_count],
+                   'type': 'pie',
+                   'marker': {'colors': ['#349600', '#ef963b']},
+               }],
+               'layout': {
+                   'title': 'Flow Cell Composition of Known/Unknown Indices'
+               }
+           }, 'Predicted clusters / produced clusters: {}%'.format(
         str(round(fraction, 1))
     )
 
