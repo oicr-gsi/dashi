@@ -184,7 +184,7 @@ def update_known_index_bar(run_json):
     dep.Output('unknown_index_bar', 'figure'),
     [dep.Input('pruned_unknown_hidden', 'children')]
 )
-def update_unknown_index_pie(run_json):
+def update_unknown_index_bar(run_json):
     """ When input (sample_run_hidden) is changed, function is rerun to get updated bar graph of known and unknown indices
                Parameters:
                    run_json(str): json format of run data
