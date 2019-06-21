@@ -10,9 +10,17 @@ except ModuleNotFoundError:
 
 
 rna_df = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
-rundate = rna_df['Sequencer Run Name'].apply(lambda x: x.split('_')[0])
-rundate = pandas.to_datetime(rundate, yearfirst=True)
-rna_df['Run Date'] = rundate
+rna_df['Run Date'] = rna_df['Sequencer Run Name'].apply(
+    lambda x: x.split('_')[0]
+)
+
+# The Run Name is used to extract the date
+# Some runs do not have the proper format
+rna_df = rna_df[rna_df['Run Date'].str.isnumeric()]
+
+rna_df['Run Date'] = pandas.to_datetime(
+     rna_df['Run Date'], yearfirst=True
+ )
 
 
 def create_plot_dict(df, variable):
