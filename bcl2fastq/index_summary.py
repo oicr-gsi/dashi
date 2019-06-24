@@ -15,9 +15,7 @@ unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     './data/bcl2fastq_cache.hd5'
 )
 
-all_runsog = index['Run'].sort_values(ascending=False).unique()
-print (all_runsog)
-all_runs = [{'label': r, 'value': r} for r in all_runsog]
+all_runs = index['Run'].sort_values(ascending=False).unique()
 """ Sample_run_hidden holds json split format of "Known"
         columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
                  "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
@@ -46,12 +44,14 @@ all_runs = [{'label': r, 'value': r} for r in all_runsog]
 layout = html.Div(children=[
     dcc.ConfirmDialog(
         id='error',
-        message='You have input an incorrect run. Click "Ok" to return to the most recent run.'
+        message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.'
     ),
     dcc.Dropdown(
         id='run_select',
-        options=all_runs,
-        value=all_runs[0]['value'],
+        #   Options and Value attributes are concantenated string versions of all_runs.
+        #   Value selects a single copy of the run name.
+        options=[{'label': r, 'value': r} for r in all_runs],
+        value=([{'label': r, 'value': r} for r in all_runs])[0]['value'],
         clearable=False
     ),
     dcc.Location(
@@ -105,12 +105,23 @@ except ModuleNotFoundError:
     [dep.Input('url', 'pathname')]
 )
 def change_url(value):
-    """Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
-    If User enters any value that's not a valid run an error box will pop up and return user to most recent run
-    """
+    """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
+        If User enters any value that's not a valid run an error box will pop up and return user to most recent run
 
-    if value == "/" or str(value)[1:] not in all_runsog:
-        return str(all_runsog[0]), True
+        Parameters:
+             value: the URL input after the port (the pathname).
+
+        Returns:
+            The string value (without '/') of the user input for the drop-down to use
+            Error pop-up displayed depending on user input.
+    """
+    #   In a pathname, it automatically adds '/' to the beginning of the input. The values in the drop-down do not have '/'
+    #   preceding the input value. Must convert to string and remove '/' to prevent errors
+
+    if value == "/":
+        return str(all_runs[0]), False
+    elif str(value)[1:] not in all_runs:
+        return str(all_runs[0]), True
     else:
         return str(value)[1:], False
 
