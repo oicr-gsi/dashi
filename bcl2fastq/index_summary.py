@@ -115,10 +115,8 @@ def change_url(value):
             Error pop-up displayed depending on user input.
     """
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
-    if value == "/":
-        return all_runs[0], False
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
-    elif value is None:
+    if value == "/" or value is None:
         return all_runs[0], False
     elif value[1:] not in all_runs:
         return all_runs[0], True
