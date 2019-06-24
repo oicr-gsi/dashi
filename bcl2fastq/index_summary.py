@@ -48,10 +48,9 @@ layout = html.Div(children=[
     ),
     dcc.Dropdown(
         id='run_select',
-        #   Options and Value attributes are concantenated string versions of all_runs.
-        #   Value selects a single copy of the run name.
+        #   Options is concantenated string versions of all_runs.
         options=[{'label': r, 'value': r} for r in all_runs],
-        value=([{'label': r, 'value': r} for r in all_runs])[0]['value'],
+        value=all_runs[0],
         clearable=False
     ),
     dcc.Location(
@@ -115,15 +114,16 @@ def change_url(value):
             The string value (without '/') of the user input for the drop-down to use
             Error pop-up displayed depending on user input.
     """
-    #   In a pathname, it automatically adds '/' to the beginning of the input. The values in the drop-down do not have '/'
-    #   preceding the input value. Must convert to string and remove '/' to prevent errors
-
+    #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
     if value == "/":
-        return str(all_runs[0]), False
-    elif str(value)[1:] not in all_runs:
-        return str(all_runs[0]), True
+        return all_runs[0], False
+    #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
+    elif value is None:
+        return all_runs[0], False
+    elif value[1:] not in all_runs:
+        return all_runs[0], True
     else:
-        return str(value)[1:], False
+        return value[1:], False
 
 
 @app.callback(
