@@ -39,7 +39,7 @@ def create_plot_dict(df, variable):
         p = {
             'x': list(data['Run Date']),
             'y': list(data[variable]),
-            'type': 'scatter',
+            'type': 'scattergl',
             'mode': 'markers',
             'name': proj,
             'text': list(data['Sample Name']),
