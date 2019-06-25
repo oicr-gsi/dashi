@@ -9,15 +9,13 @@ index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5'
 )
+
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
     './data/bcl2fastq_cache.hd5'
 )
 
 all_runs = index['Run'].sort_values(ascending=False).unique()
-
-all_runs = [{'label': r, 'value': r} for r in all_runs]
-
 """ Sample_run_hidden holds json split format of "Known"
         columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
                  "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
@@ -44,18 +42,26 @@ all_runs = [{'label': r, 'value': r} for r in all_runs]
                 -  multiple select gives error due to inconsistent values
           """
 layout = html.Div(children=[
+    dcc.ConfirmDialog(
+        id='error',
+        message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.'
+    ),
     dcc.Dropdown(
         id='run_select',
-        options=all_runs,
-        value=all_runs[0]['value'],
+        #   Options is concantenated string versions of all_runs.
+        options=[{'label': r, 'value': r} for r in all_runs],
+        value=all_runs[0],
         clearable=False
+    ),
+    dcc.Location(
+        id='url',
+        refresh=False
     ),
 
     dcc.Graph(
         id='known_index_bar',
 
     ),
-    # Bar graph with defaults set, no change in colour etc
     html.Div([
         html.Div(
             [dcc.Graph(id='known_unknown_pie'),
@@ -75,7 +81,7 @@ layout = html.Div(children=[
         ),
         html.Div(
             [dcc.Graph(id='unknown_index_bar')],
-            style={'width': '76%', 'display': 'inline-block', 'float': 'right'}
+            style={'width': '74%', 'display': 'inline-block', 'float': 'right'}
         ),
     ]),
 
@@ -83,7 +89,6 @@ layout = html.Div(children=[
     html.Div(id='pruned_unknown_hidden', style={'display': 'none'}),
 
 ])
-
 try:
     from app import app
 except ModuleNotFoundError:
@@ -91,6 +96,32 @@ except ModuleNotFoundError:
 
     app = dash.Dash(__name__)
     app.layout = layout
+
+
+@app.callback(
+    [dep.Output('run_select', 'value'),
+     dep.Output('error', 'displayed')],
+    [dep.Input('url', 'pathname')]
+)
+def change_url(value):
+    """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
+        If User enters any value that's not a valid run an error box will pop up and return user to most recent run
+
+        Parameters:
+             value: the URL input after the port (the pathname).
+
+        Returns:
+            The string value (without '/') of the user input for the drop-down to use
+            Error pop-up displayed depending on user input.
+    """
+    #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
+    #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
+    if value == "/" or value is None:
+        return all_runs[0], False
+    elif value[1:] not in all_runs:
+        return all_runs[0], True
+    else:
+        return value[1:], False
 
 
 @app.callback(
@@ -137,7 +168,8 @@ def update_pruned_unknown_hidden(run_alias):
 
 @app.callback(
     dep.Output('known_index_bar', 'figure'),
-    [dep.Input('sample_run_hidden', 'children')]
+    [dep.Input('sample_run_hidden', 'children')
+     ]
 )
 def update_known_index_bar(run_json):
     """ When input (sample_run_hidden) is changed, function is rerun to get update bar graph of sample indices
@@ -155,6 +187,7 @@ def update_known_index_bar(run_json):
     run['index'] = run['Index1'].str.cat(
         run['Index2'].fillna(''), sep=' '
     )
+
     data = []
     for inx, d in run.groupby('index'):
         data.append({
@@ -200,6 +233,7 @@ def update_unknown_index_bar(run_json):
     )
     pruned = pruned.sort_values('Count', ascending=False)
     pruned = pruned.head(30)
+
     data = []
     for lane, d in pruned.groupby('LaneNumber'):
         data.append({
@@ -208,6 +242,7 @@ def update_unknown_index_bar(run_json):
             'type': 'bar',
             'name': lane,
         })
+
     return {
         'data': data,
         'layout': {
@@ -238,6 +273,7 @@ def update_pie_chart(run_alias, known_json, unknown_json):
     """
     known = pandas.read_json(known_json, orient='split')
     pruned = pandas.read_json(unknown_json, orient='split')
+
     known_count = known['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
 
