@@ -138,7 +138,7 @@ def update_known_index_bar(run_alias):
 
 
 def update_unknown_index_bar(run_alias):
-    """ Function to unknown index bar  according to user selected run
+    """ Function to update unknown index bar  according to user selected run
             Parameters:
                  run_alias: name of run
             Returns:
@@ -181,16 +181,16 @@ def update_pie_chart(run_alias):
                  updated pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                  updates value of known_fraction
      """
-    known = index[index['Run'] == run_alias]
-    known = known[known['ReadNumber'] == 1]
-    known = known[~known['SampleID'].isna()]
-    known = known.drop_duplicates(['SampleID', 'LaneNumber'])
+    run = index[index['Run'] == run_alias]
+    run = run[run['ReadNumber'] == 1]
+    run = run[~run['SampleID'].isna()]
+    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
 
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
 
-    known_count = known['SampleNumberReads'].sum()
+    known_count = run['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
     total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
         run_alias, index
@@ -216,12 +216,12 @@ def update_pie_chart(run_alias):
      dep.Output('error', 'displayed')],
     [dep.Input('url', 'pathname')]
 )
-def change_url(value):
+def change_url(pathname):
     """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
         If User enters any value that's not a valid run an error box will pop up and return user to most recent run
 
         Parameters:
-             value: the URL input after the port (the pathname).
+             pathname: user-requested path.
 
         Returns:
             The string value (without '/') of the user input for the drop-down to use
@@ -229,12 +229,12 @@ def change_url(value):
     """
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
-    if value == "/" or value is None:
+    if pathname == "/" or pathname is None:
         return all_runs[0], False
-    elif value[1:] not in all_runs:
+    elif pathname[1:] not in all_runs:
         return all_runs[0], True
     else:
-        return value[1:], False
+        return pathname[1:], False
 
 
 @app.callback(
@@ -243,16 +243,16 @@ def change_url(value):
      dep.Output('known_unknown_pie', 'figure'),
      dep.Output('known_fraction', 'value')],
     [dep.Input('run_select', 'value')]
-
 )
 def update_layout(run_alias):
-    """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are called
+    """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
         Returns:
             functions update_known_index_bar, update_unknown_index_bar, update_pie_chart's data value,
             and update_pie_chart's fraction value
     """
-    return update_known_index_bar(run_alias), update_unknown_index_bar(run_alias), update_pie_chart(run_alias)[0], \
-           update_pie_chart(run_alias)[1]
+    pie_data, textarea_fraction = update_pie_chart(run_alias)
+
+    return update_known_index_bar(run_alias), update_unknown_index_bar(run_alias), pie_data, textarea_fraction
 
 
 if __name__ == '__main__':
