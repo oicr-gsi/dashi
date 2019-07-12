@@ -96,7 +96,7 @@ except ModuleNotFoundError:
     app.layout = layout
 
 
-def update_known_index_bar(run_alias):
+def create_known_index_bar(run):
     """ Function to update known index bar according to user selected run
            Parameters:
                run_alias: name of run
@@ -104,16 +104,6 @@ def update_known_index_bar(run_alias):
               data and values for the layout of stacked bar graph of sample indices
               updates bar graph "known_index_bar"
        """
-    run = index[index['Run'] == run_alias]
-    run = run[run['ReadNumber'] == 1]
-    run = run[~run['SampleID'].isna()]
-    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
-    run['library'] = run['SampleID'].str.extract(
-        'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_'
-    )
-    run['index'] = run['Index1'].str.cat(
-        run['Index2'].fillna(''), sep=' '
-    )
     data_known = []
     for inx, d in run.groupby('index'):
         data_known.append({
@@ -137,7 +127,7 @@ def update_known_index_bar(run_alias):
         }}
 
 
-def update_unknown_index_bar(run_alias):
+def create_unknown_index_bar(pruned):
     """ Function to update unknown index bar  according to user selected run
             Parameters:
                  run_alias: name of run
@@ -145,14 +135,6 @@ def update_unknown_index_bar(run_alias):
                 data and layout values for stacked bar graph for unknown indices
                 updates unknown_index_bar bar graph
               """
-    pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
-        run_alias, index, unknown
-    )
-    pruned['index'] = pruned['Index1'].str.cat(
-        pruned['Index2'].fillna(''), sep=' '
-    )
-    pruned = pruned.sort_values('Count', ascending=False)
-    pruned = pruned.head(30)
 
     data_unknown = []
     for lane, d in pruned.groupby('LaneNumber'):
@@ -173,7 +155,7 @@ def update_unknown_index_bar(run_alias):
     }
 
 
-def update_pie_chart(run_alias):
+def create_pie_chart(run, pruned, total_clusters):
     """ Function to update pie chart and known fraction according to user selected run
              Parameters:
                  run_alias(str): name of run
@@ -181,34 +163,23 @@ def update_pie_chart(run_alias):
                  updated pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                  updates value of known_fraction
      """
-    run = index[index['Run'] == run_alias]
-    run = run[run['ReadNumber'] == 1]
-    run = run[~run['SampleID'].isna()]
-    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
-
-    pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
-        run_alias, index, unknown
-    )
-
     known_count = run['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
-    total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
-        run_alias, index
-    )
     fraction = (known_count + pruned_count) / total_clusters * 100
-    return {
-               'data': [{
-                   'labels': ['Known', 'Unknown'],
-                   'values': [known_count, pruned_count],
-                   'type': 'pie',
-                   'marker': {'colors': ['#349600', '#ef963b']},
-               }],
-               'layout': {
-                   'title': 'Flow Cell Composition of Known/Unknown Indices'
-               }
-           }, 'Predicted clusters / produced clusters: {}%'.format(
-        str(round(fraction, 1))
-    )
+    return {'data': [{
+        'labels': ['Known', 'Unknown'],
+        'values': [known_count, pruned_count],
+        'type': 'pie',
+        'marker': {'colors': ['#349600', '#ef963b']},
+                      }],
+            'layout': {
+              'title': 'Flow Cell Composition of Known/Unknown Indices'}
+
+           }, \
+           ('Predicted clusters / produced clusters: {}%'.format(
+
+               str(round(fraction, 1))
+           ))
 
 
 @app.callback(
@@ -250,9 +221,33 @@ def update_layout(run_alias):
             functions update_known_index_bar, update_unknown_index_bar, update_pie_chart's data value,
             and update_pie_chart's fraction value
     """
-    pie_data, textarea_fraction = update_pie_chart(run_alias)
 
-    return update_known_index_bar(run_alias), update_unknown_index_bar(run_alias), pie_data, textarea_fraction
+    run = index[index['Run'] == run_alias]
+    run = run[run['ReadNumber'] == 1]
+    run = run[~run['SampleID'].isna()]
+    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
+    run['library'] = run['SampleID'].str.extract(
+        'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_'
+    )
+    run['index'] = run['Index1'].str.cat(
+        run['Index2'].fillna(''), sep=' '
+    )
+
+    pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
+        run_alias, index, unknown
+    )
+    pruned['index'] = pruned['Index1'].str.cat(
+        pruned['Index2'].fillna(''), sep=' '
+    )
+    pruned = pruned.sort_values('Count', ascending=False)
+    pruned = pruned.head(30)
+
+    total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
+        run_alias, index)
+
+    pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
+
+    return create_known_index_bar(run), create_unknown_index_bar(pruned), pie_data, textarea_fraction
 
 
 if __name__ == '__main__':
