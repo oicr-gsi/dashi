@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import pandas
+import dash_table
 
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
@@ -20,11 +21,11 @@ all_runs = index['Run'].sort_values(ascending=False).unique()
         columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
                  "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
                  "SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
-                   
+
 
      pruned_unknown_hidden holds json split format of "unknown"
         columns:  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
-               
+
          """
 
 """Within the main layout division there are 4 groups:
@@ -58,10 +59,30 @@ layout = html.Div(children=[
         refresh=False
     ),
 
-    dcc.Graph(
-        id='known_index_bar',
+    dcc.Tabs(id='Tabs', children=[
+        dcc.Tab(label='Graph', children=
+        dcc.Graph(
+            id='known_index_bar',
+        )
+                ),
+        dcc.Tab(label="Data Table", children=
+        dash_table.DataTable(
+            id='known_table',
 
-    ),
+            style_cell={
+                'minWidth': '150px',
+                'maxWidth': '150px',
+                'textAlign': 'center'
+            },
+            n_fixed_rows=True,
+            style_table={
+                'maxHeight': '500px',
+                'overflowY': 'scroll'
+            }
+
+        ))
+    ]),
+
     html.Div([
         html.Div(
             [dcc.Graph(id='known_unknown_pie'),
@@ -122,6 +143,26 @@ def change_url(value):
         return all_runs[0], True
     else:
         return value[1:], False
+
+
+@app.callback(
+    [dep.Output('known_table', 'columns'),
+     dep.Output('known_table', 'data')],
+    [dep.Input('run_select', 'value')]
+)
+def update_known_table(run_alias):
+    run = index[index['Run'] == run_alias]
+    run = run[run['ReadNumber'] == 1]
+    run = run[~run['SampleID'].isna()]
+    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
+    run = run.drop(['LIMS IUS SWID', 'LaneNumber', 'LaneClusterPF', 'ReadNumber', 'Run', 'RunNumber', 'SampleID',
+                    'SampleName', 'LaneClusterRaw'],
+                   axis=1)
+
+    columns = [{'name': i, 'id': i, 'deletable': True} for i in run.columns]
+    data = run.to_dict('records')
+
+    return columns, data
 
 
 @app.callback(
