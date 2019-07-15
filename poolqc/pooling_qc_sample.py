@@ -1,4 +1,5 @@
 import dash_core_components as dcc
+import dash_table.FormatTemplate as FormatTemplate
 import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
@@ -8,25 +9,27 @@ import plotly.graph_objs as go
 import numpy as np
 
 pandas.options.mode.chained_assignment = None
-index = pandas.read_hdf('/home/ijafari/cache_files/rnaseqqc_cache.hd5')
+df = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 
-all_runs = index['Sequencer Run Name'].sort_values(ascending=False).unique()
-all_runs = [x for x in all_runs if str(x) != 'nan']
+runs = df['Sequencer Run Name'].sort_values(ascending=False).unique()
+runs = [x for x in runs if str(x) != 'nan']
 
 layout = html.Div(children=[
     dcc.ConfirmDialog(
-        id='error',
-        message='You have input an incorrect URL. Click either "Ok" or "Cancel" to return to the most run.'
+        id='warning',
+        message='The selected run does not return any data. Analysis may have not been completed yet.' '''
+
+        '''' Click either "Ok" or "Cancel" to return to the most run.'
     ),
     dcc.Location(
-        id='url',
+        id='run_url',
         refresh=False
     ),
     html.Div(children=
     dcc.Dropdown(
-        id='run_select',
-        options=[{'label': r, 'value': r} for r in all_runs],
-        value=all_runs[0],
+        id='select_a_run',
+        options=[{'label': r, 'value': r} for r in runs],
+        value=runs[0],
         clearable=False
     )),
     html.Div(
@@ -48,9 +51,9 @@ layout = html.Div(children=[
                 'maxHeight': '500px',
                 'overflowY': 'scroll'
             },
-            style_header= { 'backgroundColor': 'rgb(222,222,222)',
-                            'fontSize': 16,
-                            'fontWeight': 'bold'}
+            style_header={'backgroundColor': 'rgb(222,222,222)',
+                          'fontSize': 16,
+                          'fontWeight': 'bold'}
 
         )),
     html.Div(
@@ -64,6 +67,14 @@ layout = html.Div(children=[
     html.Div(
         dcc.Graph(
             id='Intergenic Graph'
+        )),
+    html.Div(
+        dcc.Graph(
+            id='rRNA Contamination'
+        )),
+    html.Div(
+        dcc.Graph(
+            id='Strand Correct'
         ))
 
 ]
@@ -79,25 +90,25 @@ except ModuleNotFoundError:
 
 
 @app.callback(
-    [dep.Output('run_select', 'value'),
-     dep.Output('error', 'displayed')],
-    [dep.Input('url', 'pathname')]
+    [dep.Output('select_a_run', 'value'),
+     dep.Output('warning', 'displayed')],
+    [dep.Input('run_url', 'pathname')]
 )
-def change_url(value):
-    if value == "/" or value is None:
-        return all_runs[0], False
-    elif value[1:] not in all_runs:
-        return all_runs[0], True
+def run_URL_update(value):
+    if value == '/' or value is None:
+        return runs[0], False
+    elif value[1:] not in runs:
+        return runs[0], True
     else:
         return value[1:], False
 
 
 @app.callback(
     dep.Output('lane_select', 'options'),
-    [dep.Input('run_select', 'value')]
+    [dep.Input('select_a_run', 'value')]
 )
 def update_lane_options(run_alias):
-    run = index[index['Sequencer Run Name'] == run_alias]
+    run = df[df['Sequencer Run Name'] == run_alias]
     run = run[~run['Sequencer Run Name'].isna()]
     return [{'label': i, 'value': i} for i in run['Lane Number'].sort_values(ascending=True).unique()]
 
@@ -113,21 +124,19 @@ def update_lane_values(available_options):
 @app.callback(
     dep.Output('Title', 'children'),
     [dep.Input('lane_select', 'value'),
-     dep.Input('run_select', 'value')]
+     dep.Input('select_a_run', 'value')]
 )
 def update_title(lane_value, run_value):
     return 'You have selected lane {} in run {}'.format(lane_value, run_value)
 
 
-
-
 @app.callback(
     dep.Output('map_code', 'figure'),
-    [dep.Input('run_select', 'value'),
+    [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value')]
 )
 def Mapped_to_Coding(run_alias, lane_alias):
-    run = index[(index['Sequencer Run Name'] == run_alias) & (index['Lane Number'] == lane_alias)]
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
     run = run[~run['Sequencer Run Name'].isna()]
     data = []
     for inx, d in run.groupby(['Lane Number']):
@@ -168,11 +177,11 @@ def Mapped_to_Coding(run_alias, lane_alias):
 
 @app.callback(
     dep.Output('Intergenic Graph', 'figure'),
-    [dep.Input('run_select', 'value'),
+    [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value')]
 )
 def mapped_to_intergenic(run_alias, lane_alias):
-    run = index[(index['Sequencer Run Name'] == run_alias) & (index['Lane Number'] == lane_alias)]
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
     run = run[~run['Sequencer Run Name'].isna()]
     data = []
     for inx, d in run.groupby(['Lane Number']):
@@ -215,11 +224,11 @@ def mapped_to_intergenic(run_alias, lane_alias):
 
 @app.callback(
     dep.Output('Intronic Graph', 'figure'),
-    [dep.Input('run_select', 'value'),
+    [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value')]
 )
 def mapped_to_intronic(run_alias, lane_alias):
-    run = index[(index['Sequencer Run Name'] == run_alias) & (index['Lane Number'] == lane_alias)]
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
     run = run[~run['Sequencer Run Name'].isna()]
     data = []
     for inx, d in run.groupby(['Lane Number']):
@@ -261,20 +270,116 @@ def mapped_to_intronic(run_alias, lane_alias):
 
 
 @app.callback(
+    dep.Output('rRNA Contamination', 'figure'),
+    [dep.Input('select_a_run', 'value'),
+     dep.Input('lane_select', 'value')]
+)
+def rRna_Contamination(run_alias, lane_alias):
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
+    run = run[~run['Sequencer Run Name'].isna()]
+    data = []
+    for inx, d in run.groupby(['Lane Number']):
+        d['Threshold'] = 5
+        d['Color'] = np.where((run['rRNA Contamination (%reads aligned)'] >= d['Threshold']), '#abd9e9', '#fdae61')
+
+        data.append(
+            go.Bar(
+                y=list(d['Sample Name']),
+                x=list(run['rRNA Contamination (%reads aligned)']),
+                orientation='h',
+                name=inx,
+                marker={'color': list(d['Color'])}
+            )
+        )
+        data.append(
+            go.Scatter(
+                y=list(d['Sample Name']),
+                x=list(d['Threshold']),
+                mode='lines',
+                name=inx,
+                line={
+                    'width': 5,
+                    'color': 'rgb(204,0,0)',
+                    'dash': 'dash',
+                })
+        )
+
+    return {
+        'data': data,
+        'layout': {
+            'title': 'Per Cent rRNA Contamination (%reads aligned)',
+            'yaxis': {'title': 'Sample Name ', 'automargin': True},
+            'xaxis': {'title': 'Per Cent'},
+            'showlegend': False
+        }
+    }
+
+
+@app.callback(
+    dep.Output('Strand Correct', 'figure'),
+    [dep.Input('select_a_run', 'value'),
+     dep.Input('lane_select', 'value')]
+)
+def correct_strand_reads(run_alias, lane_alias):
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
+    run = run[~run['Sequencer Run Name'].isna()]
+    data = []
+    for inx, d in run.groupby(['Lane Number']):
+        d['Threshold'] = 15
+        d['Color'] = np.where(((run['Proportion Correct Strand Reads'] * 100) >= d['Threshold']), '#abd9e9', '#fdae61')
+
+        data.append(
+            go.Bar(
+                y=list(d['Sample Name']),
+                x=list(run['Proportion Correct Strand Reads'] * 100),
+                orientation='h',
+                name=inx,
+                marker={'color': list(d['Color'])}
+            )
+        )
+        data.append(
+            go.Scatter(
+                y=list(d['Sample Name']),
+                x=list(d['Threshold']),
+                mode='lines',
+                name=inx,
+                line={
+                    'width': 5,
+                    'color': 'rgb(204,0,0)',
+                    'dash': 'dash',
+                })
+        )
+
+    return {
+        'data': data,
+        'layout': {
+            'title': 'Proportion Correct Strand Reads',
+            'yaxis': {'title': 'Sample Name ', 'automargin': True},
+            'xaxis': {'title': 'Per Cent'},
+            'showlegend': False
+        }
+    }
+
+
+@app.callback(
     [dep.Output('Summary Table', 'columns'),
      dep.Output('Summary Table', 'data'),
      dep.Output('Summary Table', 'style_data_conditional')],
-    [dep.Input('run_select', 'value'),
+    [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value')]
 )
 def Summary_table(run_alias, lane_alias):
-    run = index[(index['Sequencer Run Name'] == run_alias) & (index['Lane Number'] == lane_alias)]
+    run = df[(df['Sequencer Run Name'] == run_alias) & (df['Lane Number'] == lane_alias)]
     run = run[~run['Sequencer Run Name'].isna()]
-    run['% Mapped to Coding'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['% Mapped to Intronic'] = run['Intronic Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['% Mapped to Intergenic'] = run['Intergenic Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run = run.filter(['Sample Name', '% Mapped to Coding', '% Mapped to Intronic', '% Mapped to Intergenic'])
-    columns = [{'name': i, 'id': i} for i in run.columns]
+    run['% Mapped to Coding'] = run['Coding Bases'] / run['Passed Filter Aligned Bases']
+    run['% Mapped to Intronic'] = run['Intronic Bases'] / run['Passed Filter Aligned Bases']
+    run['% Mapped to Intergenic'] = run['Intergenic Bases'] / run['Passed Filter Aligned Bases']
+    run['rRNA Contamination (%reads aligned)'] = run['rRNA Contamination (%reads aligned)'] / 100
+    run = run.filter(['Sample Name', '% Mapped to Coding', '% Mapped to Intronic', '% Mapped to Intergenic',
+                      'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads'])
+    columns = [{'name': i, 'id': i,
+                'type': 'numeric',
+                'format': FormatTemplate.percentage(2)} for i in run.columns]
     data = run.to_dict('records')
     style_data_conditional = [{
         'if': {'column_id': 'Sample Name'},
