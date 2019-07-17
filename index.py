@@ -10,10 +10,11 @@ from bcl2fastq.index_summary import layout as index_layout
 from rnaseqc.over_time import layout as rnaseqc_overtime_layout
 from runreport.proj_hist import layout as runreport_projhist_layout
 from runscanner.yield_over_time import layout as runscanner_yield_over_time_layout
+from poolqc.pooling_qc_sample import layout as pooling_qc_layout
 
 app.layout = html.Div([
-        dcc.Location(id='url', refresh=False),
-        html.Div(id='page-content')
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
 ])
 
 
@@ -33,6 +34,8 @@ def display_page(pathname):
         return runreport_projhist_layout
     elif pathname == '/runscanner/sum_over_time':
         return runscanner_yield_over_time_layout
+    elif pathname == '/pooling_qc':
+        return pooling_qc_layout
     else:
         return '404'
 
