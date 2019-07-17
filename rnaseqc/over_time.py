@@ -10,9 +10,10 @@ except ModuleNotFoundError:
 
 
 rna_df = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
-rna_df['Run Date'] = rna_df['Sequencer Run Name'].apply(
+rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
     lambda x: x.split('_')[0]
 )
+rna_df = rna_df.dropna(subset=['Run Date'])
 
 # The Run Name is used to extract the date
 # Some runs do not have the proper format
