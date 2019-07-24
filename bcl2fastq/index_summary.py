@@ -97,12 +97,12 @@ except ModuleNotFoundError:
 
 
 def create_known_index_bar(run):
-    """ Function to update known index bar according to user selected run
+    """ Function to create known index bar according to user selected run
            Parameters:
-               run_alias: name of run
+               run: Dataframe filtered and cleaned by 'update_layout'
            Returns:
               data and values for the layout of stacked bar graph of sample indices
-              updates bar graph "known_index_bar"
+              creates bar graph "known_index_bar"
        """
     data_known = []
     for inx, d in run.groupby('index'):
@@ -128,12 +128,12 @@ def create_known_index_bar(run):
 
 
 def create_unknown_index_bar(pruned):
-    """ Function to update unknown index bar  according to user selected run
+    """ Function to create unknown index bar  according to user selected run
             Parameters:
-                 run_alias: name of run
+                 run: Dataframe filtered and cleaned by 'update_layout'
             Returns:
                 data and layout values for stacked bar graph for unknown indices
-                updates unknown_index_bar bar graph
+                creates unknown_index_bar bar graph
               """
 
     data_unknown = []
@@ -156,12 +156,14 @@ def create_unknown_index_bar(pruned):
 
 
 def create_pie_chart(run, pruned, total_clusters):
-    """ Function to update pie chart and known fraction according to user selected run
+    """ Function to create pie chart and known fraction according to user selected run
              Parameters:
-                 run_alias(str): name of run
+                  run: Dataframe filtered and cleaned by 'update_layout'
+                  pruned: Dataframe of unknown indices filtered and cleaned by 'update_layout'
+                  total_clusters: Denominator for known/unknown indices.
              Returns:
-                 updated pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
-                 updates value of known_fraction
+                  pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
+                  creates value of known_fraction
      """
     known_count = run['SampleNumberReads'].sum()
     pruned_count = pruned['Count'].sum()
@@ -217,6 +219,8 @@ def change_url(pathname):
 )
 def update_layout(run_alias):
     """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
+        Parameter:
+            run_alias: user-selected run name from dropdown
         Returns:
             functions update_known_index_bar, update_unknown_index_bar, update_pie_chart's data value,
             and update_pie_chart's fraction value
