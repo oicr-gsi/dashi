@@ -189,13 +189,15 @@ def update_known_index_bar(run_json):
     )
 
     data = []
-    for inx, d in run.groupby('index'):
+    #   Multiple libraries can use the same index, data must be grouped by both index and libraries
+    #   to prevent duplicate counts
+    for inx, d in run.groupby(['index', 'library']):
         data.append({
-            'x': list(d['library']),
+            'x': list(d['library'].unique()),
             # One library can be run on multiple lanes. Sum them together.
-            'y': list(d.groupby('library')['SampleNumberReads'].sum()),
+            'y': [d['SampleNumberReads'].sum()],
             'type': 'bar',
-            'name': inx,
+            'name': inx[0],
             'marker': {'line': {
                 'width': 2,
                 'color': 'rgb(255,255, 255)'
