@@ -1,0 +1,8 @@
+# virtualenv files
+venv
+*/__pycache__
+__pycache__
+
+# directory containing cache files (may be a symlink)
+data
+*/data/

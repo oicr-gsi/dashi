@@ -105,13 +105,15 @@ def create_known_index_bar(run):
               creates bar graph "known_index_bar"
        """
     data_known = []
-    for inx, d in run.groupby('index'):
+    #   Multiple libraries can use the same index, data must be grouped by both index and libraries
+    #   to prevent duplicate counts
+    for inx, d in run.groupby(['index', 'library']):
         data_known.append({
-            'x': list(d['library']),
+            'x': list(d['library'].unique()),
             # One library can be run on multiple lanes. Sum them together.
-            'y': list(d.groupby('library')['SampleNumberReads'].sum()),
+            'y': [d['SampleNumberReads'].sum()],
             'type': 'bar',
-            'name': inx,
+            'name': inx[0],
             'marker': {'line': {
                 'width': 2,
                 'color': 'rgb(255,255, 255)'
