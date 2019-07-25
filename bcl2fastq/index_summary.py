@@ -132,7 +132,7 @@ def create_known_index_bar(run):
 def create_unknown_index_bar(pruned):
     """ Function to create unknown index bar  according to user selected run
             Parameters:
-                 run: Dataframe filtered and cleaned by 'update_layout'
+                pruned: Dataframe of unknown indices filtered and cleaned by 'update_layout'
             Returns:
                 data and layout values for stacked bar graph for unknown indices
                 creates unknown_index_bar bar graph
@@ -179,8 +179,7 @@ def create_pie_chart(run, pruned, total_clusters):
             'layout': {
               'title': 'Flow Cell Composition of Known/Unknown Indices'}
 
-           }, \
-           ('Predicted clusters / produced clusters: {}%'.format(
+           },('Predicted clusters / produced clusters: {}%'.format(
 
                str(round(fraction, 1))
            ))
