@@ -10,6 +10,7 @@ import plotly.plotly as plotly
 import plotly.graph_objs as go
 import numpy as np
 import urllib
+from datetime import datetime
 
 pandas.options.mode.chained_assignment = None
 
@@ -18,7 +19,6 @@ rnaseq.rename(columns={'Sample Name': 'library'}, inplace=True)
 
 bamqc = pandas.read_hdf('./data/bamqc_cache.hd5')
 
-
 bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5')
@@ -26,8 +26,6 @@ bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
-
-df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 
 runs = df['Run'].sort_values(ascending=False).unique()
 runs = [x for x in runs if str(x) != 'nan']
@@ -56,27 +54,6 @@ layout = html.Div(children=[
         )),
     html.Div(id='Title', style={'fontSize': 25, 'textAlign': 'center', 'padding': 30}),
     html.Div(children=''),
-    html.Div(
-        dt.DataTable(
-            id='Summary Table',
-            editable=True,
-            row_selectable='multi',
-            selected_rows=[],
-            style_cell={
-                'minWidth': '150px',
-                'maxWidth': '150px',
-                'textAlign': 'center'
-            },
-            n_fixed_rows=True,
-            style_table={
-                'maxHeight': '1000px',
-                'overflowY': 'scroll'
-            },
-            style_header={'backgroundColor': 'rgb(222,222,222)',
-                          'fontSize': 16,
-                          'fontWeight': 'bold'}
-
-        )),
     html.A(
         'Download Data',
         id='download-link',
@@ -84,6 +61,26 @@ layout = html.Div(children=[
         href='',
         target='_blank'
     ),
+    html.Div(
+        dt.DataTable(
+            id='Summary Table',
+            editable=True,
+            row_selectable='multi',
+            selected_rows=[],
+            style_cell={
+                'textAlign': 'center'
+            },
+            style_table={
+                'maxHeight': '1000px',
+                'maxWidth': '100%',
+                'overflowY': 'scroll',
+                'overflowX': 'scroll'
+            },
+            style_header={'backgroundColor': 'rgb(222,222,222)',
+                          'fontSize': 16,
+                          'fontWeight': 'bold'}
+
+        )),
     html.Div(
         dcc.Graph(id='SampleIndices'),
     ),
@@ -147,7 +144,8 @@ def update_title(lane_value, run_value):
     [dep.Output('Summary Table', 'columns'),
      dep.Output('Summary Table', 'data'),
      dep.Output('Summary Table', 'style_data_conditional'),
-     dep.Output('download-link', 'href')],
+     dep.Output('download-link', 'href'),
+     dep.Output('download-link', 'download')],
     [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value')]
 )
@@ -161,12 +159,14 @@ def Summary_table(run_alias, lane_alias):
     run['rRNA Contamination (%reads aligned)'] = run['rRNA Contamination (%reads aligned)']
 
     run = run.round(2)
-    run = run.filter(['library', 'Index1', 'Index2', 'YieldQ30', '% Mapped to Coding', '% Mapped to Intronic',
-                      '% Mapped to Intergenic',
-                      'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads', 'Coverage'])
+    run = run.filter(
+        ['library', 'Run', 'LaneNumber', 'Index1', 'Index2', 'YieldQ30', '% Mapped to Coding', '% Mapped to Intronic',
+         '% Mapped to Intergenic',
+         'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads', 'Coverage'])
 
     csv = run.to_csv(index=False)
     csv = 'data:text/csv;charset=utf-8,' + urllib.parse.quote(csv)
+    run = run.drop(columns=['Run', 'LaneNumber'])
 
     columns = [{'name': i, 'id': i,
                 'type': 'numeric'} for i in run.columns]
@@ -185,10 +185,12 @@ def Summary_table(run_alias, lane_alias):
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intergenic',
                 'filter': '0 < {% Mapped to Intergenic} < 15'},
-         'backgroundColor': 'rgb(219, 75, 75)'}
+         'backgroundColor': 'rgb(219, 75, 75)'},
     ]
+    downloadtimedate = datetime.today().strftime('%Y-%m-%d')
+    download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
 
-    return columns, data, style_data_conditional, csv
+    return columns, data, style_data_conditional, csv, download
 
 
 def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
@@ -207,16 +209,17 @@ def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
     return {
         'data': data,
         'layout': {
-            'title': 'Per Cent Mapped to Coding ',
+            'title': 'Index Clusters per Sample ',
             'xaxis': {'title': 'Sample', 'automargin': True},
             'yaxis': {'title': 'Clusters'},
 
         }
     }
 
-def update_map_code(run, rows, derived_virtual_selected_rows, colors):
-    run = run.sort_values(by='Result', ascending=False)
 
+def update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colors):
+    run = run[~run['Sequencer Run Name'].isna()]
+    run = run.sort_values(by='Result', ascending=False)
     data = []
 
     for inx, d in run.groupby(['LaneNumber']):
@@ -268,8 +271,8 @@ def update_map_code(run, rows, derived_virtual_selected_rows, colors):
      dep.Input('Summary Table', 'derived_virtual_data'),
      dep.Input('Summary Table', 'derived_virtual_selected_rows')])
 def update_all_graphs(run_alias, lane_alias, rows, derived_virtual_selected_rows):
-    run = df[(df['Sequencer Run Name'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Sequencer Run Name'].isna()].drop_duplicates('library')
+    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
+    run = run[~run['Run'].isna()].drop_duplicates('library')
     run['Result'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
     run['index'] = run['Index1'].str.cat(
         run['Index2'].fillna(''), sep=' ')
@@ -282,9 +285,10 @@ def update_all_graphs(run_alias, lane_alias, rows, derived_virtual_selected_rows
     colors = ['#d9c76c' if i in derived_virtual_selected_rows else '#99b2c2'
               for i in range(len(dff))]
 
-    return update_map_code(run, rows, derived_virtual_selected_rows, colors), update_sampleindices(run, rows,
-                                                                                                   derived_virtual_selected_rows,
-                                                                                                   colors)
+    return update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colors), update_sampleindices(run,
+                                                                                                                 rows,
+                                                                                                                 derived_virtual_selected_rows,
+                                                                                                                 colors)
 
 
 if __name__ == '__main__':
