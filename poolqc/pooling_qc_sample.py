@@ -27,6 +27,8 @@ bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 
+df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
+
 runs = df['Run'].sort_values(ascending=False).unique()
 runs = [x for x in runs if str(x) != 'nan']
 
@@ -61,13 +63,14 @@ layout = html.Div(children=[
         href='',
         target='_blank'
     ),
-    html.Div([
+    html.Div(
         dt.DataTable(
             id='Summary Table',
             editable=True,
             row_selectable='multi',
             selected_rows=[],
             style_cell={
+                'minWidth': '150px',
                 'textAlign': 'center'
             },
             style_table={
@@ -79,8 +82,9 @@ layout = html.Div(children=[
             style_header={'backgroundColor': 'rgb(222,222,222)',
                           'fontSize': 16,
                           'fontWeight': 'bold'},
+            n_fixed_columns=2,
 
-        )]),
+        )),
     html.Div(
         dcc.Graph(id='SampleIndices'),
     ),
@@ -144,7 +148,6 @@ def update_title(lane_value, run_value):
     [dep.Output('Summary Table', 'columns'),
      dep.Output('Summary Table', 'data'),
      dep.Output('Summary Table', 'style_data_conditional'),
-     dep.Output('Summary Table', 'n_fixed_columns'),
      dep.Output('download-link', 'href'),
      dep.Output('download-link', 'download')],
     [dep.Input('select_a_run', 'value'),
@@ -182,7 +185,7 @@ def Summary_table(run_alias, lane_alias):
                 'filter': '0 < {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intronic',
-                'filter': '0 < {% Mapped to Intronic} < 15'},
+                'filter': '0 < {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intergenic',
                 'filter': '0 < {% Mapped to Intergenic} < 15'},
@@ -191,7 +194,7 @@ def Summary_table(run_alias, lane_alias):
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
     download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
 
-    return columns, data, style_data_conditional, 2, csv, download
+    return columns, data, style_data_conditional, csv, download
 
 
 def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
@@ -219,7 +222,7 @@ def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
 
 
 def update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colors):
-    run = run[~run['Sequencer Run Name'].isna()]
+    run = run[~run['rRNA Contamination (%reads aligned)'].isna()]
     run = run.sort_values(by='Result', ascending=False)
     data = []
 
@@ -255,7 +258,7 @@ def update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colo
     return {
         'data': data,
         'layout': {
-            'title': 'Per Cent Mapped to Coding ',
+            'title': 'Per Cent Mapped to Coding (RNA) ',
             'yaxis': {'title': 'Sample', 'automargin': True},
             'xaxis': {'title': 'Per Cent', 'range': [0, 100]},
             'showlegend': False,
