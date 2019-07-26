@@ -61,7 +61,7 @@ layout = html.Div(children=[
         href='',
         target='_blank'
     ),
-    html.Div(
+    html.Div([
         dt.DataTable(
             id='Summary Table',
             editable=True,
@@ -78,9 +78,9 @@ layout = html.Div(children=[
             },
             style_header={'backgroundColor': 'rgb(222,222,222)',
                           'fontSize': 16,
-                          'fontWeight': 'bold'}
+                          'fontWeight': 'bold'},
 
-        )),
+        )]),
     html.Div(
         dcc.Graph(id='SampleIndices'),
     ),
@@ -144,6 +144,7 @@ def update_title(lane_value, run_value):
     [dep.Output('Summary Table', 'columns'),
      dep.Output('Summary Table', 'data'),
      dep.Output('Summary Table', 'style_data_conditional'),
+     dep.Output('Summary Table', 'n_fixed_columns'),
      dep.Output('download-link', 'href'),
      dep.Output('download-link', 'download')],
     [dep.Input('select_a_run', 'value'),
@@ -190,7 +191,7 @@ def Summary_table(run_alias, lane_alias):
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
     download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
 
-    return columns, data, style_data_conditional, csv, download
+    return columns, data, style_data_conditional, 2, csv, download
 
 
 def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):

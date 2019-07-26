@@ -44,11 +44,11 @@ layout = html.Div([
         )
     ),
 
-    html.H2('Pool Balancing QC '),
+    html.H2('QC Reports '),
 
     html.H3(
         dcc.Link(
-            'Project library metrics per run and lane', href='/pooling_qc'
+            'Pool Balancing QC', href='/pooling_qc'
         )
     )
 ])
