@@ -43,4 +43,12 @@ layout = html.Div([
             'Pass filter yield over time', href='/runscanner/sum_over_time'
         )
     ),
+
+    html.H2('QC Reports '),
+
+    html.H3(
+        dcc.Link(
+            'Pool Balancing QC', href='/pooling_qc'
+        )
+    )
 ])
