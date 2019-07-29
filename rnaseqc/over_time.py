@@ -1,14 +1,9 @@
 import pandas
 import dash_core_components as dcc
 import dash_html_components as html
+import dash.dependencies as dep
 
 import plotly
-
-try:
-    from app import app
-except ModuleNotFoundError:
-    import dash
-    app = dash.Dash(__name__)
 
 
 rna_df = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
@@ -27,6 +22,8 @@ rna_df = rna_df[rna_df['Run Date'].str.isnumeric()]
 rna_df['Run Date'] = pandas.to_datetime(
      rna_df['Run Date'], yearfirst=True
  )
+
+projects = rna_df['Study Title'].sort_values().unique()
 
 
 def create_plot_dict(df, variable):
@@ -129,18 +126,48 @@ def create_subplot(rna_df):
         height=1600,
         title='RNASeQC Metrics Over Time'
     )
-    fig['layout']['legend'].update(orientation="h")
+    # If you want legend at the bottom
+    # fig['layout']['legend'].update(orientation="h")
 
     return fig
 
 
 layout = html.Div(children=[
+    html.Div(children=[
+        html.Label('Project'),
+        dcc.Dropdown(
+            id='project_multi_drop',
+            multi=True,
+            options=[{'label': x, 'value': x} for x in projects],
+            value=projects
+        ),
+    ]),
     dcc.Graph(
-        id='rRNA',
+        id='graph_subplot',
         figure=create_subplot(rna_df)
     ),
 ])
 
-if __name__ == '__main__':
+try:
+    from app import app
+except ModuleNotFoundError:
+    import dash
+    app = dash.Dash(__name__)
     app.layout = layout
+
+
+@app.callback(
+    dep.Output('graph_subplot', 'figure'),
+    [dep.Input('project_multi_drop', 'value')]
+)
+def graph_subplot(projects):
+    to_plot = rna_df[rna_df['Study Title'].isin(projects)]
+
+    if len(to_plot) > 0:
+        return create_subplot(to_plot)
+    else:
+        return {}
+
+
+if __name__ == '__main__':
     app.run_server(debug=True)
