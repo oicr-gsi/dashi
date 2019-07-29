@@ -23,15 +23,20 @@ rna_df['Run Date'] = pandas.to_datetime(
      rna_df['Run Date'], yearfirst=True
  )
 
-projects = rna_df['Study Title'].sort_values().unique()
+all_projects = rna_df['Study Title'].sort_values().unique()
 
 # Pull in meta data from Pinery
 pinery = pandas.read_hdf('./data/pinery_samples_cache.hd5', 'pinery_samples')
 
 pin_needed = pinery[['name', 'preparation_kit_name']]
+# Only include libraries (ensure dilutions aren't merged in)
 pin_needed = pin_needed[pin_needed.index.str.startswith('LIB')]
 
 rna_df = rna_df.merge(pin_needed, how='left', left_on='Sample Name', right_on='name')
+# There are NaN kits, which need to be changed to a str. Use the existing Unspecified
+rna_df = rna_df.fillna({'preparation_kit_name': 'Unspecified'})
+
+all_kits = rna_df['preparation_kit_name'].sort_values().unique()
 
 
 def create_plot_dict(df, variable):
@@ -147,8 +152,15 @@ layout = html.Div(children=[
         dcc.Dropdown(
             id='project_multi_drop',
             multi=True,
-            options=[{'label': x, 'value': x} for x in projects],
-            value=projects
+            options=[{'label': x, 'value': x} for x in all_projects],
+            value=all_projects
+        ),
+        html.Label('Kits'),
+        dcc.Dropdown(
+            id='kits_multi_drop',
+            multi=True,
+            options=[{'label': x, 'value': x} for x in all_kits],
+            value=all_kits
         ),
         html.Label('Dates: '),
         dcc.DatePickerRange(
@@ -176,11 +188,13 @@ except ModuleNotFoundError:
 @app.callback(
     dep.Output('graph_subplot', 'figure'),
     [dep.Input('project_multi_drop', 'value'),
+     dep.Input('kits_multi_drop', 'value'),
      dep.Input('date_picker', 'start_date'),
      dep.Input('date_picker', 'end_date'),]
 )
-def graph_subplot(projects, start_date, end_date):
+def graph_subplot(projects, kits, start_date, end_date):
     to_plot = rna_df[rna_df['Study Title'].isin(projects)]
+    to_plot = to_plot[to_plot['preparation_kit_name'].isin(kits)]
     to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
