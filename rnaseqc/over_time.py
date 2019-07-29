@@ -25,6 +25,14 @@ rna_df['Run Date'] = pandas.to_datetime(
 
 projects = rna_df['Study Title'].sort_values().unique()
 
+# Pull in meta data from Pinery
+pinery = pandas.read_hdf('./data/pinery_samples_cache.hd5', 'pinery_samples')
+
+pin_needed = pinery[['name', 'preparation_kit_name']]
+pin_needed = pin_needed[pin_needed.index.str.startswith('LIB')]
+
+rna_df = rna_df.merge(pin_needed, how='left', left_on='Sample Name', right_on='name')
+
 
 def create_plot_dict(df, variable):
     result = []
