@@ -126,6 +126,7 @@ def create_subplot(rna_df):
         height=1600,
         title='RNASeQC Metrics Over Time'
     )
+
     # If you want legend at the bottom
     # fig['layout']['legend'].update(orientation="h")
 
@@ -140,6 +141,14 @@ layout = html.Div(children=[
             multi=True,
             options=[{'label': x, 'value': x} for x in projects],
             value=projects
+        ),
+        html.Label('Dates: '),
+        dcc.DatePickerRange(
+            id='date_picker',
+            min_date_allowed=min(rna_df['Run Date']),
+            max_date_allowed=max(rna_df['Run Date']),
+            start_date=min(rna_df['Run Date']),
+            end_date=max(rna_df['Run Date']),
         ),
     ]),
     dcc.Graph(
@@ -158,10 +167,14 @@ except ModuleNotFoundError:
 
 @app.callback(
     dep.Output('graph_subplot', 'figure'),
-    [dep.Input('project_multi_drop', 'value')]
+    [dep.Input('project_multi_drop', 'value'),
+     dep.Input('date_picker', 'start_date'),
+     dep.Input('date_picker', 'end_date'),]
 )
-def graph_subplot(projects):
+def graph_subplot(projects, start_date, end_date):
     to_plot = rna_df[rna_df['Study Title'].isin(projects)]
+    to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
+    to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
     if len(to_plot) > 0:
         return create_subplot(to_plot)
