@@ -1,10 +1,12 @@
 import gsiqcetl.bcl2fastq.parse
 import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
+import dash_table.FormatTemplate as FormatTemplate
 import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
 import pandas
+import plotly.plotly as plotly
 import plotly.graph_objs as go
 import numpy as np
 import urllib
@@ -24,6 +26,9 @@ bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
+
+df['properly paired reads'] = np.where(df['properly paired reads'].isnull(),
+                                       df['rRNA Contamination (%reads properly paired)'], df['properly paired reads'])
 
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 
@@ -54,6 +59,9 @@ layout = html.Div(children=[
         )),
     html.Div(id='Title', style={'fontSize': 25, 'textAlign': 'center', 'padding': 30}),
     html.Div(children=''),
+    html.Div(
+        dcc.Graph(id='SampleIndices'),
+    ),
     html.A(
         'Download Data',
         id='download-link',
@@ -80,14 +88,15 @@ layout = html.Div(children=[
             style_header={'backgroundColor': 'rgb(222,222,222)',
                           'fontSize': 16,
                           'fontWeight': 'bold'},
+            n_fixed_columns=2,
 
         )),
+
     html.Div(
-        dcc.Graph(id='SampleIndices'),
+        dcc.Graph(id='properly paired reads RNA', style={'display': 'none'}),
     ),
     html.Div(
-        dcc.Graph(id='map_code')
-    )
+        dcc.Graph(id='properly paired reads DNA', style={'display': 'none'}))
 ]
 )
 
@@ -154,6 +163,8 @@ def Summary_table(run_alias, lane_alias):
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
     run = run[~run['Run'].isna()].drop_duplicates('library')
     run = run[~run['library'].isna()]
+
+    # Adding 'on-the-fly' metrics
     run['% Mapped to Coding'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
     run['% Mapped to Intronic'] = run['Intronic Bases'] / run['Passed Filter Aligned Bases'] * 100
     run['% Mapped to Intergenic'] = run['Intergenic Bases'] / run['Passed Filter Aligned Bases'] * 100
@@ -161,23 +172,30 @@ def Summary_table(run_alias, lane_alias):
 
     run = run.round(2)
     run = run.filter(
-        ['library', 'Run', 'LaneNumber', 'Index1', 'Index2', 'YieldQ30', '% Mapped to Coding', '% Mapped to Intronic',
-         '% Mapped to Intergenic',
-         'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads', 'Coverage'])
-
+        ['library', 'Run', 'LaneNumber', 'Index1', 'Index2', 'SampleNumberReads', '% Mapped to Coding',
+         '% Mapped to Intronic',
+         '% Mapped to Intergenic', 'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads',
+         'Coverage'])
+    run = run.sort_values('library')
     csv = run.to_csv(index=False)
     csv = 'data:text/csv;charset=utf-8,' + urllib.parse.quote(csv)
     run = run.drop(columns=['Run', 'LaneNumber'])
+
+    # Append Pass/Fail and Thresholds
 
     columns = [{'name': i, 'id': i,
                 'type': 'numeric'} for i in run.columns]
 
     data = run.to_dict('records')
 
+    # highlighting datatable cells/columns/rows
     style_data_conditional = [{
         'if': {'column_id': 'library'},
         'backgroundColor': 'rgb(222, 222, 222)'
     },
+        {'if': {'column_id': 'properly paired reads',
+                'filter': '0 < {properly paired reads} and {properly paired reads} < 20'},
+         'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Coding',
                 'filter_query': '0 < {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
@@ -195,41 +213,64 @@ def Summary_table(run_alias, lane_alias):
 
 
 def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
+    run = run.sort_values('library')
+    run = run[~run['library'].isna()]
+    total_RNA = len(run['library'])
+    Index_Pass = '%s/%s' % (sum(i > 20000 for i in run['SampleNumberReads']), total_RNA)
+    Index_Threshold = 20000
     data = []
 
-    for inx, d in run.groupby(['index']):
+    for inx, d in run.groupby(['library']):
+        d['Threshold'] = 20000
+        d['Color'] = np.where((d['SampleNumberReads'] >= d['Threshold']), '#ffffff', '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
                 y=list(d['SampleNumberReads']),
                 name=inx,
-                marker={'color': colors},
+                marker={'color': colors,
+                        'line': {
+                            'width': 3,
+                            'color': list(d['Color'])
+                        }},
             )
         )
+        data.append(
+            go.Scatter(
+                x=list(d['library']),
+                y=list(d['Threshold']),
+                name=inx,
+                line={
+                    'width': 3,
+                    'color': 'rgb(204,0,0)',
+                    'dash': 'dash',
+                },
+                mode='lines'))
 
     return {
         'data': data,
         'layout': {
-            'title': 'Index Clusters per Sample ',
+            'title': 'Index Clusters per Sample. Passed Samples: %s Threshold: %s' % (Index_Pass, Index_Threshold),
             'xaxis': {'title': 'Sample', 'automargin': True},
             'yaxis': {'title': 'Clusters'},
+            'showlegend': False,
 
         }
     }
 
 
-def update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colors):
-    run = run[~run['rRNA Contamination (%reads aligned)'].isna()]
-    run = run.sort_values(by='Result', ascending=False)
+# ToDO remove
+def update_properly_paired_reads_RNA(run, rows, derived_virtual_selected_rows, colors):
+    run = run[~run['rRNA Contamination (%reads aligned)'].isna() & ~run['properly paired reads'].isna()]
     data = []
 
     for inx, d in run.groupby(['LaneNumber']):
-        d['Threshold'] = 20
-        d['Color'] = np.where((d['Result'] >= d['Threshold']), '#ffffff', '#db4b4b')
+        d['Threshold'] = 1000
+        d['Color'] = np.where((d['properly paired reads'] >= d['Threshold']), '#ffffff', '#db4b4b')
         data.append(
             go.Bar(
                 y=list(d['library']),
-                x=list(d['Result']),
+                x=list(d['properly paired reads']),
                 orientation='h',
                 name=inx,
                 marker={'color': colors,
@@ -255,17 +296,66 @@ def update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colo
     return {
         'data': data,
         'layout': {
-            'title': 'Per Cent Mapped to Coding (RNA) ',
+            'title': 'Properly Paired Reads (RNA) ',
             'yaxis': {'title': 'Sample', 'automargin': True},
-            'xaxis': {'title': 'Per Cent', 'range': [0, 100]},
+            'xaxis': {'title': 'Properly Paired Reads'},
             'showlegend': False,
             'height': (len(run) * 30) + 150
         }
     }
 
 
+# TODO Remove graph
+def update_properly_paired_reads_DNA(run, rows, derived_virtual_selected_rows, colors):
+    run = run[run['rRNA Contamination (%reads aligned)'].isna() & ~run['properly paired reads'].isna()]
+    run = run.sort_values(by='Result', ascending=False)
+    data = []
+
+    for inx, d in run.groupby(['LaneNumber']):
+        d['Threshold'] = 1000
+        d['Color'] = np.where((d['properly paired reads'] >= d['Threshold']), '#ffffff', '#db4b4b')
+        data.append(
+            go.Bar(
+                y=list(d['library']),
+                x=list(d['properly paired reads']),
+                orientation='h',
+                name=inx,
+                marker={'color': colors,
+                        'line': {
+                            'width': 3,
+                            'color': list(d['Color'])
+                        }},
+            )
+        )
+        data.append(
+            go.Scatter(
+                y=list(d['library']),
+                x=list(d['Threshold']),
+                orientation='h',
+                name=inx,
+                line={
+                    'width': 3,
+                    'color': 'rgb(204,0,0)',
+                    'dash': 'dash',
+                },
+                mode='lines'))
+
+    return {
+        'data': data,
+        'layout': {
+            'title': 'Properly Paired Reads (DNA) ',
+            'yaxis': {'title': 'Sample', 'automargin': True},
+            'xaxis': {'title': 'Paired Reads'},
+            'showlegend': False,
+            'height': (len(run['properly paired reads']) * 30) + 150
+        }
+    }
+
+
+# TODO Remove Graphs
 @app.callback(
-    [dep.Output('map_code', 'figure'),
+    [dep.Output('properly paired reads RNA', 'figure'),
+     dep.Output('properly paired reads DNA', 'figure'),
      dep.Output('SampleIndices', 'figure')],
     [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value'),
@@ -286,10 +376,9 @@ def update_all_graphs(run_alias, lane_alias, rows, derived_virtual_selected_rows
     colors = ['#d9c76c' if i in derived_virtual_selected_rows else '#99b2c2'
               for i in range(len(dff))]
 
-    return update_percent_mapped_to_code(run, rows, derived_virtual_selected_rows, colors), update_sampleindices(run,
-                                                                                                                 rows,
-                                                                                                                 derived_virtual_selected_rows,
-                                                                                                                 colors)
+    return (update_properly_paired_reads_RNA(run, rows, derived_virtual_selected_rows, colors),
+            update_properly_paired_reads_DNA(run, rows, derived_virtual_selected_rows, colors),
+            update_sampleindices(run, rows, derived_virtual_selected_rows, colors))
 
 
 if __name__ == '__main__':
