@@ -1,12 +1,10 @@
 import gsiqcetl.bcl2fastq.parse
 import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
-import dash_table.FormatTemplate as FormatTemplate
 import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
 import pandas
-import plotly.plotly as plotly
 import plotly.graph_objs as go
 import numpy as np
 import urllib
@@ -82,7 +80,6 @@ layout = html.Div(children=[
             style_header={'backgroundColor': 'rgb(222,222,222)',
                           'fontSize': 16,
                           'fontWeight': 'bold'},
-            n_fixed_columns=2,
 
         )),
     html.Div(
@@ -182,13 +179,13 @@ def Summary_table(run_alias, lane_alias):
         'backgroundColor': 'rgb(222, 222, 222)'
     },
         {'if': {'column_id': '% Mapped to Coding',
-                'filter': '0 < {% Mapped to Coding} < 20'},
+                'filter_query': '0 < {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intronic',
-                'filter': '0 < {% Mapped to Coding} < 20'},
+                'filter_query': '0 < {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intergenic',
-                'filter': '0 < {% Mapped to Intergenic} < 15'},
+                'filter_query': '0 < {% Mapped to Intergenic} < 15'},
          'backgroundColor': 'rgb(219, 75, 75)'},
     ]
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
