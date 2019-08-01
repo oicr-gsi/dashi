@@ -1,12 +1,10 @@
 import gsiqcetl.bcl2fastq.parse
 import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
-import dash_table.FormatTemplate as FormatTemplate
 import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
 import pandas
-import plotly.plotly as plotly
 import plotly.graph_objs as go
 import numpy as np
 import urllib
@@ -67,9 +65,6 @@ layout = html.Div(children=[
     html.Div(
         dt.DataTable(
             id='Summary Table',
-            editable=True,
-            row_selectable='multi',
-            selected_rows=[],
             style_cell={
                 'minWidth': '150px',
                 'textAlign': 'center'
@@ -85,12 +80,6 @@ layout = html.Div(children=[
                           'fontWeight': 'bold'},
 
         )),
-
-    html.Div(
-        dcc.Graph(id='properly paired reads RNA', style={'display': 'none'}),
-    ),
-    html.Div(
-        dcc.Graph(id='properly paired reads DNA', style={'display': 'none'}))
 ]
 )
 
