@@ -255,8 +255,7 @@ def update_sampleindices(run_alias, lane_alias):
                     'width': 3,
                     'color': 'rgb(0,0,0)',
                     'dash': 'dash',
-                },
-                mode='lines'))
+                },))
 
     return {
         'data': data,
