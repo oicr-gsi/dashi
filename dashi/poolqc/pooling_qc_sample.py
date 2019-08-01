@@ -26,10 +26,6 @@ bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
-
-df['properly paired reads'] = np.where(df['properly paired reads'].isnull(),
-                                       df['rRNA Contamination (%reads properly paired)'], df['properly paired reads'])
-
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 
 runs = df['Run'].sort_values(ascending=False).unique()
@@ -149,20 +145,7 @@ def update_title(lane_value, run_value):
     return 'You have selected lane {} in run {}'.format(lane_value, run_value)
 
 
-@app.callback(
-    [dep.Output('Summary Table', 'columns'),
-     dep.Output('Summary Table', 'data'),
-     dep.Output('Summary Table', 'style_data_conditional'),
-     dep.Output('download-link', 'href'),
-     dep.Output('download-link', 'download')],
-    [dep.Input('select_a_run', 'value'),
-     dep.Input('lane_select', 'value')]
-)
-def Summary_table(run_alias, lane_alias):
-    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run = run[~run['library'].isna()]
-
+def Summary_table(run):
     # Adding 'on-the-fly' metrics
     run['% Mapped to Coding'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
     run['% Mapped to Intronic'] = run['Intronic Bases'] / run['Passed Filter Aligned Bases'] * 100
@@ -191,13 +174,9 @@ def Summary_table(run_alias, lane_alias):
     style_data_conditional = [{
         'if': {'column_id': 'library'},
         'backgroundColor': 'rgb(222, 222, 222)'
-    },
-        {'if': {'column_id': 'properly paired reads',
-                'filter_query': '0 < {properly paired reads} and {properly paired reads} < 20'},
-         'backgroundColor': 'rgb(219, 75, 75)'},
-        {'if': {'column_id': '% Mapped to Coding',
-                'filter_query': '0 < {% Mapped to Coding} and {% Mapped to Coding} < 20'},
-         'backgroundColor': 'rgb(219, 75, 75)'},
+    }, {'if': {'column_id': '% Mapped to Coding',
+               'filter_query': '0 < {% Mapped to Coding} and {% Mapped to Coding} < 20'},
+        'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intronic',
                 'filter_query': '0 < {% Mapped to Intronic} and {% Mapped to Intronic} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
@@ -208,32 +187,19 @@ def Summary_table(run_alias, lane_alias):
                 'filter_query': '0 < {rRNA Contamination (%reads aligned)} and {rRNA Contamination (%reads aligned)} < 15'},
          'backgroundColor': 'rgb(219, 75, 75)'},
     ]
-    downloadtimedate = datetime.today().strftime('%Y-%m-%d')
-    download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
-
-    return columns, data, style_data_conditional, csv, download
+    return columns, data, style_data_conditional, csv
 
 
-@app.callback(
-    dep.Output('SampleIndices', 'figure'),
-    [dep.Input('select_a_run', 'value'),
-     dep.Input('lane_select', 'value')])
-def update_sampleindices(run_alias, lane_alias):
-    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run['Result'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['index'] = run['Index1'].str.cat(
-        run['Index2'].fillna(''), sep=' ')
+def update_sampleindices(run):
     run = run.sort_values('library')
-
-    total_RNA = len(run['library'])
-    Index_Pass = '%s/%s' % (sum(i > 20000 for i in run['SampleNumberReads']), total_RNA)
-    Index_Threshold = 50000000
+    num_libraries = len(run['library'])
+    samples_passing_clusters = '%s/%s' % (sum(i > 20000 for i in run['SampleNumberReads']), num_libraries)
+    index_threshold = 50000000
     data = []
 
     for inx, d in run.groupby(['library']):
-        d['Threshold'] = Index_Threshold
-        d['Color'] = np.where((d['SampleNumberReads'] >= d['Threshold']), '#ffffff', '#db4b4b')
+        d['Threshold'] = index_threshold
+        d['Color'] = np.where((d['SampleNumberReads'] >= index_threshold), '#ffffff', '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
@@ -255,18 +221,41 @@ def update_sampleindices(run_alias, lane_alias):
                     'width': 3,
                     'color': 'rgb(0,0,0)',
                     'dash': 'dash',
-                },))
+                }, ))
 
     return {
         'data': data,
         'layout': {
-            'title': 'Index Clusters per Sample. Passed Samples: %s Threshold: %s' % (Index_Pass, Index_Threshold),
+            'title': 'Index Clusters per Sample. Passed Samples: %s Threshold: %s' % (
+                samples_passing_clusters, index_threshold),
             'xaxis': {'title': 'Sample', 'automargin': True},
             'yaxis': {'title': 'Clusters'},
             'showlegend': False,
 
         }
     }
+
+
+@app.callback(
+    [dep.Output('SampleIndices', 'figure'),
+     dep.Output('Summary Table', 'columns'),
+     dep.Output('Summary Table', 'data'),
+     dep.Output('Summary Table', 'style_data_conditional'),
+     dep.Output('download-link', 'href'),
+     dep.Output('download-link', 'download')],
+    [dep.Input('select_a_run', 'value'),
+     dep.Input('lane_select', 'value')])
+def update_graphs(run_alias, lane_alias):
+    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
+    run = run[~run['Run'].isna()].drop_duplicates('library')
+    run = run[~run['library'].isna()]
+
+    downloadtimedate = datetime.today().strftime('%Y-%m-%d')
+    download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
+
+    columns, data, style_data_conditional, csv = Summary_table(run)
+
+    return update_sampleindices(run), columns, data, style_data_conditional, csv, download
 
 
 if __name__ == '__main__':
