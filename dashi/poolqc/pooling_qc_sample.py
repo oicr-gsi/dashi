@@ -88,7 +88,6 @@ layout = html.Div(children=[
             style_header={'backgroundColor': 'rgb(222,222,222)',
                           'fontSize': 16,
                           'fontWeight': 'bold'},
-            n_fixed_columns=2,
 
         )),
 
@@ -194,16 +193,19 @@ def Summary_table(run_alias, lane_alias):
         'backgroundColor': 'rgb(222, 222, 222)'
     },
         {'if': {'column_id': 'properly paired reads',
-                'filter': '0 < {properly paired reads} and {properly paired reads} < 20'},
+                'filter_query': '0 < {properly paired reads} and {properly paired reads} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Coding',
-                'filter_query': '0 < {% Mapped to Coding} < 20'},
+                'filter_query': '0 < {% Mapped to Coding} and {% Mapped to Coding} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intronic',
-                'filter_query': '0 < {% Mapped to Coding} < 20'},
+                'filter_query': '0 < {% Mapped to Intronic} and {% Mapped to Intronic} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': '% Mapped to Intergenic',
-                'filter_query': '0 < {% Mapped to Intergenic} < 15'},
+                'filter_query': '0 < {% Mapped to Intergenic} and {% Mapped to Intergenic} < 15'},
+         'backgroundColor': 'rgb(219, 75, 75)'},
+        {'if': {'column_id': 'rRNA Contamination (%reads aligned)',
+                'filter_query': '0 < {rRNA Contamination (%reads aligned)} and {rRNA Contamination (%reads aligned)} < 15'},
          'backgroundColor': 'rgb(219, 75, 75)'},
     ]
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
@@ -212,23 +214,32 @@ def Summary_table(run_alias, lane_alias):
     return columns, data, style_data_conditional, csv, download
 
 
-def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
+@app.callback(
+    dep.Output('SampleIndices', 'figure'),
+    [dep.Input('select_a_run', 'value'),
+     dep.Input('lane_select', 'value')])
+def update_sampleindices(run_alias, lane_alias):
+    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
+    run = run[~run['Run'].isna()].drop_duplicates('library')
+    run['Result'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
+    run['index'] = run['Index1'].str.cat(
+        run['Index2'].fillna(''), sep=' ')
     run = run.sort_values('library')
-    run = run[~run['library'].isna()]
+
     total_RNA = len(run['library'])
     Index_Pass = '%s/%s' % (sum(i > 20000 for i in run['SampleNumberReads']), total_RNA)
-    Index_Threshold = 20000
+    Index_Threshold = 50000000
     data = []
 
     for inx, d in run.groupby(['library']):
-        d['Threshold'] = 20000
+        d['Threshold'] = Index_Threshold
         d['Color'] = np.where((d['SampleNumberReads'] >= d['Threshold']), '#ffffff', '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
                 y=list(d['SampleNumberReads']),
                 name=inx,
-                marker={'color': colors,
+                marker={'color': '#20639B',
                         'line': {
                             'width': 3,
                             'color': list(d['Color'])
@@ -239,10 +250,10 @@ def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
             go.Scatter(
                 x=list(d['library']),
                 y=list(d['Threshold']),
-                name=inx,
+                mode='markers+lines',
                 line={
                     'width': 3,
-                    'color': 'rgb(204,0,0)',
+                    'color': 'rgb(0,0,0)',
                     'dash': 'dash',
                 },
                 mode='lines'))
@@ -257,128 +268,6 @@ def update_sampleindices(run, rows, derived_virtual_selected_rows, colors):
 
         }
     }
-
-
-# ToDO remove
-def update_properly_paired_reads_RNA(run, rows, derived_virtual_selected_rows, colors):
-    run = run[~run['rRNA Contamination (%reads aligned)'].isna() & ~run['properly paired reads'].isna()]
-    data = []
-
-    for inx, d in run.groupby(['LaneNumber']):
-        d['Threshold'] = 1000
-        d['Color'] = np.where((d['properly paired reads'] >= d['Threshold']), '#ffffff', '#db4b4b')
-        data.append(
-            go.Bar(
-                y=list(d['library']),
-                x=list(d['properly paired reads']),
-                orientation='h',
-                name=inx,
-                marker={'color': colors,
-                        'line': {
-                            'width': 3,
-                            'color': list(d['Color'])
-                        }},
-            )
-        )
-        data.append(
-            go.Scatter(
-                y=list(d['library']),
-                x=list(d['Threshold']),
-                orientation='h',
-                name=inx,
-                line={
-                    'width': 3,
-                    'color': 'rgb(204,0,0)',
-                    'dash': 'dash',
-                },
-                mode='lines'))
-
-    return {
-        'data': data,
-        'layout': {
-            'title': 'Properly Paired Reads (RNA) ',
-            'yaxis': {'title': 'Sample', 'automargin': True},
-            'xaxis': {'title': 'Properly Paired Reads'},
-            'showlegend': False,
-            'height': (len(run) * 30) + 150
-        }
-    }
-
-
-# TODO Remove graph
-def update_properly_paired_reads_DNA(run, rows, derived_virtual_selected_rows, colors):
-    run = run[run['rRNA Contamination (%reads aligned)'].isna() & ~run['properly paired reads'].isna()]
-    run = run.sort_values(by='Result', ascending=False)
-    data = []
-
-    for inx, d in run.groupby(['LaneNumber']):
-        d['Threshold'] = 1000
-        d['Color'] = np.where((d['properly paired reads'] >= d['Threshold']), '#ffffff', '#db4b4b')
-        data.append(
-            go.Bar(
-                y=list(d['library']),
-                x=list(d['properly paired reads']),
-                orientation='h',
-                name=inx,
-                marker={'color': colors,
-                        'line': {
-                            'width': 3,
-                            'color': list(d['Color'])
-                        }},
-            )
-        )
-        data.append(
-            go.Scatter(
-                y=list(d['library']),
-                x=list(d['Threshold']),
-                orientation='h',
-                name=inx,
-                line={
-                    'width': 3,
-                    'color': 'rgb(204,0,0)',
-                    'dash': 'dash',
-                },
-                mode='lines'))
-
-    return {
-        'data': data,
-        'layout': {
-            'title': 'Properly Paired Reads (DNA) ',
-            'yaxis': {'title': 'Sample', 'automargin': True},
-            'xaxis': {'title': 'Paired Reads'},
-            'showlegend': False,
-            'height': (len(run['properly paired reads']) * 30) + 150
-        }
-    }
-
-
-# TODO Remove Graphs
-@app.callback(
-    [dep.Output('properly paired reads RNA', 'figure'),
-     dep.Output('properly paired reads DNA', 'figure'),
-     dep.Output('SampleIndices', 'figure')],
-    [dep.Input('select_a_run', 'value'),
-     dep.Input('lane_select', 'value'),
-     dep.Input('Summary Table', 'derived_virtual_data'),
-     dep.Input('Summary Table', 'derived_virtual_selected_rows')])
-def update_all_graphs(run_alias, lane_alias, rows, derived_virtual_selected_rows):
-    run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run['Result'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['index'] = run['Index1'].str.cat(
-        run['Index2'].fillna(''), sep=' ')
-
-    if derived_virtual_selected_rows is None:
-        derived_virtual_selected_rows = []
-
-    dff = run if rows is None else pandas.DataFrame(rows)
-
-    colors = ['#d9c76c' if i in derived_virtual_selected_rows else '#99b2c2'
-              for i in range(len(dff))]
-
-    return (update_properly_paired_reads_RNA(run, rows, derived_virtual_selected_rows, colors),
-            update_properly_paired_reads_DNA(run, rows, derived_virtual_selected_rows, colors),
-            update_sampleindices(run, rows, derived_virtual_selected_rows, colors))
 
 
 if __name__ == '__main__':
