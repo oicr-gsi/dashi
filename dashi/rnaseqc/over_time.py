@@ -6,7 +6,7 @@ import dash.dependencies as dep
 import plotly
 
 
-rna_df = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
+rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
     lambda x: x.split('_')[0]
 )
@@ -26,7 +26,7 @@ rna_df['Run Date'] = pandas.to_datetime(
 all_projects = rna_df['Study Title'].sort_values().unique()
 
 # Pull in meta data from Pinery
-pinery = pandas.read_hdf('./data/pinery_samples_cache.hd5', 'pinery_samples')
+pinery: pandas.DataFrame = pandas.read_hdf('./data/pinery_samples_cache.hd5', 'pinery_samples')
 
 pin_needed = pinery[['name', 'preparation_kit_name']]
 # Only include libraries (ensure dilutions aren't merged in)
@@ -79,7 +79,7 @@ def create_subplot(rna_df):
         '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
     ]
 
-    fig = plotly.tools.make_subplots(
+    fig = plotly.subplots.make_subplots(
         rows=4, cols=2,
         subplot_titles=(
             'Proportion Usable Bases',
