@@ -3,10 +3,14 @@ from setuptools import setup, find_packages
 setup(
    name='dashi',
 <<<<<<< HEAD
+<<<<<<< HEAD
    version='0.1.0',
 =======
    version='0.0.1',
 >>>>>>> Created setup.py for easy and consistent installs
+=======
+   version='0.1.0',
+>>>>>>> Added `setup.py` and CHANGELOG
    description='Visualizer for GSI QC data',
    author='Savo Lazic',
    author_email='savo.lazic@oicr.on.ca',
