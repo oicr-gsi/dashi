@@ -4,11 +4,17 @@
 
 Interactive visualization of OICR Genomics QC data
 
-## Requirements
-* python >= 3.6
-* pandas >= 23.0
-* dash >= 0.43
-* gsi-qc-etl (private OICR BitBucket repository)
+## Installation
+
+`pip install git+https://github.com/oicr-gsi/dashi`
+
+For development, it is more convenient to run
+
+`pip install -e git+https://github.com/oicr-gsi/dashi#egg=dashi --src DICT`
+
+where `DICT` is the destination folder for the code. The installed package is
+symbolically linked to that folder and any changes in the code will be
+automatically available in the installed package.
 
 ## Usage
 
