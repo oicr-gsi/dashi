@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
    name='dashi',
-   version='0.0.1',
+   version='0.1.0',
    description='Visualizer for GSI QC data',
    author='Savo Lazic',
    author_email='savo.lazic@oicr.on.ca',
