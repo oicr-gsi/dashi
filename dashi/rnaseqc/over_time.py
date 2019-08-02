@@ -8,6 +8,10 @@ import itertools
 import plotly
 import sd_material_ui
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> Plotly deprecation and Pandas variable typing update to rnaseqc
 rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
     lambda x: x.split('_')[0]
@@ -84,6 +88,7 @@ def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
     return result
 
 
+<<<<<<< HEAD
 def create_subplot(rna_df, graph_list):
     traces = []
     for g in graph_list:
@@ -91,6 +96,58 @@ def create_subplot(rna_df, graph_list):
             traces.append(create_plot_dict(rna_df, g, show_legend=True))
         else:
             traces.append(create_plot_dict(rna_df, g, show_legend=False))
+=======
+def create_subplot(rna_df):
+    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases')
+    trace2 = create_plot_dict(rna_df, 'rRNA Contamination (%reads aligned)')
+    trace3 = create_plot_dict(rna_df, 'Proportion Correct Strand Reads')
+    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases')
+    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases')
+    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases')
+    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases')
+    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases')
+
+    color = [
+        '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
+        '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
+        '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
+        '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
+    ]
+
+    fig = plotly.subplots.make_subplots(
+        rows=4, cols=2,
+        subplot_titles=(
+            'Proportion Usable Bases',
+            'rRNA Contamination (%reads aligned)',
+            'Proportion Correct Strand Reads',
+            'Proportion Aligned Bases',
+            'Proportion Coding Bases',
+            'Proportion Intronic Bases',
+            'Proportion Intergenic Bases',
+            'Proportion UTR Bases',
+        ),
+        print_grid=False,
+    )
+
+    color_index = 0
+    for i in range(len(trace1)):
+        if color_index >= len(color):
+            color_index = 0
+
+        t1 = trace1[i]
+        t1['marker'] = {'color': color[color_index]}
+        t1['showlegend'] = True
+
+        fig.append_trace(t1, 1, 1)
+
+        t2 = trace2[i]
+        t2['marker'] = {'color': color[color_index]}
+        fig.append_trace(t2, 1, 2)
+
+        t3 = trace3[i]
+        t3['marker'] = {'color': color[color_index]}
+        fig.append_trace(t3, 2, 1)
+>>>>>>> Plotly deprecation and Pandas variable typing update to rnaseqc
 
     # This assumes at most 8 graphs
     rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
