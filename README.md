@@ -6,15 +6,15 @@ Interactive visualization of OICR Genomics QC data
 
 ## Installation
 
-`pip install git+https://github.com/slazicoicr/dashi`
+`pip install git+https://github.com/oicr-gsi/dashi`
 
 For development, it is more convenient to run
 
-`pip install -e git+https://github.com/slazicoicr/dashi#egg=dashi --src DICT`
+`pip install -e git+https://github.com/oicr-gsi/dashi#egg=dashi --src DICT`
 
-where `DICT` is the destination folder for the code. The installed package is 
-system linked to that folder and any changes in the code will be automatically 
-available in the installed package.
+where `DICT` is the destination folder for the code. The installed package is
+symbolically linked to that folder and any changes in the code will be
+automatically available in the installed package.
 
 ## Usage
 
