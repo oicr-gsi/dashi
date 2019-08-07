@@ -4,6 +4,7 @@ import dash_html_components as html
 import dash.dependencies as dep
 
 import plotly
+import sd_material_ui
 
 
 rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
@@ -137,7 +138,6 @@ def create_subplot(rna_df):
 
     fig['layout'].update(
         height=1600,
-        title='RNASeQC Metrics Over Time'
     )
 
     # If you want legend at the bottom
@@ -148,33 +148,45 @@ def create_subplot(rna_df):
 
 layout = html.Div(children=[
     html.Div(children=[
-        html.Label('Project'),
-        dcc.Dropdown(
-            id='project_multi_drop',
-            multi=True,
-            options=[{'label': x, 'value': x} for x in all_projects],
-            value=all_projects
+        sd_material_ui.Drawer(
+            id='project_drawer', open=False, docked=False, width='50%',
+            children=[html.Div(children=[
+                html.Label('Project:'),
+                dcc.Dropdown(
+                    id='project_multi_drop',
+                    multi=True,
+                    options=[{'label': x, 'value': x} for x in all_projects],
+                    value=all_projects
+                ),
+                html.Br(),
+                html.Label('Kits:'),
+                dcc.Dropdown(
+                    id='kits_multi_drop',
+                    multi=True,
+                    options=[{'label': x, 'value': x} for x in all_kits],
+                    value=all_kits
+                ),
+                html.Br(),
+                html.Label('Dates: '),
+                dcc.DatePickerRange(
+                    id='date_picker',
+                    min_date_allowed=min(rna_df['Run Date']),
+                    max_date_allowed=max(rna_df['Run Date']),
+                    start_date=min(rna_df['Run Date']),
+                    end_date=max(rna_df['Run Date']),
+                ),
+            ], style={'margin': '23px'})]
         ),
-        html.Label('Kits'),
-        dcc.Dropdown(
-            id='kits_multi_drop',
-            multi=True,
-            options=[{'label': x, 'value': x} for x in all_kits],
-            value=all_kits
-        ),
-        html.Label('Dates: '),
-        dcc.DatePickerRange(
-            id='date_picker',
-            min_date_allowed=min(rna_df['Run Date']),
-            max_date_allowed=max(rna_df['Run Date']),
-            start_date=min(rna_df['Run Date']),
-            end_date=max(rna_df['Run Date']),
-        ),
+        sd_material_ui.RaisedButton(id='project_button', label='Projects'),
     ]),
-    dcc.Graph(
-        id='graph_subplot',
-        figure=create_subplot(rna_df)
-    ),
+    dcc.Loading(id="graph_loader", children=[
+        sd_material_ui.Paper(
+            [dcc.Graph(
+                id='graph_subplot',
+                figure=create_subplot(rna_df)
+            )]
+        ),
+    ], type='circle')
 ])
 
 try:
@@ -202,6 +214,14 @@ def graph_subplot(projects, kits, start_date, end_date):
         return create_subplot(to_plot)
     else:
         return {}
+
+
+@app.callback(
+    dep.Output('project_drawer', 'open'),
+    [dep.Input('project_button', 'n_clicks')]
+)
+def open_project_drawer(n_clicks):
+    return n_clicks is not None
 
 
 if __name__ == '__main__':
