@@ -171,7 +171,11 @@ def create_subplot(rna_df):
         )
 
     fig['layout'].update(
+<<<<<<< HEAD
         height=400*max_rows,
+=======
+        height=1600,
+>>>>>>> Graph shows loading animation while being rendered
     )
 
     # If you want legend at the bottom
@@ -209,6 +213,7 @@ layout = html.Div(children=[
                     start_date=min(rna_df['Run Date']),
                     end_date=max(rna_df['Run Date']),
                 ),
+<<<<<<< HEAD
                 html.Br(),
                 html.Label('Show Graphs:'),
                 dcc.Dropdown(
@@ -220,11 +225,20 @@ layout = html.Div(children=[
             ], style={'margin': '23px'})]
         ),
         sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
+=======
+            ], style={'margin': '23px'})]
+        ),
+        sd_material_ui.RaisedButton(id='project_button', label='Projects'),
+>>>>>>> Graph shows loading animation while being rendered
     ]),
     dcc.Loading(id="graph_loader", children=[
         sd_material_ui.Paper(
             [dcc.Graph(
                 id='graph_subplot',
+<<<<<<< HEAD
+=======
+                figure=create_subplot(rna_df)
+>>>>>>> Graph shows loading animation while being rendered
             )]
         ),
     ], type='circle')
@@ -266,7 +280,11 @@ def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
 
 @app.callback(
     dep.Output('project_drawer', 'open'),
+<<<<<<< HEAD
     [dep.Input('filter_button', 'n_clicks')]
+=======
+    [dep.Input('project_button', 'n_clicks')]
+>>>>>>> Graph shows loading animation while being rendered
 )
 def open_project_drawer(n_clicks):
     return n_clicks is not None
