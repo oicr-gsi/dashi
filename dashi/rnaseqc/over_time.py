@@ -3,15 +3,21 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import dash.exceptions
+<<<<<<< HEAD
 import itertools
+=======
+>>>>>>> Closing drawer causes graphs to update
 
 import plotly
 import sd_material_ui
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> Plotly deprecation and Pandas variable typing update to rnaseqc
+=======
+>>>>>>> Closing drawer causes graphs to update
 rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
     lambda x: x.split('_')[0]
@@ -258,10 +264,16 @@ except ModuleNotFoundError:
     [dep.State('project_multi_drop', 'value'),
      dep.State('kits_multi_drop', 'value'),
      dep.State('date_picker', 'start_date'),
+<<<<<<< HEAD
      dep.State('date_picker', 'end_date'),
      dep.State('graphs_to_plot', 'value')]
 )
 def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
+=======
+     dep.State('date_picker', 'end_date'),]
+)
+def graph_subplot(drawer_open, projects, kits, start_date, end_date):
+>>>>>>> Closing drawer causes graphs to update
     if drawer_open:
         raise dash.exceptions.PreventUpdate(
             'Drawer opening does not require recalculation'
