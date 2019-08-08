@@ -59,7 +59,7 @@ COLOURS = [
 ]
 
 
-def create_plot_dict(df, variable, colours):
+def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
     result = []
     col = itertools.cycle(colours)
 
@@ -75,7 +75,7 @@ def create_plot_dict(df, variable, colours):
             'name': proj,
             'text': list(data['Sample Name']),
             'legendgroup': proj,
-            'showlegend': False,
+            'showlegend': show_legend,
             'marker': {'color': next(col)}
         }
 
@@ -84,63 +84,37 @@ def create_plot_dict(df, variable, colours):
     return result
 
 
-def create_subplot(rna_df):
-    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases', COLOURS)
-    trace2 = create_plot_dict(
-        rna_df, 'rRNA Contamination (%reads aligned)', COLOURS
-    )
-    trace3 = create_plot_dict(
-        rna_df, 'Proportion Correct Strand Reads', COLOURS
-    )
-    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases', COLOURS)
-    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases', COLOURS)
-    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases', COLOURS)
-    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases', COLOURS)
-    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases', COLOURS)
+def create_subplot(rna_df, graph_list):
+    traces = []
+    for g in graph_list:
+        if len(traces) == 0:
+            traces.append(create_plot_dict(rna_df, g, show_legend=True))
+        else:
+            traces.append(create_plot_dict(rna_df, g, show_legend=False))
+
+    # This assumes at most 8 graphs
+    rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
+    cols = [1, 2, 1, 2, 1, 2, 1, 2][:len(traces)]
+    max_rows = max(rows)
+
+    traces = zip(*traces)
+
 
     fig = plotly.subplots.make_subplots(
-        rows=4, cols=2,
-        subplot_titles=(
-            'Proportion Usable Bases',
-            'rRNA Contamination (%reads aligned)',
-            'Proportion Correct Strand Reads',
-            'Proportion Aligned Bases',
-            'Proportion Coding Bases',
-            'Proportion Intronic Bases',
-            'Proportion Intergenic Bases',
-            'Proportion UTR Bases',
-        ),
+        rows=max_rows, cols=2,
+        subplot_titles=graph_list,
         print_grid=False,
     )
 
-    for i in range(len(trace1)):
-        t1 = trace1[i]
-        t1['showlegend'] = True
-        fig.append_trace(t1, 1, 1)
-
-        t2 = trace2[i]
-        fig.append_trace(t2, 1, 2)
-
-        t3 = trace3[i]
-        fig.append_trace(t3, 2, 1)
-
-        t4 = trace4[i]
-        fig.append_trace(t4, 2, 2)
-
-        t5 = trace5[i]
-        fig.append_trace(t5, 3, 1)
-
-        t6 = trace6[i]
-        fig.append_trace(t6, 3, 2)
-
-        t7 = trace7[i]
-        fig.append_trace(t7, 4, 1)
-
-        t8 = trace8[i]
-        fig.append_trace(t8, 4, 2)
+    for t in traces:
+        fig.add_traces(
+            t,
+            rows=rows,
+            cols=cols,
+        )
 
     fig['layout'].update(
-        height=1600,
+        height=400*max_rows,
     )
 
     # If you want legend at the bottom
@@ -178,15 +152,22 @@ layout = html.Div(children=[
                     start_date=min(rna_df['Run Date']),
                     end_date=max(rna_df['Run Date']),
                 ),
+                html.Br(),
+                html.Label('Show Graphs:'),
+                dcc.Dropdown(
+                    id='graphs_to_plot',
+                    multi=True,
+                    options=[{'label': x, 'value': x} for x in graphs_to_plot],
+                    value=graphs_to_plot[:4]
+                ),
             ], style={'margin': '23px'})]
         ),
-        sd_material_ui.RaisedButton(id='project_button', label='Projects'),
+        sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
     ]),
     dcc.Loading(id="graph_loader", children=[
         sd_material_ui.Paper(
             [dcc.Graph(
                 id='graph_subplot',
-                figure=create_subplot(rna_df)
             )]
         ),
     ], type='circle')
@@ -206,9 +187,10 @@ except ModuleNotFoundError:
     [dep.State('project_multi_drop', 'value'),
      dep.State('kits_multi_drop', 'value'),
      dep.State('date_picker', 'start_date'),
-     dep.State('date_picker', 'end_date'),]
+     dep.State('date_picker', 'end_date'),
+     dep.State('graphs_to_plot', 'value')]
 )
-def graph_subplot(drawer_open, projects, kits, start_date, end_date):
+def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
     if drawer_open:
         raise dash.exceptions.PreventUpdate(
             'Drawer opening does not require recalculation'
@@ -220,14 +202,14 @@ def graph_subplot(drawer_open, projects, kits, start_date, end_date):
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
     if len(to_plot) > 0:
-        return create_subplot(to_plot)
+        return create_subplot(to_plot, graphs)
     else:
         return {}
 
 
 @app.callback(
     dep.Output('project_drawer', 'open'),
-    [dep.Input('project_button', 'n_clicks')]
+    [dep.Input('filter_button', 'n_clicks')]
 )
 def open_project_drawer(n_clicks):
     return n_clicks is not None
