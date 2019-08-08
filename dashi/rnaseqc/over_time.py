@@ -2,10 +2,10 @@ import pandas
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
+import dash.exceptions
 
 import plotly
 import sd_material_ui
-
 
 rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
@@ -199,12 +199,18 @@ except ModuleNotFoundError:
 
 @app.callback(
     dep.Output('graph_subplot', 'figure'),
-    [dep.Input('project_multi_drop', 'value'),
-     dep.Input('kits_multi_drop', 'value'),
-     dep.Input('date_picker', 'start_date'),
-     dep.Input('date_picker', 'end_date'),]
+    [dep.Input('project_drawer', 'open')],
+    [dep.State('project_multi_drop', 'value'),
+     dep.State('kits_multi_drop', 'value'),
+     dep.State('date_picker', 'start_date'),
+     dep.State('date_picker', 'end_date'),]
 )
-def graph_subplot(projects, kits, start_date, end_date):
+def graph_subplot(drawer_open, projects, kits, start_date, end_date):
+    if drawer_open:
+        raise dash.exceptions.PreventUpdate(
+            'Drawer opening does not require recalculation'
+        )
+
     to_plot = rna_df[rna_df['Study Title'].isin(projects)]
     to_plot = to_plot[to_plot['preparation_kit_name'].isin(kits)]
     to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
