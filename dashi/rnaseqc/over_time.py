@@ -78,8 +78,12 @@ def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
 =======
 
 
+<<<<<<< HEAD
 def create_plot_dict(df, variable, colours):
 >>>>>>> Graph colours are now a global variable
+=======
+def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
+>>>>>>> Option to select which graphs to display has been added
     result = []
     col = itertools.cycle(colours)
 
@@ -96,10 +100,14 @@ def create_plot_dict(df, variable, colours):
             'text': list(data['Sample Name']),
             'legendgroup': proj,
 <<<<<<< HEAD
+<<<<<<< HEAD
             'showlegend': show_legend,
 =======
             'showlegend': False,
 >>>>>>> Graph colours are now a global variable
+=======
+            'showlegend': show_legend,
+>>>>>>> Option to select which graphs to display has been added
             'marker': {'color': next(col)}
         }
 
@@ -109,6 +117,9 @@ def create_plot_dict(df, variable, colours):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Option to select which graphs to display has been added
 def create_subplot(rna_df, graph_list):
     traces = []
     for g in graph_list:
@@ -116,6 +127,7 @@ def create_subplot(rna_df, graph_list):
             traces.append(create_plot_dict(rna_df, g, show_legend=True))
         else:
             traces.append(create_plot_dict(rna_df, g, show_legend=False))
+<<<<<<< HEAD
 =======
 def create_subplot(rna_df):
     trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases', COLOURS)
@@ -159,10 +171,14 @@ def create_subplot(rna_df):
 >>>>>>> Plotly deprecation and Pandas variable typing update to rnaseqc
 
 <<<<<<< HEAD
+=======
+
+>>>>>>> Option to select which graphs to display has been added
     # This assumes at most 8 graphs
     rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
     cols = [1, 2, 1, 2, 1, 2, 1, 2][:len(traces)]
     max_rows = max(rows)
+<<<<<<< HEAD
 
     traces = zip(*traces)
 
@@ -183,26 +199,36 @@ def create_subplot(rna_df):
 =======
         t4 = trace4[i]
         fig.append_trace(t4, 2, 2)
+=======
 
-        t5 = trace5[i]
-        fig.append_trace(t5, 3, 1)
+    traces = zip(*traces)
+>>>>>>> Option to select which graphs to display has been added
 
-        t6 = trace6[i]
-        fig.append_trace(t6, 3, 2)
 
-        t7 = trace7[i]
-        fig.append_trace(t7, 4, 1)
+    fig = plotly.subplots.make_subplots(
+        rows=max_rows, cols=2,
+        subplot_titles=graph_list,
+        print_grid=False,
+    )
 
-        t8 = trace8[i]
-        fig.append_trace(t8, 4, 2)
+    for t in traces:
+        fig.add_traces(
+            t,
+            rows=rows,
+            cols=cols,
+        )
 
 >>>>>>> Graph colours are now a global variable
     fig['layout'].update(
+<<<<<<< HEAD
 <<<<<<< HEAD
         height=400*max_rows,
 =======
         height=1600,
 >>>>>>> Graph shows loading animation while being rendered
+=======
+        height=400*max_rows,
+>>>>>>> Option to select which graphs to display has been added
     )
 
     # If you want legend at the bottom
@@ -241,6 +267,9 @@ layout = html.Div(children=[
                     end_date=max(rna_df['Run Date']),
                 ),
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Option to select which graphs to display has been added
                 html.Br(),
                 html.Label('Show Graphs:'),
                 dcc.Dropdown(
@@ -249,6 +278,7 @@ layout = html.Div(children=[
                     options=[{'label': x, 'value': x} for x in graphs_to_plot],
                     value=graphs_to_plot[:4]
                 ),
+<<<<<<< HEAD
             ], style={'margin': '23px'})]
         ),
         sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
@@ -257,15 +287,23 @@ layout = html.Div(children=[
         ),
         sd_material_ui.RaisedButton(id='project_button', label='Projects'),
 >>>>>>> Graph shows loading animation while being rendered
+=======
+            ], style={'margin': '23px'})]
+        ),
+        sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
+>>>>>>> Option to select which graphs to display has been added
     ]),
     dcc.Loading(id="graph_loader", children=[
         sd_material_ui.Paper(
             [dcc.Graph(
                 id='graph_subplot',
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                 figure=create_subplot(rna_df)
 >>>>>>> Graph shows loading animation while being rendered
+=======
+>>>>>>> Option to select which graphs to display has been added
             )]
         ),
     ], type='circle')
@@ -286,6 +324,7 @@ except ModuleNotFoundError:
      dep.State('kits_multi_drop', 'value'),
      dep.State('date_picker', 'start_date'),
 <<<<<<< HEAD
+<<<<<<< HEAD
      dep.State('date_picker', 'end_date'),
      dep.State('graphs_to_plot', 'value')]
 )
@@ -295,6 +334,12 @@ def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
 )
 def graph_subplot(drawer_open, projects, kits, start_date, end_date):
 >>>>>>> Closing drawer causes graphs to update
+=======
+     dep.State('date_picker', 'end_date'),
+     dep.State('graphs_to_plot', 'value')]
+)
+def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
+>>>>>>> Option to select which graphs to display has been added
     if drawer_open:
         raise dash.exceptions.PreventUpdate(
             'Drawer opening does not require recalculation'
@@ -314,10 +359,14 @@ def graph_subplot(drawer_open, projects, kits, start_date, end_date):
 @app.callback(
     dep.Output('project_drawer', 'open'),
 <<<<<<< HEAD
+<<<<<<< HEAD
     [dep.Input('filter_button', 'n_clicks')]
 =======
     [dep.Input('project_button', 'n_clicks')]
 >>>>>>> Graph shows loading animation while being rendered
+=======
+    [dep.Input('filter_button', 'n_clicks')]
+>>>>>>> Option to select which graphs to display has been added
 )
 def open_project_drawer(n_clicks):
     return n_clicks is not None
