@@ -3,6 +3,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import dash.exceptions
+import itertools
 
 import plotly
 import sd_material_ui
@@ -39,9 +40,28 @@ rna_df = rna_df.fillna({'preparation_kit_name': 'Unspecified'})
 
 all_kits = rna_df['preparation_kit_name'].sort_values().unique()
 
+graphs_to_plot = (
+    'Proportion Usable Bases',
+    'rRNA Contamination (%reads aligned)',
+    'Proportion Correct Strand Reads',
+    'Proportion Aligned Bases',
+    'Proportion Coding Bases',
+    'Proportion Intronic Bases',
+    'Proportion Intergenic Bases',
+    'Proportion UTR Bases',
+)
 
-def create_plot_dict(df, variable):
+COLOURS = [
+    '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
+    '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
+    '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
+    '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
+]
+
+
+def create_plot_dict(df, variable, colours):
     result = []
+    col = itertools.cycle(colours)
 
     for g in df.groupby('Study Title'):
         proj = g[0]
@@ -56,6 +76,7 @@ def create_plot_dict(df, variable):
             'text': list(data['Sample Name']),
             'legendgroup': proj,
             'showlegend': False,
+            'marker': {'color': next(col)}
         }
 
         result.append(p)
@@ -64,21 +85,18 @@ def create_plot_dict(df, variable):
 
 
 def create_subplot(rna_df):
-    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases')
-    trace2 = create_plot_dict(rna_df, 'rRNA Contamination (%reads aligned)')
-    trace3 = create_plot_dict(rna_df, 'Proportion Correct Strand Reads')
-    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases')
-    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases')
-    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases')
-    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases')
-    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases')
-
-    color = [
-        '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
-        '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
-        '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
-        '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
-    ]
+    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases', COLOURS)
+    trace2 = create_plot_dict(
+        rna_df, 'rRNA Contamination (%reads aligned)', COLOURS
+    )
+    trace3 = create_plot_dict(
+        rna_df, 'Proportion Correct Strand Reads', COLOURS
+    )
+    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases', COLOURS)
+    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases', COLOURS)
+    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases', COLOURS)
+    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases', COLOURS)
+    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases', COLOURS)
 
     fig = plotly.subplots.make_subplots(
         rows=4, cols=2,
@@ -95,46 +113,31 @@ def create_subplot(rna_df):
         print_grid=False,
     )
 
-    color_index = 0
     for i in range(len(trace1)):
-        if color_index >= len(color):
-            color_index = 0
-
         t1 = trace1[i]
-        t1['marker'] = {'color': color[color_index]}
         t1['showlegend'] = True
-
         fig.append_trace(t1, 1, 1)
 
         t2 = trace2[i]
-        t2['marker'] = {'color': color[color_index]}
         fig.append_trace(t2, 1, 2)
 
         t3 = trace3[i]
-        t3['marker'] = {'color': color[color_index]}
         fig.append_trace(t3, 2, 1)
 
         t4 = trace4[i]
-        t4['marker'] = {'color': color[color_index]}
         fig.append_trace(t4, 2, 2)
 
         t5 = trace5[i]
-        t5['marker'] = {'color': color[color_index]}
         fig.append_trace(t5, 3, 1)
 
         t6 = trace6[i]
-        t6['marker'] = {'color': color[color_index]}
         fig.append_trace(t6, 3, 2)
 
         t7 = trace7[i]
-        t7['marker'] = {'color': color[color_index]}
         fig.append_trace(t7, 4, 1)
 
         t8 = trace8[i]
-        t8['marker'] = {'color': color[color_index]}
         fig.append_trace(t8, 4, 2)
-
-        color_index += 1
 
     fig['layout'].update(
         height=1600,
