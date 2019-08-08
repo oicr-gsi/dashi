@@ -4,9 +4,13 @@ import dash_html_components as html
 import dash.dependencies as dep
 import dash.exceptions
 <<<<<<< HEAD
+<<<<<<< HEAD
 import itertools
 =======
 >>>>>>> Closing drawer causes graphs to update
+=======
+import itertools
+>>>>>>> Graph colours are now a global variable
 
 import plotly
 import sd_material_ui
@@ -67,9 +71,15 @@ COLOURS = [
     '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ]
+<<<<<<< HEAD
 
 
 def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
+=======
+
+
+def create_plot_dict(df, variable, colours):
+>>>>>>> Graph colours are now a global variable
     result = []
     col = itertools.cycle(colours)
 
@@ -85,7 +95,11 @@ def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
             'name': proj,
             'text': list(data['Sample Name']),
             'legendgroup': proj,
+<<<<<<< HEAD
             'showlegend': show_legend,
+=======
+            'showlegend': False,
+>>>>>>> Graph colours are now a global variable
             'marker': {'color': next(col)}
         }
 
@@ -104,21 +118,18 @@ def create_subplot(rna_df, graph_list):
             traces.append(create_plot_dict(rna_df, g, show_legend=False))
 =======
 def create_subplot(rna_df):
-    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases')
-    trace2 = create_plot_dict(rna_df, 'rRNA Contamination (%reads aligned)')
-    trace3 = create_plot_dict(rna_df, 'Proportion Correct Strand Reads')
-    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases')
-    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases')
-    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases')
-    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases')
-    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases')
-
-    color = [
-        '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
-        '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
-        '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
-        '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
-    ]
+    trace1 = create_plot_dict(rna_df, 'Proportion Usable Bases', COLOURS)
+    trace2 = create_plot_dict(
+        rna_df, 'rRNA Contamination (%reads aligned)', COLOURS
+    )
+    trace3 = create_plot_dict(
+        rna_df, 'Proportion Correct Strand Reads', COLOURS
+    )
+    trace4 = create_plot_dict(rna_df, 'Proportion Aligned Bases', COLOURS)
+    trace5 = create_plot_dict(rna_df, 'Proportion Coding Bases', COLOURS)
+    trace6 = create_plot_dict(rna_df, 'Proportion Intronic Bases', COLOURS)
+    trace7 = create_plot_dict(rna_df, 'Proportion Intergenic Bases', COLOURS)
+    trace8 = create_plot_dict(rna_df, 'Proportion UTR Bases', COLOURS)
 
     fig = plotly.subplots.make_subplots(
         rows=4, cols=2,
@@ -135,26 +146,19 @@ def create_subplot(rna_df):
         print_grid=False,
     )
 
-    color_index = 0
     for i in range(len(trace1)):
-        if color_index >= len(color):
-            color_index = 0
-
         t1 = trace1[i]
-        t1['marker'] = {'color': color[color_index]}
         t1['showlegend'] = True
-
         fig.append_trace(t1, 1, 1)
 
         t2 = trace2[i]
-        t2['marker'] = {'color': color[color_index]}
         fig.append_trace(t2, 1, 2)
 
         t3 = trace3[i]
-        t3['marker'] = {'color': color[color_index]}
         fig.append_trace(t3, 2, 1)
 >>>>>>> Plotly deprecation and Pandas variable typing update to rnaseqc
 
+<<<<<<< HEAD
     # This assumes at most 8 graphs
     rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
     cols = [1, 2, 1, 2, 1, 2, 1, 2][:len(traces)]
@@ -176,6 +180,23 @@ def create_subplot(rna_df):
             cols=cols,
         )
 
+=======
+        t4 = trace4[i]
+        fig.append_trace(t4, 2, 2)
+
+        t5 = trace5[i]
+        fig.append_trace(t5, 3, 1)
+
+        t6 = trace6[i]
+        fig.append_trace(t6, 3, 2)
+
+        t7 = trace7[i]
+        fig.append_trace(t7, 4, 1)
+
+        t8 = trace8[i]
+        fig.append_trace(t8, 4, 2)
+
+>>>>>>> Graph colours are now a global variable
     fig['layout'].update(
 <<<<<<< HEAD
         height=400*max_rows,
