@@ -12,8 +12,6 @@ import numpy as np
 import urllib
 from datetime import datetime
 
-pandas.options.mode.chained_assignment = None
-
 rnaseq = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 rnaseq.rename(columns={'Sample Name': 'library'}, inplace=True)
 
@@ -28,14 +26,15 @@ df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 
-runs = df['Run'].sort_values(ascending=False).unique()
-runs = [x for x in runs if str(x) != 'nan']
+runs = df['Run'].dropna().sort_values(ascending=False).unique()
+
+# Currently using arbitrary values as threshold for visualisation
+INDEX_THRESHOLD = 500000
 
 layout = html.Div(children=[
     dcc.ConfirmDialog(
         id='warning',
         message='The selected run does not return any data. Analysis may have not been completed yet.' '''
-
         '''' Click either "Ok" or "Cancel" to return to the most recent run.'
     ),
     dcc.Location(
@@ -124,7 +123,6 @@ def run_URL_update(value):
 )
 def update_lane_options(run_alias):
     run = df[df['Run'] == run_alias]
-    run = run[~run['Run'].isna()]
     return [{'label': i, 'value': i} for i in run['LaneNumber'].sort_values(ascending=True).unique()]
 
 
@@ -146,17 +144,16 @@ def update_title(lane_value, run_value):
 
 
 def Summary_table(run):
-    # Adding 'on-the-fly' metrics
-    run['% Mapped to Coding'] = run['Coding Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['% Mapped to Intronic'] = run['Intronic Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['% Mapped to Intergenic'] = run['Intergenic Bases'] / run['Passed Filter Aligned Bases'] * 100
-    run['rRNA Contamination (%reads aligned)'] = run['rRNA Contamination (%reads aligned)']
+    run['Proportion Coding Bases'] = run['Proportion Coding Bases'] * 100
+    run['Proportion Intronic Bases'] = run['Proportion Intronic Bases'] * 100
+    run['Proportion Intergenic Bases'] = run['Proportion Intergenic Bases'] * 100
+    run['Proportion Correct Strand Reads'] = run['Proportion Correct Strand Reads'] * 100
 
     run = run.round(2)
     run = run.filter(
-        ['library', 'Run', 'LaneNumber', 'Index1', 'Index2', 'SampleNumberReads', '% Mapped to Coding',
-         '% Mapped to Intronic',
-         '% Mapped to Intergenic', 'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads',
+        ['library', 'Run', 'LaneNumber', 'Index1', 'Index2', 'SampleNumberReads', 'Proportion Coding Bases',
+         'Proportion Intronic Bases', 'Proportion Intergenic Bases',
+         'rRNA Contamination (%reads aligned)', 'Proportion Correct Strand Reads',
          'Coverage'])
     run = run.sort_values('library')
     csv = run.to_csv(index=False)
@@ -174,14 +171,18 @@ def Summary_table(run):
     style_data_conditional = [{
         'if': {'column_id': 'library'},
         'backgroundColor': 'rgb(222, 222, 222)'
-    }, {'if': {'column_id': '% Mapped to Coding',
-               'filter_query': '0 < {% Mapped to Coding} and {% Mapped to Coding} < 20'},
-        'backgroundColor': 'rgb(219, 75, 75)'},
-        {'if': {'column_id': '% Mapped to Intronic',
-                'filter_query': '0 < {% Mapped to Intronic} and {% Mapped to Intronic} < 20'},
+    },
+        {'if': {'column_id': 'properly paired reads',
+                'filter_query': '0 < {properly paired reads} and {properly paired reads} < 20'},
          'backgroundColor': 'rgb(219, 75, 75)'},
-        {'if': {'column_id': '% Mapped to Intergenic',
-                'filter_query': '0 < {% Mapped to Intergenic} and {% Mapped to Intergenic} < 15'},
+        {'if': {'column_id': 'Proportion Coding Bases',
+                'filter_query': '0 < {Proportion Coding Bases} and {Proportion Coding Bases} < 20'},
+         'backgroundColor': 'rgb(219, 75, 75)'},
+        {'if': {'column_id': 'Proportion Intronic Bases',
+                'filter_query': '0 < {Proportion Intronic Bases} and {Proportion Intronic Bases} < 20'},
+         'backgroundColor': 'rgb(219, 75, 75)'},
+        {'if': {'column_id': 'Proportion Intergenic Bases',
+                'filter_query': '0 < {Proportion Intergenic Bases} and {Proportion Intergenic Bases} < 15'},
          'backgroundColor': 'rgb(219, 75, 75)'},
         {'if': {'column_id': 'rRNA Contamination (%reads aligned)',
                 'filter_query': '0 < {rRNA Contamination (%reads aligned)} and {rRNA Contamination (%reads aligned)} < 15'},
@@ -193,13 +194,13 @@ def Summary_table(run):
 def update_sampleindices(run):
     run = run.sort_values('library')
     num_libraries = len(run['library'])
-    samples_passing_clusters = '%s/%s' % (sum(i > 20000 for i in run['SampleNumberReads']), num_libraries)
-    index_threshold = 50000000
+    samples_passing_clusters = '%s/%s' % (sum(i > INDEX_THRESHOLD for i in run['SampleNumberReads']), num_libraries)
+
     data = []
 
     for inx, d in run.groupby(['library']):
-        d['Threshold'] = index_threshold
-        d['Color'] = np.where((d['SampleNumberReads'] >= index_threshold), '#ffffff', '#db4b4b')
+        d['Threshold'] = INDEX_THRESHOLD
+        d['Color'] = np.where((d['SampleNumberReads'] >= INDEX_THRESHOLD), '#ffffff', '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
@@ -227,7 +228,7 @@ def update_sampleindices(run):
         'data': data,
         'layout': {
             'title': 'Index Clusters per Sample. Passed Samples: %s Threshold: %s' % (
-                samples_passing_clusters, index_threshold),
+                samples_passing_clusters, INDEX_THRESHOLD),
             'xaxis': {'title': 'Sample', 'automargin': True},
             'yaxis': {'title': 'Clusters'},
             'showlegend': False,
@@ -247,8 +248,7 @@ def update_sampleindices(run):
      dep.Input('lane_select', 'value')])
 def update_graphs(run_alias, lane_alias):
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run = run[~run['library'].isna()]
+    run = run[~run['library'].isna()].drop_duplicates('library')
 
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
     download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
