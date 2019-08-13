@@ -15,6 +15,7 @@ setup(
       'pandas==0.23.4',
       'tables==3.5.1',
       'numpy==1.15.4',
+      'sd-material-ui==3.1.2',
       'gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@master'
    ],
 )
