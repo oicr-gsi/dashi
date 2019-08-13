@@ -24,9 +24,13 @@ setup(
       'tables==3.5.1',
       'numpy==1.15.4',
 <<<<<<< HEAD
+<<<<<<< HEAD
       'sd-material-ui==3.1.2',
 =======
 >>>>>>> Created setup.py for easy and consistent installs
+=======
+      'sd-material-ui==3.1.2',
+>>>>>>> Added Material UI as a dependency for the updated RNASeQC layout
       'gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@master'
    ],
 )
