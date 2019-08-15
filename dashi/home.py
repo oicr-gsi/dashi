@@ -48,7 +48,12 @@ layout = html.Div([
 
     html.H3(
         dcc.Link(
-            'Pool Balancing QC', href='/pooling_qc'
+            'Pool Balancing QC', href='/pool_balance_qc'
+        )
+    ),
+    html.H3(
+        dcc.Link(
+            'Target Seq QC (Postcapture)', href='/target_seq_qc'
         )
     )
 ])
