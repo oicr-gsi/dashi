@@ -53,6 +53,9 @@ layout = html.Div(children=[
         value=all_runs[0],
         clearable=False
     ),
+# This element doesn't work correctly in a multi-app context. Left in code for further work
+#ToDO
+#https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
     dcc.Location(
         id='bcl2fastq_url',
         refresh=False
