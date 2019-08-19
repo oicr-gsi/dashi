@@ -54,7 +54,7 @@ layout = html.Div(children=[
         clearable=False
     ),
     dcc.Location(
-        id='url',
+        id='bcl2fastq_url',
         refresh=False
     ),
 
@@ -188,7 +188,7 @@ def create_pie_chart(run, pruned, total_clusters):
 @app.callback(
     [dep.Output('run_select', 'value'),
      dep.Output('error', 'displayed')],
-    [dep.Input('url', 'pathname')]
+    [dep.Input('bcl2fastq_url', 'pathname')]
 )
 def change_url(pathname):
     """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
@@ -205,10 +205,10 @@ def change_url(pathname):
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
     if pathname == "/" or pathname is None:
         return all_runs[0], False
-    elif pathname[1:] not in all_runs:
+    elif pathname[1:-2] not in all_runs:
         return all_runs[0], True
     else:
-        return pathname[1:], False
+        return pathname[1:-2], False
 
 
 @app.callback(
