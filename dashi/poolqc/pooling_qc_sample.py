@@ -1,6 +1,5 @@
 import gsiqcetl.bcl2fastq.parse
 import gsiqcetl.bcl2fastq.utility
-import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
@@ -13,6 +12,7 @@ from datetime import datetime
 import sd_material_ui as sd
 
 rnaseq = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
+# Column name is being renamed to allow for a seamless merge on column 'library'
 rnaseq.rename(columns={'Sample Name': 'library'}, inplace=True)
 
 bamqc = pandas.read_hdf('./data/bamqc_cache.hd5')
@@ -20,12 +20,15 @@ bamqc = pandas.read_hdf('./data/bamqc_cache.hd5')
 bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5')
+
+# Column is being renamed for clarification
 bcl2fastq.rename(columns={'SampleNumberReads': 'Clusters'}, inplace=True)
-bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_')
+bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(.+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d{3}_[A-Z]{2})_')
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
+df['Sample Type'] = df['library'].str[-2:]
 
 runs = df['Run'].dropna().sort_values(ascending=False).unique()
 
@@ -79,7 +82,7 @@ layout = html.Div(children=[
                           ),
                       ),
                       html.Div([
-                          html.P(children='Library Type',
+                          html.P(children='Sample Type',
                                  style={'padding-left': '5px', 'font-weight': 'bold'}),
                           dcc.Dropdown(
                               id='sample_type',
@@ -98,17 +101,17 @@ layout = html.Div(children=[
                   ])]
               ),
     sd.RaisedButton(id='filters',
-                    label='Report Filters'),
+                    label='Filters'),
     html.Div(children=[
-        dcc.ConfirmDialog(
-            id='warning',
-            message='The selected run does not return any data. Analysis may have not been completed yet.' '''
-        '''' Click either "Ok" or "Cancel" to return to the most recent run.'
-        ),
-        dcc.Location(
-            id='PBQCrun_url',
-            refresh=False
-        ),
+        # dcc.ConfirmDialog(
+        #    id='warning',
+        #   message='The selected run does not return any data. Analysis may have not been completed yet.' '''
+        # '''' Click either "Ok" or "Cancel" to return to the most recent run.'
+        # ),
+        # dcc.Location(
+        #   id='PBQCrun_url',
+        #  refresh=False
+        # ),
         html.P(children='Pool Balancing QC Report',
                style={'fontSize': 35, 'textAlign': 'center', 'fontWeight': '900', 'fontFamily': 'sans serif'}),
         html.Div(id='Title', style={'fontSize': 20, 'fontFamily': 'sans serif', 'textAlign': 'center', 'padding': 30}),
@@ -168,7 +171,9 @@ except ModuleNotFoundError:
     app = dash.Dash(__name__)
     app.layout = layout
 
+# TODO - URL bug
 
+'''
 @app.callback(
     [dep.Output('select_a_run', 'value'),
      dep.Output('warning', 'displayed')],
@@ -181,6 +186,7 @@ def run_URL_update(value):
         return runs[0], True
     else:
         return value[1:-2], False
+'''
 
 
 @app.callback(
@@ -189,7 +195,7 @@ def run_URL_update(value):
 )
 def update_lane_options(run_alias):
     run = df[df['Run'] == run_alias]
-    run = run[~run['Run'].isna()]
+    run = run[run['Run'].notna()]
     return [{'label': i, 'value': i} for i in run['LaneNumber'].sort_values(ascending=True).unique()]
 
 
@@ -225,8 +231,7 @@ def open_project_drawer(n_clicks):
 )
 def initial_threshold_value(run_alias, lane_alias):
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run = run[~run['library'].isna()]
+    run = run.drop_duplicates('library')
 
     index_threshold = round(sum(run['Clusters']) / len(run['library']))
     return index_threshold
@@ -237,6 +242,7 @@ def Summary_table(run):
     run['Proportion Coding Bases'] = run['Proportion Coding Bases'] * 100
     run['Proportion Intronic Bases'] = run['Proportion Intronic Bases'] * 100
     run['Proportion Intergenic Bases'] = run['Proportion Intergenic Bases'] * 100
+    run['Proportion Correct Strand Reads'] = run['Proportion Correct Strand Reads']*100
 
     run = run.round(2)
     run = run.filter(
@@ -267,7 +273,7 @@ def update_sampleindices(run, index_threshold):
     data = []
 
     for inx, d in run.groupby(['library']):
-        d['Threshold'] = index_threshold
+        d['Index Threshold'] = index_threshold
         d['Color'] = np.where((d['Clusters'] >= index_threshold), '#20639B', '#db4b4b')
         data.append(
             go.Bar(
@@ -280,7 +286,7 @@ def update_sampleindices(run, index_threshold):
         data.append(
             go.Scatter(
                 x=list(d['library']),
-                y=list(d['Threshold']),
+                y=list(d['Index Threshold']),
                 mode='markers+lines',
                 line={
                     'width': 3,
@@ -302,8 +308,6 @@ def update_sampleindices(run, index_threshold):
 
 
 def percent_difference(run, index_threshold):
-    run = run.sort_values('library')
-
     data = []
 
     for inx, d in run.groupby('library'):
@@ -342,11 +346,30 @@ def percent_difference(run, index_threshold):
      dep.Input('pass/fail', 'value'),
      dep.Input('sample_type', 'value')])
 def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
+    """
+    Outputs:
+        SampleIndices: updates the figure Layout element of the graph titled the Index Clusters per Sample
+        Per Cent Difference: updates the figure of Layout element of Per Cent Differences of Index Clusters
+        Summary Table:
+            Columns: updates the names of columns in the Summary Table
+            Data: updates the cells in the Summary Table
+        download-link:
+            href: clickable link to download page for raw data in Summary Table
+            download: csv file for raw data in Summary Table
+        'object_threshold': updates the value of the 'Clusters Threshold' textbox at the top of report
+        'object_passed_samples': updates the value of the 'Passed Samples' textbox at the top of the report
+    Inputs:
+        :param run_alias: the value from the run drop-down in drawer
+        :param lane_alias: value selected from lane options in drawer
+        :param threshold: either the calculated initial threshold, or if changed, the new value of index_threshold
+        :param PassOrFail: calculated value of how many samples have passed dependent on the threshold
+        :param sample_type: the values of all the types of samples selected to view in the report (DNA vs RNA)
+    """
     index_threshold = int(threshold)
-
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
-    run = run[~run['Run'].isna()].drop_duplicates('library')
-    run = run[~run['library'].isna()]
+
+    run = run.drop_duplicates('library')
+    run = run[run['library'].notna()]
 
     num_libraries = len(run['library'])
     samples_passing_clusters = '%s/%s' % (sum(i > index_threshold for i in run['Clusters']), num_libraries)
@@ -355,12 +378,12 @@ def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
     for row in run['Clusters']:
         if row >= index_threshold:
             pass_or_fail.append('Pass')
-        if row < index_threshold:
+        else:
             pass_or_fail.append('Fail')
+
     run['Pass/Fail'] = pass_or_fail
     run = run[run['Pass/Fail'].isin(PassOrFail)]
 
-    run['Sample Type'] = run['library'].str[-2:]
     run = run[run['Sample Type'].isin(sample_type)]
 
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
@@ -368,11 +391,15 @@ def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
 
     columns, data, csv = Summary_table(run)
 
-    return update_sampleindices(run, index_threshold), percent_difference(run,
-                                                                          index_threshold), columns, data, csv, download, (
-                   'Clusters Threshold: ' + str(index_threshold)), (
-                   'Passed Samples: ' + str(samples_passing_clusters)),
-
+    return (update_sampleindices(run, index_threshold),
+            percent_difference(run, index_threshold),
+            columns,
+            data,
+            csv,
+            download,
+            ('Clusters Threshold: ' + str(index_threshold)),
+            ('Passed Samples: ' + str(samples_passing_clusters))
+            )
 
 if __name__ == '__main__':
     app.run_server(debug=True)
