@@ -27,8 +27,7 @@ df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 
-runs = df['Run'].sort_values(ascending=False).unique()
-runs = [x for x in runs if str(x) != 'nan']
+runs = df['Run'].dropna().sort_values(ascending=False).unique()
 
 layout = html.Div(children=[
 
@@ -36,71 +35,70 @@ layout = html.Div(children=[
               width='40%',
               docked=False,
               children=[
-                  html.Div([html.P(children='Report Filters', style={'font-size': '30px', 'padding-top': '10px',
-                                                                     'text-align': 'center'}),
-                            sd.Divider(),
-                            html.P(children='Select a Run', style={'padding-left': '5px', 'font-weight': 'bold'}),
-                            dcc.Dropdown(
-                                id='select_a_run',
-                                options=[{'label': r, 'value': r} for r in runs],
-                                value=runs[0],
-                                clearable=False
-                            ),
-                            html.Br(),
-                            html.P(children='Select a Lane', style={'padding-left': '5px', 'font-weight': 'bold'}),
-                            html.Div(
-                                dcc.RadioItems(
-                                    id='lane_select',
-                                    labelStyle={'display': 'inline-block', 'padding-left': '30px', }
-                                )
-                            ),
-                            html.Br(),
-                            html.P(children='Enter a Threshold Value for the Index Clusters',
-                                   style={'padding-left': '5px', 'font-weight': 'bold'}),
-                            html.Div(
-                                dcc.Input(
-                                    id='index_threshold',
-                                    placeholder='Press "Enter" when complete',
-                                    debounce=True,
-                                    type='number',
-                                    value='0'
-                                )
-                            ),
-                            html.Br(),
-                            html.P(children='Select Which Type of Sample to View',
-                                   style={'padding-left': '5px', 'font-weight': 'bold'}),
-                            html.Div(
-                                dcc.Checklist(
-                                    id='pass/fail',
-                                    options=[
-                                        {'label': 'Passed Samples', 'value': 'Pass'},
-                                        {'label': 'Failed Samples', 'value': 'Fail'},
-                                    ],
-                                    value=['Pass', 'Fail'],
-                                    labelStyle={'paddingLeft': 30}
+                  html.Div([
+                      html.P(children='Run Name', style={'padding-left': '5px', 'font-weight': 'bold'}),
+                      dcc.Dropdown(
+                          id='select_a_run',
+                          options=[{'label': r, 'value': r} for r in runs],
+                          value=runs[0],
+                          clearable=False
+                      ),
+                      html.Br(),
+                      html.P(children='Lane Number', style={'padding-left': '5px', 'font-weight': 'bold'}),
+                      html.Div(
+                          dcc.RadioItems(
+                              id='lane_select',
+                              labelStyle={'display': 'inline-block', 'padding-left': '30px', }
+                          )
+                      ),
+                      html.Br(),
+                      html.P(children='Threshold Value for Index Clusters',
+                             style={'padding-left': '5px', 'font-weight': 'bold'}),
+                      html.Div(
+                          dcc.Input(
+                              id='index_threshold',
+                              placeholder='Press "Enter" when complete',
+                              debounce=True,
+                              type='number',
+                              value='0'
+                          )
+                      ),
+                      html.Br(),
+                      html.P(children='Sample QC Status',
+                             style={'padding-left': '5px', 'font-weight': 'bold'}),
+                      html.Div(
+                          dcc.Checklist(
+                              id='pass/fail',
+                              options=[
+                                  {'label': 'Passed Samples', 'value': 'Pass'},
+                                  {'label': 'Failed Samples', 'value': 'Fail'},
+                              ],
+                              value=['Pass', 'Fail'],
+                              labelStyle={'paddingLeft': 30}
 
-                                ),
-                            ),
-                            html.Div([
-                                html.P(children='Select a Sample Type',
-                                       style={'padding-left': '5px', 'font-weight': 'bold'}),
-                                dcc.Dropdown(
-                                    id='sample_type',
-                                    options=[{'label': 'DNA: WG', 'value': 'WG'},
-                                             {'label': 'DNA: EX', 'value': 'EX'},
-                                             {'label': 'DNA: TS', 'value': 'TS'},
-                                             {'label': 'RNA: MR', 'value': 'MR'},
-                                             {'label': 'RNA: SM', 'value': 'SM'},
-                                             {'label': 'RNA: WT', 'value': 'WT'},
-                                             {'label': 'RNA: TR', 'value': 'TR'}],
-                                    value=['WG', 'EX', 'TS', 'MR', 'SM', 'WT', 'TR'],
-                                    clearable=False,
-                                    multi=True
-                                )])
-                            ])]
+                          ),
+                      ),
+                      html.Div([
+                          html.P(children='Library Type',
+                                 style={'padding-left': '5px', 'font-weight': 'bold'}),
+                          dcc.Dropdown(
+                              id='sample_type',
+                              options=[{'label': 'DNA: WG', 'value': 'WG'},
+                                       {'label': 'DNA: EX', 'value': 'EX'},
+                                       {'label': 'DNA: TS', 'value': 'TS'},
+                                       {'label': 'DNA: AS', 'value': 'AS'},
+                                       {'label': 'RNA: MR', 'value': 'MR'},
+                                       {'label': 'RNA: SM', 'value': 'SM'},
+                                       {'label': 'RNA: WT', 'value': 'WT'},
+                                       {'label': 'RNA: TR', 'value': 'TR'}],
+                              value=['WG', 'EX', 'TS', 'AS', 'MR', 'SM', 'WT', 'TR'],
+                              clearable=False,
+                              multi=True
+                          )])
+                  ])]
               ),
-    sd.FlatButton(id='filters',
-                  label='Report Filters'),
+    sd.RaisedButton(id='filters',
+                    label='Report Filters'),
     html.Div(children=[
         dcc.ConfirmDialog(
             id='warning',
@@ -118,13 +116,10 @@ layout = html.Div(children=[
 
         html.Div(sd.Paper(html.Div(id='object_threshold', style={'fontSize': 20, 'fontWeight': 'bold'}),
                           style={'padding': 50, 'background-color': 'rgb(222,222,222)'}),
-                 style={'width': '30%', 'display': 'inline-block', 'textAlign': 'center', }),
+                 style={'width': '45%', 'display': 'inline-block', 'textAlign': 'center', }),
         html.Div(sd.Paper(html.Div(id='object_passed_samples', style={'fontSize': 20, 'fontWeight': 'bold'}),
                           style={'padding': 50, 'background-color': 'rgb(222,222,222)'}),
-                 style={'width': '30%', 'display': 'inline-block', 'textAlign': 'center', 'padding': 50}),
-        html.Div(sd.Paper(html.Div(id='object_option3', style={'fontSize': 20, 'fontWeight': 'bold'}),
-                          style={'padding': 50, 'background-color': 'rgb(222,222,222)'}),
-                 style={'width': '30%', 'display': 'inline-block', 'textAlign': 'center'}, ),
+                 style={'width': '45%', 'display': 'inline-block', 'textAlign': 'center', 'padding': 50}),
         html.Br(),
         html.Div([
             sd.Paper(
@@ -226,13 +221,14 @@ def open_project_drawer(n_clicks):
 @app.callback(
     dep.Output('index_threshold', 'value'),
     [dep.Input('select_a_run', 'value'),
-     dep.Input('lane_select', 'value')])
+     dep.Input('lane_select', 'value')]
+)
 def initial_threshold_value(run_alias, lane_alias):
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
     run = run[~run['Run'].isna()].drop_duplicates('library')
     run = run[~run['library'].isna()]
 
-    index_threshold = sum(run['Clusters']) / len(run['library'])
+    index_threshold = round(sum(run['Clusters']) / len(run['library']))
     return index_threshold
 
 
@@ -296,7 +292,7 @@ def update_sampleindices(run, index_threshold):
         'data': data,
         'layout': {
             'title': 'Index Clusters per Sample',
-            'xaxis': {'title': 'Sample', 'automargin': True},
+            'xaxis': {'title': 'Sample', 'automargin': True, 'tickangle': '90', },
             'yaxis': {'title': 'Clusters'},
             'showlegend': False,
             'barmode': 'group',
@@ -324,7 +320,7 @@ def percent_difference(run, index_threshold):
         'data': data,
         'layout': {
             'title': 'Per Cent Difference of Index Clusters',
-            'xaxis': {'title': 'Sample', 'automargin': True},
+            'xaxis': {'title': 'Sample', 'automargin': True, 'tickangle': '90', },
             'yaxis': {'title': 'Per Cent', 'range': [-100, 100]},
             'showlegend': False,
         }
@@ -339,8 +335,7 @@ def percent_difference(run, index_threshold):
      dep.Output('download-link', 'href'),
      dep.Output('download-link', 'download'),
      dep.Output('object_threshold', 'children'),
-     dep.Output('object_passed_samples', 'children'),
-     dep.Output('object_option3', 'children')],
+     dep.Output('object_passed_samples', 'children')],
     [dep.Input('select_a_run', 'value'),
      dep.Input('lane_select', 'value'),
      dep.Input('index_threshold', 'value'),
@@ -375,8 +370,8 @@ def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
 
     return update_sampleindices(run, index_threshold), percent_difference(run,
                                                                           index_threshold), columns, data, csv, download, (
-                   'Threshold: ' + str(index_threshold)), (
-                   'Passed Samples: ' + str(samples_passing_clusters)), 'Option3',
+                   'Clusters Threshold: ' + str(index_threshold)), (
+                   'Passed Samples: ' + str(samples_passing_clusters)),
 
 
 if __name__ == '__main__':
