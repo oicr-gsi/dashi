@@ -95,15 +95,15 @@ except ModuleNotFoundError:
 @app.callback(
     [dep.Output('select_a_run', 'value'),
      dep.Output('warning', 'displayed')],
-    [dep.Input('run_url', 'pathname')]
+    [dep.Input('run_url', 'search')]
 )
 def run_URL_update(value):
     if value == '/' or value is None:
         return runs[0], False
-    elif value[1:-2] not in runs:
+    elif value[2:] not in runs:
         return runs[0], True
     else:
-        return value[1:-2], False
+        return value[2:], False
 
 
 @app.callback(

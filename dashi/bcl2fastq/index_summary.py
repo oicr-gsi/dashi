@@ -47,7 +47,7 @@ layout = html.Div(children=[
         message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.'
     ),
     dcc.Dropdown(
-        id='run_select',
+        id='bcl2fastq_run_select',
         #   Options is concantenated string versions of all_runs.
         options=[{'label': r, 'value': r} for r in all_runs],
         value=all_runs[0],
@@ -189,12 +189,19 @@ def create_pie_chart(run, pruned, total_clusters):
 
 
 @app.callback(
-    [dep.Output('run_select', 'value'),
+    [dep.Output('bcl2fastq_run_select', 'value'),
      dep.Output('error', 'displayed')],
-    [dep.Input('bcl2fastq_url', 'pathname')]
+    [dep.Input('bcl2fastq_url', 'search'),
+     dep.Input('bcl2fastq_run_select', 'options')]
 )
-def change_url(pathname):
-    """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
+def change_url(pathname, options):
+    """
+    Note: In a callback that requires a Location element as an Input, an extra element
+    (not another attribute of the Location element) must be included as an arbitrary input.
+    It doesn't need to have an Output, but it must be used within the function. In the case below,
+    it is printed in the terminal. Do not remove this Input or the callback will not fire at all.
+
+    Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
         If User enters any value that's not a valid run an error box will pop up and return user to most recent run
 
         Parameters:
@@ -206,12 +213,15 @@ def change_url(pathname):
     """
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
+    print (options[1])
+    print (pathname[2:])
+
     if pathname == "/" or pathname is None:
         return all_runs[0], False
-    elif pathname[1:-2] not in all_runs:
+    elif pathname[2:] not in all_runs:
         return all_runs[0], True
     else:
-        return pathname[1:-2], False
+        return pathname[2:], False
 
 
 @app.callback(
@@ -219,7 +229,7 @@ def change_url(pathname):
      dep.Output('unknown_index_bar', 'figure'),
      dep.Output('known_unknown_pie', 'figure'),
      dep.Output('known_fraction', 'value')],
-    [dep.Input('run_select', 'value')]
+    [dep.Input('bcl2fastq_run_select', 'value')]
 )
 def update_layout(run_alias):
     """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
@@ -229,7 +239,6 @@ def update_layout(run_alias):
             functions update_known_index_bar, update_unknown_index_bar, update_pie_chart's data value,
             and update_pie_chart's fraction value
     """
-
     run = index[index['Run'] == run_alias]
     run = run[run['ReadNumber'] == 1]
     run = run[~run['SampleID'].isna()]
