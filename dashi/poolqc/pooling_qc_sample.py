@@ -104,6 +104,8 @@ layout = html.Div(children=[
     sd.RaisedButton(id='filters',
                     label='Filters'),
     html.Div(children=[
+
+# TODO - URL bug https://jira.oicr.on.ca/browse/GR-755
         # dcc.ConfirmDialog(
         #    id='warning',
         #   message='The selected run does not return any data. Analysis may have not been completed yet.' '''
