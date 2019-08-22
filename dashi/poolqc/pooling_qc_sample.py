@@ -23,7 +23,7 @@ bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
 
 # Column is being renamed for clarification
 bcl2fastq.rename(columns={'SampleNumberReads': 'Clusters'}, inplace=True)
-bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(.+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d{3}_[A-Z]{2})_')
+bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_([A-Z0-9]+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d+_[A-Z]{2})_')
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
@@ -171,7 +171,7 @@ except ModuleNotFoundError:
     app = dash.Dash(__name__)
     app.layout = layout
 
-# TODO - URL bug
+# TODO - URL bug https://jira.oicr.on.ca/browse/GR-755
 
 '''
 @app.callback(
