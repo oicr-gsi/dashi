@@ -29,6 +29,7 @@ df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 df['Sample Type'] = df['library'].str[-2:]
+df['% Yield over Q30'] = df['ReadYieldQ30']/df['ReadYield']*100
 
 runs = df['Run'].dropna().sort_values(ascending=False).unique()
 
@@ -155,8 +156,9 @@ layout = html.Div(children=[
 
                 },
                 style_header={'backgroundColor': 'rgb(222,222,222)',
-                              'fontSize': 16,
-                              'fontWeight': 'bold'},
+                              'fontSize': 12,
+                              'fontWeight': 'bold',
+                              'fontFamily': 'sans serif'},
             )
         ),
     ],
@@ -250,7 +252,7 @@ def Summary_table(run):
          'Proportion Coding Bases',
          'Proportion Intronic Bases',
          'Proportion Intergenic Bases', 'Proportion Correct Strand Reads',
-         'Coverage'])
+         'Coverage', '% Yield over Q30'])
     run = run.sort_values('library')
 
     csv = run.to_csv(index=False)
