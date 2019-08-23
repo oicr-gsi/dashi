@@ -9,6 +9,7 @@ import re
 import plotly.graph_objs as go
 import numpy as np
 import urllib
+from urllib.parse import parse_qs
 from datetime import datetime
 
 rnaseq = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
@@ -19,7 +20,8 @@ bamqc = pandas.read_hdf('./data/bamqc_cache.hd5')
 bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
     './data/bcl2fastq_cache.hd5')
-bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_')
+bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract(
+    'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_')
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
@@ -40,8 +42,7 @@ layout = html.Div(children=[
         id='report_url',
         refresh=False
     ),
-    html.Div(children=
-    dcc.Dropdown(
+    html.Div(children=dcc.Dropdown(
         id='select_a_run',
         options=[{'label': r, 'value': r} for r in runs],
         value=runs[0],
@@ -51,7 +52,12 @@ layout = html.Div(children=[
         dcc.Dropdown(
             id='lane_select'
         )),
-    html.Div(id='Title', style={'fontSize': 25, 'textAlign': 'center', 'padding': 30}),
+    html.Div(
+        id='Title',
+        style={
+            'fontSize': 25,
+            'textAlign': 'center',
+            'padding': 30}),
     html.Div(children=''),
     html.Div(
         dcc.Graph(id='SampleIndices'),
@@ -97,21 +103,19 @@ except ModuleNotFoundError:
     [dep.Output('select_a_run', 'value'),
      dep.Output('warning', 'displayed')],
     [dep.Input('select_a_run', 'options'),
-    dep.Input('report_url', 'search')]
+     dep.Input('report_url', 'search')]
 )
 def report_url_update(run_options, search):
-    print(run_options[0])
-    run_value = re.search('[?]\S+=(\S[^?]+)', search)
-    print (run_value)
-    if run_value:
-        run_value = run_value.group(1)
-    print (run_value)
-    if run_value == '/' or run_value is None:
+    query = parse_qs(search[1:])
+
+    requested_run = query.get('run')[0] if (
+        query.get('run') and query.get('run')[0]) else None
+    if requested_run == '/' or requested_run is None:
         return runs[0], False
-    elif run_value not in runs:
+    elif requested_run not in runs:
         return runs[0], True
     else:
-        return run_value, False
+        return requested_run, False
 
 
 @app.callback(
@@ -120,7 +124,8 @@ def report_url_update(run_options, search):
 )
 def update_lane_options(run_alias):
     run = df[df['Run'] == run_alias]
-    return [{'label': i, 'value': i} for i in run['LaneNumber'].sort_values(ascending=True).unique()]
+    return [{'label': i, 'value': i}
+            for i in run['LaneNumber'].sort_values(ascending=True).unique()]
 
 
 @app.callback(
@@ -129,19 +134,15 @@ def update_lane_options(run_alias):
      dep.Input('report_url', 'search')]
 )
 def update_lane_values(available_options, search):
-    lane_value = re.search('[?]\S+=[^?]+\w.*=([0-9])', search)
+    query = parse_qs(search[1:])
 
-    if lane_value:
-        lane_value = lane_value.group(1)
+    requested_lane = int(query.get('lane')[0]) if (
+        query.get('lane') and query.get('lane')[0]) else 1
+
+    if any(x['value'] == requested_lane for x in available_options):
+        return requested_lane
     else:
         return 1
-
-    lane_value = int(lane_value)
-    if any(x['value'] == lane_value for x in available_options):
-        return lane_value
-    else:
-        return 1
-
 
 
 @app.callback(
@@ -204,13 +205,17 @@ def Summary_table(run):
 def update_sampleindices(run):
     run = run.sort_values('library')
     num_libraries = len(run['library'])
-    samples_passing_clusters = '%s/%s' % (sum(i > INDEX_THRESHOLD for i in run['SampleNumberReads']), num_libraries)
+    samples_passing_clusters = '%s/%s' % (
+        sum(i > INDEX_THRESHOLD for i in run['SampleNumberReads']), num_libraries)
 
     data = []
 
     for inx, d in run.groupby(['library']):
         d['Threshold'] = INDEX_THRESHOLD
-        d['Color'] = np.where((d['SampleNumberReads'] >= INDEX_THRESHOLD), '#ffffff', '#db4b4b')
+        d['Color'] = np.where(
+            (d['SampleNumberReads'] >= INDEX_THRESHOLD),
+            '#ffffff',
+            '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
@@ -261,11 +266,13 @@ def update_graphs(run_alias, lane_alias):
     run = run[~run['library'].isna()].drop_duplicates('library')
 
     downloadtimedate = datetime.today().strftime('%Y-%m-%d')
-    download = 'PoolQC_%s_%s_%s.csv' % (downloadtimedate, run_alias, lane_alias)
+    download = 'PoolQC_%s_%s_%s.csv' % (
+        downloadtimedate, run_alias, lane_alias)
 
     columns, data, style_data_conditional, csv = Summary_table(run)
 
-    return update_sampleindices(run), columns, data, style_data_conditional, csv, download
+    return update_sampleindices(
+        run), columns, data, style_data_conditional, csv, download
 
 
 if __name__ == '__main__':

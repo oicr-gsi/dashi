@@ -5,6 +5,7 @@ import dash_html_components as html
 import dash.dependencies as dep
 import pandas
 import re
+from urllib.parse import parse_qs
 
 
 index = gsiqcetl.bcl2fastq.parse.load_cache(
@@ -55,9 +56,10 @@ layout = html.Div(children=[
         value=all_runs[0],
         clearable=False
     ),
-# This element doesn't work correctly in a multi-app context. Left in code for further work
-#ToDO
-#https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
+    # This element doesn't work correctly in a multi-app context. Left in code for further work
+    # ToDO
+    # https://jira.oicr.on.ca/browse/GR-776 and
+    # https://jira.oicr.on.ca/browse/GR-777
     dcc.Location(
         id='bcl2fastq_url',
         refresh=False
@@ -81,7 +83,7 @@ layout = html.Div(children=[
                      "being used on one run. This number should be 100%."
                  ),
 
-             )],
+            )],
             style={'width': '25%', 'display': 'inline-block', }
         ),
         html.Div(
@@ -180,14 +182,14 @@ def create_pie_chart(run, pruned, total_clusters):
         'values': [known_count, pruned_count],
         'type': 'pie',
         'marker': {'colors': ['#349600', '#ef963b']},
-                      }],
-            'layout': {
-              'title': 'Flow Cell Composition of Known/Unknown Indices'}
+    }],
+        'layout': {
+        'title': 'Flow Cell Composition of Known/Unknown Indices'}
 
-           },('Predicted clusters / produced clusters: {}%'.format(
+    }, ('Predicted clusters / produced clusters: {}%'.format(
 
-               str(round(fraction, 1))
-           ))
+        str(round(fraction, 1))
+    ))
 
 
 @app.callback(
@@ -214,18 +216,20 @@ def change_url(pathname, options):
             Error pop-up displayed depending on user input.
     """
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
-    #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
+    # While page loads, pathname is set to 'None'. Once page is loaded
+    # pathname is set to user input.
 
-    pathname= re.search('[?]\S+=(\S[^?]+)', pathname)
-    if pathname:
-        pathname = pathname.group(1)
+    query = parse_qs(pathname[1:])
 
-    if pathname == "/" or pathname is None:
+    requested_run = query.get('run')[0] if (
+        query.get('run') and query.get('run')[0]) else None
+
+    if requested_run == "/" or requested_run is None:
         return all_runs[0], False
-    elif pathname not in all_runs:
+    elif requested_run not in all_runs:
         return all_runs[0], True
     else:
-        return pathname, False
+        return requested_run, False
 
 
 @app.callback(
@@ -268,7 +272,8 @@ def update_layout(run_alias):
 
     pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
 
-    return create_known_index_bar(run), create_unknown_index_bar(pruned), pie_data, textarea_fraction
+    return create_known_index_bar(run), create_unknown_index_bar(
+        pruned), pie_data, textarea_fraction
 
 
 if __name__ == '__main__':
