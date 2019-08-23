@@ -23,13 +23,14 @@ bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
 
 # Column is being renamed for clarification
 bcl2fastq.rename(columns={'SampleNumberReads': 'Clusters'}, inplace=True)
-bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract('SWID_\d+_([A-Z0-9]+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d+_[A-Z]{2})_')
+bcl2fastq['library'] = bcl2fastq['SampleID'].str.extract(
+    'SWID_\d+_([A-Z0-9]+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d+_[A-Z]{2})_')
 
 df = bcl2fastq.merge(rnaseq, on='library', how='outer')
 df = df.merge(bamqc, on='library', how='outer')
 df = df.drop(columns=['Sequencer Run Name', 'Lane Number'])
 df['Sample Type'] = df['library'].str[-2:]
-df['% Yield over Q30'] = df['ReadYieldQ30']/df['ReadYield']*100
+df['% Yield over Q30'] = df['ReadYieldQ30'] / df['ReadYield'] * 100
 
 runs = df['Run'].dropna().sort_values(ascending=False).unique()
 
@@ -105,7 +106,7 @@ layout = html.Div(children=[
                     label='Filters'),
     html.Div(children=[
 
-# TODO - URL bug https://jira.oicr.on.ca/browse/GR-755
+        # TODO - URL bug https://jira.oicr.on.ca/browse/GR-755
         # dcc.ConfirmDialog(
         #    id='warning',
         #   message='The selected run does not return any data. Analysis may have not been completed yet.' '''
@@ -246,7 +247,7 @@ def Summary_table(run):
     run['Proportion Coding Bases'] = run['Proportion Coding Bases'] * 100
     run['Proportion Intronic Bases'] = run['Proportion Intronic Bases'] * 100
     run['Proportion Intergenic Bases'] = run['Proportion Intergenic Bases'] * 100
-    run['Proportion Correct Strand Reads'] = run['Proportion Correct Strand Reads']*100
+    run['Proportion Correct Strand Reads'] = run['Proportion Correct Strand Reads'] * 100
 
     run = run.round(2)
     run = run.filter(
@@ -277,20 +278,18 @@ def update_sampleindices(run, index_threshold):
     data = []
 
     for inx, d in run.groupby(['library']):
-        d['Index Threshold'] = index_threshold
-        d['Color'] = np.where((d['Clusters'] >= index_threshold), '#20639B', '#db4b4b')
         data.append(
             go.Bar(
                 x=list(d['library']),
                 y=list(d['Clusters']),
                 name=inx,
-                marker={'color': list(d['Color'])},
+                marker={'color': np.where((d['Clusters'] >= index_threshold), '#20639B', '#db4b4b')},
             )
         )
         data.append(
             go.Scatter(
                 x=list(d['library']),
-                y=list(d['Index Threshold']),
+                y=[index_threshold] * len(d),
                 mode='markers+lines',
                 line={
                     'width': 3,
@@ -315,11 +314,10 @@ def percent_difference(run, index_threshold):
     data = []
 
     for inx, d in run.groupby('library'):
-        d['Per Cent Difference'] = (d['Clusters'] - index_threshold) / index_threshold * 100
         data.append(
             go.Bar(
                 x=list(d['library']),
-                y=list(d['Per Cent Difference']),
+                y=(d['Clusters'] - index_threshold) / index_threshold * 100,
                 name=inx,
                 marker={'color': '#20639B'},
             )
@@ -349,7 +347,7 @@ def percent_difference(run, index_threshold):
      dep.Input('index_threshold', 'value'),
      dep.Input('pass/fail', 'value'),
      dep.Input('sample_type', 'value')])
-def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
+def update_graphs(run_alias, lane_alias, index_threshold, PassOrFail, sample_type):
     """
     Outputs:
         SampleIndices: updates the figure Layout element of the graph titled the Index Clusters per Sample
@@ -363,13 +361,13 @@ def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
         'object_threshold': updates the value of the 'Clusters Threshold' textbox at the top of report
         'object_passed_samples': updates the value of the 'Passed Samples' textbox at the top of the report
     Inputs:
-        :param run_alias: the value from the run drop-down in drawer
-        :param lane_alias: value selected from lane options in drawer
-        :param threshold: either the calculated initial threshold, or if changed, the new value of index_threshold
-        :param PassOrFail: calculated value of how many samples have passed dependent on the threshold
-        :param sample_type: the values of all the types of samples selected to view in the report (DNA vs RNA)
+        select_a_run: the value from the run drop-down in drawer
+        lane_select: value selected from lane options in drawer
+        index_threshold: either the calculated initial threshold, or if changed, the new value of index_threshold
+        pass/fail: calculated value of how many samples have passed dependent on the threshold
+        sample_type: the values of all the types of samples selected to view in the report (DNA vs RNA)
     """
-    index_threshold = int(threshold)
+    index_threshold = int(index_threshold)
     run = df[(df['Run'] == run_alias) & (df['LaneNumber'] == lane_alias)]
 
     run = run.drop_duplicates('library')
@@ -404,6 +402,7 @@ def update_graphs(run_alias, lane_alias, threshold, PassOrFail, sample_type):
             ('Clusters Threshold: ' + str(index_threshold)),
             ('Passed Samples: ' + str(samples_passing_clusters))
             )
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
