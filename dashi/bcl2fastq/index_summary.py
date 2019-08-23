@@ -4,6 +4,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import pandas
+import re
+
 
 index = gsiqcetl.bcl2fastq.parse.load_cache(
     gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
@@ -213,15 +215,17 @@ def change_url(pathname, options):
     """
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
-    print (options[1])
-    print (pathname[2:])
+
+    pathname= re.search('[?]\s+=([^?]+)', pathname)
+    if pathname:
+        pathname = pathname.group(1)
 
     if pathname == "/" or pathname is None:
         return all_runs[0], False
-    elif pathname[2:] not in all_runs:
+    elif pathname not in all_runs:
         return all_runs[0], True
     else:
-        return pathname[2:], False
+        return pathname, False
 
 
 @app.callback(

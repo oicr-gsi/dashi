@@ -5,6 +5,7 @@ import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
 import pandas
+import re
 import plotly.graph_objs as go
 import numpy as np
 import urllib
@@ -36,7 +37,7 @@ layout = html.Div(children=[
         '''' Click either "Ok" or "Cancel" to return to the most recent run.'
     ),
     dcc.Location(
-        id='run_url',
+        id='report_url',
         refresh=False
     ),
     html.Div(children=
@@ -95,15 +96,22 @@ except ModuleNotFoundError:
 @app.callback(
     [dep.Output('select_a_run', 'value'),
      dep.Output('warning', 'displayed')],
-    [dep.Input('run_url', 'search')]
+    [dep.Input('select_a_run', 'options'),
+    dep.Input('report_url', 'search')]
 )
-def run_URL_update(value):
-    if value == '/' or value is None:
+def report_url_update(run_options, search):
+    print(run_options[0])
+    run_value = re.search('[?]\s+=([^?]+)', search)
+    print (run_value)
+    if run_value:
+        run_value = run_value.group(1)
+    print (run_value)
+    if run_value == '/' or run_value is None:
         return runs[0], False
-    elif value[2:] not in runs:
+    elif run_value not in runs:
         return runs[0], True
     else:
-        return value[2:], False
+        return run_value, False
 
 
 @app.callback(
@@ -117,10 +125,23 @@ def update_lane_options(run_alias):
 
 @app.callback(
     dep.Output('lane_select', 'value'),
-    [dep.Input('lane_select', 'options')]
+    [dep.Input('lane_select', 'options'),
+     dep.Input('report_url', 'search')]
 )
-def update_lane_values(available_options):
-    return available_options[0]['value']
+def update_lane_values(available_options, search):
+    lane_value = re.search('[?]\s+=[^?]+\w.*=([0-9])', search)
+
+    if lane_value:
+        lane_value = lane_value.group(1)
+    else:
+        return 1
+
+    lane_value = int(lane_value)
+    if any(x['value'] == lane_value for x in available_options):
+        return lane_value
+    else:
+        return 1
+
 
 
 @app.callback(
