@@ -101,7 +101,7 @@ except ModuleNotFoundError:
 )
 def report_url_update(run_options, search):
     print(run_options[0])
-    run_value = re.search('[?]\s+=([^?]+)', search)
+    run_value = re.search('[?]\S+=(\S[^?]+)', search)
     print (run_value)
     if run_value:
         run_value = run_value.group(1)
@@ -129,7 +129,7 @@ def update_lane_options(run_alias):
      dep.Input('report_url', 'search')]
 )
 def update_lane_values(available_options, search):
-    lane_value = re.search('[?]\s+=[^?]+\w.*=([0-9])', search)
+    lane_value = re.search('[?]\S+=[^?]+\w.*=([0-9])', search)
 
     if lane_value:
         lane_value = lane_value.group(1)

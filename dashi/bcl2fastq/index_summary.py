@@ -216,7 +216,7 @@ def change_url(pathname, options):
     #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
     #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
 
-    pathname= re.search('[?]\s+=([^?]+)', pathname)
+    pathname= re.search('[?]\S+=(\S[^?]+)', pathname)
     if pathname:
         pathname = pathname.group(1)
 
