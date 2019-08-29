@@ -1,3 +1,4 @@
+import collections
 import pandas
 import dash_core_components as dcc
 import dash_html_components as html
@@ -35,6 +36,7 @@ pin_needed = pinery[['name', 'preparation_kit_name']]
 pin_needed = pin_needed[pin_needed.index.str.startswith('LIB')]
 
 rna_df = rna_df.merge(pin_needed, how='left', left_on='Sample Name', right_on='name')
+
 # There are NaN kits, which need to be changed to a str. Use the existing Unspecified
 rna_df = rna_df.fillna({'preparation_kit_name': 'Unspecified'})
 
@@ -58,25 +60,68 @@ COLOURS = [
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ]
 
+# More can be added if the future needs it
+# See https://plot.ly/python/reference/#scatter-marker
+SHAPES = [
+    "circle", "square", "diamond", "cross", "x", "triangle-up", "triangle-down",
+    "triangle-left", "triangle-right", "pentagon", "star",
+]
 
-def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
+PlotProperty = collections.namedtuple('PlotProperty', ['name', 'properties'])
+
+
+def assign_consistent_property(values: list, prop: list) -> dict:
+    """
+    Values in the DataFrame (project, tissue, kit) need to be assigned
+    consistent properties (color, shape). This does is fairly simply, by looping
+    in order through the values and assigning them the next available property.
+    Property lists cannot run out, as it loops back to the beginning.
+
+    Args:
+        values: The values of assign properties to. Need to be unique
+        prop: The properties to assign to
+
+    Returns: A dictionary with keys being the values (project, tissue, kit) and
+        the dictionary values being the properties (color, shape).
+
+    """
+    result = {}
+    prop = itertools.cycle(prop)
+
+    for v in values:
+        result[v] = next(prop)
+
+    return result
+
+
+def create_plot_dict(df, variable, color, shape, show_legend=False):
     result = []
-    col = itertools.cycle(colours)
 
-    for g in df.groupby('Study Title'):
-        proj = g[0]
+    for g in df.groupby([color.name, shape.name]):
+        color_name = g[0][0]
+        shape_name = g[0][1]
         data = g[1]
+
+        data_shape = data[shape.name].apply(
+            lambda x: shape.properties[x]
+        )
 
         p = {
             'x': list(data['Run Date']),
             'y': list(data[variable]),
             'type': 'scattergl',
             'mode': 'markers',
-            'name': proj,
+            'name': color_name+'<br>'+shape_name,
             'text': list(data['Sample Name']),
-            'legendgroup': proj,
+            'legendgroup': color_name,
             'showlegend': show_legend,
-            'marker': {'color': next(col)}
+            'marker': {
+                'color': color.properties[color_name],
+                'symbol': data_shape
+            },
+            # Hover labels are not cropped
+            # https://github.com/plotly/plotly.js/issues/460
+            'hoverlabel': {'namelength': -1},
         }
 
         result.append(p)
@@ -86,11 +131,33 @@ def create_plot_dict(df, variable, colours=COLOURS, show_legend=False):
 
 def create_subplot(rna_df, graph_list):
     traces = []
+
+    projects = sorted(rna_df['Study Title'].unique(), key=lambda x: x.upper())
+    colors = assign_consistent_property(projects, COLOURS)
+
+    kits = sorted(
+        rna_df['preparation_kit_name'].unique(),
+        key=lambda x: x.upper()
+    )
+    shapes = assign_consistent_property(kits, SHAPES)
+
     for g in graph_list:
         if len(traces) == 0:
-            traces.append(create_plot_dict(rna_df, g, show_legend=True))
+            traces.append(create_plot_dict(
+                rna_df,
+                g,
+                PlotProperty('Study Title', colors),
+                PlotProperty('preparation_kit_name', shapes),
+                show_legend=True
+            ))
         else:
-            traces.append(create_plot_dict(rna_df, g, show_legend=False))
+            traces.append(create_plot_dict(
+                rna_df,
+                g,
+                PlotProperty('Study Title', colors),
+                PlotProperty('preparation_kit_name', shapes),
+                show_legend=False
+            ))
 
     # This assumes at most 8 graphs
     rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
@@ -98,7 +165,6 @@ def create_subplot(rna_df, graph_list):
     max_rows = max(rows)
 
     traces = zip(*traces)
-
 
     fig = plotly.subplots.make_subplots(
         rows=max_rows, cols=2,
@@ -115,6 +181,7 @@ def create_subplot(rna_df, graph_list):
 
     fig['layout'].update(
         height=400*max_rows,
+        template='plotly_white',
     )
 
     # If you want legend at the bottom
@@ -147,6 +214,7 @@ layout = html.Div(children=[
                 html.Label('Dates: '),
                 dcc.DatePickerRange(
                     id='date_picker',
+                    display_format='YYYY-MM-DD',
                     min_date_allowed=min(rna_df['Run Date']),
                     max_date_allowed=max(rna_df['Run Date']),
                     start_date=min(rna_df['Run Date']),
