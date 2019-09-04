@@ -53,6 +53,12 @@ RNA_DF = RNA_DF.merge(
 
 # NaN kits need to be changed to a str. Use the existing Unspecified
 RNA_DF = RNA_DF.fillna({'geo_prep_kit': 'Unspecified'})
+RNA_DF = RNA_DF.fillna({'geo_library_source_template_type': 'Unknown'})
+# NaN Tissue Origin is set to `nn`, which is used by MISO for unknown
+RNA_DF = RNA_DF.fillna({'geo_tissue_origin': 'nn'})
+# NaN Tissue Type is set to `n`, which is used by MISO for unknown
+RNA_DF = RNA_DF.fillna({'geo_tissue_type': 'n'})
+RNA_DF = RNA_DF.fillna({'geo_tissue_preparation': 'Unknown'})
 
 # Kits used for RNA-Seq experiments
 ALL_KITS = RNA_DF['geo_prep_kit'].sort_values().unique()
@@ -184,7 +190,8 @@ def create_plot_dict(
 
 
 def create_subplot(
-        rna_df: pandas.DataFrame, graph_list: list
+        rna_df: pandas.DataFrame, graph_list: list,
+        color_col: str, shape_col: str
 ) -> plotly.graph_objs.Figure:
     """
     Creates the subplots for the columns provided
@@ -192,6 +199,8 @@ def create_subplot(
     Args:
         rna_df: DataFrame containing the data
         graph_list: Which columns to plot
+        color_col: Which column should specify the colors in the plot
+        shape_col: Which column should specify the shapes in the plot
 
     Returns: The plotly figure that can be displayed
 
@@ -206,31 +215,36 @@ def create_subplot(
     traces = []
 
     # Sort irrespective of capital letters
-    projects = sorted(rna_df['Study Title'].unique(), key=lambda x: x.upper())
-    colors = assign_consistent_property(projects, COLOURS)
-
-    # Sort irrespective of capital letters
-    kits = sorted(
-        rna_df['geo_prep_kit'].unique(),
+    color_names = sorted(
+        rna_df[color_col].unique(),
         key=lambda x: x.upper()
     )
-    shapes = assign_consistent_property(kits, SHAPES)
+    colors = assign_consistent_property(color_names, COLOURS)
+    color_prop = PlotProperty(color_col, colors)
+
+    # Sort irrespective of capital letters
+    shape_names = sorted(
+        rna_df[shape_col].unique(),
+        key=lambda x: x.upper()
+    )
+    shapes = assign_consistent_property(shape_names, SHAPES)
+    shape_prop = PlotProperty(shape_col, shapes)
 
     for g in graph_list:
         if len(traces) == 0:
             traces.append(create_plot_dict(
                 rna_df,
                 g,
-                PlotProperty('Study Title', colors),
-                PlotProperty('geo_prep_kit', shapes),
+                color_prop,
+                shape_prop,
                 show_legend=True
             ))
         else:
             traces.append(create_plot_dict(
                 rna_df,
                 g,
-                PlotProperty('Study Title', colors),
-                PlotProperty('geo_prep_kit', shapes),
+                color_prop,
+                shape_prop,
                 show_legend=False
             ))
 
@@ -381,7 +395,12 @@ def graph_subplot(
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
     if len(to_plot) > 0:
-        return create_subplot(to_plot, graphs)
+        return create_subplot(
+            to_plot,
+            graphs,
+            'geo_tissue_preparation',
+            'Study Title',
+        )
     else:
         return {}
 
