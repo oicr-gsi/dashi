@@ -6,44 +6,54 @@ import dash.dependencies as dep
 import dash.exceptions
 import dash_table
 import itertools
+from typing import List, Union
 
-import plotly
+import plotly.subplots
+import plotly.graph_objs
 import sd_material_ui
 
-rna_df: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
-rna_df['Run Date'] = rna_df['Sequencer Run Name'].dropna().apply(
-    lambda x: x.split('_')[0]
-)
-
-rna_df['Proportion Aligned Bases'] = (
-    rna_df['Passed Filter Aligned Bases'] / rna_df['Passed Filter Bases']
-)
+# noinspection PyTypeChecker
+RNA_DF: pandas.DataFrame = pandas.read_hdf('./data/rnaseqqc_cache.hd5')
 
 # The Run Name is used to extract the date
-# Some runs do not have the proper format
-rna_df = rna_df[rna_df['Run Date'].str.isnumeric()]
+RNA_DF['Run Date'] = RNA_DF['Sequencer Run Name'].dropna().apply(
+    lambda x: x.split('_')[0]
+)
+# Some runs do not have the proper format and will be excluded
+RNA_DF = RNA_DF[RNA_DF['Run Date'].str.isnumeric()]
+RNA_DF['Run Date'] = pandas.to_datetime(
+    RNA_DF['Run Date'], yearfirst=True
+)
 
-rna_df['Run Date'] = pandas.to_datetime(
-     rna_df['Run Date'], yearfirst=True
- )
+RNA_DF['Proportion Aligned Bases'] = (
+        RNA_DF['Passed Filter Aligned Bases'] / RNA_DF['Passed Filter Bases']
+)
 
-all_projects = rna_df['Study Title'].sort_values().unique()
+# List projects for which RNA-Seq studies have been done
+ALL_PROJECTS = RNA_DF['Study Title'].sort_values().unique()
 
 # Pull in meta data from Pinery
-pinery: pandas.DataFrame = pandas.read_hdf('./data/pinery_samples_cache.hd5', 'pinery_samples')
+# noinspection PyTypeChecker
+PINERY: pandas.DataFrame = pandas.read_hdf(
+    './data/pinery_samples_cache.hd5', 'pinery_samples'
+)
 
-pin_needed = pinery[['name', 'preparation_kit_name']]
+PINERY = PINERY[['name', 'preparation_kit_name']]
 # Only include libraries (ensure dilutions aren't merged in)
-pin_needed = pin_needed[pin_needed.index.str.startswith('LIB')]
+PINERY = PINERY[PINERY.index.str.startswith('LIB')]
 
-rna_df = rna_df.merge(pin_needed, how='left', left_on='Sample Name', right_on='name')
+RNA_DF = RNA_DF.merge(
+    PINERY, how='left', left_on='Sample Name', right_on='name'
+)
 
-# There are NaN kits, which need to be changed to a str. Use the existing Unspecified
-rna_df = rna_df.fillna({'preparation_kit_name': 'Unspecified'})
+# NaN kits need to be changed to a str. Use the existing Unspecified
+RNA_DF = RNA_DF.fillna({'preparation_kit_name': 'Unspecified'})
 
-all_kits = rna_df['preparation_kit_name'].sort_values().unique()
+# Kits used for RNA-Seq experiments
+ALL_KITS = RNA_DF['preparation_kit_name'].sort_values().unique()
 
-graphs_to_plot = (
+# Which metrics can be plotted
+METRICS_TO_GRAPH = (
     'Proportion Usable Bases',
     'rRNA Contamination (%reads aligned)',
     'Proportion Correct Strand Reads',
@@ -54,6 +64,7 @@ graphs_to_plot = (
     'Proportion UTR Bases',
 )
 
+# The colours that are used in the graphs
 COLOURS = [
     '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
     '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
@@ -61,14 +72,13 @@ COLOURS = [
     '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'
 ]
 
+# The shapes of the points to use in the graph
 # More can be added if the future needs it
 # See https://plot.ly/python/reference/#scatter-marker
 SHAPES = [
     "circle", "square", "diamond", "cross", "x", "triangle-up", "triangle-down",
     "triangle-left", "triangle-right", "pentagon", "star",
 ]
-
-PlotProperty = collections.namedtuple('PlotProperty', ['name', 'properties'])
 
 # Which columns will the data table always have
 DEFAULT_TABLE_COLUMN = [
@@ -77,6 +87,13 @@ DEFAULT_TABLE_COLUMN = [
     {'name': 'Lane', 'id': 'Lane Number'},
     {'name': 'Kit', 'id': 'preparation_kit_name'},
 ]
+
+# A convenience container that links how a metric should be graphed
+# The name is the column name
+# The properties is a dict
+# The dict key is a value found in the column
+# The dict value is the property (color, shape, etc) assigned to the dict keY
+PlotProperty = collections.namedtuple('PlotProperty', ['name', 'properties'])
 
 
 def assign_consistent_property(values: list, prop: list) -> dict:
@@ -103,7 +120,25 @@ def assign_consistent_property(values: list, prop: list) -> dict:
     return result
 
 
-def create_plot_dict(df, variable, color, shape, show_legend=False):
+def create_plot_dict(
+        df: pandas.DataFrame, variable: str, color: PlotProperty,
+        shape: PlotProperty, show_legend: bool = False
+) -> list:
+    """
+    Creates the traces for a given column in the DataFrame, assigning each
+    point shape and color.
+
+    Args:
+        df: DataFrame that contains the data
+        variable: Which column to plot on the Y-axis
+        color: What color to assign to each data point
+        shape: What shape to assign to each data point
+        show_legend: Should the trace have a legend displayed
+
+    Returns:
+        Plotly compliant list of traces to plot
+
+    """
     result = []
 
     for g in df.groupby([color.name, shape.name]):
@@ -138,12 +173,33 @@ def create_plot_dict(df, variable, color, shape, show_legend=False):
     return result
 
 
-def create_subplot(rna_df, graph_list):
+def create_subplot(
+        rna_df: pandas.DataFrame, graph_list: list
+) -> plotly.graph_objs.Figure:
+    """
+    Creates the subplots for the columns provided
+
+    Args:
+        rna_df: DataFrame containing the data
+        graph_list: Which columns to plot
+
+    Returns: The plotly figure that can be displayed
+
+    Raises:
+        ValueError: If more than 8 columns are given. Up to 8 subplots are
+        supported.
+
+    """
+    if len(graph_list) > 8:
+        raise ValueError('Can only plot up to 8 subplots')
+
     traces = []
 
+    # Sort irrespective of capital letters
     projects = sorted(rna_df['Study Title'].unique(), key=lambda x: x.upper())
     colors = assign_consistent_property(projects, COLOURS)
 
+    # Sort irrespective of capital letters
     kits = sorted(
         rna_df['preparation_kit_name'].unique(),
         key=lambda x: x.upper()
@@ -168,11 +224,13 @@ def create_subplot(rna_df, graph_list):
                 show_legend=False
             ))
 
-    # This assumes at most 8 graphs
+    # Hardcoded subplot positions (starting from top left and going across)
     rows = [1, 1, 2, 2, 3, 3, 4, 4][:len(traces)]
     cols = [1, 2, 1, 2, 1, 2, 1, 2][:len(traces)]
     max_rows = max(rows)
 
+    # Each row in the DataFrame is plotted across all subplots
+    # The other approach would be to plot each column in only one subplot
     traces = zip(*traces)
 
     fig = plotly.subplots.make_subplots(
@@ -181,6 +239,7 @@ def create_subplot(rna_df, graph_list):
         print_grid=False,
     )
 
+    # Go across each row and put each data point in the respective subplot
     for t in traces:
         fig.add_traces(
             t,
@@ -208,34 +267,36 @@ layout = html.Div(children=[
                 dcc.Dropdown(
                     id='project_multi_drop',
                     multi=True,
-                    options=[{'label': x, 'value': x} for x in all_projects],
-                    value=all_projects
+                    options=[{'label': x, 'value': x} for x in ALL_PROJECTS],
+                    value=ALL_PROJECTS
                 ),
                 html.Br(),
                 html.Label('Kits:'),
                 dcc.Dropdown(
                     id='kits_multi_drop',
                     multi=True,
-                    options=[{'label': x, 'value': x} for x in all_kits],
-                    value=all_kits
+                    options=[{'label': x, 'value': x} for x in ALL_KITS],
+                    value=ALL_KITS
                 ),
                 html.Br(),
                 html.Label('Dates: '),
                 dcc.DatePickerRange(
                     id='date_picker',
                     display_format='YYYY-MM-DD',
-                    min_date_allowed=min(rna_df['Run Date']),
-                    max_date_allowed=max(rna_df['Run Date']),
-                    start_date=min(rna_df['Run Date']),
-                    end_date=max(rna_df['Run Date']),
+                    min_date_allowed=min(RNA_DF['Run Date']),
+                    max_date_allowed=max(RNA_DF['Run Date']),
+                    start_date=min(RNA_DF['Run Date']),
+                    end_date=max(RNA_DF['Run Date']),
                 ),
                 html.Br(),
                 html.Label('Show Graphs:'),
                 dcc.Dropdown(
                     id='graphs_to_plot',
                     multi=True,
-                    options=[{'label': x, 'value': x} for x in graphs_to_plot],
-                    value=graphs_to_plot[:4]
+                    options=[
+                        {'label': x, 'value': x} for x in METRICS_TO_GRAPH
+                    ],
+                    value=METRICS_TO_GRAPH[:4]
                 ),
             ], style={'margin': '23px'})]
         ),
@@ -251,9 +312,9 @@ layout = html.Div(children=[
             [dash_table.DataTable(
                 id='data_table',
                 columns=DEFAULT_TABLE_COLUMN + [
-                    {'name': i, 'id': i} for i in graphs_to_plot[:4]
+                    {'name': i, 'id': i} for i in METRICS_TO_GRAPH[:4]
                 ],
-                data=rna_df.to_dict('records'),
+                data=RNA_DF.to_dict('records'),
                 page_size=50,
             )]
         )
@@ -277,13 +338,33 @@ except ModuleNotFoundError:
      dep.State('date_picker', 'end_date'),
      dep.State('graphs_to_plot', 'value')]
 )
-def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
+def graph_subplot(
+        drawer_open: bool, projects: List[str], kits: List[str],
+        start_date: str, end_date: str, graphs: List[str]
+):
+    """
+    Plots the subplot, filtering for projects, kits, and a date range.
+
+    This only fires when the drawer is closed. I found that severe slowdown can
+    occur if the graph is updated each time the user values in the drawer.
+
+    Args:
+        drawer_open: Has the drawer been opened (False is it was closed)
+        projects: Which projects to plot
+        kits: Which kits to plot
+        start_date: From which date to display (inclusive)
+        end_date: Up to which date to display (inclusive)
+        graphs: Which columns to plot
+
+    Returns: Updates the figure layout
+
+    """
     if drawer_open:
         raise dash.exceptions.PreventUpdate(
             'Drawer opening does not require recalculation'
         )
 
-    to_plot = rna_df[rna_df['Study Title'].isin(projects)]
+    to_plot = RNA_DF[RNA_DF['Study Title'].isin(projects)]
     to_plot = to_plot[to_plot['preparation_kit_name'].isin(kits)]
     to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
@@ -298,7 +379,18 @@ def graph_subplot(drawer_open, projects, kits, start_date, end_date, graphs):
     dep.Output('project_drawer', 'open'),
     [dep.Input('filter_button', 'n_clicks')]
 )
-def open_project_drawer(n_clicks):
+def open_project_drawer(n_clicks: Union[int, None]) -> bool:
+    """
+    Open the drawer when the Open Drawer button is clicked
+
+    Args:
+        n_clicks: How often has the button been clicked. None if it has never
+            been clicked
+
+    Returns: Should the drawer be opened
+
+    """
+    # Do no open if the button has never been clicked, otherwise open
     return n_clicks is not None
 
 
