@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import dash.exceptions
+import dash_table
 import itertools
 
 import plotly
@@ -68,6 +69,14 @@ SHAPES = [
 ]
 
 PlotProperty = collections.namedtuple('PlotProperty', ['name', 'properties'])
+
+# Which columns will the data table always have
+DEFAULT_TABLE_COLUMN = [
+    {'name': 'Library', 'id': 'Sample Name'},
+    {'name': 'Run', 'id': 'Sequencer Run Name'},
+    {'name': 'Lane', 'id': 'Lane Number'},
+    {'name': 'Kit', 'id': 'preparation_kit_name'},
+]
 
 
 def assign_consistent_property(values: list, prop: list) -> dict:
@@ -238,6 +247,16 @@ layout = html.Div(children=[
                 id='graph_subplot',
             )]
         ),
+        sd_material_ui.Paper(
+            [dash_table.DataTable(
+                id='data_table',
+                columns=DEFAULT_TABLE_COLUMN + [
+                    {'name': i, 'id': i} for i in graphs_to_plot[:4]
+                ],
+                data=rna_df.to_dict('records'),
+                page_size=50,
+            )]
+        )
     ], type='circle')
 ])
 
