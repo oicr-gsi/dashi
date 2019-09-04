@@ -101,7 +101,16 @@ DEFAULT_TABLE_COLUMN = [
     {'name': 'Tissue Origin', 'id': 'geo_tissue_origin'},
     {'name': 'Tissue Type', 'id': 'geo_tissue_type'},
     {'name': 'Tissue State', 'id': 'geo_tissue_preparation'},
-    # {'name': 'External Name', 'id': 'geo_external_name'}
+]
+
+# Columns on which shape and colour can be set
+SHAPE_COLOUR_COLUMN = [
+    {'name': 'Project', 'id': 'Study Title'},
+    {'name': 'Kit', 'id': 'geo_prep_kit'},
+    {'name': 'Library Source Type', 'id': 'geo_library_source_template_type'},
+    {'name': 'Tissue Origin', 'id': 'geo_tissue_origin'},
+    {'name': 'Tissue Type', 'id': 'geo_tissue_type'},
+    {'name': 'Tissue State', 'id': 'geo_tissue_preparation'},
 ]
 
 # A convenience container that links how a metric should be graphed
@@ -323,6 +332,34 @@ layout = html.Div(children=[
                     ],
                     value=METRICS_TO_GRAPH[:4]
                 ),
+                html.Br(),
+                html.Div([
+                    html.Div([
+                        html.Label('Colour by:'),
+                        dcc.Dropdown(
+                            id='colour_by',
+                            options=[
+                                {'label': x['name'], 'value': x['id']} for x
+                                in SHAPE_COLOUR_COLUMN
+                            ],
+                            value='Study Title'
+                        ),
+                    ], style={'width': '45%', 'display': 'inline-block', }),
+                    html.Div([
+                        html.Label('Shape by:'),
+                        dcc.Dropdown(
+                            id='shape_by',
+                            options=[
+                                {'label': x['name'], 'value': x['id']} for x
+                                in SHAPE_COLOUR_COLUMN
+                            ],
+                            value='geo_prep_kit'
+                        ),
+                    ], style={
+                        'width': '45%', 'display': 'inline-block',
+                        'float': 'right'
+                    }),
+                ])
             ], style={'margin': '23px'})]
         ),
         sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
@@ -361,11 +398,14 @@ except ModuleNotFoundError:
      dep.State('kits_multi_drop', 'value'),
      dep.State('date_picker', 'start_date'),
      dep.State('date_picker', 'end_date'),
-     dep.State('graphs_to_plot', 'value')]
+     dep.State('graphs_to_plot', 'value'),
+     dep.State('colour_by', 'value'),
+     dep.State('shape_by', 'value')]
 )
 def graph_subplot(
         drawer_open: bool, projects: List[str], kits: List[str],
-        start_date: str, end_date: str, graphs: List[str]
+        start_date: str, end_date: str, graphs: List[str],
+        colour_by: str, shape_by: str,
 ):
     """
     Plots the subplot, filtering for projects, kits, and a date range.
@@ -380,6 +420,8 @@ def graph_subplot(
         start_date: From which date to display (inclusive)
         end_date: Up to which date to display (inclusive)
         graphs: Which columns to plot
+        colour_by: The column that determines data colour
+        shape_by: The column that determines data shape
 
     Returns: Updates the figure layout
 
@@ -398,8 +440,8 @@ def graph_subplot(
         return create_subplot(
             to_plot,
             graphs,
-            'geo_tissue_preparation',
-            'Study Title',
+            colour_by,
+            shape_by,
         )
     else:
         return {}
