@@ -392,7 +392,8 @@ except ModuleNotFoundError:
 
 
 @app.callback(
-    dep.Output('graph_subplot', 'figure'),
+    [dep.Output('graph_subplot', 'figure'),
+     dep.Output('data_table', 'data')],
     [dep.Input('project_drawer', 'open')],
     [dep.State('project_multi_drop', 'value'),
      dep.State('kits_multi_drop', 'value'),
@@ -423,7 +424,9 @@ def graph_subplot(
         colour_by: The column that determines data colour
         shape_by: The column that determines data shape
 
-    Returns: Updates the figure layout
+    Returns: A tuple
+        1) The figures to plot
+        2) The data table to display
 
     """
     if drawer_open:
@@ -437,14 +440,16 @@ def graph_subplot(
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
     if len(to_plot) > 0:
-        return create_subplot(
-            to_plot,
-            graphs,
-            colour_by,
-            shape_by,
+        return (
+            create_subplot(
+                to_plot,
+                graphs,
+                colour_by,
+                shape_by,
+            ), to_plot.to_dict('records')
         )
     else:
-        return {}
+        return {}, to_plot.to_dict('records')
 
 
 @app.callback(
