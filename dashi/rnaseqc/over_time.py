@@ -35,22 +35,27 @@ ALL_PROJECTS = RNA_DF['Study Title'].sort_values().unique()
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
 PINERY: pandas.DataFrame = pandas.read_hdf(
-    './data/pinery_samples_cache.hd5', 'pinery_samples'
+    './data/pinery_samples_provenance_cache.hd5'
 )
 
-PINERY = PINERY[['name', 'preparation_kit_name']]
-# Only include libraries (ensure dilutions aren't merged in)
-PINERY = PINERY[PINERY.index.str.startswith('LIB')]
+PINERY = PINERY[[
+    'sampleName', 'sequencerRunName', 'laneNumber', 'geo_prep_kit',
+    'geo_library_source_template_type', 'geo_tissue_origin', 'geo_tissue_type',
+    'geo_tissue_preparation',
+]]
 
 RNA_DF = RNA_DF.merge(
-    PINERY, how='left', left_on='Sample Name', right_on='name'
+    PINERY,
+    how='left',
+    left_on=['Sample Name', 'Sequencer Run Name', 'Lane Number'],
+    right_on=['sampleName', 'sequencerRunName', 'laneNumber'],
 )
 
 # NaN kits need to be changed to a str. Use the existing Unspecified
-RNA_DF = RNA_DF.fillna({'preparation_kit_name': 'Unspecified'})
+RNA_DF = RNA_DF.fillna({'geo_prep_kit': 'Unspecified'})
 
 # Kits used for RNA-Seq experiments
-ALL_KITS = RNA_DF['preparation_kit_name'].sort_values().unique()
+ALL_KITS = RNA_DF['geo_prep_kit'].sort_values().unique()
 
 # Which metrics can be plotted
 METRICS_TO_GRAPH = (
@@ -85,7 +90,12 @@ DEFAULT_TABLE_COLUMN = [
     {'name': 'Library', 'id': 'Sample Name'},
     {'name': 'Run', 'id': 'Sequencer Run Name'},
     {'name': 'Lane', 'id': 'Lane Number'},
-    {'name': 'Kit', 'id': 'preparation_kit_name'},
+    {'name': 'Kit', 'id': 'geo_prep_kit'},
+    {'name': 'Library Source Type', 'id': 'geo_library_source_template_type'},
+    {'name': 'Tissue Origin', 'id': 'geo_tissue_origin'},
+    {'name': 'Tissue Type', 'id': 'geo_tissue_type'},
+    {'name': 'Tissue State', 'id': 'geo_tissue_preparation'},
+    # {'name': 'External Name', 'id': 'geo_external_name'}
 ]
 
 # A convenience container that links how a metric should be graphed
@@ -201,7 +211,7 @@ def create_subplot(
 
     # Sort irrespective of capital letters
     kits = sorted(
-        rna_df['preparation_kit_name'].unique(),
+        rna_df['geo_prep_kit'].unique(),
         key=lambda x: x.upper()
     )
     shapes = assign_consistent_property(kits, SHAPES)
@@ -212,7 +222,7 @@ def create_subplot(
                 rna_df,
                 g,
                 PlotProperty('Study Title', colors),
-                PlotProperty('preparation_kit_name', shapes),
+                PlotProperty('geo_prep_kit', shapes),
                 show_legend=True
             ))
         else:
@@ -220,7 +230,7 @@ def create_subplot(
                 rna_df,
                 g,
                 PlotProperty('Study Title', colors),
-                PlotProperty('preparation_kit_name', shapes),
+                PlotProperty('geo_prep_kit', shapes),
                 show_legend=False
             ))
 
@@ -288,6 +298,7 @@ layout = html.Div(children=[
                     start_date=min(RNA_DF['Run Date']),
                     end_date=max(RNA_DF['Run Date']),
                 ),
+                html.Br(),
                 html.Br(),
                 html.Label('Show Graphs:'),
                 dcc.Dropdown(
@@ -365,7 +376,7 @@ def graph_subplot(
         )
 
     to_plot = RNA_DF[RNA_DF['Study Title'].isin(projects)]
-    to_plot = to_plot[to_plot['preparation_kit_name'].isin(kits)]
+    to_plot = to_plot[to_plot['geo_prep_kit'].isin(kits)]
     to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
     to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
 
