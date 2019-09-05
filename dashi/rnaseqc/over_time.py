@@ -148,7 +148,7 @@ def assign_consistent_property(values: list, prop: list) -> dict:
 
 def create_plot_dict(
         df: pandas.DataFrame, variable: str, color: PlotProperty,
-        shape: PlotProperty, show_legend: bool = False
+        shape: PlotProperty, order: bool, show_legend: bool = False
 ) -> list:
     """
     Creates the traces for a given column in the DataFrame, assigning each
@@ -159,6 +159,8 @@ def create_plot_dict(
         variable: Which column to plot on the Y-axis
         color: What color to assign to each data point
         shape: What shape to assign to each data point
+        order: If true, plot the points in the order given. Otherwise, plot
+            by date
         show_legend: Should the trace have a legend displayed
 
     Returns:
@@ -166,6 +168,11 @@ def create_plot_dict(
 
     """
     result = []
+
+    if order:
+        df['x_axis'] = list(range(0, len(df)))
+    else:
+        df['x_axis'] = list(df['Run Date'])
 
     for g in df.groupby([color.name, shape.name]):
         color_name = g[0][0]
@@ -177,7 +184,7 @@ def create_plot_dict(
         )
 
         p = {
-            'x': list(data['Run Date']),
+            'x': list(data['x_axis']),
             'y': list(data[variable]),
             'type': 'scattergl',
             'mode': 'markers',
@@ -201,7 +208,7 @@ def create_plot_dict(
 
 def create_subplot(
         rna_df: pandas.DataFrame, graph_list: list,
-        color_col: str, shape_col: str
+        color_col: str, shape_col: str, order: bool
 ) -> plotly.graph_objs.Figure:
     """
     Creates the subplots for the columns provided
@@ -211,6 +218,8 @@ def create_subplot(
         graph_list: Which columns to plot
         color_col: Which column should specify the colors in the plot
         shape_col: Which column should specify the shapes in the plot
+        order: If True, points will be plotted in their DataFrame order (0 to
+            n - 1). Otherwise, plotted by date.
 
     Returns: The plotly figure that can be displayed
 
@@ -247,6 +256,7 @@ def create_subplot(
                 g,
                 color_prop,
                 shape_prop,
+                order,
                 show_legend=True
             ))
         else:
@@ -255,6 +265,7 @@ def create_subplot(
                 g,
                 color_prop,
                 shape_prop,
+                order,
                 show_legend=False
             ))
 
@@ -281,10 +292,13 @@ def create_subplot(
             cols=cols,
         )
 
-    fig['layout'].update(
+    fig.update_layout(
         height=400*max_rows,
         template='plotly_white',
     )
+
+    # If the data is sorted, the x-axis will be increasing numbers. Hide them
+    fig.update_xaxes(showticklabels=not order)
 
     # If you want legend at the bottom
     # fig['layout']['legend'].update(orientation="h")
@@ -366,7 +380,7 @@ layout = html.Div(children=[
         html.Div([
             html.Div(
                 sd_material_ui.RaisedButton(
-                    id='filter_button', label='Filters'
+                    id='filter_button', label='Options'
                 ), style={'display': 'inline-block', }
             ),
             html.Div(
@@ -392,6 +406,8 @@ layout = html.Div(children=[
                 ],
                 data=RNA_DF.to_dict('records'),
                 page_size=50,
+                sort_action='native',
+                sort_mode='multi',
             )]
         )
     ], type='circle')
@@ -474,11 +490,12 @@ def populate_data_table(
     [dep.State('data_table', 'derived_virtual_data'),
      dep.State('graphs_to_plot', 'value'),
      dep.State('colour_by', 'value'),
-     dep.State('shape_by', 'value')]
+     dep.State('shape_by', 'value'),
+     dep.State('data_table', 'sort_by')]
 )
 def graph_subplot(
         _clicks: int, data_to_plot: list, graphs: List[str],
-        colour_by: str, shape_by: str,
+        colour_by: str, shape_by: str, sort_by: Union[None, list]
 ):
     """
     Plots the data from the data table, preserving all sorting and filtering
@@ -496,18 +513,25 @@ def graph_subplot(
         graphs: Which columns to plot
         colour_by: The column that determines data colour
         shape_by: The column that determines data shape
+        sort_by: The columns on which data is sorted. The content does not
+            matter for this function. If there is anything in this variable,
+            the data will be plotted in order it is found in the input DataFrame
 
     Returns: The figures to plot
 
     """
     to_plot = pandas.DataFrame(data_to_plot)
 
+    # The variable can either be None or an empty list when no sorting is done
+    order = True if sort_by else False
+
     if len(to_plot) > 0:
         return create_subplot(
-                to_plot,
-                graphs,
-                colour_by,
-                shape_by,
+            to_plot,
+            graphs,
+            colour_by,
+            shape_by,
+            order,
         )
     else:
         return {}
