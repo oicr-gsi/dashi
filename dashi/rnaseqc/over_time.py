@@ -94,6 +94,7 @@ SHAPES = [
 # Which columns will the data table always have
 DEFAULT_TABLE_COLUMN = [
     {'name': 'Library', 'id': 'Sample Name'},
+    {'name': 'Project', 'id': 'Study Title'},
     {'name': 'Run', 'id': 'Sequencer Run Name'},
     {'name': 'Lane', 'id': 'Lane Number'},
     {'name': 'Kit', 'id': 'geo_prep_kit'},
@@ -362,14 +363,27 @@ layout = html.Div(children=[
                 ])
             ], style={'margin': '23px'})]
         ),
-        sd_material_ui.RaisedButton(id='filter_button', label='Filters'),
+        html.Div([
+            html.Div(
+                sd_material_ui.RaisedButton(
+                    id='filter_button', label='Filters'
+                ), style={'display': 'inline-block', }
+            ),
+            html.Div(
+                sd_material_ui.RaisedButton(
+                    id='update_from_table_button', label='Update Order',
+                ), style={'display': 'inline-block', 'margin-left': '15px'}
+            ),
+        ]),
     ]),
-    dcc.Loading(id="graph_loader", children=[
+    dcc.Loading(id="graph_loader_plot", children=[
         sd_material_ui.Paper(
             [dcc.Graph(
                 id='graph_subplot',
             )]
         ),
+    ]),
+    dcc.Loading(id="graph_loader_data_table", children=[
         sd_material_ui.Paper(
             [dash_table.DataTable(
                 id='data_table',
@@ -392,27 +406,44 @@ except ModuleNotFoundError:
 
 
 @app.callback(
-    [dep.Output('graph_subplot', 'figure'),
-     dep.Output('data_table', 'data')],
+    dep.Output('update_from_table_button', 'n_clicks'),
+    [dep.Input('data_table', 'data')],
+    [dep.State('update_from_table_button', 'n_clicks')]
+)
+def click_update_graph_button(_data, n_clicks):
+    """
+    A programmatic way to click the button when the data_table data changes,
+    which causes the graphs to be rendered.
+
+    This function is necessary because rendering the graphs when the data_table
+    data changes does not work. See the rendering function for more details.
+
+    Args:
+        _data: Causes the button to be clicked, but not used
+        n_clicks: The previous number of clicks on the button
+
+    Returns: The incremented click number
+
+    """
+    n_clicks = 0 if n_clicks is None else n_clicks + 1
+    return n_clicks
+
+
+@app.callback(
+    dep.Output('data_table', 'data'),
     [dep.Input('project_drawer', 'open')],
     [dep.State('project_multi_drop', 'value'),
      dep.State('kits_multi_drop', 'value'),
      dep.State('date_picker', 'start_date'),
-     dep.State('date_picker', 'end_date'),
-     dep.State('graphs_to_plot', 'value'),
-     dep.State('colour_by', 'value'),
-     dep.State('shape_by', 'value')]
+     dep.State('date_picker', 'end_date'), ]
 )
-def graph_subplot(
+def populate_data_table(
         drawer_open: bool, projects: List[str], kits: List[str],
-        start_date: str, end_date: str, graphs: List[str],
-        colour_by: str, shape_by: str,
+        start_date: str, end_date: str,
 ):
     """
-    Plots the subplot, filtering for projects, kits, and a date range.
-
-    This only fires when the drawer is closed. I found that severe slowdown can
-    occur if the graph is updated each time the user values in the drawer.
+    Given the filtering options in the side drawer, create the data table with
+    the filtered data.
 
     Args:
         drawer_open: Has the drawer been opened (False is it was closed)
@@ -420,13 +451,8 @@ def graph_subplot(
         kits: Which kits to plot
         start_date: From which date to display (inclusive)
         end_date: Up to which date to display (inclusive)
-        graphs: Which columns to plot
-        colour_by: The column that determines data colour
-        shape_by: The column that determines data shape
 
-    Returns: A tuple
-        1) The figures to plot
-        2) The data table to display
+    Returns: The data to put in the data table
 
     """
     if drawer_open:
@@ -434,22 +460,57 @@ def graph_subplot(
             'Drawer opening does not require recalculation'
         )
 
-    to_plot = RNA_DF[RNA_DF['Study Title'].isin(projects)]
-    to_plot = to_plot[to_plot['geo_prep_kit'].isin(kits)]
-    to_plot = to_plot[to_plot['Run Date'] >= pandas.to_datetime(start_date)]
-    to_plot = to_plot[to_plot['Run Date'] <= pandas.to_datetime(end_date)]
+    to_table = RNA_DF[RNA_DF['Study Title'].isin(projects)]
+    to_table = to_table[to_table['geo_prep_kit'].isin(kits)]
+    to_table = to_table[to_table['Run Date'] >= pandas.to_datetime(start_date)]
+    to_table = to_table[to_table['Run Date'] <= pandas.to_datetime(end_date)]
+
+    return to_table.to_dict('records')
+
+
+@app.callback(
+    dep.Output('graph_subplot', 'figure'),
+    [dep.Input('update_from_table_button', 'n_clicks')],
+    [dep.State('data_table', 'derived_virtual_data'),
+     dep.State('graphs_to_plot', 'value'),
+     dep.State('colour_by', 'value'),
+     dep.State('shape_by', 'value')]
+)
+def graph_subplot(
+        _clicks: int, data_to_plot: list, graphs: List[str],
+        colour_by: str, shape_by: str,
+):
+    """
+    Plots the data from the data table, preserving all sorting and filtering
+    applied.
+
+    The button that fires this callback had to be used. The simpler option
+    would have been to fire it when the data table body is updated, but the
+    `derived_virtual_data` property was linked to the body data and was not
+    updated fast enough
+
+    Args:
+        _clicks: The click fires the callback, but is never used
+        data_to_plot: This is the sorted and filtered data table data, which
+            will be used for plots
+        graphs: Which columns to plot
+        colour_by: The column that determines data colour
+        shape_by: The column that determines data shape
+
+    Returns: The figures to plot
+
+    """
+    to_plot = pandas.DataFrame(data_to_plot)
 
     if len(to_plot) > 0:
-        return (
-            create_subplot(
+        return create_subplot(
                 to_plot,
                 graphs,
                 colour_by,
                 shape_by,
-            ), to_plot.to_dict('records')
         )
     else:
-        return {}, to_plot.to_dict('records')
+        return {}
 
 
 @app.callback(
