@@ -9,7 +9,7 @@ setup(
    python_requires='>=3.6.0',
    packages=find_packages(),
    install_requires=[
-      'dash==1.0.2',
+      'dash==1.2.0',
       'plotly==4.0.0',
       'scipy==1.2.0',
       'pandas==0.23.4',

@@ -408,6 +408,7 @@ layout = html.Div(children=[
                 page_size=50,
                 sort_action='native',
                 sort_mode='multi',
+                export_format='csv'
             )]
         )
     ], type='circle')
