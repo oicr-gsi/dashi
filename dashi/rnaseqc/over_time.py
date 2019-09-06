@@ -98,20 +98,20 @@ DEFAULT_TABLE_COLUMN = [
     {'name': 'Run', 'id': 'Sequencer Run Name'},
     {'name': 'Lane', 'id': 'Lane Number'},
     {'name': 'Kit', 'id': 'geo_prep_kit'},
-    {'name': 'Library Source Type', 'id': 'geo_library_source_template_type'},
+    {'name': 'Library Design', 'id': 'geo_library_source_template_type'},
     {'name': 'Tissue Origin', 'id': 'geo_tissue_origin'},
     {'name': 'Tissue Type', 'id': 'geo_tissue_type'},
-    {'name': 'Tissue State', 'id': 'geo_tissue_preparation'},
+    {'name': 'Tissue Material', 'id': 'geo_tissue_preparation'},
 ]
 
 # Columns on which shape and colour can be set
 SHAPE_COLOUR_COLUMN = [
     {'name': 'Project', 'id': 'Study Title'},
     {'name': 'Kit', 'id': 'geo_prep_kit'},
-    {'name': 'Library Source Type', 'id': 'geo_library_source_template_type'},
+    {'name': 'Library Design', 'id': 'geo_library_source_template_type'},
     {'name': 'Tissue Origin', 'id': 'geo_tissue_origin'},
     {'name': 'Tissue Type', 'id': 'geo_tissue_type'},
-    {'name': 'Tissue State', 'id': 'geo_tissue_preparation'},
+    {'name': 'Tissue Material', 'id': 'geo_tissue_preparation'},
 ]
 
 # A convenience container that links how a metric should be graphed
@@ -124,17 +124,18 @@ PlotProperty = collections.namedtuple('PlotProperty', ['name', 'properties'])
 
 def assign_consistent_property(values: list, prop: list) -> dict:
     """
-    Values in the DataFrame (project, tissue, kit) need to be assigned
-    consistent properties (color, shape). This does is fairly simply, by looping
-    in order through the values and assigning them the next available property.
-    Property lists cannot run out, as it loops back to the beginning.
+    Entries in the DataFrame column (project, tissue, kit) need to be assigned
+    consistent properties (color, shape) across all plots. This does is fairly
+    simply, by looping in order through each unique column entry and assigning
+    them the next available property. Property lists cannot run out, as it loops
+    back to the beginning.
 
     Args:
-        values: The values of assign properties to. Need to be unique
-        prop: The properties to assign to
+        values: The column entries. Need to be unique.
+        prop: The plotting properties to assign to each entry
 
-    Returns: A dictionary with keys being the values (project, tissue, kit) and
-        the dictionary values being the properties (color, shape).
+    Returns: A dictionary with keys being the unique DataFrame column entries
+        and the dictionary values being the plotting properties (color, shape).
 
     """
     result = {}
@@ -385,10 +386,10 @@ layout = html.Div(children=[
             ),
             html.Div(
                 sd_material_ui.RaisedButton(
-                    id='update_from_table_button', label='Update Order',
+                    id='update_from_table_button', label='Update Graphs'
                 ), style={'display': 'inline-block', 'margin-left': '15px'}
             ),
-        ]),
+        ], style={'margin-bottom': '5px'}),
     ]),
     dcc.Loading(id="graph_loader_plot", children=[
         sd_material_ui.Paper(
