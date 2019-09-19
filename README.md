@@ -37,7 +37,7 @@ python index.py
 
 ## Development
 
-If your development environment doesn't already automatically use PEP8 for formatting, you can 
+If your development environment doesn't already automatically use PEP8 for formatting, you can
 install a git hook to automatically format Python files as part of the commit process. To do so,
 run this once:
 
