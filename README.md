@@ -37,10 +37,12 @@ python index.py
 
 ## Development
 
-If your development environment doesn't already automatically use PEP8 for formatting, you can
-install a git hook to automatically format Python files as part of the commit process. To do so,
-run this once:
+Consistent PEP8 compliant formatting can be ensured by enabling pre-commit
+git hook.
 
     ```
-    git config core.hooksPath .githooks
+    pip install pre-commit
+    
+    #While in the root of Dashi
+    pre-commit install
     ```
