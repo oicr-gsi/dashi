@@ -6,16 +6,14 @@ import dash.dependencies as dep
 import pandas
 
 index = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES,
-    './data/bcl2fastq_cache.hd5'
+    gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES, "./data/bcl2fastq_cache.hd5"
 )
 
 unknown = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN,
-    './data/bcl2fastq_cache.hd5'
+    gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN, "./data/bcl2fastq_cache.hd5"
 )
 
-all_runs = index['Run'].sort_values(ascending=False).unique()
+all_runs = index["Run"].sort_values(ascending=False).unique()
 """ Sample_run_hidden holds json split format of "Known"
         columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
                  "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
@@ -41,54 +39,55 @@ all_runs = index['Run'].sort_values(ascending=False).unique()
           Dropdown multi set to false (default) - only single select possible
                 -  multiple select gives error due to inconsistent values
           """
-layout = html.Div(children=[
-    dcc.ConfirmDialog(
-        id='error',
-        message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.'
-    ),
-    dcc.Dropdown(
-        id='run_select',
-        #   Options is concantenated string versions of all_runs.
-        options=[{'label': r, 'value': r} for r in all_runs],
-        value=all_runs[0],
-        clearable=False
-    ),
-# This element doesn't work correctly in a multi-app context. Left in code for further work
-#ToDO
-#https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
-    dcc.Location(
-        id='bcl2fastq_url',
-        refresh=False
-    ),
-
-    dcc.Graph(
-        id='known_index_bar',
-
-    ),
-    html.Div([
-        html.Div(
-            [dcc.Graph(id='known_unknown_pie'),
-             dcc.Textarea(
-                 id='known_fraction',
-                 style={'width': '100%'},
-                 readOnly=True,
-                 # This is the textbox at the bottom, hover over to see title
-                 title=(
-                     "Assumptions are made about which indexes are known "
-                     "or unknown. This is due to multiple bcl2fastq analyses "
-                     "being used on one run. This number should be 100%."
-                 ),
-
-             )],
-            style={'width': '25%', 'display': 'inline-block', }
+layout = html.Div(
+    children=[
+        dcc.ConfirmDialog(
+            id="error",
+            message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.',
         ),
-        html.Div(
-            [dcc.Graph(id='unknown_index_bar')],
-            style={'width': '75%', 'display': 'inline-block', 'float': 'right'}
+        dcc.Dropdown(
+            id="run_select",
+            #   Options is concantenated string versions of all_runs.
+            options=[{"label": r, "value": r} for r in all_runs],
+            value=all_runs[0],
+            clearable=False,
         ),
-
-    ])
-])
+        # This element doesn't work correctly in a multi-app context. Left in code for further work
+        # ToDO
+        # https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
+        dcc.Location(id="bcl2fastq_url", refresh=False),
+        dcc.Graph(id="known_index_bar"),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        dcc.Graph(id="known_unknown_pie"),
+                        dcc.Textarea(
+                            id="known_fraction",
+                            style={"width": "100%"},
+                            readOnly=True,
+                            # This is the textbox at the bottom, hover over to see title
+                            title=(
+                                "Assumptions are made about which indexes are known "
+                                "or unknown. This is due to multiple bcl2fastq analyses "
+                                "being used on one run. This number should be 100%."
+                            ),
+                        ),
+                    ],
+                    style={"width": "25%", "display": "inline-block"},
+                ),
+                html.Div(
+                    [dcc.Graph(id="unknown_index_bar")],
+                    style={
+                        "width": "75%",
+                        "display": "inline-block",
+                        "float": "right",
+                    },
+                ),
+            ]
+        ),
+    ]
+)
 
 try:
     from app import app
@@ -110,26 +109,26 @@ def create_known_index_bar(run):
     data_known = []
     #   Multiple libraries can use the same index, data must be grouped by both index and libraries
     #   to prevent duplicate counts
-    for inx, d in run.groupby(['index', 'library']):
-        data_known.append({
-            'x': list(d['library'].unique()),
-            # One library can be run on multiple lanes. Sum them together.
-            'y': [d['SampleNumberReads'].sum()],
-            'type': 'bar',
-            'name': inx[0],
-            'marker': {'line': {
-                'width': 2,
-                'color': 'rgb(255,255, 255)'
-            }}
-        })
+    for inx, d in run.groupby(["index", "library"]):
+        data_known.append(
+            {
+                "x": list(d["library"].unique()),
+                # One library can be run on multiple lanes. Sum them together.
+                "y": [d["SampleNumberReads"].sum()],
+                "type": "bar",
+                "name": inx[0],
+                "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
+            }
+        )
     return {
-        'data': data_known,
-        'layout': {
-            'barmode': 'stack',
-            'title': 'Sample Indices',
-            'xaxis': {'title': 'Library', 'automargin': True},
-            'yaxis': {'title': 'Clusters'},
-        }}
+        "data": data_known,
+        "layout": {
+            "barmode": "stack",
+            "title": "Sample Indices",
+            "xaxis": {"title": "Library", "automargin": True},
+            "yaxis": {"title": "Clusters"},
+        },
+    }
 
 
 def create_unknown_index_bar(pruned):
@@ -142,21 +141,23 @@ def create_unknown_index_bar(pruned):
               """
 
     data_unknown = []
-    for lane, d in pruned.groupby('LaneNumber'):
-        data_unknown.append({
-            'x': list(d['index']),
-            'y': list(d['Count']),
-            'type': 'bar',
-            'name': lane,
-        })
+    for lane, d in pruned.groupby("LaneNumber"):
+        data_unknown.append(
+            {
+                "x": list(d["index"]),
+                "y": list(d["Count"]),
+                "type": "bar",
+                "name": lane,
+            }
+        )
     return {
-        'data': data_unknown,
-        'layout': {
-            'barmode': 'stack',
-            'title': 'Unknown Indices',
-            'xaxis': {'title': 'Index'},
-            'yaxis': {'title': 'Clusters'},
-        }
+        "data": data_unknown,
+        "layout": {
+            "barmode": "stack",
+            "title": "Unknown Indices",
+            "xaxis": {"title": "Index"},
+            "yaxis": {"title": "Clusters"},
+        },
     }
 
 
@@ -170,28 +171,34 @@ def create_pie_chart(run, pruned, total_clusters):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run['SampleNumberReads'].sum()
-    pruned_count = pruned['Count'].sum()
+    known_count = run["SampleNumberReads"].sum()
+    pruned_count = pruned["Count"].sum()
     fraction = (known_count + pruned_count) / total_clusters * 100
-    return {'data': [{
-        'labels': ['Known', 'Unknown'],
-        'values': [known_count, pruned_count],
-        'type': 'pie',
-        'marker': {'colors': ['#349600', '#ef963b']},
-                      }],
-            'layout': {
-              'title': 'Flow Cell Composition of Known/Unknown Indices'}
-
-           },('Predicted clusters / produced clusters: {}%'.format(
-
-               str(round(fraction, 1))
-           ))
+    return (
+        {
+            "data": [
+                {
+                    "labels": ["Known", "Unknown"],
+                    "values": [known_count, pruned_count],
+                    "type": "pie",
+                    "marker": {"colors": ["#349600", "#ef963b"]},
+                }
+            ],
+            "layout": {
+                "title": "Flow Cell Composition of Known/Unknown Indices"
+            },
+        },
+        (
+            "Predicted clusters / produced clusters: {}%".format(
+                str(round(fraction, 1))
+            )
+        ),
+    )
 
 
 @app.callback(
-    [dep.Output('run_select', 'value'),
-     dep.Output('error', 'displayed')],
-    [dep.Input('bcl2fastq_url', 'pathname')]
+    [dep.Output("run_select", "value"), dep.Output("error", "displayed")],
+    [dep.Input("bcl2fastq_url", "pathname")],
 )
 def change_url(pathname):
     """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
@@ -215,11 +222,13 @@ def change_url(pathname):
 
 
 @app.callback(
-    [dep.Output('known_index_bar', 'figure'),
-     dep.Output('unknown_index_bar', 'figure'),
-     dep.Output('known_unknown_pie', 'figure'),
-     dep.Output('known_fraction', 'value')],
-    [dep.Input('run_select', 'value')]
+    [
+        dep.Output("known_index_bar", "figure"),
+        dep.Output("unknown_index_bar", "figure"),
+        dep.Output("known_unknown_pie", "figure"),
+        dep.Output("known_fraction", "value"),
+    ],
+    [dep.Input("run_select", "value")],
 )
 def update_layout(run_alias):
     """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
@@ -230,33 +239,37 @@ def update_layout(run_alias):
             and update_pie_chart's fraction value
     """
 
-    run = index[index['Run'] == run_alias]
-    run = run[run['ReadNumber'] == 1]
-    run = run[~run['SampleID'].isna()]
-    run = run.drop_duplicates(['SampleID', 'LaneNumber'])
-    run['library'] = run['SampleID'].str.extract(
-        'SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_'
+    run = index[index["Run"] == run_alias]
+    run = run[run["ReadNumber"] == 1]
+    run = run[~run["SampleID"].isna()]
+    run = run.drop_duplicates(["SampleID", "LaneNumber"])
+    run["library"] = run["SampleID"].str.extract(
+        r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
     )
-    run['index'] = run['Index1'].str.cat(
-        run['Index2'].fillna(''), sep=' '
-    )
+    run["index"] = run["Index1"].str.cat(run["Index2"].fillna(""), sep=" ")
 
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
-    pruned['index'] = pruned['Index1'].str.cat(
-        pruned['Index2'].fillna(''), sep=' '
+    pruned["index"] = pruned["Index1"].str.cat(
+        pruned["Index2"].fillna(""), sep=" "
     )
-    pruned = pruned.sort_values('Count', ascending=False)
+    pruned = pruned.sort_values("Count", ascending=False)
     pruned = pruned.head(30)
 
     total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
-        run_alias, index)
+        run_alias, index
+    )
 
     pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
 
-    return create_known_index_bar(run), create_unknown_index_bar(pruned), pie_data, textarea_fraction
+    return (
+        create_known_index_bar(run),
+        create_unknown_index_bar(pruned),
+        pie_data,
+        textarea_fraction,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run_server(debug=True)
