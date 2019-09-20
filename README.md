@@ -41,8 +41,11 @@ Consistent PEP8 compliant formatting can be ensured by enabling pre-commit
 git hook.
 
     ```
+    # Activate your preferred Dashi Python environment. If using Conda
+    source activate your_dashi_conda_environment
+
     pip install pre-commit
-    
+
     #While in the root of Dashi
     pre-commit install
     ```
