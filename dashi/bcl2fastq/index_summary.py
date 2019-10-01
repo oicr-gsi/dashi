@@ -1,19 +1,21 @@
-import gsiqcetl.bcl2fastq.parse
+import gsiqcetl.bcl2fastq.cache
 import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
-import pandas
 
-index = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES, "./data/bcl2fastq_cache.hd5"
+
+index = gsiqcetl.bcl2fastq.cache.load_known_samples_cache(
+    "v1", "./data/bcl2fastq_known_samples_cache.hd5"
 )
+index_col = gsiqcetl.bcl2fastq.cache.get_samples_column_names()
 
-unknown = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN, "./data/bcl2fastq_cache.hd5"
+unknown = gsiqcetl.bcl2fastq.cache.load_unknown_index_cache(
+    "v1", "./data/bcl2fastq_unknown_index_cache.hd5"
 )
+un_col = gsiqcetl.bcl2fastq.cache.get_unknown_index_column_names()
 
-all_runs = index["Run"].sort_values(ascending=False).unique()
+all_runs = index[index_col.Run].sort_values(ascending=False).unique()
 """ Sample_run_hidden holds json split format of "Known"
         columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
                  "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
@@ -114,7 +116,7 @@ def create_known_index_bar(run):
             {
                 "x": list(d["library"].unique()),
                 # One library can be run on multiple lanes. Sum them together.
-                "y": [d["SampleNumberReads"].sum()],
+                "y": [d[index_col.ReadCount].sum()],
                 "type": "bar",
                 "name": inx[0],
                 "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
@@ -141,11 +143,11 @@ def create_unknown_index_bar(pruned):
               """
 
     data_unknown = []
-    for lane, d in pruned.groupby("LaneNumber"):
+    for lane, d in pruned.groupby(un_col.LaneNumber):
         data_unknown.append(
             {
                 "x": list(d["index"]),
-                "y": list(d["Count"]),
+                "y": list(d[un_col.Count]),
                 "type": "bar",
                 "name": lane,
             }
@@ -171,8 +173,8 @@ def create_pie_chart(run, pruned, total_clusters):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run["SampleNumberReads"].sum()
-    pruned_count = pruned["Count"].sum()
+    known_count = run[index_col.ReadCount].sum()
+    pruned_count = pruned[un_col.Count].sum()
     fraction = (known_count + pruned_count) / total_clusters * 100
     return (
         {
@@ -239,22 +241,24 @@ def update_layout(run_alias):
             and update_pie_chart's fraction value
     """
 
-    run = index[index["Run"] == run_alias]
-    run = run[run["ReadNumber"] == 1]
-    run = run[~run["SampleID"].isna()]
-    run = run.drop_duplicates(["SampleID", "LaneNumber"])
-    run["library"] = run["SampleID"].str.extract(
+    run = index[index[index_col.Run] == run_alias]
+    run = run[run[index_col.ReadNumber] == 1]
+    run = run[~run[index_col.SampleID].isna()]
+    run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
+    run["library"] = run[index_col.SampleID].str.extract(
         r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
     )
-    run["index"] = run["Index1"].str.cat(run["Index2"].fillna(""), sep=" ")
+    run["index"] = run[index_col.Index1].str.cat(
+        run[index_col.Index2].fillna(""), sep=" "
+    )
 
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
-    pruned["index"] = pruned["Index1"].str.cat(
-        pruned["Index2"].fillna(""), sep=" "
+    pruned["index"] = pruned[un_col.Index1].str.cat(
+        pruned[un_col.Index2].fillna(""), sep=" "
     )
-    pruned = pruned.sort_values("Count", ascending=False)
+    pruned = pruned.sort_values(un_col.Count, ascending=False)
     pruned = pruned.head(30)
 
     total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
