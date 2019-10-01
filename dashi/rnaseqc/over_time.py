@@ -12,72 +12,80 @@ import plotly.subplots
 import plotly.graph_objs
 import sd_material_ui
 
-# noinspection PyTypeChecker
-RNA_DF: pandas.DataFrame = pandas.read_hdf("./data/rnaseqqc_cache.hd5")
+import gsiqcetl.rnaseqqc.cache
+import gsiqcetl.pinery.sampleprovenance.cache
+
+RNA_DF = gsiqcetl.rnaseqqc.cache.load_cache("v2", "./data/rnaseqqc_cache.hd5")
+RNA_COL = gsiqcetl.rnaseqqc.cache.get_column_names("v2")
 
 # The Run Name is used to extract the date
 RNA_DF["Run Date"] = (
-    RNA_DF["Sequencer Run Name"].dropna().apply(lambda x: x.split("_")[0])
+    RNA_DF[RNA_COL.SequencerRunName].dropna().apply(lambda x: x.split("_")[0])
 )
 # Some runs do not have the proper format and will be excluded
 RNA_DF = RNA_DF[RNA_DF["Run Date"].str.isnumeric()]
 RNA_DF["Run Date"] = pandas.to_datetime(RNA_DF["Run Date"], yearfirst=True)
 
 RNA_DF["Proportion Aligned Bases"] = (
-    RNA_DF["Passed Filter Aligned Bases"] / RNA_DF["Passed Filter Bases"]
+    RNA_DF[RNA_COL.PassedFilterAlignedBases] / RNA_DF[RNA_COL.PassedFilterBases]
 )
 
 # List projects for which RNA-Seq studies have been done
-ALL_PROJECTS = RNA_DF["Study Title"].sort_values().unique()
+ALL_PROJECTS = RNA_DF[RNA_COL.StudyTitle].sort_values().unique()
 
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
-PINERY: pandas.DataFrame = pandas.read_hdf(
-    "./data/pinery_samples_provenance_cache.hd5"
+PINERY: pandas.DataFrame = gsiqcetl.pinery.sampleprovenance.cache.load_cache(
+    "v1", "./data/pinery_samples_provenance_cache.hd5"
 )
+PINERY_COL = gsiqcetl.pinery.sampleprovenance.cache.get_column_names("v1")
 
 PINERY = PINERY[
     [
-        "sampleName",
-        "sequencerRunName",
-        "laneNumber",
-        "geo_prep_kit",
-        "geo_library_source_template_type",
-        "geo_tissue_origin",
-        "geo_tissue_type",
-        "geo_tissue_preparation",
+        PINERY_COL.SampleName,
+        PINERY_COL.SequencerRunName,
+        PINERY_COL.LaneNumber,
+        PINERY_COL.PrepKit,
+        PINERY_COL.LibrarySourceTemplateType,
+        PINERY_COL.TissueOrigin,
+        PINERY_COL.TissueType,
+        PINERY_COL.TissuePreparation,
     ]
 ]
 
 RNA_DF = RNA_DF.merge(
     PINERY,
     how="left",
-    left_on=["Sample Name", "Sequencer Run Name", "Lane Number"],
-    right_on=["sampleName", "sequencerRunName", "laneNumber"],
+    left_on=[RNA_COL.SampleName, RNA_COL.SequencerRunName, RNA_COL.LaneNumber],
+    right_on=[
+        PINERY_COL.SampleName,
+        PINERY_COL.SequencerRunName,
+        PINERY_COL.LaneNumber,
+    ],
 )
 
 # NaN kits need to be changed to a str. Use the existing Unspecified
-RNA_DF = RNA_DF.fillna({"geo_prep_kit": "Unspecified"})
-RNA_DF = RNA_DF.fillna({"geo_library_source_template_type": "Unknown"})
+RNA_DF = RNA_DF.fillna({PINERY_COL.PrepKit: "Unspecified"})
+RNA_DF = RNA_DF.fillna({PINERY_COL.LibrarySourceTemplateType: "Unknown"})
 # NaN Tissue Origin is set to `nn`, which is used by MISO for unknown
-RNA_DF = RNA_DF.fillna({"geo_tissue_origin": "nn"})
+RNA_DF = RNA_DF.fillna({PINERY_COL.TissueOrigin: "nn"})
 # NaN Tissue Type is set to `n`, which is used by MISO for unknown
-RNA_DF = RNA_DF.fillna({"geo_tissue_type": "n"})
-RNA_DF = RNA_DF.fillna({"geo_tissue_preparation": "Unknown"})
+RNA_DF = RNA_DF.fillna({PINERY_COL.TissueType: "n"})
+RNA_DF = RNA_DF.fillna({PINERY_COL.TissuePreparation: "Unknown"})
 
 # Kits used for RNA-Seq experiments
-ALL_KITS = RNA_DF["geo_prep_kit"].sort_values().unique()
+ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
 
 # Which metrics can be plotted
 METRICS_TO_GRAPH = (
-    "Proportion Usable Bases",
-    "rRNA Contamination (%reads aligned)",
-    "Proportion Correct Strand Reads",
+    RNA_COL.ProportionUsableBases,
+    RNA_COL.rRNAContaminationreadsaligned,
+    RNA_COL.ProportionCorrectStrandReads,
     "Proportion Aligned Bases",
-    "Proportion Coding Bases",
-    "Proportion Intronic Bases",
-    "Proportion Intergenic Bases",
-    "Proportion UTR Bases",
+    RNA_COL.ProportionCodingBases,
+    RNA_COL.ProportionIntronicBases,
+    RNA_COL.ProportionIntergenicBases,
+    RNA_COL.ProportionUTRBases,
 )
 
 # The colours that are used in the graphs
@@ -123,25 +131,25 @@ SHAPES = [
 
 # Which columns will the data table always have
 DEFAULT_TABLE_COLUMN = [
-    {"name": "Library", "id": "Sample Name"},
-    {"name": "Project", "id": "Study Title"},
-    {"name": "Run", "id": "Sequencer Run Name"},
-    {"name": "Lane", "id": "Lane Number"},
-    {"name": "Kit", "id": "geo_prep_kit"},
-    {"name": "Library Design", "id": "geo_library_source_template_type"},
-    {"name": "Tissue Origin", "id": "geo_tissue_origin"},
-    {"name": "Tissue Type", "id": "geo_tissue_type"},
-    {"name": "Tissue Material", "id": "geo_tissue_preparation"},
+    {"name": "Library", "id": RNA_COL.SampleName},
+    {"name": "Project", "id": RNA_COL.StudyTitle},
+    {"name": "Run", "id": RNA_COL.SequencerRunName},
+    {"name": "Lane", "id": RNA_COL.LaneNumber},
+    {"name": "Kit", "id": PINERY_COL.PrepKit},
+    {"name": "Library Design", "id": PINERY_COL.LibrarySourceTemplateType},
+    {"name": "Tissue Origin", "id": PINERY_COL.TissueOrigin},
+    {"name": "Tissue Type", "id": PINERY_COL.TissueType},
+    {"name": "Tissue Material", "id": PINERY_COL.TissuePreparation},
 ]
 
 # Columns on which shape and colour can be set
 SHAPE_COLOUR_COLUMN = [
-    {"name": "Project", "id": "Study Title"},
-    {"name": "Kit", "id": "geo_prep_kit"},
-    {"name": "Library Design", "id": "geo_library_source_template_type"},
-    {"name": "Tissue Origin", "id": "geo_tissue_origin"},
-    {"name": "Tissue Type", "id": "geo_tissue_type"},
-    {"name": "Tissue Material", "id": "geo_tissue_preparation"},
+    {"name": "Project", "id": RNA_COL.StudyTitle},
+    {"name": "Kit", "id": PINERY_COL.PrepKit},
+    {"name": "Library Design", "id": PINERY_COL.LibrarySourceTemplateType},
+    {"name": "Tissue Origin", "id": PINERY_COL.TissueOrigin},
+    {"name": "Tissue Type", "id": PINERY_COL.TissueType},
+    {"name": "Tissue Material", "id": PINERY_COL.TissuePreparation},
 ]
 
 # A convenience container that links how a metric should be graphed
@@ -222,7 +230,7 @@ def create_plot_dict(
             "type": "scattergl",
             "mode": "markers",
             "name": color_name + "<br>" + shape_name,
-            "text": list(data["Sample Name"]),
+            "text": list(data[RNA_COL.SampleName]),
             "legendgroup": color_name,
             "showlegend": show_legend,
             "marker": {
@@ -411,7 +419,7 @@ layout = html.Div(
                                                         }
                                                         for x in SHAPE_COLOUR_COLUMN
                                                     ],
-                                                    value="geo_prep_kit",
+                                                    value=PINERY_COL.PrepKit,
                                                 ),
                                             ],
                                             style={
@@ -549,8 +557,8 @@ def populate_data_table(
             "Drawer opening does not require recalculation"
         )
 
-    to_table = RNA_DF[RNA_DF["Study Title"].isin(projects)]
-    to_table = to_table[to_table["geo_prep_kit"].isin(kits)]
+    to_table = RNA_DF[RNA_DF[RNA_COL.StudyTitle].isin(projects)]
+    to_table = to_table[to_table[PINERY_COL.PrepKit].isin(kits)]
     to_table = to_table[to_table["Run Date"] >= pandas.to_datetime(start_date)]
     to_table = to_table[to_table["Run Date"] <= pandas.to_datetime(end_date)]
 
