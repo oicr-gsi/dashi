@@ -4,14 +4,17 @@ import dash_core_components as dcc
 import dash.dependencies as dep
 import plotly.graph_objs as go
 
-from app import app
+import gsiqcetl.bamqc.cache
 
-bamqc = pd.read_hdf("./data/bamqc_cache.hd5", "bamqc")
-bamqc["total bases"] = bamqc["total reads"] * bamqc["average read length"]
-bamqc["run date"] = pd.to_datetime(bamqc["run name"].str[0:6], format="%y%m%d")
+
+bamqc = gsiqcetl.bamqc.cache.load_cache("v1", "./data/bamqc_cache.hd5")
+col = gsiqcetl.bamqc.cache.get_column_names("v1")
+
+bamqc["total bases"] = bamqc[col.TotalReads] * bamqc[col.AverageReadLength]
+bamqc["run date"] = pd.to_datetime(bamqc[col.Run].str[0:6], format="%y%m%d")
 
 bamqc_lib = [
-    {"label": x, "value": x} for x in bamqc["sequencing type"].unique()
+    {"label": x, "value": x} for x in bamqc[col.SequencingType].unique()
 ]
 bamqc_lib.append({"label": "All", "value": "All"})
 
@@ -24,12 +27,20 @@ layout = html.Div(
     ]
 )
 
+try:
+    from app import app
+except ModuleNotFoundError:
+    import dash
+
+    app = dash.Dash(__name__)
+    app.layout = layout
+
 
 def filter_df(seq_type):
     if seq_type == "All":
         return bamqc
     else:
-        return bamqc.loc[bamqc["sequencing type"] == seq_type]
+        return bamqc.loc[bamqc[col.SequencingType] == seq_type]
 
 
 @app.callback(dep.Output("month_plot", "figure"), [dep.Input("lib", "value")])
@@ -75,3 +86,7 @@ def update_cumulative(seq_type):
             title="Cumulative GB per month", yaxis=dict(title="Gigabases")
         ),
     }
+
+
+if __name__ == "__main__":
+    app.run_server(debug=True)
