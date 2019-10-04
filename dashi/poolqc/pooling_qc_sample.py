@@ -1,5 +1,4 @@
-import gsiqcetl.bcl2fastq.parse
-import gsiqcetl.bcl2fastq.utility
+# TODO: Replace string column names with ETL Column class constants
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
@@ -11,29 +10,35 @@ import urllib
 from datetime import datetime
 import sd_material_ui as sd
 
-rnaseq = pandas.read_hdf("./data/rnaseqqc_cache.hd5")
+import gsiqcetl.load
+
+rnaseq = gsiqcetl.load.rnaseqqc("v1", "./data/rnaseqqc_cache.hd5")
+rnaseq_col = gsiqcetl.load.rnaseqqc_columns("v1")
 # Column name is being renamed to allow for a seamless merge on column 'library'
-rnaseq.rename(columns={"Sample Name": "library"}, inplace=True)
+rnaseq.rename(columns={rnaseq_col.SampleName: "library"}, inplace=True)
 
-bamqc = pandas.read_hdf("./data/bamqc_cache.hd5")
+bamqc = gsiqcetl.load.bamqc("v1", "./data/bamqc_cache.hd5")
+bamcq_col = gsiqcetl.load.bamqc_columns("v1")
 
-bcl2fastq = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES, "./data/bcl2fastq_cache.hd5"
+bcl2fastq = gsiqcetl.load.bcl2fastq_known_samples(
+    "v1", "./data/bcl2fastq_known_samples_cache.hd5"
 )
+bcl2fastq_col = gsiqcetl.load.bcl2fastq_known_samples_columns("v1")
 
 # Column is being renamed for clarification
-bcl2fastq.rename(columns={"SampleNumberReads": "Clusters"}, inplace=True)
-bcl2fastq["library"] = bcl2fastq["SampleID"].str.extract(
+bcl2fastq.rename(columns={bcl2fastq_col.ReadCount: "Clusters"}, inplace=True)
+bcl2fastq["library"] = bcl2fastq[bcl2fastq_col.SampleName].str.extract(
     r"SWID_\d+_([A-Z0-9]+_\d+_[a-zA-Z]{2}_._[A-Z]{2}_\d+_[A-Z]{2})_"
 )
 
 df = bcl2fastq.merge(rnaseq, on="library", how="outer")
 df = df.merge(bamqc, on="library", how="outer")
-df = df.drop(columns=["Sequencer Run Name", "Lane Number"])
 df["Sample Type"] = df["library"].str[-2:]
-df["% Yield over Q30"] = df["ReadYieldQ30"] / df["ReadYield"] * 100
+df["% Yield over Q30"] = (
+    df[bcl2fastq_col.ReadYieldQ30] / df[bcl2fastq_col.ReadYield] * 100
+)
 
-runs = df["Run"].dropna().sort_values(ascending=False).unique()
+runs = df[bcl2fastq_col.Run].dropna().sort_values(ascending=False).unique()
 
 layout = html.Div(
     children=[
