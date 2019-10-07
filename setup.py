@@ -16,6 +16,6 @@ setup(
         "tables==3.5.1",
         "numpy==1.15.4",
         "sd-material-ui==3.1.2",
-        "gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@v0.4.0",
+        "gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@v0.5.0",
     ],
 )
