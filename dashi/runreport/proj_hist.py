@@ -7,25 +7,30 @@ from dash.dependencies import Input, Output
 import plotly.figure_factory as ff
 
 import gsiqcetl.load
+from gsiqcetl.runreport.constants import CacheSchema
 
 idx = pandas.IndexSlice
 
-rr = gsiqcetl.load.runreport("v1", "./data/run_report_cache.hd5")
-rr_col = gsiqcetl.load.runreport_columns("v1")
+rr = gsiqcetl.load.runreport(CacheSchema.v1)
+rr_col = gsiqcetl.load.runreport_columns(CacheSchema.v1)
 
-rr["Project"] = rr[rr_col.Library].apply(lambda x: x.split("_", 1)[0])
-rr.set_index(["Project", rr_col.Run], inplace=True)
-rr.sort_values([rr_col.Run, "Project"], ascending=False, inplace=True)
+COL_PROJECT = "Project"
+
+rr[COL_PROJECT] = rr[rr_col.Library].apply(lambda x: x.split("_", 1)[0])
+rr.set_index([COL_PROJECT, rr_col.Run], inplace=True)
+rr.sort_values([rr_col.Run, COL_PROJECT], ascending=False, inplace=True)
 
 # Count how many runs per project
-runs_per_proj_count = rr.reset_index().groupby("Project")[rr_col.Run].nunique()
+runs_per_proj_count = (
+    rr.reset_index().groupby(COL_PROJECT)[rr_col.Run].nunique()
+)
 proj_with_multi_run = runs_per_proj_count[runs_per_proj_count > 1].index
 # Only display project that have more than one run
 rr = rr.loc[idx[proj_with_multi_run, :], :]
 
-rr = rr.groupby(["Project", rr_col.Run]).filter(lambda x: len(x) > 1)
+rr = rr.groupby([COL_PROJECT, rr_col.Run]).filter(lambda x: len(x) > 1)
 
-proj_list = list(rr.index.get_level_values("Project").unique())
+proj_list = list(rr.index.get_level_values(COL_PROJECT).unique())
 proj_top = proj_list[0]
 proj_list.sort()
 

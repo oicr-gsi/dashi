@@ -12,21 +12,28 @@ import plotly.subplots
 import plotly.graph_objs
 import sd_material_ui
 
-import gsiqcetl.rnaseqqc.cache
-import gsiqcetl.pinery.sampleprovenance.cache
+import gsiqcetl.load
+from gsiqcetl.rnaseqqc.constants import CacheSchema
+from gsiqcetl.pinery.sampleprovenance.constants import (
+    CacheSchema as SampleProvenanceCacheSchema,
+)
 
-RNA_DF = gsiqcetl.rnaseqqc.cache.load_cache("v2", "./data/rnaseqqc_cache.hd5")
-RNA_COL = gsiqcetl.rnaseqqc.cache.get_column_names("v2")
+
+RNA_DF = gsiqcetl.load.rnaseqqc(CacheSchema.v2)
+RNA_COL = gsiqcetl.load.rnaseqqc_columns(CacheSchema.v2)
+
+COL_RUN_DATE = "Run Date"
+COL_PROP_ALIGNED_BASES = "Proportion Aligned Bases"
 
 # The Run Name is used to extract the date
-RNA_DF["Run Date"] = (
+RNA_DF[COL_RUN_DATE] = (
     RNA_DF[RNA_COL.SequencerRunName].dropna().apply(lambda x: x.split("_")[0])
 )
 # Some runs do not have the proper format and will be excluded
-RNA_DF = RNA_DF[RNA_DF["Run Date"].str.isnumeric()]
-RNA_DF["Run Date"] = pandas.to_datetime(RNA_DF["Run Date"], yearfirst=True)
+RNA_DF = RNA_DF[RNA_DF[COL_RUN_DATE].str.isnumeric()]
+RNA_DF[COL_RUN_DATE] = pandas.to_datetime(RNA_DF[COL_RUN_DATE], yearfirst=True)
 
-RNA_DF["Proportion Aligned Bases"] = (
+RNA_DF[COL_PROP_ALIGNED_BASES] = (
     RNA_DF[RNA_COL.PassedFilterAlignedBases] / RNA_DF[RNA_COL.PassedFilterBases]
 )
 
@@ -35,10 +42,12 @@ ALL_PROJECTS = RNA_DF[RNA_COL.StudyTitle].sort_values().unique()
 
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
-PINERY: pandas.DataFrame = gsiqcetl.pinery.sampleprovenance.cache.load_cache(
-    "v1", "./data/pinery_samples_provenance_cache.hd5"
+PINERY: pandas.DataFrame = gsiqcetl.load.pinery_sample_provenance(
+    SampleProvenanceCacheSchema.v1
 )
-PINERY_COL = gsiqcetl.pinery.sampleprovenance.cache.get_column_names("v1")
+PINERY_COL = gsiqcetl.load.pinery_sample_provenance_columns(
+    SampleProvenanceCacheSchema.v1
+)
 
 PINERY = PINERY[
     [
@@ -81,7 +90,7 @@ METRICS_TO_GRAPH = (
     RNA_COL.ProportionUsableBases,
     RNA_COL.rRNAContaminationreadsaligned,
     RNA_COL.ProportionCorrectStrandReads,
-    "Proportion Aligned Bases",
+    COL_PROP_ALIGNED_BASES,
     RNA_COL.ProportionCodingBases,
     RNA_COL.ProportionIntronicBases,
     RNA_COL.ProportionIntergenicBases,
@@ -215,7 +224,7 @@ def create_plot_dict(
     if order:
         df["x_axis"] = list(range(0, len(df)))
     else:
-        df["x_axis"] = list(df["Run Date"])
+        df["x_axis"] = list(df[COL_RUN_DATE])
 
     for g in df.groupby([color.name, shape.name]):
         color_name = g[0][0]
@@ -367,10 +376,10 @@ layout = html.Div(
                                 dcc.DatePickerRange(
                                     id="date_picker",
                                     display_format="YYYY-MM-DD",
-                                    min_date_allowed=min(RNA_DF["Run Date"]),
-                                    max_date_allowed=max(RNA_DF["Run Date"]),
-                                    start_date=min(RNA_DF["Run Date"]),
-                                    end_date=max(RNA_DF["Run Date"]),
+                                    min_date_allowed=min(RNA_DF[COL_RUN_DATE]),
+                                    max_date_allowed=max(RNA_DF[COL_RUN_DATE]),
+                                    start_date=min(RNA_DF[COL_RUN_DATE]),
+                                    end_date=max(RNA_DF[COL_RUN_DATE]),
                                 ),
                                 html.Br(),
                                 html.Br(),
@@ -559,8 +568,10 @@ def populate_data_table(
 
     to_table = RNA_DF[RNA_DF[RNA_COL.StudyTitle].isin(projects)]
     to_table = to_table[to_table[PINERY_COL.PrepKit].isin(kits)]
-    to_table = to_table[to_table["Run Date"] >= pandas.to_datetime(start_date)]
-    to_table = to_table[to_table["Run Date"] <= pandas.to_datetime(end_date)]
+    to_table = to_table[
+        to_table[COL_RUN_DATE] >= pandas.to_datetime(start_date)
+    ]
+    to_table = to_table[to_table[COL_RUN_DATE] <= pandas.to_datetime(end_date)]
 
     return to_table.to_dict("records")
 

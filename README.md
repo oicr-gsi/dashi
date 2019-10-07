@@ -8,6 +8,11 @@ Interactive visualization of OICR Genomics QC data
 
 `pip install git+https://github.com/oicr-gsi/dashi`
 
+Use the environmental variable to specify where the gsi-qc-etl cache folder
+resides:
+
+`export GSI_ETL_CACHE_DIR=/path/to/etl/cale/folder`
+
 For development, it is more convenient to run
 
 `pip install -e git+https://github.com/oicr-gsi/dashi#egg=dashi --src DICT`

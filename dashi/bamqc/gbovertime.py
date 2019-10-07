@@ -4,14 +4,18 @@ import dash_core_components as dcc
 import dash.dependencies as dep
 import plotly.graph_objs as go
 
-import gsiqcetl.bamqc.cache
+import gsiqcetl.load
+from gsiqcetl.bamqc.constants import CacheSchema
 
 
-bamqc = gsiqcetl.bamqc.cache.load_cache("v1", "./data/bamqc_cache.hd5")
-col = gsiqcetl.bamqc.cache.get_column_names("v1")
+bamqc = gsiqcetl.load.bamqc(CacheSchema.v1)
+col = gsiqcetl.load.bamqc_columns(CacheSchema.v1)
 
-bamqc["total bases"] = bamqc[col.TotalReads] * bamqc[col.AverageReadLength]
-bamqc["run date"] = pd.to_datetime(bamqc[col.Run].str[0:6], format="%y%m%d")
+COL_TOTAL_BASES = "total bases"
+COL_RUN_DATE = "run date"
+
+bamqc[COL_TOTAL_BASES] = bamqc[col.TotalReads] * bamqc[col.AverageReadLength]
+bamqc[COL_RUN_DATE] = pd.to_datetime(bamqc[col.Run].str[0:6], format="%y%m%d")
 
 bamqc_lib = [
     {"label": x, "value": x} for x in bamqc[col.SequencingType].unique()
@@ -47,8 +51,8 @@ def filter_df(seq_type):
 def update_per_month(seq_type):
     subset = filter_df(seq_type)
 
-    month_sum = subset.resample("MS", on="run date").sum()
-    trace = [go.Bar(x=month_sum.index, y=month_sum["total bases"] / 1e9)]
+    month_sum = subset.resample("MS", on=COL_RUN_DATE).sum()
+    trace = [go.Bar(x=month_sum.index, y=month_sum[COL_TOTAL_BASES] / 1e9)]
     return {
         "data": trace,
         "layout": go.Layout(
@@ -60,8 +64,8 @@ def update_per_month(seq_type):
 @app.callback(dep.Output("3month_plot", "figure"), [dep.Input("lib", "value")])
 def update_per_3month(seq_type):
     subset = filter_df(seq_type)
-    month_sum = subset.resample("3MS", on="run date").sum()
-    trace = [go.Bar(x=month_sum.index, y=month_sum["total bases"] / 1e9)]
+    month_sum = subset.resample("3MS", on=COL_RUN_DATE).sum()
+    trace = [go.Bar(x=month_sum.index, y=month_sum[COL_TOTAL_BASES] / 1e9)]
     return {
         "data": trace,
         "layout": go.Layout(
@@ -73,11 +77,11 @@ def update_per_3month(seq_type):
 @app.callback(dep.Output("cum_plot", "figure"), [dep.Input("lib", "value")])
 def update_cumulative(seq_type):
     subset = filter_df(seq_type)
-    month_sum = subset.resample("MS", on="run date").sum()
+    month_sum = subset.resample("MS", on=COL_RUN_DATE).sum()
     month_cumsum = month_sum.cumsum()
 
     trace = [
-        go.Scatter(x=month_cumsum.index, y=month_cumsum["total bases"] / 1e9)
+        go.Scatter(x=month_cumsum.index, y=month_cumsum[COL_TOTAL_BASES] / 1e9)
     ]
 
     return {

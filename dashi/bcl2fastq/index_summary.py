@@ -1,51 +1,49 @@
-import gsiqcetl.bcl2fastq.cache
-import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 
+import gsiqcetl.load
+from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
+import gsiqcetl.bcl2fastq.utility
 
-index = gsiqcetl.bcl2fastq.cache.load_known_samples_cache(
-    "v1", "./data/bcl2fastq_known_samples_cache.hd5"
-)
-index_col = gsiqcetl.bcl2fastq.cache.get_samples_column_names()
 
-unknown = gsiqcetl.bcl2fastq.cache.load_unknown_index_cache(
-    "v1", "./data/bcl2fastq_unknown_index_cache.hd5"
-)
-un_col = gsiqcetl.bcl2fastq.cache.get_unknown_index_column_names()
+index = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
+index_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
+
+unknown = gsiqcetl.load.bcl2fastq_unknown_index(UnknownIndexSchema.v1)
+un_col = gsiqcetl.load.bcl2fastq_unknown_index_columns(UnknownIndexSchema.v1)
 
 all_runs = index[index_col.Run].sort_values(ascending=False).unique()
-""" Sample_run_hidden holds json split format of "Known"
-        columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
-                 "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
-                 "SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+
+COL_LIBRARY = "library"
+COL_INDEX = "index"
+
+""" Sample_run_hidden holds json split format of "Known" columns:
+"FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
+"LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
+"SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+
+ pruned_unknown_hidden holds json split format of "unknown" columns:
+ "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
+ """
+
+"""Within the main layout division there are 4 groups: 1. the section with the
+100% bar graph 2.  Nested subdivision of: a) pie graph at 24% b) bar graph at
+76% 3. Sample Run hidden 4. Pruned  Unknown Hidden Note: span can be used for
+inline setting
 
 
-     pruned_unknown_hidden holds json split format of "unknown"
-        columns:  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
-
-         """
-
-"""Within the main layout division there are 4 groups:
-          1. the section with the 100% bar graph
-          2.  Nested subdivision of:
-                  a) pie graph at 24%
-                  b) bar graph at 76%
-          3. Sample Run hidden
-          4. Pruned  Unknown Hidden
-            Note: span can be used for inline setting
-
-
-          Dropdown option's label set to all_runs(combination of unknown and known)
-          Dropdown multi set to false (default) - only single select possible
-                -  multiple select gives error due to inconsistent values
-          """
+Dropdown option's label set to all_runs(combination of unknown and
+known) Dropdown multi set to false (default) - only single select
+possible -  multiple select gives error due to inconsistent values """
 layout = html.Div(
     children=[
         dcc.ConfirmDialog(
             id="error",
-            message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.',
+            message=(
+                'You have input an incorrect run. Click either "Ok" or '
+                '"Cancel" to return to the most recent run.'
+            ),
         ),
         dcc.Dropdown(
             id="run_select",
@@ -111,10 +109,10 @@ def create_known_index_bar(run):
     data_known = []
     #   Multiple libraries can use the same index, data must be grouped by both index and libraries
     #   to prevent duplicate counts
-    for inx, d in run.groupby(["index", "library"]):
+    for inx, d in run.groupby([COL_INDEX, COL_LIBRARY]):
         data_known.append(
             {
-                "x": list(d["library"].unique()),
+                "x": list(d[COL_LIBRARY].unique()),
                 # One library can be run on multiple lanes. Sum them together.
                 "y": [d[index_col.ReadCount].sum()],
                 "type": "bar",
@@ -127,7 +125,7 @@ def create_known_index_bar(run):
         "layout": {
             "barmode": "stack",
             "title": "Sample Indices",
-            "xaxis": {"title": "Library", "automargin": True},
+            "xaxis": {"title": COL_LIBRARY, "automargin": True},
             "yaxis": {"title": "Clusters"},
         },
     }
@@ -146,7 +144,7 @@ def create_unknown_index_bar(pruned):
     for lane, d in pruned.groupby(un_col.LaneNumber):
         data_unknown.append(
             {
-                "x": list(d["index"]),
+                "x": list(d[COL_INDEX]),
                 "y": list(d[un_col.Count]),
                 "type": "bar",
                 "name": lane,
@@ -157,7 +155,7 @@ def create_unknown_index_bar(pruned):
         "layout": {
             "barmode": "stack",
             "title": "Unknown Indices",
-            "xaxis": {"title": "Index"},
+            "xaxis": {"title": COL_INDEX},
             "yaxis": {"title": "Clusters"},
         },
     }
@@ -245,17 +243,17 @@ def update_layout(run_alias):
     run = run[run[index_col.ReadNumber] == 1]
     run = run[~run[index_col.SampleID].isna()]
     run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
-    run["library"] = run[index_col.SampleID].str.extract(
+    run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
         r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
     )
-    run["index"] = run[index_col.Index1].str.cat(
+    run[COL_INDEX] = run[index_col.Index1].str.cat(
         run[index_col.Index2].fillna(""), sep=" "
     )
 
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
-    pruned["index"] = pruned[un_col.Index1].str.cat(
+    pruned[COL_INDEX] = pruned[un_col.Index1].str.cat(
         pruned[un_col.Index2].fillna(""), sep=" "
     )
     pruned = pruned.sort_values(un_col.Count, ascending=False)

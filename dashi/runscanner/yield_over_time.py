@@ -6,14 +6,18 @@ import pandas
 import plotly.graph_objs as go
 
 import gsiqcetl.load
+from gsiqcetl.runscanner.illumina.constants import FlowCellCacheSchema
+from gsiqcetl.pinery.instruments.constants import CacheSchema
 
 
-rs_flow = gsiqcetl.load.runscanner_illumina_flowcell(
-    "v1", "./data/runscanner_illumina_flow_cell_cache.hd5"
+rs_flow = gsiqcetl.load.runscanner_illumina_flowcell(FlowCellCacheSchema.v1)
+rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns(
+    FlowCellCacheSchema.v1
 )
-rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns("v1")
 
-rs_flow["Total Yield (GB)"] = rs_flow[
+COL_TOTAL_YIELD = "Total Yield (GB)"
+
+rs_flow[COL_TOTAL_YIELD] = rs_flow[
     [
         rs_flow_col.YieldRead1,
         rs_flow_col.YieldRead2,
@@ -27,14 +31,12 @@ rs_flow = rs_flow[
         rs_flow_col.SequencerName,
         rs_flow_col.StartDate,
         rs_flow_col.HealthType,
-        "Total Yield (GB)",
+        COL_TOTAL_YIELD,
     ]
 ]
 
-inst_raw = gsiqcetl.load.pinery_instruments(
-    "v1", "./data/pinery_instruments_cache.hd5"
-)
-inst_col = gsiqcetl.load.pinery_instruments_columns("v1")
+inst_raw = gsiqcetl.load.pinery_instruments(CacheSchema.v1)
+inst_col = gsiqcetl.load.pinery_instruments_columns(CacheSchema.v1)
 
 inst_model = inst_raw[[inst_col.InstrumentName, inst_col.ModelName]]
 
@@ -117,7 +119,7 @@ def create_bar_sum_fig(df_group_sum, colour_by):
     if colour_by is None:
         return {
             "data": [
-                go.Bar(x=df[rs_flow_col.StartDate], y=df["Total Yield (GB)"])
+                go.Bar(x=df[rs_flow_col.StartDate], y=df[COL_TOTAL_YIELD])
             ],
             "layout": layout,
         }
@@ -126,7 +128,7 @@ def create_bar_sum_fig(df_group_sum, colour_by):
         for name, data in df.groupby(colour_by):
             t = go.Bar(
                 x=list(data[rs_flow_col.StartDate]),
-                y=list(data["Total Yield (GB)"]),
+                y=list(data[COL_TOTAL_YIELD]),
                 name=name,
             )
             traces.append(t)
