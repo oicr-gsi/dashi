@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2019-10-03
 
 ### Changed
-* Updated all modules to work with gsi-qc-etl 0.4.0 (which uses versioned
+* Updated all modules to work with gsi-qc-etl 0.5.0 (which uses versioned
 DataFrames)
 * Columns defined within a module are proper constants
 

@@ -11,7 +11,7 @@ Interactive visualization of OICR Genomics QC data
 Use the environmental variable to specify where the gsi-qc-etl cache folder
 resides:
 
-`export GSI_ETL_CACHE_DIR=/path/to/etl/cale/folder`
+`export GSI_ETL_CACHE_DIR=/path/to/etl/cache/folder`
 
 For development, it is more convenient to run
 
