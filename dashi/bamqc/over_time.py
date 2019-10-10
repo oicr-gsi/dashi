@@ -18,6 +18,8 @@ from gsiqcetl.pinery.sampleprovenance.constants import (
     CacheSchema as SampleProvenanceCacheSchema,
 )
 
+from dashi.plots.shiny_mimic import ShinyMimic
+
 
 RNA_DF = gsiqcetl.load.bamqc(CacheSchema.v1)
 RNA_COL = gsiqcetl.load.bamqc_columns(CacheSchema.v1)
@@ -47,10 +49,6 @@ RNA_DF[FRACTION_MAPPED] = (
 RNA_DF[FRACTION_SECONDARY] = (
     RNA_DF[RNA_COL.NonPrimaryReads] / RNA_DF[RNA_COL.TotalReads]
 )
-
-
-# List projects for which RNA-Seq studies have been done
-ALL_PROJECTS = RNA_DF[PROJECT].sort_values().unique()
 
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
@@ -93,9 +91,6 @@ RNA_DF = RNA_DF.fillna({PINERY_COL.TissueOrigin: "nn"})
 # NaN Tissue Type is set to `n`, which is used by MISO for unknown
 RNA_DF = RNA_DF.fillna({PINERY_COL.TissueType: "n"})
 RNA_DF = RNA_DF.fillna({PINERY_COL.TissuePreparation: "Unknown"})
-
-# Kits used for RNA-Seq experiments
-ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
 
 # Which metrics can be plotted
 METRICS_TO_GRAPH = (
@@ -177,6 +172,14 @@ SHAPE_COLOUR_COLUMN = [
 # The dict key is a value found in the column
 # The dict value is the property (color, shape, etc) assigned to the dict keY
 PlotProperty = collections.namedtuple("PlotProperty", ["name", "properties"])
+
+plot_creator = ShinyMimic(
+    RNA_DF,
+    "bamqc_over_time",
+    METRICS_TO_GRAPH,
+    SHAPE_COLOUR_COLUMN,
+    SHAPE_COLOUR_COLUMN,
+)
 
 
 def assign_consistent_property(values: list, prop: list) -> dict:
@@ -352,107 +355,13 @@ layout = html.Div(
     children=[
         html.Div(
             children=[
-                sd_material_ui.Drawer(
-                    id="project_drawer",
-                    open=False,
-                    docked=False,
-                    width="50%",
-                    children=[
-                        html.Div(
-                            children=[
-                                html.Label("Project:"),
-                                dcc.Dropdown(
-                                    id="project_multi_drop",
-                                    multi=True,
-                                    options=[
-                                        {"label": x, "value": x}
-                                        for x in ALL_PROJECTS
-                                    ],
-                                    value=ALL_PROJECTS,
-                                ),
-                                html.Br(),
-                                html.Label("Kits:"),
-                                dcc.Dropdown(
-                                    id="kits_multi_drop",
-                                    multi=True,
-                                    options=[
-                                        {"label": x, "value": x}
-                                        for x in ALL_KITS
-                                    ],
-                                    value=ALL_KITS,
-                                ),
-                                html.Br(),
-                                html.Label("Dates: "),
-                                dcc.DatePickerRange(
-                                    id="date_picker",
-                                    display_format="YYYY-MM-DD",
-                                    min_date_allowed=min(RNA_DF[COL_RUN_DATE]),
-                                    max_date_allowed=max(RNA_DF[COL_RUN_DATE]),
-                                    start_date=min(RNA_DF[COL_RUN_DATE]),
-                                    end_date=max(RNA_DF[COL_RUN_DATE]),
-                                ),
-                                html.Br(),
-                                html.Br(),
-                                html.Label("Show Graphs:"),
-                                dcc.Dropdown(
-                                    id="graphs_to_plot",
-                                    multi=True,
-                                    options=[
-                                        {"label": x, "value": x}
-                                        for x in METRICS_TO_GRAPH
-                                    ],
-                                    value=METRICS_TO_GRAPH[:4],
-                                ),
-                                html.Br(),
-                                html.Div(
-                                    [
-                                        html.Div(
-                                            [
-                                                html.Label("Colour by:"),
-                                                dcc.Dropdown(
-                                                    id="colour_by",
-                                                    options=[
-                                                        {
-                                                            "label": x["name"],
-                                                            "value": x["id"],
-                                                        }
-                                                        for x in SHAPE_COLOUR_COLUMN
-                                                    ],
-                                                    value=PROJECT,
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "45%",
-                                                "display": "inline-block",
-                                            },
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Label("Shape by:"),
-                                                dcc.Dropdown(
-                                                    id="shape_by",
-                                                    options=[
-                                                        {
-                                                            "label": x["name"],
-                                                            "value": x["id"],
-                                                        }
-                                                        for x in SHAPE_COLOUR_COLUMN
-                                                    ],
-                                                    value=PINERY_COL.PrepKit,
-                                                ),
-                                            ],
-                                            style={
-                                                "width": "45%",
-                                                "display": "inline-block",
-                                                "float": "right",
-                                            },
-                                        ),
-                                    ]
-                                ),
-                            ],
-                            style={"margin": "23px"},
-                        )
-                    ],
+                plot_creator.generate_drawer_layout(
+                    PROJECT,
+                    PINERY_COL.PrepKit,
+                    COL_RUN_DATE,
+                    4,
+                    PROJECT,
+                    PINERY_COL.PrepKit,
                 ),
                 html.Div(
                     [
@@ -539,12 +448,12 @@ def click_update_graph_button(_data, n_clicks):
 
 @app.callback(
     dep.Output("data_table", "data"),
-    [dep.Input("project_drawer", "open")],
+    [dep.Input(plot_creator.id_drawer, "open")],
     [
-        dep.State("project_multi_drop", "value"),
-        dep.State("kits_multi_drop", "value"),
-        dep.State("date_picker", "start_date"),
-        dep.State("date_picker", "end_date"),
+        dep.State(plot_creator.id_multiselect_project, "value"),
+        dep.State(plot_creator.id_multiselect_kit, "value"),
+        dep.State(plot_creator.id_date_picker, "start_date"),
+        dep.State(plot_creator.id_date_picker, "end_date"),
     ],
 )
 def populate_data_table(
@@ -588,9 +497,9 @@ def populate_data_table(
     [dep.Input("update_from_table_button", "n_clicks")],
     [
         dep.State("data_table", "derived_virtual_data"),
-        dep.State("graphs_to_plot", "value"),
-        dep.State("colour_by", "value"),
-        dep.State("shape_by", "value"),
+        dep.State(plot_creator.id_multiselect_plots, "value"),
+        dep.State(plot_creator.id_select_colour, "value"),
+        dep.State(plot_creator.id_select_shape, "value"),
         dep.State("data_table", "sort_by"),
     ],
 )
@@ -637,7 +546,7 @@ def graph_subplot(
 
 
 @app.callback(
-    dep.Output("project_drawer", "open"),
+    dep.Output(plot_creator.id_drawer, "open"),
     [dep.Input("filter_button", "n_clicks")],
 )
 def open_project_drawer(n_clicks: Union[int, None]) -> bool:
