@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="dashi",
-    version="0.2.0",
+    version="0.3.0",
     description="Visualizer for GSI QC data",
     author="Savo Lazic",
     author_email="savo.lazic@oicr.on.ca",
@@ -16,6 +16,6 @@ setup(
         "tables==3.5.1",
         "numpy==1.15.4",
         "sd-material-ui==3.1.2",
-        "gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@master",
+        "gsiqcetl @ git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@v0.5.0",
     ],
 )

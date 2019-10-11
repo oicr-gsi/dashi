@@ -6,28 +6,36 @@ import dash_core_components as dcc
 from dash.dependencies import Input, Output
 import plotly.figure_factory as ff
 
+import gsiqcetl.load
+from gsiqcetl.runreport.constants import CacheSchema
 
 idx = pandas.IndexSlice
 
-rr = pandas.read_hdf("./data/run_report_cache.hd5")
-rr["Project"] = rr["Library"].apply(lambda x: x.split("_", 1)[0])
-rr.set_index(["Project", "Run"], inplace=True)
-rr.sort_values(["Run", "Project"], ascending=False, inplace=True)
+rr = gsiqcetl.load.runreport(CacheSchema.v1)
+rr_col = gsiqcetl.load.runreport_columns(CacheSchema.v1)
+
+COL_PROJECT = "Project"
+
+rr[COL_PROJECT] = rr[rr_col.Library].apply(lambda x: x.split("_", 1)[0])
+rr.set_index([COL_PROJECT, rr_col.Run], inplace=True)
+rr.sort_values([rr_col.Run, COL_PROJECT], ascending=False, inplace=True)
 
 # Count how many runs per project
-runs_per_proj_count = rr.reset_index().groupby("Project")["Run"].nunique()
+runs_per_proj_count = (
+    rr.reset_index().groupby(COL_PROJECT)[rr_col.Run].nunique()
+)
 proj_with_multi_run = runs_per_proj_count[runs_per_proj_count > 1].index
 # Only display project that have more than one run
 rr = rr.loc[idx[proj_with_multi_run, :], :]
 
-rr = rr.groupby(["Project", "Run"]).filter(lambda x: len(x) > 1)
+rr = rr.groupby([COL_PROJECT, rr_col.Run]).filter(lambda x: len(x) > 1)
 
-proj_list = list(rr.index.get_level_values("Project").unique())
+proj_list = list(rr.index.get_level_values(COL_PROJECT).unique())
 proj_top = proj_list[0]
 proj_list.sort()
 
 run_list = list(
-    rr.loc[idx[proj_top, :], :].index.get_level_values("Run").unique()
+    rr.loc[idx[proj_top, :], :].index.get_level_values(rr_col.Run).unique()
 )
 
 layout = html.Div(
@@ -61,7 +69,9 @@ except ModuleNotFoundError:
 # Show only runs where the project is found
 @app.callback(Output("focused_run", "options"), [Input("project", "value")])
 def set_focused_run_based_on_project(project):
-    runs = rr.loc[idx[project, :], :].index.get_level_values("Run").unique()
+    runs = (
+        rr.loc[idx[project, :], :].index.get_level_values(rr_col.Run).unique()
+    )
 
     return [{"label": v, "value": v} for v in runs]
 
@@ -80,13 +90,13 @@ def set_focused_run_default_value_when_options_change(project):
     [Input("project", "value"), Input("focused_run", "value")],
 )
 def create_coverage_dist(project, run_to_focus):
-    highlight = rr.loc[idx[project, run_to_focus], "Coverage (collapsed)"]
+    highlight = rr.loc[idx[project, run_to_focus], rr_col.Coverage]
 
-    other_runs = rr.index.get_level_values("Run").difference(
-        highlight.index.get_level_values("Run")
+    other_runs = rr.index.get_level_values(rr_col.Run).difference(
+        highlight.index.get_level_values(rr_col.Run)
     )
 
-    other_runs_data = rr.loc[idx[project, other_runs], "Coverage (collapsed)"]
+    other_runs_data = rr.loc[idx[project, other_runs], rr_col.Coverage]
 
     if len(other_runs_data.unique()) < 2:
         return []

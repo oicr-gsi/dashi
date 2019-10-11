@@ -5,37 +5,50 @@ import dash_table
 import pandas
 import plotly.graph_objs as go
 
-
-def load_df_as_json():
-    idx = pandas.IndexSlice
-
-    rs_raw = pandas.read_hdf("./data/runscanner_illumina_cache.hd5")
-    inst_raw = pandas.read_hdf("./data/pinery_instruments_cache.hd5")
-
-    rs_flow = rs_raw.loc[idx[:, "flow_cell", :, :], "value"].unstack("key")
-    rs_flow = rs_flow[["sequencerName", "startDate", "healthType"]]
-    rs_flow = rs_flow.reset_index()
-
-    inst_model = inst_raw[["name_instrument", "name_model"]]
-
-    rs_flow = rs_flow.merge(
-        inst_model, "left", left_on="sequencerName", right_on="name_instrument"
-    )
-
-    rs_lane = rs_raw.loc[idx[:, ["Read", "Index"], :, :], "value"].unstack(
-        "key"
-    )
-    rs_lane_yield = rs_lane.groupby("run_alias")[["Yield"]].sum()
-    rs_lane_yield = rs_lane_yield.rename(columns={"Yield": "Total Yield (GB)"})
-
-    final = rs_flow.merge(rs_lane_yield, on="run_alias", right_index=True)
-    final = final[final["healthType"] == "COMPLETED"]
-    final = final.astype({"startDate": "datetime64[ns]"})
-
-    return final
+import gsiqcetl.load
+from gsiqcetl.runscanner.illumina.constants import FlowCellCacheSchema
+from gsiqcetl.pinery.instruments.constants import CacheSchema
 
 
-raw_df = load_df_as_json()
+rs_flow = gsiqcetl.load.runscanner_illumina_flowcell(FlowCellCacheSchema.v1)
+rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns(
+    FlowCellCacheSchema.v1
+)
+
+COL_TOTAL_YIELD = "Total Yield (GB)"
+
+rs_flow[COL_TOTAL_YIELD] = rs_flow[
+    [
+        rs_flow_col.YieldRead1,
+        rs_flow_col.YieldRead2,
+        rs_flow_col.YieldIndex1,
+        rs_flow_col.YieldIndex2,
+    ]
+].sum(axis=1)
+
+rs_flow = rs_flow[
+    [
+        rs_flow_col.SequencerName,
+        rs_flow_col.StartDate,
+        rs_flow_col.HealthType,
+        COL_TOTAL_YIELD,
+    ]
+]
+
+inst_raw = gsiqcetl.load.pinery_instruments(CacheSchema.v1)
+inst_col = gsiqcetl.load.pinery_instruments_columns(CacheSchema.v1)
+
+inst_model = inst_raw[[inst_col.InstrumentName, inst_col.ModelName]]
+
+rs_flow = rs_flow.merge(
+    inst_model,
+    "left",
+    left_on=rs_flow_col.SequencerName,
+    right_on=inst_col.InstrumentName,
+)
+
+raw_df = rs_flow[rs_flow[rs_flow_col.HealthType] == "COMPLETED"]
+
 raw_df_table_col_names = [{"name": i, "id": i} for i in raw_df.columns]
 
 layout = html.Div(
@@ -55,8 +68,8 @@ layout = html.Div(
         dcc.Dropdown(
             id="colour_by_dropdown",
             options=[
-                {"label": "Machine ID", "value": "sequencerName"},
-                {"label": "Machine Model", "value": "name_model"},
+                {"label": "Machine ID", "value": inst_col.InstrumentName},
+                {"label": "Machine Model", "value": inst_col.ModelName},
             ],
             value=None,
             placeholder="Colour By",
@@ -105,15 +118,17 @@ def create_bar_sum_fig(df_group_sum, colour_by):
 
     if colour_by is None:
         return {
-            "data": [go.Bar(x=df["startDate"], y=df["Total Yield (GB)"])],
+            "data": [
+                go.Bar(x=df[rs_flow_col.StartDate], y=df[COL_TOTAL_YIELD])
+            ],
             "layout": layout,
         }
     else:
         traces = []
         for name, data in df.groupby(colour_by):
             t = go.Bar(
-                x=list(data["startDate"]),
-                y=list(data["Total Yield (GB)"]),
+                x=list(data[rs_flow_col.StartDate]),
+                y=list(data[COL_TOTAL_YIELD]),
                 name=name,
             )
             traces.append(t)
@@ -152,14 +167,14 @@ def update_table_tab(selected_tab, raw_df_json, group_df_json):
 )
 def update_grouped_df(raw_df_json, frequency, colour_grouper):
     raw = pandas.read_json(
-        raw_df_json, orient="records", convert_dates=["startDate"]
+        raw_df_json, orient="records", convert_dates=[rs_flow_col.StartDate]
     )
 
     if colour_grouper is None:
-        grouper = [pandas.Grouper(key="startDate", freq=frequency)]
+        grouper = [pandas.Grouper(key=rs_flow_col.StartDate, freq=frequency)]
     else:
         grouper = [
-            pandas.Grouper(key="startDate", freq=frequency),
+            pandas.Grouper(key=rs_flow_col.StartDate, freq=frequency),
             colour_grouper,
         ]
 

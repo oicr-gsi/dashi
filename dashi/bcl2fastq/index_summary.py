@@ -1,49 +1,49 @@
-import gsiqcetl.bcl2fastq.parse
-import gsiqcetl.bcl2fastq.utility
 import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
-import pandas
 
-index = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.SAMPLES, "./data/bcl2fastq_cache.hd5"
-)
-
-unknown = gsiqcetl.bcl2fastq.parse.load_cache(
-    gsiqcetl.bcl2fastq.parse.CACHENAME.UNKNOWN, "./data/bcl2fastq_cache.hd5"
-)
-
-all_runs = index["Run"].sort_values(ascending=False).unique()
-""" Sample_run_hidden holds json split format of "Known"
-        columns: "FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
-                 "LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
-                 "SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+import gsiqcetl.load
+from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
+import gsiqcetl.bcl2fastq.utility
 
 
-     pruned_unknown_hidden holds json split format of "unknown"
-        columns:  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
+index = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
+index_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
 
-         """
+unknown = gsiqcetl.load.bcl2fastq_unknown_index(UnknownIndexSchema.v1)
+un_col = gsiqcetl.load.bcl2fastq_unknown_index_columns(UnknownIndexSchema.v1)
 
-"""Within the main layout division there are 4 groups:
-          1. the section with the 100% bar graph
-          2.  Nested subdivision of:
-                  a) pie graph at 24%
-                  b) bar graph at 76%
-          3. Sample Run hidden
-          4. Pruned  Unknown Hidden
-            Note: span can be used for inline setting
+all_runs = index[index_col.Run].sort_values(ascending=False).unique()
+
+COL_LIBRARY = "library"
+COL_INDEX = "index"
+
+""" Sample_run_hidden holds json split format of "Known" columns:
+"FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
+"LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
+"SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+
+ pruned_unknown_hidden holds json split format of "unknown" columns:
+ "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
+ """
+
+"""Within the main layout division there are 4 groups: 1. the section with the
+100% bar graph 2.  Nested subdivision of: a) pie graph at 24% b) bar graph at
+76% 3. Sample Run hidden 4. Pruned  Unknown Hidden Note: span can be used for
+inline setting
 
 
-          Dropdown option's label set to all_runs(combination of unknown and known)
-          Dropdown multi set to false (default) - only single select possible
-                -  multiple select gives error due to inconsistent values
-          """
+Dropdown option's label set to all_runs(combination of unknown and
+known) Dropdown multi set to false (default) - only single select
+possible -  multiple select gives error due to inconsistent values """
 layout = html.Div(
     children=[
         dcc.ConfirmDialog(
             id="error",
-            message='You have input an incorrect run. Click either "Ok" or "Cancel" to return to the most recent run.',
+            message=(
+                'You have input an incorrect run. Click either "Ok" or '
+                '"Cancel" to return to the most recent run.'
+            ),
         ),
         dcc.Dropdown(
             id="run_select",
@@ -109,12 +109,12 @@ def create_known_index_bar(run):
     data_known = []
     #   Multiple libraries can use the same index, data must be grouped by both index and libraries
     #   to prevent duplicate counts
-    for inx, d in run.groupby(["index", "library"]):
+    for inx, d in run.groupby([COL_INDEX, COL_LIBRARY]):
         data_known.append(
             {
-                "x": list(d["library"].unique()),
+                "x": list(d[COL_LIBRARY].unique()),
                 # One library can be run on multiple lanes. Sum them together.
-                "y": [d["SampleNumberReads"].sum()],
+                "y": [d[index_col.ReadCount].sum()],
                 "type": "bar",
                 "name": inx[0],
                 "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
@@ -125,7 +125,7 @@ def create_known_index_bar(run):
         "layout": {
             "barmode": "stack",
             "title": "Sample Indices",
-            "xaxis": {"title": "Library", "automargin": True},
+            "xaxis": {"title": COL_LIBRARY, "automargin": True},
             "yaxis": {"title": "Clusters"},
         },
     }
@@ -141,11 +141,11 @@ def create_unknown_index_bar(pruned):
               """
 
     data_unknown = []
-    for lane, d in pruned.groupby("LaneNumber"):
+    for lane, d in pruned.groupby(un_col.LaneNumber):
         data_unknown.append(
             {
-                "x": list(d["index"]),
-                "y": list(d["Count"]),
+                "x": list(d[COL_INDEX]),
+                "y": list(d[un_col.Count]),
                 "type": "bar",
                 "name": lane,
             }
@@ -155,7 +155,7 @@ def create_unknown_index_bar(pruned):
         "layout": {
             "barmode": "stack",
             "title": "Unknown Indices",
-            "xaxis": {"title": "Index"},
+            "xaxis": {"title": COL_INDEX},
             "yaxis": {"title": "Clusters"},
         },
     }
@@ -171,8 +171,8 @@ def create_pie_chart(run, pruned, total_clusters):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run["SampleNumberReads"].sum()
-    pruned_count = pruned["Count"].sum()
+    known_count = run[index_col.ReadCount].sum()
+    pruned_count = pruned[un_col.Count].sum()
     fraction = (known_count + pruned_count) / total_clusters * 100
     return (
         {
@@ -239,22 +239,24 @@ def update_layout(run_alias):
             and update_pie_chart's fraction value
     """
 
-    run = index[index["Run"] == run_alias]
-    run = run[run["ReadNumber"] == 1]
-    run = run[~run["SampleID"].isna()]
-    run = run.drop_duplicates(["SampleID", "LaneNumber"])
-    run["library"] = run["SampleID"].str.extract(
+    run = index[index[index_col.Run] == run_alias]
+    run = run[run[index_col.ReadNumber] == 1]
+    run = run[~run[index_col.SampleID].isna()]
+    run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
+    run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
         r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
     )
-    run["index"] = run["Index1"].str.cat(run["Index2"].fillna(""), sep=" ")
+    run[COL_INDEX] = run[index_col.Index1].str.cat(
+        run[index_col.Index2].fillna(""), sep=" "
+    )
 
     pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
         run_alias, index, unknown
     )
-    pruned["index"] = pruned["Index1"].str.cat(
-        pruned["Index2"].fillna(""), sep=" "
+    pruned[COL_INDEX] = pruned[un_col.Index1].str.cat(
+        pruned[un_col.Index2].fillna(""), sep=" "
     )
-    pruned = pruned.sort_values("Count", ascending=False)
+    pruned = pruned.sort_values(un_col.Count, ascending=False)
     pruned = pruned.head(30)
 
     total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(

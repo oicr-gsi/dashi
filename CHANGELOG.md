@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2019-10-03
+
+### Changed
+* Updated all modules to work with gsi-qc-etl 0.5.0 (which uses versioned
+DataFrames)
+* Columns defined within a module are proper constants
+
+### Removed
+* `aq` module from runreport (dead code)
+* `histograms` module from runscanner (did not work as a visualization)
+
+### Added
+* Cache location needs to be specified by environmental variable
+
 ## [0.2.0] - 2019-09-05
 
 ### RNASeQC
