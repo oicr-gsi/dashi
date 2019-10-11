@@ -121,7 +121,7 @@ SHAPE_COLOUR_COLUMN = [
 
 
 plot_creator = ShinyMimic(
-    RNA_DF,
+    lambda: RNA_DF,
     "bamqc_over_time",
     METRICS_TO_GRAPH,
     SHAPE_COLOUR_COLUMN,

@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from pandas import DataFrame
 
@@ -26,7 +26,7 @@ class ShinyMimic:
 
     def __init__(
         self,
-        df: DataFrame,
+        df: Callable[[], DataFrame],
         id_prefix: str,
         columns_to_plot: List[str],
         colour_columns: List[Dict[str, str]],
@@ -35,7 +35,7 @@ class ShinyMimic:
         kit_column_name: str,
         date_column_name: str,
     ):
-        self._df = df
+        self.df_func = df
         self.id_prefix = id_prefix
         self.columns_to_plot = columns_to_plot
         self.colour_columns = colour_columns
@@ -45,7 +45,7 @@ class ShinyMimic:
         self.date_column_name = date_column_name
 
     def get_sorted_column(self, column_name) -> list:
-        return list(self._df[column_name].sort_values().unique())
+        return list(self.df_func()[column_name].sort_values().unique())
 
     def generate_id(self, name: str):
         return f"{self.id_prefix}_{name}"
@@ -115,13 +115,15 @@ class ShinyMimic:
                             id=self.id_date_picker,
                             display_format="YYYY-MM-DD",
                             min_date_allowed=min(
-                                self._df[self.date_column_name]
+                                self.df_func()[self.date_column_name]
                             ),
                             max_date_allowed=max(
-                                self._df[self.date_column_name]
+                                self.df_func()[self.date_column_name]
                             ),
-                            start_date=min(self._df[self.date_column_name]),
-                            end_date=max(self._df[self.date_column_name]),
+                            start_date=min(
+                                self.df_func()[self.date_column_name]
+                            ),
+                            end_date=max(self.df_func()[self.date_column_name]),
                         ),
                         html.Br(),
                         html.Br(),
@@ -226,7 +228,7 @@ class ShinyMimic:
                                 dash_table.DataTable(
                                     id=self.id_data_table,
                                     columns=data_table_columns,
-                                    data=self._df.to_dict("records"),
+                                    data=self.df_func().to_dict("records"),
                                     page_size=50,
                                     sort_action="native",
                                     sort_mode="multi",
