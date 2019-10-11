@@ -186,7 +186,11 @@ def create_subplot(
     traces = zip(*traces)
 
     fig = plotly.subplots.make_subplots(
-        rows=max_rows, cols=1, subplot_titles=graph_list, print_grid=False
+        rows=max_rows,
+        cols=1,
+        subplot_titles=graph_list,
+        print_grid=False,
+        shared_xaxes=True,
     )
 
     # Go across each row and put each data point in the respective subplot
