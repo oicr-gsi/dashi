@@ -1,16 +1,12 @@
 import collections
 import pandas
-import dash_core_components as dcc
-import dash_html_components as html
 import dash.dependencies as dep
 import dash.exceptions
-import dash_table
 import itertools
 from typing import List, Union
 
 import plotly.subplots
 import plotly.graph_objs
-import sd_material_ui
 
 import gsiqcetl.load
 from gsiqcetl.bamqc.constants import CacheSchema
@@ -179,6 +175,9 @@ plot_creator = ShinyMimic(
     METRICS_TO_GRAPH,
     SHAPE_COLOUR_COLUMN,
     SHAPE_COLOUR_COLUMN,
+    PROJECT,
+    PINERY_COL.PrepKit,
+    COL_RUN_DATE,
 )
 
 
@@ -351,66 +350,11 @@ def create_subplot(
     return fig
 
 
-layout = html.Div(
-    children=[
-        html.Div(
-            children=[
-                plot_creator.generate_drawer_layout(
-                    PROJECT,
-                    PINERY_COL.PrepKit,
-                    COL_RUN_DATE,
-                    4,
-                    PROJECT,
-                    PINERY_COL.PrepKit,
-                ),
-                html.Div(
-                    [
-                        html.Div(
-                            sd_material_ui.RaisedButton(
-                                id="filter_button", label="Options"
-                            ),
-                            style={"display": "inline-block"},
-                        ),
-                        html.Div(
-                            sd_material_ui.RaisedButton(
-                                id="update_from_table_button",
-                                label="Update Graphs",
-                            ),
-                            style={
-                                "display": "inline-block",
-                                "margin-left": "15px",
-                            },
-                        ),
-                    ],
-                    style={"margin-bottom": "5px"},
-                ),
-            ]
-        ),
-        dcc.Loading(
-            id="graph_loader_plot",
-            children=[sd_material_ui.Paper([dcc.Graph(id="graph_subplot")])],
-        ),
-        dcc.Loading(
-            id="graph_loader_data_table",
-            children=[
-                sd_material_ui.Paper(
-                    [
-                        dash_table.DataTable(
-                            id="data_table",
-                            columns=DEFAULT_TABLE_COLUMN
-                            + [{"name": i, "id": i} for i in METRICS_TO_GRAPH],
-                            data=RNA_DF.to_dict("records"),
-                            page_size=50,
-                            sort_action="native",
-                            sort_mode="multi",
-                            export_format="csv",
-                        )
-                    ]
-                )
-            ],
-            type="circle",
-        ),
-    ]
+layout = plot_creator.generate_layout(
+    4,
+    PROJECT,
+    PINERY_COL.PrepKit,
+    DEFAULT_TABLE_COLUMN + [{"name": i, "id": i} for i in METRICS_TO_GRAPH],
 )
 
 try:
@@ -423,9 +367,9 @@ except ModuleNotFoundError:
 
 
 @app.callback(
-    dep.Output("update_from_table_button", "n_clicks"),
-    [dep.Input("data_table", "data")],
-    [dep.State("update_from_table_button", "n_clicks")],
+    dep.Output(plot_creator.id_button_update, "n_clicks"),
+    [dep.Input(plot_creator.id_data_table, "data")],
+    [dep.State(plot_creator.id_button_update, "n_clicks")],
 )
 def click_update_graph_button(_data, n_clicks):
     """
@@ -447,7 +391,7 @@ def click_update_graph_button(_data, n_clicks):
 
 
 @app.callback(
-    dep.Output("data_table", "data"),
+    dep.Output(plot_creator.id_data_table, "data"),
     [dep.Input(plot_creator.id_drawer, "open")],
     [
         dep.State(plot_creator.id_multiselect_project, "value"),
@@ -493,14 +437,14 @@ def populate_data_table(
 
 
 @app.callback(
-    dep.Output("graph_subplot", "figure"),
-    [dep.Input("update_from_table_button", "n_clicks")],
+    dep.Output(plot_creator.id_plot, "figure"),
+    [dep.Input(plot_creator.id_button_update, "n_clicks")],
     [
-        dep.State("data_table", "derived_virtual_data"),
+        dep.State(plot_creator.id_data_table, "derived_virtual_data"),
         dep.State(plot_creator.id_multiselect_plots, "value"),
         dep.State(plot_creator.id_select_colour, "value"),
         dep.State(plot_creator.id_select_shape, "value"),
-        dep.State("data_table", "sort_by"),
+        dep.State(plot_creator.id_data_table, "sort_by"),
     ],
 )
 def graph_subplot(
@@ -547,7 +491,7 @@ def graph_subplot(
 
 @app.callback(
     dep.Output(plot_creator.id_drawer, "open"),
-    [dep.Input("filter_button", "n_clicks")],
+    [dep.Input(plot_creator.id_button_options, "n_clicks")],
 )
 def open_project_drawer(n_clicks: Union[int, None]) -> bool:
     """
