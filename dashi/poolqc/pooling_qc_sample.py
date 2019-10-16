@@ -3,7 +3,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash.dependencies as dep
 import dash_table as dt
-import pandas
 import plotly.graph_objs as go
 import numpy as np
 import urllib
@@ -11,19 +10,20 @@ from datetime import datetime
 import sd_material_ui as sd
 
 import gsiqcetl.load
+from gsiqcetl.rnaseqqc.constants import CacheSchema as RNASeqQCCacheSchema
+from gsiqcetl.bamqc.constants import CacheSchema as BamQCCacheSchema
+from gsiqcetl.bcl2fastq.constants import SamplesSchema
 
-rnaseq = gsiqcetl.load.rnaseqqc("v1", "./data/rnaseqqc_cache.hd5")
-rnaseq_col = gsiqcetl.load.rnaseqqc_columns("v1")
+rnaseq = gsiqcetl.load.rnaseqqc(RNASeqQCCacheSchema.v1)
+rnaseq_col = gsiqcetl.load.rnaseqqc_columns(RNASeqQCCacheSchema.v1)
 # Column name is being renamed to allow for a seamless merge on column 'library'
 rnaseq.rename(columns={rnaseq_col.SampleName: "library"}, inplace=True)
 
-bamqc = gsiqcetl.load.bamqc("v1", "./data/bamqc_cache.hd5")
-bamcq_col = gsiqcetl.load.bamqc_columns("v1")
+bamqc = gsiqcetl.load.bamqc(BamQCCacheSchema.v1)
+bamcq_col = gsiqcetl.load.bamqc_columns(BamQCCacheSchema.v1)
 
-bcl2fastq = gsiqcetl.load.bcl2fastq_known_samples(
-    "v1", "./data/bcl2fastq_known_samples_cache.hd5"
-)
-bcl2fastq_col = gsiqcetl.load.bcl2fastq_known_samples_columns("v1")
+bcl2fastq = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
+bcl2fastq_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
 
 # Column is being renamed for clarification
 bcl2fastq.rename(columns={bcl2fastq_col.ReadCount: "Clusters"}, inplace=True)

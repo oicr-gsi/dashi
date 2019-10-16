@@ -1,7 +1,8 @@
 import pandas
 
+
 import gsiqcetl.load
-from gsiqcetl.rnaseqqc.constants import CacheSchema
+from gsiqcetl.bamqc.constants import CacheSchema
 from gsiqcetl.pinery.sampleprovenance.constants import (
     CacheSchema as SampleProvenanceCacheSchema,
 )
@@ -9,26 +10,36 @@ from gsiqcetl.pinery.sampleprovenance.constants import (
 from dashi.plots.shiny_mimic import ShinyMimic
 
 
-RNA_DF = gsiqcetl.load.rnaseqqc(CacheSchema.v2)
-RNA_COL = gsiqcetl.load.rnaseqqc_columns(CacheSchema.v2)
+BAMQC_DF = gsiqcetl.load.bamqc(CacheSchema.v1)
+BAMQC_COL = gsiqcetl.load.bamqc_columns(CacheSchema.v1)
 
 COL_RUN_DATE = "Run Date"
-COL_PROP_ALIGNED_BASES = "Proportion Aligned Bases"
+PROJECT = "Project"
+FRACTION_ON_TARGET = "Read Fraction on Target"
+FRACTION_MAPPED = "Read Fraction Mapped"
+FRACTION_SECONDARY = "Read Fraction Secondary"
 
 # The Run Name is used to extract the date
-RNA_DF[COL_RUN_DATE] = (
-    RNA_DF[RNA_COL.SequencerRunName].dropna().apply(lambda x: x.split("_")[0])
+BAMQC_DF[COL_RUN_DATE] = (
+    BAMQC_DF[BAMQC_COL.Run].dropna().apply(lambda x: x.split("_")[0])
 )
 # Some runs do not have the proper format and will be excluded
-RNA_DF = RNA_DF[RNA_DF[COL_RUN_DATE].str.isnumeric()]
-RNA_DF[COL_RUN_DATE] = pandas.to_datetime(RNA_DF[COL_RUN_DATE], yearfirst=True)
-
-RNA_DF[COL_PROP_ALIGNED_BASES] = (
-    RNA_DF[RNA_COL.PassedFilterAlignedBases] / RNA_DF[RNA_COL.PassedFilterBases]
+BAMQC_DF = BAMQC_DF[BAMQC_DF[COL_RUN_DATE].str.isnumeric()]
+BAMQC_DF[COL_RUN_DATE] = pandas.to_datetime(
+    BAMQC_DF[COL_RUN_DATE], yearfirst=True
 )
 
-# List projects for which RNA-Seq studies have been done
-ALL_PROJECTS = RNA_DF[RNA_COL.StudyTitle].sort_values().unique()
+BAMQC_DF[PROJECT] = BAMQC_DF[BAMQC_COL.Library].apply(lambda x: x.split("_")[0])
+
+BAMQC_DF[FRACTION_ON_TARGET] = (
+    BAMQC_DF[BAMQC_COL.ReadsOnTarget] / BAMQC_DF[BAMQC_COL.TotalReads]
+)
+BAMQC_DF[FRACTION_MAPPED] = (
+    BAMQC_DF[BAMQC_COL.MappedReads] / BAMQC_DF[BAMQC_COL.TotalReads]
+)
+BAMQC_DF[FRACTION_SECONDARY] = (
+    BAMQC_DF[BAMQC_COL.NonPrimaryReads] / BAMQC_DF[BAMQC_COL.TotalReads]
+)
 
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
@@ -52,10 +63,10 @@ PINERY = PINERY[
     ]
 ]
 
-RNA_DF = RNA_DF.merge(
+BAMQC_DF = BAMQC_DF.merge(
     PINERY,
     how="left",
-    left_on=[RNA_COL.SampleName, RNA_COL.SequencerRunName, RNA_COL.LaneNumber],
+    left_on=[BAMQC_COL.Library, BAMQC_COL.Run, BAMQC_COL.Lane],
     right_on=[
         PINERY_COL.SampleName,
         PINERY_COL.SequencerRunName,
@@ -64,35 +75,31 @@ RNA_DF = RNA_DF.merge(
 )
 
 # NaN kits need to be changed to a str. Use the existing Unspecified
-RNA_DF = RNA_DF.fillna({PINERY_COL.PrepKit: "Unspecified"})
-RNA_DF = RNA_DF.fillna({PINERY_COL.LibrarySourceTemplateType: "Unknown"})
+BAMQC_DF = BAMQC_DF.fillna({PINERY_COL.PrepKit: "Unspecified"})
+BAMQC_DF = BAMQC_DF.fillna({PINERY_COL.LibrarySourceTemplateType: "Unknown"})
 # NaN Tissue Origin is set to `nn`, which is used by MISO for unknown
-RNA_DF = RNA_DF.fillna({PINERY_COL.TissueOrigin: "nn"})
+BAMQC_DF = BAMQC_DF.fillna({PINERY_COL.TissueOrigin: "nn"})
 # NaN Tissue Type is set to `n`, which is used by MISO for unknown
-RNA_DF = RNA_DF.fillna({PINERY_COL.TissueType: "n"})
-RNA_DF = RNA_DF.fillna({PINERY_COL.TissuePreparation: "Unknown"})
-
-# Kits used for RNA-Seq experiments
-ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
+BAMQC_DF = BAMQC_DF.fillna({PINERY_COL.TissueType: "n"})
+BAMQC_DF = BAMQC_DF.fillna({PINERY_COL.TissuePreparation: "Unknown"})
 
 # Which metrics can be plotted
 METRICS_TO_GRAPH = (
-    RNA_COL.ProportionUsableBases,
-    RNA_COL.rRNAContaminationreadsaligned,
-    RNA_COL.ProportionCorrectStrandReads,
-    COL_PROP_ALIGNED_BASES,
-    RNA_COL.ProportionCodingBases,
-    RNA_COL.ProportionIntronicBases,
-    RNA_COL.ProportionIntergenicBases,
-    RNA_COL.ProportionUTRBases,
+    FRACTION_ON_TARGET,
+    FRACTION_MAPPED,
+    BAMQC_COL.InsertMean,
+    BAMQC_COL.ReadsPerStartPoint,
+    BAMQC_COL.TotalReads,
+    FRACTION_SECONDARY,
 )
+
 
 # Which columns will the data table always have
 DEFAULT_TABLE_COLUMN = [
-    {"name": "Library", "id": RNA_COL.SampleName},
-    {"name": "Project", "id": RNA_COL.StudyTitle},
-    {"name": "Run", "id": RNA_COL.SequencerRunName},
-    {"name": "Lane", "id": RNA_COL.LaneNumber},
+    {"name": "Library", "id": BAMQC_COL.Library},
+    {"name": "Project", "id": PROJECT},
+    {"name": "Run", "id": BAMQC_COL.Run},
+    {"name": "Lane", "id": BAMQC_COL.Lane},
     {"name": "Kit", "id": PINERY_COL.PrepKit},
     {"name": "Library Design", "id": PINERY_COL.LibrarySourceTemplateType},
     {"name": "Tissue Origin", "id": PINERY_COL.TissueOrigin},
@@ -102,7 +109,7 @@ DEFAULT_TABLE_COLUMN = [
 
 # Columns on which shape and colour can be set
 SHAPE_COLOUR_COLUMN = [
-    {"name": "Project", "id": RNA_COL.StudyTitle},
+    {"name": "Project", "id": PROJECT},
     {"name": "Kit", "id": PINERY_COL.PrepKit},
     {"name": "Library Design", "id": PINERY_COL.LibrarySourceTemplateType},
     {"name": "Tissue Origin", "id": PINERY_COL.TissueOrigin},
@@ -110,21 +117,23 @@ SHAPE_COLOUR_COLUMN = [
     {"name": "Tissue Material", "id": PINERY_COL.TissuePreparation},
 ]
 
+
 plot_creator = ShinyMimic(
-    lambda: RNA_DF,
-    "rnaseqqc_over_time",
+    lambda: BAMQC_DF,
+    "bamqc_over_time",
     METRICS_TO_GRAPH,
     SHAPE_COLOUR_COLUMN,
     SHAPE_COLOUR_COLUMN,
-    RNA_COL.StudyTitle,
+    PROJECT,
     PINERY_COL.PrepKit,
     COL_RUN_DATE,
-    RNA_COL.SampleName,
+    BAMQC_COL.Library,
 )
+
 
 layout = plot_creator.generate_layout(
     4,
-    RNA_COL.StudyTitle,
+    PROJECT,
     PINERY_COL.PrepKit,
     DEFAULT_TABLE_COLUMN + [{"name": i, "id": i} for i in METRICS_TO_GRAPH],
 )

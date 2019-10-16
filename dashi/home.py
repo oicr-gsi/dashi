@@ -8,6 +8,7 @@ layout = html.Div(
         html.H3(
             dcc.Link("Gigabases produced over time", href="/bamqc/gbovertime")
         ),
+        html.H3(dcc.Link("Shiny", href="/bamqc/shiny")),
         html.H2("bcl2fastq"),
         html.H3(
             dcc.Link(

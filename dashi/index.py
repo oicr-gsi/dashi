@@ -6,6 +6,7 @@ import dash.dependencies as dep
 from app import app, server
 from home import layout as home_layout
 from bamqc.gbovertime import layout as gbovertime_layout
+from bamqc.over_time import layout as bamqc_over_time
 from bcl2fastq.index_summary import layout as index_layout
 from rnaseqc.over_time import layout as rnaseqc_overtime_layout
 from runreport.proj_hist import layout as runreport_projhist_layout
@@ -27,6 +28,8 @@ def display_page(pathname):
         return home_layout
     elif pathname == "/bamqc/gbovertime":
         return gbovertime_layout
+    elif pathname == "/bamqc/shiny":
+        return bamqc_over_time
     elif pathname == "/bcl2fastq/indexinfo":
         return index_layout
     elif pathname == "/rnaseqc/over_time":
