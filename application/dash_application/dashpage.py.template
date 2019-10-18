@@ -1,0 +1,20 @@
+import dash_html_components as html
+import dash_core_components as core
+from dash.dependencies import Input, Output
+from .dash_id import init_ids
+
+##############################################
+### Add file name to the list in pages.py  ###
+### once you're done!					   ###
+##############################################
+
+layout = html.Div(children='Placeholder') 
+
+ids = init_ids([])
+
+def init_callbacks(app):
+    @app.callback(
+        [Output()],
+        [Input()])
+    def placeholder_callback(value):
+        return
