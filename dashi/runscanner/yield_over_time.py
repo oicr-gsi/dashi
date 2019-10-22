@@ -94,7 +94,7 @@ layout = html.Div(
 )
 
 try:
-    from app import app
+    from dashi.app import app
 
     app.layout = layout
 except ModuleNotFoundError:

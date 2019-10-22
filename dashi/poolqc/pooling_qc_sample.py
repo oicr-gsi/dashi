@@ -268,7 +268,7 @@ layout = html.Div(
 )
 
 try:
-    from app import app
+    from dashi.app import app
 except ModuleNotFoundError:
     import dash
 

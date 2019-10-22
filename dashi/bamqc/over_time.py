@@ -139,7 +139,7 @@ layout = plot_creator.generate_layout(
 )
 
 try:
-    from app import app
+    from dashi.app import app
 except ModuleNotFoundError:
     import dash
 
