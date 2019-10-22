@@ -1,3 +1,5 @@
+import urllib.parse
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -29,7 +31,7 @@ COL_INDEX = "index"
  """
 
 
-def generate_layout() -> html.Div:
+def generate_layout(qs) -> html.Div:
     """
     Within the main layout division there are 4 groups: 1. the section with the
     100% bar graph 2.  Nested subdivision of: a) pie graph at 24% b) bar graph
@@ -41,13 +43,24 @@ def generate_layout() -> html.Div:
     Dropdown multi set to false (default) - only single select possible -
     multiple select gives error due to inconsistent values
     """
+
+    if qs:
+        qs = qs[1:]
+
+    qs = urllib.parse.parse_qs(qs)
+
+    if "run" in qs and qs["run"][0] in all_runs:
+        default_run = qs["run"][0]
+    else:
+        default_run = all_runs[0]
+
     return html.Div(
         children=[
             dcc.Dropdown(
                 id="run_select",
                 #   Options is concantenated string versions of all_runs.
                 options=[{"label": r, "value": r} for r in all_runs],
-                value=all_runs[0],
+                value=default_run,
                 clearable=False,
             ),
             dcc.Graph(id="known_index_bar"),
@@ -243,7 +256,18 @@ if __name__ == "__main__":
     import dash
 
     stand_alone = dash.Dash(__name__)
-    stand_alone.layout = generate_layout()
+    stand_alone.layout = html.Div(
+        [
+            dcc.Location(id="url", refresh=False),
+            html.Div(id="debug", children=[generate_layout(None)]),
+        ]
+    )
     assign_callbacks(stand_alone)
+
+    @stand_alone.callback(
+        dep.Output("debug", "children"), [dep.Input("url", "search")]
+    )
+    def query_string(search):
+        return generate_layout(search)
 
     stand_alone.run_server(debug=True)

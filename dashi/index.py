@@ -24,24 +24,25 @@ app.layout = html.Div(
 
 
 @app.callback(
-    dep.Output("page-content", "children"), [dep.Input("url", "pathname")]
+    dep.Output("page-content", "children"),
+    [dep.Input("url", "pathname"), dep.Input("url", "search")],
 )
-def display_page(pathname):
+def display_page(pathname, search):
     if pathname == "/":
         return home_layout
-    elif pathname == "/bamqc/gbovertime":
+    elif pathname == "/bamqc/gbovertime/":
         return gbovertime_layout
-    elif pathname == "/bamqc/shiny":
+    elif pathname == "/bamqc/shiny/":
         return bamqc_over_time
-    elif pathname == "/bcl2fastq/indexinfo":
-        return bcl2fastq_generate_layout()
-    elif pathname == "/rnaseqc/over_time":
+    elif pathname == "/bcl2fastq/indexinfo/":
+        return bcl2fastq_generate_layout(search)
+    elif pathname == "/rnaseqc/over_time/":
         return rnaseqc_overtime_layout
-    elif pathname == "/runreport/proj_hist":
+    elif pathname == "/runreport/proj_hist/":
         return runreport_projhist_layout
-    elif pathname == "/runscanner/sum_over_time":
+    elif pathname == "/runscanner/sum_over_time/":
         return runscanner_yield_over_time_layout
-    elif pathname == "/pooling_qc":
+    elif pathname == "/pooling_qc/":
         return pooling_qc_layout
     else:
         return "404"
