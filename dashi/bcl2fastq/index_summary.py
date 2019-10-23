@@ -33,15 +33,28 @@ COL_INDEX = "index"
 
 def generate_layout(qs) -> html.Div:
     """
-    Within the main layout division there are 4 groups: 1. the section with the
-    100% bar graph 2.  Nested subdivision of: a) pie graph at 24% b) bar graph
-    at 76% 3. Sample Run hidden 4. Pruned  Unknown Hidden Note: span can be used
-    for inline setting
+    Within the main layout division there are 3 groups:
+    1. Top: Bar graphs showing each known index count
+    2. Bottom left: Pie chart and text box
+        a) Pie chart shows proportion of known and unknown indices
+        b) Text box measures how well multiple analyses were combined (see
+            below)
+    3. Bottom right: Bar graph breaking down count of each unknown index
 
+    In many instances, multiple bcl2fastq analyses are performed for one run. It
+    is necessary to combine them to obtain meaningful statistics of unknown
+    indices, but due to one run combining single/dual and different length
+    indices, the calculations do have to make certain assumptions. The ratio
+    displayed in the text box is of the calculated read count divided by the
+    machine produced read count.
 
-    Dropdown option's label set to all_runs(combination of unknown and known)
-    Dropdown multi set to false (default) - only single select possible -
-    multiple select gives error due to inconsistent values
+    Args:
+        qs: The query string that modifying the layout. "run" parameter sets
+        the run selected on layout load
+
+    Returns: The Div of the complete layout with the defaults set from the
+        passed query string
+
     """
 
     if qs:
@@ -220,6 +233,8 @@ def assign_callbacks(app: dash.Dash):
         run = run[run[index_col.ReadNumber] == 1]
         run = run[~run[index_col.SampleID].isna()]
         run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
+        # TODO: Replace with join from Pinery (on Run, Lane, Index1, Index2)
+        #  10X index (SI-GA-H11) will have to be converted to nucleotide
         run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
             r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
         )
