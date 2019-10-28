@@ -49,14 +49,16 @@ def generate_layout(qs) -> html.Div:
     machine produced read count.
 
     Args:
-        qs: The query string that modifying the layout. "run" parameter sets
-        the run selected on layout load
+        qs: The query string from the URL that modifying the layout.
+            "run" parameter sets the run selected on layout load
 
     Returns: The Div of the complete layout with the defaults set from the
         passed query string
 
     """
 
+    # If query string exist, Dash returns it with the leading `?`
+    # The `parse_qs` function does not expect this and `?` needs to be removed
     if qs:
         qs = qs[1:]
 
