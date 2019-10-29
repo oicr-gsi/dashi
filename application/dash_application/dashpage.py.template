@@ -8,13 +8,21 @@ from .dash_id import init_ids
 ### once you're done!					   ###
 ##############################################
 
-layout = html.Div(children='Placeholder') 
+## Please refer to the Dash documentation for information
+## on Layouts and Callbacks
 
+## Please add all layout element IDs to this array of String
+## Then, use ids['name_of_element'] instead 'name_of_element' in the id 
+## field of your layout elements
 ids = init_ids([])
 
+## Dash layout object
+layout = html.Div(children='Placeholder') 
+
+## Please define all callbacks inside this procedure
 def init_callbacks(app):
     @app.callback(
-        [Output()],
+        Output(),
         [Input()])
     def placeholder_callback(value):
         return

@@ -2,6 +2,7 @@ from flask import Flask
 from flask_caching import Cache
 from prometheus_flask_exporter import PrometheusMetrics
 
+## Set up Flask application, attach extensions, and load configuration
 def create_app():
     # Construct new Flask core
     app = Flask(__name__,

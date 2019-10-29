@@ -2,16 +2,18 @@ from dash import Dash
 from dash.dependencies import Input, Output
 import dash_html_components as html
 
-
-# Add Dash to provided Flask server
+## Adds Dash to provided Flask server
 def add_dash(server):
+    ## Create Dash instance using Flask object as server
     dash_app = Dash(__name__, server=server) 
 
+    ## Load callbacks into memory
     from . import pages
     for page in pages.pages:
         page.init_callbacks(dash_app)
 
-    dash_app.layout = #FIXME
+    ## Set your initial Dash page's layout to this variable 
+    dash_app.layout = 
 
-    #Return the server object from Dash to overwrite Flask server object
+    ## Return the server object from Dash to overwrite Flask server object
     return dash_app.server
