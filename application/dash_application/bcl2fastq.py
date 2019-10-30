@@ -4,6 +4,9 @@ from dash.dependencies import Input, Output
 from .dash_id import init_ids
 
 #TODO: gsiqcetl imports?
+# import gsiqcetl.load
+# from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
+# import gsiqcetl.bcl2fastq.utility
 
 ids = init_ids([
     'error',
@@ -143,6 +146,8 @@ def init_callbacks(dash_app):
             pie_data,
             textarea_fraction,
         )
+
+## These aren't in init_callbacks. Do they need to be? Are we OK to call them?
 
 def create_known_index_bar(run):
     """ Function to create known index bar according to user selected run
