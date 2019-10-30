@@ -20,7 +20,7 @@ ids = init_ids([])
 layout = html.Div(children='Placeholder') 
 
 ## Please define all callbacks inside this procedure
-def init_callbacks(app):
+def init_callbacks(dash_app):
     @app.callback(
         Output(),
         [Input()])
