@@ -3,10 +3,9 @@ import dash_core_components as core
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
 
-#TODO: gsiqcetl imports?
-# import gsiqcetl.load
-# from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
-# import gsiqcetl.bcl2fastq.utility
+import gsiqcetl.load
+from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
+import gsiqcetl.bcl2fastq.utility
 
 ids = init_ids([
     'error',
@@ -17,6 +16,17 @@ ids = init_ids([
     'known_fraction',
     'unknown_index_bar'
 ])
+
+index = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
+index_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
+
+unknown = gsiqcetl.load.bcl2fastq_unknown_index(UnknownIndexSchema.v1)
+un_col = gsiqcetl.load.bcl2fastq_unknown_index_columns(UnknownIndexSchema.v1)
+
+all_runs = index[index_col.Run].sort_values(ascending=False).unique()
+
+COL_LIBRARY = "library"
+COL_INDEX = "index"
 
 layout = html.Div(
     children=[
@@ -73,8 +83,11 @@ layout = html.Div(
 
 
 def init_callbacks(dash_app):
-    @app.callback(
-        [Output(ids['run_select'], "value"), dep.Output("error", "displayed")],
+    dash_app.config.suppress_callback_exceptions = True
+
+    @dash_app.callback(
+        [Output(ids['run_select'], "value"), 
+        Output("error", "displayed")],
         [Input(ids['bcl2fastq_url'], "pathname")],
     )
     def change_url(pathname):
@@ -98,7 +111,7 @@ def init_callbacks(dash_app):
             return pathname[1:-2], False
 
 
-    @app.callback(
+    @dash_app.callback(
         [Output(ids['known_index_bar'], "figure"),
         Output(ids['unknown_index_bar'], "figure"),
         Output(ids['known_unknown_pie'], "figure"),
