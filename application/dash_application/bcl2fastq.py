@@ -90,6 +90,7 @@ def init_callbacks(dash_app):
         Output("error", "displayed")],
         [Input(ids['bcl2fastq_url'], "pathname")],
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def change_url(pathname):
         """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
             If User enters any value that's not a valid run an error box will pop up and return user to most recent run
@@ -118,6 +119,7 @@ def init_callbacks(dash_app):
         Output(ids['known_fraction'], "value")],
         [Input(ids['run_select'], "value")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def update_layout(run_alias):
         """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
             Parameter:
@@ -162,6 +164,7 @@ def init_callbacks(dash_app):
 
 ## These aren't in init_callbacks. Do they need to be? Are we OK to call them?
 
+@app.cache.memoize(timeout=60)
 def create_known_index_bar(run):
     """ Function to create known index bar according to user selected run
            Parameters:
@@ -194,7 +197,6 @@ def create_known_index_bar(run):
         },
     }
 
-
 def create_unknown_index_bar(pruned):
     """ Function to create unknown index bar  according to user selected run
             Parameters:
@@ -223,7 +225,6 @@ def create_unknown_index_bar(pruned):
             "yaxis": {"title": "Clusters"},
         },
     }
-
 
 def create_pie_chart(run, pruned, total_clusters):
     """ Function to create pie chart and known fraction according to user selected run
