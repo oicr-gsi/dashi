@@ -2,6 +2,7 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
+from flask import current_app as app
 
 import gsiqcetl.load
 from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
