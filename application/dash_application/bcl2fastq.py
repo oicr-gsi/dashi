@@ -8,6 +8,8 @@ import gsiqcetl.load
 from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
 import gsiqcetl.bcl2fastq.utility
 
+page_name = 'bcl2fastq/indexinfo'
+
 ids = init_ids([
     'error',
     'run_select',

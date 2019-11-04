@@ -5,7 +5,8 @@ prefix = 'application.dash_application.'
 # Please create array of module names as string, one per page
 # e.g., pagenames = ['myPage', 'myPage2']
 pagenames = [
-    'bcl2fastq'
+    'bcl2fastq',
+    'url_handler'
 ]
 
 # Please do not edit this array
