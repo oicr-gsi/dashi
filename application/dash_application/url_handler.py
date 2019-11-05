@@ -13,6 +13,7 @@ layout = html.Div([
     html.Div(id=ids['page-content'])
 ]) 
 
+
 def init_callbacks(dash_app):
     dash_app.config.suppress_callback_exceptions = True
 
