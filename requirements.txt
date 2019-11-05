@@ -8,3 +8,4 @@ prometheus_flask_exporter==0.11.0
 plotly==4.2.1
 git+https://bitbucket.oicr.on.ca/scm/gsi/gsi-qc-etl.git@v0.5.0
 sd-material-ui==3.1.2
+scipy==1.2.0
