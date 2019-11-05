@@ -71,6 +71,7 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         Output(ids['focused_run'], "options"), 
         [Input(ids['project'], "value")])
+    @dash_app.server.cache.memoize(timeout=60)
     def set_focused_run_based_on_project(project):
         runs = (
             rr.loc[idx[project, :], :].index.get_level_values(rr_col.Run).unique()
@@ -92,6 +93,7 @@ def init_callbacks(dash_app):
         Output(ids['coverage_dist'], "figure"),
         [Input(ids['project'], "value"), 
         Input(ids['focused_run'], "value")])
+    @dash_app.server.cache.memoize(timeout=60)
     def create_coverage_dist(project, run_to_focus):
         highlight = rr.loc[idx[project, run_to_focus], rr_col.Coverage]
 
@@ -122,5 +124,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         Output(ids['click-data'], "children"), 
         [Input(ids['coverage_dist'], "clickData")])
+    @dash_app.server.cache.memoize(timeout=60)
     def display_click_data(clickData):
         return json.dumps(clickData, indent=2)

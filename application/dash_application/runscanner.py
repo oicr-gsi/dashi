@@ -65,7 +65,7 @@ raw_df_table_col_names = [{"name": i, "id": i} for i in raw_df.columns]
 layout = html.Div(
     [
         core.Dropdown(
-            id="freq_dropdown",
+            id=ids['freq_dropdown'],
             options=[
                 {"label": "Daily", "value": "D"},
                 {"label": "Weekly", "value": "W"},
@@ -77,7 +77,7 @@ layout = html.Div(
             clearable=False,
         ),
         core.Dropdown(
-            id="colour_by_dropdown",
+            id=ids['colour_by_dropdown'],
             options=[
                 {"label": "Machine ID", "value": inst_col.InstrumentName},
                 {"label": "Machine Model", "value": inst_col.ModelName},
@@ -85,22 +85,22 @@ layout = html.Div(
             value=None,
             placeholder="Colour By",
         ),
-        core.Graph(id="bar_sum"),
+        core.Graph(id=ids['bar_sum']),
         core.Tabs(
-            id="table_tabs",
+            id=ids['table_tabs'],
             value="grouped",
             children=[
                 core.Tab(label="Grouped Data", value="grouped"),
                 core.Tab(label="All Data", value="all"),
             ],
         ),
-        html.Div(id="table_tabs_content"),
+        html.Div(id=ids['table_tabs_content']),
         html.Div(
-            id="raw_df_json",
+            id=ids['raw_df_json'],
             style={"display": "none"},
             children=raw_df.to_json(date_format="iso", orient="records"),
         ),
-        html.Div(id="df_group_sum", style={"display": "none"}),
+        html.Div(id=ids['df_group_sum'], style={"display": "none"}),
     ]
 ) 
 
@@ -109,6 +109,7 @@ def init_callbacks(dash_app):
         Output(ids['bar_sum'], "figure"),
         [Input(ids['df_group_sum'], "children"), 
         Input(ids['colour_by_dropdown'], "value")])
+    @dash_app.server.cache.memoize(timeout=60)
     def create_bar_sum_fig(df_group_sum, colour_by):
         df = pandas.read_json(df_group_sum, orient="split")
 
@@ -142,6 +143,7 @@ def init_callbacks(dash_app):
         [Input(ids['table_tabs'], "value"),
         Input(ids['raw_df_json'], "children"),
         Input(ids['df_group_sum'], "children")])
+    @dash_app.server.cache.memoize(timeout=60)
     def update_table_tab(selected_tab, raw_df_json, group_df_json):
         if selected_tab == "grouped":
             df = pandas.read_json(group_df_json, orient="split")
@@ -160,6 +162,7 @@ def init_callbacks(dash_app):
         [Input(ids['raw_df_json'], "children"),
         Input(ids['freq_dropdown'], "value"),
         Input(ids['colour_by_dropdown'], "value")])
+    @dash_app.server.cache.memoize(timeout=60)
     def update_grouped_df(raw_df_json, frequency, colour_grouper):
         raw = pandas.read_json(
             raw_df_json, orient="records", convert_dates=[rs_flow_col.StartDate]

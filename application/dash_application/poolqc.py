@@ -288,6 +288,7 @@ def init_callbacks(dash_app):
         Output(ids['lane_select'], "options"), 
         [Input("select_a_run", "value")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def update_lane_options(run_alias):
         run = df[df["Run"] == run_alias]
         run = run[run["Run"].notna()]
@@ -300,6 +301,7 @@ def init_callbacks(dash_app):
         Output(ids['lane_select'], "value"), 
         [Input(ids['lane_select'], "options")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def update_lane_values(available_options):
         return available_options[0]["value"]
 
@@ -308,6 +310,7 @@ def init_callbacks(dash_app):
         [Input(ids['lane_select'], "value"), 
         Input(ids['select_a_run'], "value")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def update_title(lane_value, run_value):
         return "You have selected lane {} in run {}".format(lane_value, run_value)
 
@@ -315,14 +318,16 @@ def init_callbacks(dash_app):
         Output(ids['Filter_drawer'], "open"), 
         [Input(ids['filters'], "n_clicks")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def open_project_drawer(n_clicks):
         return n_clicks is not None
 
-    @app.callback(
+    @dash_app.callback(
         Output(ids['index_threshold'], "value"),
         [Input(ids['select_a_run'], "value"), 
         Input(ids['lane_select'], "value")]
     )
+    @dash_app.server.cache.memoize(timeout=60)
     def initial_threshold_value(run_alias, lane_alias):
         run = df[(df["Run"] == run_alias) & (df["LaneNumber"] == lane_alias)]
         run = run.drop_duplicates("library")
@@ -345,6 +350,7 @@ def init_callbacks(dash_app):
         Input(ids['pass/fail'], "value"),
         Input(ids['sample_type'], "value")]
     )
+    @dash_app.server.cache.memoize(timeout=60) #That might take a lot of memory 
     def update_graphs(
         run_alias, lane_alias, index_threshold, PassOrFail, sample_type
     ):
