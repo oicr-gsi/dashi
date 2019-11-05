@@ -6,7 +6,8 @@ prefix = 'application.dash_application.'
 # e.g., pagenames = ['myPage', 'myPage2']
 pagenames = [
     'bcl2fastq',
-    'url_handler'
+    'url_handler',
+    'bamqc_gbovertime'
 ]
 
 # Please do not edit this array
