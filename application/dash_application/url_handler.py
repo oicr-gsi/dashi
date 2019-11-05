@@ -2,7 +2,7 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
-from . import bcl2fastq, bamqc_gbovertime, poolqc, runreport
+from . import bcl2fastq, bamqc_gbovertime, poolqc, runreport, runscanner, bamqc_overtime
 
 ids = init_ids(['url', 'page-content'])
 
@@ -14,6 +14,7 @@ layout = html.Div([
 def init_callbacks(dash_app):
     dash_app.config.suppress_callback_exceptions = True
 
+    # TODO: use pages.py or sOMETHING
     @dash_app.callback(
         Output(ids['page-content'], 'children'),
         [Input(ids['url'], 'pathname')])
@@ -26,5 +27,9 @@ def init_callbacks(dash_app):
             return poolqc.layout
         elif path == '/{0}'.format(runreport.page_name):
             return runreport.layout
+        elif path == '/{0}'.format(runscanner.page_name):
+            return runscanner.layout
+        elif path == '/{0}'.format(bamqc_overtime.page_name):
+            return bamqc_overtime.layout
         else:
             return '404'

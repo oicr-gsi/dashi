@@ -8,7 +8,9 @@ pagenames = [
     'bcl2fastq',
     'url_handler',
     'bamqc_gbovertime',
-    'runreport'
+    'runreport',
+    'runscanner',
+    'bamqc_overtime'
 ]
 
 # Please do not edit this array

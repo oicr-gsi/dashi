@@ -13,9 +13,6 @@ from gsiqcetl.rnaseqqc.constants import CacheSchema as RNASeqQCCacheSchema
 from gsiqcetl.bamqc.constants import CacheSchema as BamQCCacheSchema
 from gsiqcetl.bcl2fastq.constants import SamplesSchema
 
-# TODO: Replace string column names with ETL Column class constants
-# FIXME why doesn't this work the way it does on Dash
-
 page_name = 'pooling_qc'
 
 ids = init_ids([
