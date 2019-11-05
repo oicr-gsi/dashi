@@ -2,7 +2,7 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
-from . import bcl2fastq, bamqc_gbovertime, poolqc, runreport, runscanner, bamqc_overtime
+from . import bcl2fastq, bamqc_gbovertime, poolqc, runreport, runscanner, bamqc_overtime, rnaseqc
 
 ids = init_ids(['url', 'page-content'])
 
@@ -31,5 +31,7 @@ def init_callbacks(dash_app):
             return runscanner.layout
         elif path == '/{0}'.format(bamqc_overtime.page_name):
             return bamqc_overtime.layout
+        elif path == '/{0}'.format(rnaseqc.page_name):
+            return rnaseqc.layout
         else:
             return '404'
