@@ -9,6 +9,8 @@ import gsiqcetl.bcl2fastq.utility
 import urllib.parse
 
 
+#TODO: there was a rewrite of this
+
 page_name = 'bcl2fastq/indexinfo'
 
 ids = init_ids([
