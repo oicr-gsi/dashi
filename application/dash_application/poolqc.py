@@ -286,7 +286,7 @@ layout = html.Div(children=[
 def init_callbacks(dash_app):
     @dash_app.callback(
         Output(ids['lane_select'], "options"), 
-        [Input("select_a_run", "value")]
+        [Input(ids['select_a_run'], "value")]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_lane_options(run_alias):
