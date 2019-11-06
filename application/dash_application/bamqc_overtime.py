@@ -6,7 +6,7 @@ import pandas
 import gsiqcetl.load
 from gsiqcetl.bamqc.constants import CacheSchema
 from gsiqcetl.pinery.sampleprovenance.constants import (
-    CacheSchema as SampleProvenanceCacheSchema,
+    CacheSchema as SampleProvenanceCacheSchema
 )
 from application.dash_application.plots.shiny_mimic import ShinyMimic
 
