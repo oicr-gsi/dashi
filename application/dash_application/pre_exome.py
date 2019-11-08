@@ -3,12 +3,21 @@ import dash_core_components as core
 import dash_table as tabl
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
-
+import plotly.graph_objects as go
+import gsiqcetl.load
 # TODO: develop against gsiqcetl@master rather than v0.5.0 once bamqc is available
 
+bamqc = gsiqcetl.load.bamqc('v1')
+bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
 
+# TODO: make this a function
+bamqc['Percent-Unmapped'] = (bamqc[bamqc_cols.UnmappedReads] / bamqc[bamqc_cols.TotalReads]) * 100
 
-# This is a great candidate for using ScatterGL
+bamqc['Percent-On-Target'] = (bamqc[bamqc_cols.ReadsOnTarget] / bamqc[bamqc_cols.TotalReads]) * 100
+
+bamqc['Percent-Non-Primary'] = (bamqc[bamqc_cols.NonPrimaryReads] / bamqc[bamqc_cols.TotalReads]) * 100
+
+# TODO: group by project
 
 
 page_name = 'preexome'
@@ -33,7 +42,7 @@ ids = init_ids([
     #Graphs
     'total-reads',
     'unmapped-reads',
-    'secondary-reads',
+    'non-primary-reads',
     'on-target-reads',
     'reads-per-start-point',
     'mean-insert-size',
@@ -66,10 +75,86 @@ layout = html.Div(className='body',
         html.Div(className='graphs',
             children=[
                 core.Graph(id=ids['total-reads']),
-                core.Graph(id=ids['unmapped-reads']),
-                core.Graph(id=ids['secondary-reads']),
-                core.Graph(id=ids['reads-per-start-point']),
-                core.Graph(id=ids['mean-insert-size'])
+
+                core.Graph(id=ids['unmapped-reads'], # Percentage
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc['Percent-Unmapped'],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                    )],
+                    layout = go.Layout(
+                        title="Unmapped Reads (%)"
+                    )
+                )),
+
+                core.Graph(id=ids['non-primary-reads'],
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc['Percent-Non-Primary'],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                        )],
+                        layout = go.Layout(
+                            title="Non-Primary Reads (%)"
+                        )
+                )),
+                
+                core.Graph(id=ids['on-target-reads'],
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc['Percent-On-Target'],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                        )],
+                        layout = go.Layout(
+                            title="On Target Reads (%)"
+                        )
+                )),
+
+                core.Graph(id=ids['reads-per-start-point'],
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc[bamqc_cols.ReadsPerStartPoint],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                        )],
+                        layout = go.Layout(
+                            title="Reads per Start Point"
+                        )
+                )),
+                
+                core.Graph(id=ids['mean-insert-size'],
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc[bamqc_cols.InsertMean],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                    )],
+                    layout = go.Layout(
+                        title="Mean Insert Size"
+                    )
+                ))
             ]),
         html.Div(className='terminal-output',
             children=[
@@ -90,3 +175,4 @@ def init_callbacks(dash_app):
     #     [Input()])
     # def placeholder_callback(value):
         return
+
