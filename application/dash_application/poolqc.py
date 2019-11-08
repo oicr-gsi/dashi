@@ -13,8 +13,6 @@ from gsiqcetl.rnaseqqc.constants import CacheSchema as RNASeqQCCacheSchema
 from gsiqcetl.bamqc.constants import CacheSchema as BamQCCacheSchema
 from gsiqcetl.bcl2fastq.constants import SamplesSchema
 
-import pdb
-
 page_name = 'pooling_qc'
 
 ids = init_ids([
@@ -292,7 +290,6 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_lane_options(run_alias):
-        pdb.set_trace()
         run = df[df["Run"] == run_alias]
         run = run[run["Run"].notna()]
         return [
@@ -306,7 +303,6 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_lane_values(available_options):
-        pdb.set_trace()
         return available_options[0]["value"]
 
     @dash_app.callback(
@@ -316,7 +312,6 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_title(lane_value, run_value):
-        pdb.set_trace()
         return "You have selected lane {} in run {}".format(lane_value, run_value)
 
     @dash_app.callback(
@@ -325,7 +320,6 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def open_project_drawer(n_clicks):
-        pdb.set_trace()
         return n_clicks is not None
 
     @dash_app.callback(
@@ -335,7 +329,6 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def initial_threshold_value(run_alias, lane_alias):
-        pdb.set_trace()
         run = df[(df["Run"] == run_alias) & (df["LaneNumber"] == lane_alias)]
         run = run.drop_duplicates("library")
 
@@ -380,7 +373,6 @@ def init_callbacks(dash_app):
             pass/fail: calculated value of how many samples have passed dependent on the threshold
             sample_type: the values of all the types of samples selected to view in the report (DNA vs RNA)
         """
-        pdb.set_trace()
         index_threshold = int(index_threshold)
         run = df[(df["Run"] == run_alias) & (df["LaneNumber"] == lane_alias)]
 
