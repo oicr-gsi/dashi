@@ -74,9 +74,23 @@ layout = html.Div(className='body',
             ]),
         html.Div(className='graphs',
             children=[
-                core.Graph(id=ids['total-reads']),
+                core.Graph(id=ids['total-reads'],
+                    figure=go.Figure(
+                        data=[go.Scattergl(
+                            x=bamqc[bamqc_cols.Sample],
+                            y=bamqc[bamqc_cols.TotalReads],
+                            mode='markers',
+                            marker={
+                                'size': 1,
+                                'line': {'width': 0.5, 'color': 'red'}
+                            }
+                        )],
+                    layout = go.Layout(
+                        title="Total Reads" #what does 'passed filter' mean
+                    )
+                )),
 
-                core.Graph(id=ids['unmapped-reads'], # Percentage
+                core.Graph(id=ids['unmapped-reads'],
                     figure=go.Figure(
                         data=[go.Scattergl(
                             x=bamqc[bamqc_cols.Sample],
