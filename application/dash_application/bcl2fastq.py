@@ -3,10 +3,11 @@ import dash_core_components as core
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
 from flask import current_app as app
-
 import gsiqcetl.load
 from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
 import gsiqcetl.bcl2fastq.utility
+import urllib.parse
+
 
 page_name = 'bcl2fastq/indexinfo'
 
@@ -30,6 +31,15 @@ all_runs = index[index_col.Run].sort_values(ascending=False).unique()
 
 COL_LIBRARY = "library"
 COL_INDEX = "index"
+
+""" Sample_run_hidden holds json split format of "Known" columns:
+"FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
+"LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
+"SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
+
+ pruned_unknown_hidden holds json split format of "unknown" columns:
+ "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
+ """
 
 layout = html.Div(
     children=[
@@ -84,13 +94,12 @@ layout = html.Div(
     ]
 )
 
-
 def init_callbacks(dash_app):
     dash_app.config.suppress_callback_exceptions = True
 
     @dash_app.callback(
         [Output(ids['run_select'], "value"), 
-        Output("error", "displayed")],
+        Output(ids['error'], "displayed")],
         [Input(ids['bcl2fastq_url'], "pathname")],
     )
     @dash_app.server.cache.memoize(timeout=60)
@@ -124,18 +133,23 @@ def init_callbacks(dash_app):
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_layout(run_alias):
-        """ When input(run dropdown) is changed, known index bar, unknown index bar, piechart and textarea are updated
-            Parameter:
-                run_alias: user-selected run name from dropdown
-            Returns:
-                functions update_known_index_bar, update_unknown_index_bar, update_pie_chart's data value,
-                and update_pie_chart's fraction value
+        """
+        When input(run dropdown) is changed, known index bar, unknown index bar,
+        piechart and textarea are updated
+
+        Parameter:
+            run_alias: user-selected run name from dropdown
+        Returns:
+            functions update_known_index_bar, update_unknown_index_bar,
+            update_pie_chart's data value, and update_pie_chart's fraction value
         """
 
         run = index[index[index_col.Run] == run_alias]
         run = run[run[index_col.ReadNumber] == 1]
         run = run[~run[index_col.SampleID].isna()]
         run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
+        # TODO: Replace with join from Pinery (on Run, Lane, Index1, Index2)
+        #  10X index (SI-GA-H11) will have to be converted to nucleotide
         run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
             r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
         )
@@ -156,16 +170,96 @@ def init_callbacks(dash_app):
             run_alias, index
         )
 
-        pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
+        pie_data, textarea_fraction = create_pie_chart(
+            run, pruned, total_clusters
+        )
 
         return (
             create_known_index_bar(run),
             create_unknown_index_bar(pruned),
             pie_data,
-            textarea_fraction,
+            textarea_fraction
         )
 
-## These aren't in init_callbacks. Do they need to be? Are we OK to call them?
+@app.cache.memoize(timeout=60)
+def generate_layout(qs) -> html.Div:
+    """
+    Within the main layout division there are 3 groups:
+    1. Top: Bar graphs showing each known index count
+    2. Bottom left: Pie chart and text box
+        a) Pie chart shows proportion of known and unknown indices
+        b) Text box measures how well multiple analyses were combined (see
+            below)
+    3. Bottom right: Bar graph breaking down count of each unknown index
+
+    In many instances, multiple bcl2fastq analyses are performed for one run. It
+    is necessary to combine them to obtain meaningful statistics of unknown
+    indices, but due to one run combining single/dual and different length
+    indices, the calculations do have to make certain assumptions. The ratio
+    displayed in the text box is of the calculated read count divided by the
+    machine produced read count.
+
+    Args:
+        qs: The query string from the URL that modifying the layout.
+            "run" parameter sets the run selected on layout load
+
+    Returns: The Div of the complete layout with the defaults set from the
+        passed query string
+
+    """
+
+    # If query string exist, Dash returns it with the leading `?`
+    # The `parse_qs` function does not expect this and `?` needs to be removed
+    if qs:
+        qs = qs[1:]
+
+    qs = urllib.parse.parse_qs(qs)
+
+    if "run" in qs and qs["run"][0] in all_runs:
+        default_run = qs["run"][0]
+    else:
+        default_run = all_runs[0]
+
+    return html.Div(
+        children=[
+            core.Dropdown(
+                id=ids['run_select'],
+                #   Options is concantenated string versions of all_runs.
+                options=[{"label": r, "value": r} for r in all_runs],
+                value=default_run,
+                clearable=False,
+            ),
+            core.Graph(id=ids['known_index_bar']),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            core.Graph(id=ids['known_unknown_pie']),
+                            core.Textarea(
+                                id=ids['known_fraction'],
+                                style={"width": "100%"},
+                                readOnly=True,
+                                # This is hover text
+                                title="Assumptions are made about which indexes"
+                                " are known or unknown. This is due to "
+                                "multiple bcl2fastq analyses being used "
+                                "on one run. This number should be 100%.",
+                            ),
+                        ],
+                        style={"width": "25%", "display": "inline-block"},
+                    ),
+                    html.Div(
+                        [core.Graph(id=ids['unknown_index_bar'])],
+                        style={
+                            "width": "75%",
+                            "display": "inline-block",
+                            "float": "right",
+                        },
+                    ),
+                ]
+            ),
+        ]
+    )
 
 @app.cache.memoize(timeout=60)
 def create_known_index_bar(run):
