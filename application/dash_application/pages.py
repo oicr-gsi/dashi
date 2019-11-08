@@ -11,7 +11,8 @@ pagenames = [
     'runreport',
     'runscanner',
     'bamqc_overtime',
-    'rnaseqc'
+    'rnaseqc',
+    'poolqc'
 ]
 
 # Please do not edit this array
