@@ -4,7 +4,12 @@ import dash_table as tabl
 from dash.dependencies import Input, Output
 from .dash_id import init_ids
 
+# TODO: develop against gsiqcetl@master rather than v0.5.0 once bamqc is available
+
+
+
 # This is a great candidate for using ScatterGL
+
 
 page_name = 'preexome'
 
