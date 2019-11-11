@@ -1,7 +1,7 @@
 import dash_html_components as html
 import dash_core_components as core
 import dash_table as tabl
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from .dash_id import init_ids
 import plotly.graph_objects as go
 import gsiqcetl.load
@@ -54,10 +54,10 @@ ids = init_ids([
     'data-table'
 ])
 
-def generateTotalReads():
+def generateTotalReads(samples=bamqc[bamqc_cols.Sample]):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
+            x=samples,
             y=bamqc[bamqc_cols.TotalReads] / pow(10,6),
             mode='markers',
             marker={
@@ -205,6 +205,7 @@ layout = html.Div(className='body',
                         options = [
                             {'label': x, 'value': x} for x in bamqc[bamqc_cols.Run].unique()
                         ]
+                        #TODO: needs to have all selected by default
                     )
                 ]), html.Br(),
                 
@@ -333,38 +334,38 @@ layout = html.Div(className='body',
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        Output(ids['total-reads'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_1(value):
-        return generateTotalReads();
-
-    @dash_app.callback(
+        [Output(ids['total-reads'], 'figure'),
         Output(ids['unmapped-reads'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_2(value):
-        return generateUnmappedReads();
-
-    @dash_app.callback(
         Output(ids['non-primary-reads'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_3(value):
-        return generateNonprimaryReads();
-
-    @dash_app.callback(
         Output(ids['on-target-reads'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_4(value):
-        return generateOnTargetReads();
-
-    @dash_app.callback(
         Output(ids['reads-per-start-point'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_5(value):
-        return generateReadsPerStartPoint();
-
-    @dash_app.callback(
-        Output(ids['mean-insert-size'], 'figure'),
-        [Input(ids['reads-per-start-point-slider'], 'value')])
-    def test_6(value):
-        return generateMeanInsertSize();
+        Output(ids['mean-insert-size'], 'figure')],
+        [Input(ids['update-button'], 'n-clicks')],
+        [State(ids['run-id-list'], 'value'),
+        State(ids['first-sort'], 'value'),
+        State(ids['second-sort'], 'value'),
+        State(ids['colour-by'], 'value'),
+        State(ids['shape-by'], 'value'),
+        State(ids['search-sample'], 'value'),
+        State(ids['show-names'], 'value'),
+        State(ids['reads-per-start-point-slider'], 'value'),
+        State(ids['insert-size-mean-slider'], 'value'),
+        State(ids['passed-filter-reads-slider'], 'value')])
+    def updatePressed(click, 
+            runs, 
+            firstsort, 
+            secondsort, 
+            colourby,
+            shapeby,
+            searchsample,
+            shownames,
+            reads,
+            insertsizemean,
+            passedfilter):
+        return [generateTotalReads(),
+            generateUnmappedReads(),
+            generateNonprimaryReads(),
+            generateOnTargetReads(),
+            generateReadsPerStartPoint(),
+            generateMeanInsertSize()]
 
