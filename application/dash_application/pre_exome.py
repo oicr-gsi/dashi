@@ -78,7 +78,7 @@ layout = html.Div(className='body',
                     figure=go.Figure(
                         data=[go.Scattergl(
                             x=bamqc[bamqc_cols.Sample],
-                            y=bamqc[bamqc_cols.TotalReads],
+                            y=bamqc[bamqc_cols.TotalReads] / pow(10,6),
                             mode='markers',
                             marker={
                                 'size': 1,
@@ -86,7 +86,15 @@ layout = html.Div(className='body',
                             }
                         )],
                     layout = go.Layout(
-                        title="Total Reads" #what does 'passed filter' mean
+                        title="Total Reads", #what does 'passed filter' mean
+                        xaxis={'visible': False,
+                            'rangemode': 'normal',
+                            'autorange': True},
+                        yaxis={
+                            'title': {
+                                'text': '# Reads x 10^6'
+                            }
+                        }
                     )
                 )),
 
@@ -102,7 +110,13 @@ layout = html.Div(className='body',
                             }
                     )],
                     layout = go.Layout(
-                        title="Unmapped Reads (%)"
+                        title="Unmapped Reads (%)",
+                        xaxis={'visible': False},
+                        yaxis={
+                            'title': {
+                                'text': '%'
+                            }
+                        }
                     )
                 )),
 
@@ -118,7 +132,13 @@ layout = html.Div(className='body',
                             }
                         )],
                         layout = go.Layout(
-                            title="Non-Primary Reads (%)"
+                            title="Non-Primary Reads (%)",
+                            xaxis={'visible': False},
+                            yaxis={
+                                'title':{
+                                    'text': '%'
+                                }
+                            }
                         )
                 )),
                 
@@ -134,7 +154,13 @@ layout = html.Div(className='body',
                             }
                         )],
                         layout = go.Layout(
-                            title="On Target Reads (%)"
+                            title="On Target Reads (%)",
+                            xaxis={'visible': False},
+                            yaxis={
+                                'title':{
+                                    'text': '%'
+                                }
+                            }
                         )
                 )),
 
@@ -150,7 +176,13 @@ layout = html.Div(className='body',
                             }
                         )],
                         layout = go.Layout(
-                            title="Reads per Start Point"
+                            title="Reads per Start Point",
+                            xaxis={'visible': False},
+                            yaxis={
+                                'title':{
+                                    'text': 'Fraction'
+                                }
+                            }
                         )
                 )),
                 
@@ -166,7 +198,13 @@ layout = html.Div(className='body',
                             }
                     )],
                     layout = go.Layout(
-                        title="Mean Insert Size"
+                        title="Mean Insert Size",
+                        xaxis={'visible': False},
+                            yaxis={
+                                'title':{
+                                    'text': 'Fraction'
+                                }
+                            }
                     )
                 ))
             ]),
