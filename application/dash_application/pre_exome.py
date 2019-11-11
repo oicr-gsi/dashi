@@ -192,8 +192,10 @@ layout = html.Div(className='body',
     children=[
         html.Div(className='sidebar',
             children=[
-                html.Button(id=ids['update-button']),
-                html.Button(id=ids['download-button']),
+                # As far as I can tell, there's no named attribute for button text
+                # It's always positional
+                html.Button('Update', id=ids['update-button']),
+                html.Button('Download', id=ids['download-button']),
                 html.Br(),
 
 

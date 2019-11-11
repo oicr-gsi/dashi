@@ -1,5 +1,29 @@
 /* Stylesheets in the /assets directory get automatically applied */
 
-div {
-    background-color: #EEE;
+:root {
+    --sidebar-width: 50%;
+}
+
+.body {
+    width: 100%;
+    margin: auto;
+    padding: 10px;
+}
+
+.sidebar {
+    width: var(--sidebar-width);
+    float: left;
+    background-color: lightgray;
+}
+
+.graphs {
+    margin-left: var(--sidebar-width);
+}
+
+.terminal-output {
+    margin-left: var(--sidebar-width);
+}
+
+.data-table {
+    margin-left: var(--sidebar-width);
 }
