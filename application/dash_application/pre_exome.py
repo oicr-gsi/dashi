@@ -35,9 +35,9 @@ ids = init_ids([
     'shape-by',
     'search-sample',
     'show-names',
-    'reads-per-start-point',
-    'insert-size-mean',
-    'passed-filter-reads',
+    'reads-per-start-point-slider',
+    'insert-size-mean-slider',
+    'passed-filter-reads-slider',
 
     #Graphs
     'total-reads',
@@ -68,145 +68,18 @@ layout = html.Div(className='body',
                 core.Dropdown(id=ids['first-sort']),
                 core.Input(id=ids['search-sample']),
                 core.Dropdown(id=ids['show-names']),
-                core.Slider(id=ids['on-target-reads']),
-                core.Slider(id=ids['reads-per-start-point']),
-                core.Slider(id=ids['mean-insert-size'])
+                core.Slider(id=ids['reads-per-start-point-slider']),
+                core.Slider(id=ids['insert-size-mean-slider']),
+                core.Slider(id=ids['passed-filter-reads-slider'])
             ]),
         html.Div(className='graphs',
             children=[
-                core.Graph(id=ids['total-reads'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc[bamqc_cols.TotalReads] / pow(10,6),
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                        )],
-                    layout = go.Layout(
-                        title="Total Reads", #what does 'passed filter' mean
-                        xaxis={'visible': False,
-                            'rangemode': 'normal',
-                            'autorange': True},
-                        yaxis={
-                            'title': {
-                                'text': '# Reads x 10^6'
-                            }
-                        }
-                    )
-                )),
-
-                core.Graph(id=ids['unmapped-reads'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc['Percent-Unmapped'],
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                    )],
-                    layout = go.Layout(
-                        title="Unmapped Reads (%)",
-                        xaxis={'visible': False},
-                        yaxis={
-                            'title': {
-                                'text': '%'
-                            }
-                        }
-                    )
-                )),
-
-                core.Graph(id=ids['non-primary-reads'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc['Percent-Non-Primary'],
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                        )],
-                        layout = go.Layout(
-                            title="Non-Primary Reads (%)",
-                            xaxis={'visible': False},
-                            yaxis={
-                                'title':{
-                                    'text': '%'
-                                }
-                            }
-                        )
-                )),
-                
-                core.Graph(id=ids['on-target-reads'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc['Percent-On-Target'],
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                        )],
-                        layout = go.Layout(
-                            title="On Target Reads (%)",
-                            xaxis={'visible': False},
-                            yaxis={
-                                'title':{
-                                    'text': '%'
-                                }
-                            }
-                        )
-                )),
-
-                core.Graph(id=ids['reads-per-start-point'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc[bamqc_cols.ReadsPerStartPoint],
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                        )],
-                        layout = go.Layout(
-                            title="Reads per Start Point",
-                            xaxis={'visible': False},
-                            yaxis={
-                                'title':{
-                                    'text': 'Fraction'
-                                }
-                            }
-                        )
-                )),
-                
-                core.Graph(id=ids['mean-insert-size'],
-                    figure=go.Figure(
-                        data=[go.Scattergl(
-                            x=bamqc[bamqc_cols.Sample],
-                            y=bamqc[bamqc_cols.InsertMean],
-                            mode='markers',
-                            marker={
-                                'size': 1,
-                                'line': {'width': 0.5, 'color': 'red'}
-                            }
-                    )],
-                    layout = go.Layout(
-                        title="Mean Insert Size",
-                        xaxis={'visible': False},
-                            yaxis={
-                                'title':{
-                                    'text': 'Fraction'
-                                }
-                            }
-                    )
-                ))
+                core.Graph(id=ids['total-reads']),
+                core.Graph(id=ids['unmapped-reads']),
+                core.Graph(id=ids['non-primary-reads']),
+                core.Graph(id=ids['on-target-reads']),
+                core.Graph(id=ids['reads-per-start-point']),
+                core.Graph(id=ids['mean-insert-size'])
             ]),
         html.Div(className='terminal-output',
             children=[
@@ -224,7 +97,140 @@ layout = html.Div(className='body',
 def init_callbacks(dash_app):
     # @dash_app.callback(
     #     Output(),
-    #     [Input()])
+    #     [Input(ids['rea'])])
     # def placeholder_callback(value):
         return
 
+def generateTotalReads():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc[bamqc_cols.TotalReads] / pow(10,6),
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+        )],
+        layout = go.Layout(
+            title="Total Reads", #what does 'passed filter' mean
+            xaxis={'visible': False,
+                'rangemode': 'normal',
+                'autorange': True},
+            yaxis={
+                'title': {
+                    'text': '# Reads x 10^6'
+                }
+            }
+        )
+    )
+
+def generateUnmappedReads():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc['Percent-Unmapped'],
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+        )],
+        layout = go.Layout(
+            title="Unmapped Reads (%)",
+            xaxis={'visible': False},
+            yaxis={
+                'title': {
+                    'text': '%'
+                }
+            }
+        )
+    )
+
+def generateNonprimaryReads():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc['Percent-Non-Primary'],
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+        )],
+        layout = go.Layout(
+            title="Non-Primary Reads (%)",
+            xaxis={'visible': False},
+            yaxis={
+                'title':{
+                    'text': '%'
+                }
+            }
+        )
+    )
+
+def generateOnTargetReads():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc['Percent-On-Target'],
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+        )],
+        layout = go.Layout(
+            title="On Target Reads (%)",
+            xaxis={'visible': False},
+            yaxis={
+                'title':{
+                    'text': '%'
+                }
+            }
+        )
+    )
+
+def generateReadsPerStartPoint():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc[bamqc_cols.ReadsPerStartPoint],
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+        )],
+        layout = go.Layout(
+            title="Reads per Start Point",
+            xaxis={'visible': False},
+            yaxis={
+                'title':{
+                    'text': 'Fraction'
+                }
+            }
+        )
+    )
+
+def generateMeanInsertSize():
+    return go.Figure(
+        data=[go.Scattergl(
+            x=bamqc[bamqc_cols.Sample],
+            y=bamqc[bamqc_cols.InsertMean],
+            mode='markers',
+            marker={
+                'size': 1,
+                'line': {'width': 0.5, 'color': 'red'}
+            }
+    )],
+    layout = go.Layout(
+        title="Mean Insert Size",
+        xaxis={'visible': False},
+            yaxis={
+                'title':{
+                    'text': 'Fraction'
+                }
+            }
+        )
+    )
