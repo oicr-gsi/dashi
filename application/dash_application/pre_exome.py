@@ -201,7 +201,11 @@ layout = html.Div(className='body',
 
                 html.Label([
                     "Run ID", 
-                    core.Checklist(id=ids['run-id-list'])
+                    core.Checklist(id=ids['run-id-list'],
+                        options = [
+                            {'label': x, 'value': x} for x in bamqc[bamqc_cols.Run].unique()
+                        ]
+                    )
                 ]), html.Br(),
                 
                 html.Label([
