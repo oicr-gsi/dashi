@@ -54,53 +54,6 @@ ids = init_ids([
     'data-table'
 ])
 
-layout = html.Div(className='body',
-    children=[
-        html.Div(className='sidebar',
-            children=[
-                html.Button(id=ids['update-button']),
-                html.Button(id=ids['download-button']),
-                core.Checklist(id=ids['run-id-list']),
-                core.Dropdown(id=ids['first-sort']),
-                core.Dropdown(id=ids['second-sort']),
-                core.Dropdown(id=ids['colour-by']),
-                core.Dropdown(id=ids['shape-by']),
-                core.Dropdown(id=ids['first-sort']),
-                core.Input(id=ids['search-sample']),
-                core.Dropdown(id=ids['show-names']),
-                core.Slider(id=ids['reads-per-start-point-slider']),
-                core.Slider(id=ids['insert-size-mean-slider']),
-                core.Slider(id=ids['passed-filter-reads-slider'])
-            ]),
-        html.Div(className='graphs',
-            children=[
-                core.Graph(id=ids['total-reads']),
-                core.Graph(id=ids['unmapped-reads']),
-                core.Graph(id=ids['non-primary-reads']),
-                core.Graph(id=ids['on-target-reads']),
-                core.Graph(id=ids['reads-per-start-point']),
-                core.Graph(id=ids['mean-insert-size'])
-            ]),
-        html.Div(className='terminal-output',
-            children=[
-                core.Textarea(id=ids['terminal-output'],
-                    readOnly=True,
-                    value='$'
-                )
-            ]),
-        html.Div(className='data-table',
-            children=[
-                tabl.DataTable(id=ids['data-table'])
-            ])
-    ]) 
-
-def init_callbacks(dash_app):
-    # @dash_app.callback(
-    #     Output(),
-    #     [Input(ids['rea'])])
-    # def placeholder_callback(value):
-        return
-
 def generateTotalReads():
     return go.Figure(
         data=[go.Scattergl(
@@ -234,3 +187,178 @@ def generateMeanInsertSize():
             }
         )
     )
+
+layout = html.Div(className='body',
+    children=[
+        html.Div(className='sidebar',
+            children=[
+                html.Button(id=ids['update-button']),
+                html.Button(id=ids['download-button']),
+                html.Br(),
+
+
+                html.Label([
+                    "Run ID", 
+                    core.Checklist(id=ids['run-id-list'])
+                ]), html.Br(),
+                
+                html.Label([
+                    "1st Sort:",
+                    core.Dropdown(id=ids['first-sort'],
+                        options = [
+                            {'label': 'Project', 'value': 'project'},
+                            {'label': 'Run', 'value': 'run'}
+                        ],
+                        value = 'project',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
+
+                html.Label([
+                    "2nd Sort:",
+                    core.Dropdown(id=ids['second-sort'],
+                        options = [
+                            # TODO: Friendlier names
+                            {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
+                            {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
+                            {'label': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
+                            {'label': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
+                        ],
+                        value = 'BAMQC_TOTALREADS',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
+
+                html.Label([
+                    "Colour by:",
+                    core.Dropdown(id=ids['colour-by'],
+                        options = [
+                            {'label': 'Project', 'value': 'project'},
+                            {'label': 'Run', 'value': 'run'}
+                        ],
+                        value = 'project',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
+
+                html.Label([
+                    "Shape by:",
+                    core.Dropdown(id=ids['shape-by'],
+                        options = [
+                            {'label': 'Project', 'value': 'project'},
+                            {'label': 'Run', 'value': 'run'}
+                        ],
+                        value = 'project',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
+
+                html.Label([
+                    "Search Sample:",
+                    core.Input(id=ids['search-sample'])
+                ]), html.Br(),
+                
+                html.Label([
+                    "Show Names:",
+                    core.Dropdown(id=ids['show-names'],
+                        options = [
+                            {'label': 'Sample', 'value': 'sample'},
+                            {'label': 'groupID', 'value': 'groupID'},
+                            {'label': 'None', 'value': 'none'}
+                        ],
+                        value = 'none',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
+
+                html.Label([
+                    "Reads Per Start Point:",
+                    core.Slider(id=ids['reads-per-start-point-slider'])
+                ]), html.Br(),
+
+                html.Label([
+                    "Insert Size Mean:",
+                    core.Slider(id=ids['insert-size-mean-slider'])
+                ]), html.Br(),
+                
+                html.Label([
+                    "Passed Filter Reads:",
+                    core.Slider(id=ids['passed-filter-reads-slider'])
+                ]), html.Br()
+            ]),
+        html.Div(className='graphs',
+            children=[
+                core.Graph(id=ids['total-reads'],
+                    figure=generateTotalReads()
+                ),
+                core.Graph(id=ids['unmapped-reads'],
+                    figure=generateUnmappedReads()
+                ),
+                core.Graph(id=ids['non-primary-reads'],
+                    figure=generateNonprimaryReads()
+                ),
+                core.Graph(id=ids['on-target-reads'],
+                    figure=generateOnTargetReads()
+                ),
+                core.Graph(id=ids['reads-per-start-point'],
+                    figure=generateReadsPerStartPoint()
+                ),
+                core.Graph(id=ids['mean-insert-size'],
+                    figure=generateMeanInsertSize()
+                )
+            ]),
+        html.Div(className='terminal-output',
+            children=[
+                core.Textarea(id=ids['terminal-output'],
+                    readOnly=True,
+                    value='$'
+                )
+            ]),
+        html.Div(className='data-table',
+            children=[
+                tabl.DataTable(id=ids['data-table'])
+            ])
+    ]) 
+
+def init_callbacks(dash_app):
+    @dash_app.callback(
+        Output(ids['total-reads'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_1(value):
+        return generateTotalReads();
+
+    @dash_app.callback(
+        Output(ids['unmapped-reads'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_2(value):
+        return generateUnmappedReads();
+
+    @dash_app.callback(
+        Output(ids['non-primary-reads'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_3(value):
+        return generateNonprimaryReads();
+
+    @dash_app.callback(
+        Output(ids['on-target-reads'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_4(value):
+        return generateOnTargetReads();
+
+    @dash_app.callback(
+        Output(ids['reads-per-start-point'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_5(value):
+        return generateReadsPerStartPoint();
+
+    @dash_app.callback(
+        Output(ids['mean-insert-size'], 'figure'),
+        [Input(ids['reads-per-start-point-slider'], 'value')])
+    def test_6(value):
+        return generateMeanInsertSize();
+
