@@ -4,21 +4,13 @@ import dash_table as tabl
 from dash.dependencies import Input, Output, State
 from .dash_id import init_ids
 import plotly.graph_objects as go
+import pandas as pd
 import gsiqcetl.load
 # TODO: develop against gsiqcetl@master rather than v0.5.0 once bamqc is available
 
 bamqc = gsiqcetl.load.bamqc('v1')
 bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
-
-# TODO: make this a function
-bamqc['Percent-Unmapped'] = (bamqc[bamqc_cols.UnmappedReads] / bamqc[bamqc_cols.TotalReads]) * 100
-
-bamqc['Percent-On-Target'] = (bamqc[bamqc_cols.ReadsOnTarget] / bamqc[bamqc_cols.TotalReads]) * 100
-
-bamqc['Percent-Non-Primary'] = (bamqc[bamqc_cols.NonPrimaryReads] / bamqc[bamqc_cols.TotalReads]) * 100
-
 # TODO: group by project
-
 
 page_name = 'preexome'
 
@@ -54,11 +46,14 @@ ids = init_ids([
     'data-table'
 ])
 
-def generateTotalReads(samples=bamqc[bamqc_cols.Sample]):
+def percentageOf(data, bamqc_column):
+    return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
+
+def generateTotalReads(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=samples,
-            y=bamqc[bamqc_cols.TotalReads] / pow(10,6),
+            x=current_data[bamqc_cols.Sample],
+            y=current_data[bamqc_cols.TotalReads] / pow(10,6),
             mode='markers',
             marker={
                 'size': 1,
@@ -78,11 +73,11 @@ def generateTotalReads(samples=bamqc[bamqc_cols.Sample]):
         )
     )
 
-def generateUnmappedReads():
+def generateUnmappedReads(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
-            y=bamqc['Percent-Unmapped'],
+            x=current_data[bamqc_cols.Sample],
+            y=percentageOf(current_data, bamqc_cols.UnmappedReads),
             mode='markers',
             marker={
                 'size': 1,
@@ -100,11 +95,11 @@ def generateUnmappedReads():
         )
     )
 
-def generateNonprimaryReads():
+def generateNonprimaryReads(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
-            y=bamqc['Percent-Non-Primary'],
+            x=current_data[bamqc_cols.Sample],
+            y=percentageOf(current_data, bamqc_cols.NonPrimaryReads),
             mode='markers',
             marker={
                 'size': 1,
@@ -122,11 +117,11 @@ def generateNonprimaryReads():
         )
     )
 
-def generateOnTargetReads():
+def generateOnTargetReads(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
-            y=bamqc['Percent-On-Target'],
+            x=current_data[bamqc_cols.Sample],
+            y=percentageOf(current_data, bamqc_cols.ReadsOnTarget),
             mode='markers',
             marker={
                 'size': 1,
@@ -144,11 +139,11 @@ def generateOnTargetReads():
         )
     )
 
-def generateReadsPerStartPoint():
+def generateReadsPerStartPoint(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
-            y=bamqc[bamqc_cols.ReadsPerStartPoint],
+            x=current_data[bamqc_cols.Sample],
+            y=percentageOf(current_data, bamqc_cols.ReadsPerStartPoint),
             mode='markers',
             marker={
                 'size': 1,
@@ -166,11 +161,11 @@ def generateReadsPerStartPoint():
         )
     )
 
-def generateMeanInsertSize():
+def generateMeanInsertSize(current_data):
     return go.Figure(
         data=[go.Scattergl(
-            x=bamqc[bamqc_cols.Sample],
-            y=bamqc[bamqc_cols.InsertMean],
+            x=current_data[bamqc_cols.Sample],
+            y=current_data[bamqc_cols.InsertMean],
             mode='markers',
             marker={
                 'size': 1,
@@ -303,22 +298,22 @@ layout = html.Div(className='body',
         html.Div(className='graphs',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads()
+                    figure=generateTotalReads(bamqc)
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads()
+                    figure=generateUnmappedReads(bamqc)
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads()
+                    figure=generateNonprimaryReads(bamqc)
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads()
+                    figure=generateOnTargetReads(bamqc)
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint()
+                    figure=generateReadsPerStartPoint(bamqc)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize()
+                    figure=generateMeanInsertSize(bamqc)
                 )
             ]),
         html.Div(className='terminal-output',
@@ -342,7 +337,7 @@ def init_callbacks(dash_app):
         Output(ids['on-target-reads'], 'figure'),
         Output(ids['reads-per-start-point'], 'figure'),
         Output(ids['mean-insert-size'], 'figure')],
-        [Input(ids['update-button'], 'n-clicks')],
+        [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
         State(ids['second-sort'], 'value'),
@@ -364,10 +359,16 @@ def init_callbacks(dash_app):
             reads,
             insertsizemean,
             passedfilter):
-        return [generateTotalReads(),
-            generateUnmappedReads(),
-            generateNonprimaryReads(),
-            generateOnTargetReads(),
-            generateReadsPerStartPoint(),
-            generateMeanInsertSize()]
+
+
+        data = pd.DataFrame(columns=bamqc.columns)
+        for run in runs:
+            data = data.append(bamqc.loc[bamqc[bamqc_cols.Run] == run])
+
+        return [generateTotalReads(data),
+            generateUnmappedReads(data),
+            generateNonprimaryReads(data),
+            generateOnTargetReads(data),
+            generateReadsPerStartPoint(data),
+            generateMeanInsertSize(data)]
 
