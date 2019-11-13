@@ -11,7 +11,6 @@ from dash.dependencies import Output, Input, State
 import dash.exceptions
 import dash_table
 import dash
-import pdb
 
 from application.dash_application.plots.plot_scatter_subplot import create_subplot
 
@@ -219,7 +218,6 @@ class ShinyMimic:
             Returns: The incremented click number
 
             """
-            pdb.set_trace()
             n_clicks = 0 if n_clicks is None else n_clicks + 1
             return n_clicks
 
@@ -254,7 +252,6 @@ class ShinyMimic:
             Returns: The data to put in the data table
 
             """
-            pdb.set_trace()
             if drawer_open:
                 raise dash.exceptions.PreventUpdate(
                     "Drawer opening does not require recalculation"
@@ -317,7 +314,6 @@ class ShinyMimic:
             Returns: The figures to plot
 
             """
-            pdb.set_trace()
             to_plot = pandas.DataFrame(data_to_plot)
 
             # The variable can be None or an empty list when no sorting is done
@@ -352,7 +348,6 @@ class ShinyMimic:
 
             """
             # Do no open if the button has never been clicked, otherwise open
-            pdb.set_trace()
             return n_clicks is not None
 
     def generate_main_window(
