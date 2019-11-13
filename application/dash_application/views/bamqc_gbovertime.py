@@ -3,7 +3,7 @@ import dash_core_components as core
 from dash.dependencies import Input, Output
 from ..dash_id import init_ids
 import pandas as pd
-import plotly.graph_objects as go
+import plotly.graph_objects as go 
 import gsiqcetl.load
 from gsiqcetl.bamqc.constants import CacheSchema
 from flask import current_app as app
