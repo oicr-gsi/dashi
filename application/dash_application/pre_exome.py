@@ -280,19 +280,38 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br(),
 
+                # TODO: there's no range() for floats
                 html.Label([
                     "Reads Per Start Point:",
-                    core.Slider(id=ids['reads-per-start-point-slider'])
+                    core.Slider(id=ids['reads-per-start-point-slider'],
+                        min = 0,
+                        max = 20,
+                        step = 1,
+                        #marks = {str(n):str(n) for n in range(0, 20, 2)},
+                        value = 5
+                    )
                 ]), html.Br(),
 
                 html.Label([
                     "Insert Size Mean:",
-                    core.Slider(id=ids['insert-size-mean-slider'])
+                    core.Slider(id=ids['insert-size-mean-slider'],
+                        min = 0,
+                        max = 500,
+                        step = 1,
+                        #marks = {str(n):str(n) for n in range(0, 500, 50)},
+                        value = 150
+                    )
                 ]), html.Br(),
                 
                 html.Label([
                     "Passed Filter Reads:",
-                    core.Slider(id=ids['passed-filter-reads-slider'])
+                    core.Slider(id=ids['passed-filter-reads-slider'],
+                        min = 0,
+                        max = 0.5,
+                        step = 0.005,
+                        #marks = {str(n):str(n) for n in range(0, 0.5, 0.05)},
+                        value = 0.01
+                    )
                 ]), html.Br()
             ]),
         html.Div(className='graphs',
