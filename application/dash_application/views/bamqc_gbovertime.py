@@ -36,7 +36,10 @@ layout = html.Div(
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        Output(ids["month_plot"], "figure"), [Input(ids["lib"], "value")]
+        Output(ids["month_plot"], "figure"),
+        [
+            Input(ids["lib"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_per_month(seq_type):
@@ -50,7 +53,10 @@ def init_callbacks(dash_app):
         }
 
     @dash_app.callback(
-        Output(ids["3month_plot"], "figure"), [Input(ids["lib"], "value")]
+        Output(ids["3month_plot"], "figure"),
+        [
+            Input(ids["lib"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_per_3month(seq_type):

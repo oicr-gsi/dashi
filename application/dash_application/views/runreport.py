@@ -12,7 +12,12 @@ from gsiqcetl.runreport.constants import CacheSchema
 
 page_name = "runreport/proj_hist"
 
-ids = init_ids(["project", "focused_run", "coverage_dist", "click-data"])
+ids = init_ids([
+    "project",
+    "focused_run",
+    "coverage_dist",
+    "click-data"
+])
 
 idx = pandas.IndexSlice
 
@@ -61,7 +66,10 @@ def init_callbacks(dash_app):
     # When a project is selected,
     # show only runs where the project is found
     @dash_app.callback(
-        Output(ids["focused_run"], "options"), [Input(ids["project"], "value")]
+        Output(ids["focused_run"], "options"),
+        [
+            Input(ids["project"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def set_focused_run_based_on_project(project):
@@ -72,7 +80,10 @@ def init_callbacks(dash_app):
     # When a project is selected
     # Set the newest run as the default selection
     @dash_app.callback(
-        Output(ids["focused_run"], "value"), [Input(ids["project"], "value")]
+        Output(ids["focused_run"], "value"),
+        [
+            Input(ids["project"], "value")
+        ]
     )
     def set_focused_run_default_value_when_options_change(project):
         runs = rr.loc[idx[project, :], :].index.get_level_values("Run").unique()
@@ -81,7 +92,10 @@ def init_callbacks(dash_app):
 
     @dash_app.callback(
         Output(ids["coverage_dist"], "figure"),
-        [Input(ids["project"], "value"), Input(ids["focused_run"], "value")],
+        [
+            Input(ids["project"], "value"),
+            Input(ids["focused_run"], "value")
+        ],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def create_coverage_dist(project, run_to_focus):
@@ -113,7 +127,9 @@ def init_callbacks(dash_app):
 
     @dash_app.callback(
         Output(ids["click-data"], "children"),
-        [Input(ids["coverage_dist"], "clickData")],
+        [
+            Input(ids["coverage_dist"], "clickData")
+        ],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def display_click_data(clickData):

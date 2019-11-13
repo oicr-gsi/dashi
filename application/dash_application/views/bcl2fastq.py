@@ -97,8 +97,13 @@ def init_callbacks(dash_app):
     dash_app.config.suppress_callback_exceptions = True
 
     @dash_app.callback(
-        [Output(ids["run_select"], "value"), Output(ids["error"], "displayed")],
-        [Input(ids["bcl2fastq_url"], "pathname")],
+        [
+            Output(ids["run_select"], "value"),
+            Output(ids["error"], "displayed")
+        ],
+        [
+            Input(ids["bcl2fastq_url"], "pathname")
+        ],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def change_url(pathname):
@@ -128,7 +133,9 @@ def init_callbacks(dash_app):
             Output(ids["known_unknown_pie"], "figure"),
             Output(ids["known_fraction"], "value"),
         ],
-        [Input(ids["run_select"], "value")],
+        [
+            Input(ids["run_select"], "value")
+        ],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_layout(run_alias):

@@ -266,7 +266,10 @@ layout = html.Div(
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        Output(ids["lane_select"], "options"), [Input(ids["select_a_run"], "value")]
+        Output(ids["lane_select"], "options"),
+        [
+            Input(ids["select_a_run"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_lane_options(run_alias):
@@ -278,7 +281,10 @@ def init_callbacks(dash_app):
         ]
 
     @dash_app.callback(
-        Output(ids["lane_select"], "value"), [Input(ids["lane_select"], "options")]
+        Output(ids["lane_select"], "value"),
+        [
+            Input(ids["lane_select"], "options")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_lane_values(available_options):
@@ -286,14 +292,20 @@ def init_callbacks(dash_app):
 
     @dash_app.callback(
         Output(ids["Title"], "children"),
-        [Input(ids["lane_select"], "value"), Input(ids["select_a_run"], "value")],
+        [
+            Input(ids["lane_select"], "value"),
+            Input(ids["select_a_run"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_title(lane_value, run_value):
         return "You have selected lane {} in run {}".format(lane_value, run_value)
 
     @dash_app.callback(
-        Output(ids["Filter_drawer"], "open"), [Input(ids["filters"], "n_clicks")]
+        Output(ids["Filter_drawer"], "open"),
+        [
+            Input(ids["filters"], "n_clicks")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def open_project_drawer(n_clicks):
@@ -301,7 +313,10 @@ def init_callbacks(dash_app):
 
     @dash_app.callback(
         Output(ids["index_threshold"], "value"),
-        [Input(ids["select_a_run"], "value"), Input(ids["lane_select"], "value")],
+        [
+            Input(ids["select_a_run"], "value"),
+            Input(ids["lane_select"], "value")
+        ]
     )
     @dash_app.server.cache.memoize(timeout=60)
     def initial_threshold_value(run_alias, lane_alias):
