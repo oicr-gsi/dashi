@@ -166,9 +166,9 @@ def generateReadsPerStartPoint(current_data, cutoff_line):
         )
     )
 
-def generateMeanInsertSize(current_data):
+def generateMeanInsertSize(current_data, cutoff_line):
     return go.Figure(
-        data=[go.Scattergl(
+        data=[go.Scattergl( # Actual Data
             x=current_data[bamqc_cols.Sample],
             y=current_data[bamqc_cols.InsertMean],
             mode='markers',
@@ -176,7 +176,13 @@ def generateMeanInsertSize(current_data):
                 'size': 1,
                 'line': {'width': 0.5, 'color': 'red'}
             }
-    )],
+        ), go.Scattergl( # Cutoff line
+            x=current_data[bamqc_cols.Sample],
+            y=[cutoff_line] * len(current_data),
+            mode="markers+lines",
+            line={"width": 3, "color":"black", "dash":"dash"}
+        )
+    ],
     layout = go.Layout(
         title="Mean Insert Size",
         xaxis={'visible': False},
@@ -336,7 +342,7 @@ layout = html.Div(className='body',
                     figure=generateReadsPerStartPoint(bamqc, 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc)
+                    figure=generateMeanInsertSize(bamqc, 150)
                 )
             ]),
         html.Div(className='terminal-output',
@@ -396,5 +402,5 @@ def init_callbacks(dash_app):
             generateNonprimaryReads(data),
             generateOnTargetReads(data),
             generateReadsPerStartPoint(data, reads),
-            generateMeanInsertSize(data)]
+            generateMeanInsertSize(data, insertsizemean)]
 
