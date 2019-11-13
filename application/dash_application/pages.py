@@ -6,7 +6,7 @@ prefix = "application.dash_application.views."
 # e.g., pagenames = ['myPage', 'myPage2']
 pagenames = [
     "bcl2fastq",
-    "url_handler",
+    "index_page",
     "bamqc_gbovertime",
     "runreport",
     "runscanner",
