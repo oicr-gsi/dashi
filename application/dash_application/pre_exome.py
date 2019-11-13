@@ -360,10 +360,13 @@ def init_callbacks(dash_app):
             insertsizemean,
             passedfilter):
 
+        # Apply get selected runs
+        data = bamqc[bamqc[bamqc_cols.Run].isin(runs)]
 
-        data = pd.DataFrame(columns=bamqc.columns)
-        for run in runs:
-            data = data.append(bamqc.loc[bamqc[bamqc_cols.Run] == run])
+        # Group by 1st and 2nd sort
+        # TODO: idk how to actually do this
+        if firstsort == 'run':
+            data = data.groupby(bamqc_cols.Run).apply(lambda x:x)
 
         return [generateTotalReads(data),
             generateUnmappedReads(data),
