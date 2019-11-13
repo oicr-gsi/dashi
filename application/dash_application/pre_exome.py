@@ -139,9 +139,9 @@ def generateOnTargetReads(current_data):
         )
     )
 
-def generateReadsPerStartPoint(current_data):
+def generateReadsPerStartPoint(current_data, cutoff_line):
     return go.Figure(
-        data=[go.Scattergl(
+        data=[go.Scattergl( # Actual data
             x=current_data[bamqc_cols.Sample],
             y=percentageOf(current_data, bamqc_cols.ReadsPerStartPoint),
             mode='markers',
@@ -149,6 +149,11 @@ def generateReadsPerStartPoint(current_data):
                 'size': 1,
                 'line': {'width': 0.5, 'color': 'red'}
             }
+        ), go.Scattergl( # Cutoff line
+            x=current_data[bamqc_cols.Sample],
+            y=[cutoff_line] * len(current_data),
+            mode="markers+lines", #TODO: ???
+            line={"width": 3, "color": "black", "dash": "dash"}
         )],
         layout = go.Layout(
             title="Reads per Start Point",
@@ -202,7 +207,6 @@ layout = html.Div(className='body',
                         ],
                         value=[x for x in bamqc[bamqc_cols.Run].unique()],
                         multi=True
-                        #TODO: needs to have all selected by default
                     )
                 ]), html.Br(),
                 
@@ -329,7 +333,7 @@ layout = html.Div(className='body',
                     figure=generateOnTargetReads(bamqc)
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc)
+                    figure=generateReadsPerStartPoint(bamqc, 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
                     figure=generateMeanInsertSize(bamqc)
@@ -391,6 +395,6 @@ def init_callbacks(dash_app):
             generateUnmappedReads(data),
             generateNonprimaryReads(data),
             generateOnTargetReads(data),
-            generateReadsPerStartPoint(data),
+            generateReadsPerStartPoint(data, reads),
             generateMeanInsertSize(data)]
 
