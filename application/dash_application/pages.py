@@ -5,14 +5,14 @@ prefix = "application.dash_application.views."
 # Please create array of module names as string, one per page
 # e.g., pagenames = ['myPage', 'myPage2']
 pagenames = [
+    "bamqc_gbovertime",
+    "bamqc_overtime",
     "bcl2fastq",
     "index_page",
-    "bamqc_gbovertime",
+    "poolqc",
+    "rnaseqc",
     "runreport",
     "runscanner",
-    "bamqc_overtime",
-    "rnaseqc",
-    "poolqc",
 ]
 
 # Please do not edit this array
