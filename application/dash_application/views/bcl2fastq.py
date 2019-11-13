@@ -1,7 +1,7 @@
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
-from .dash_id import init_ids
+from ..dash_id import init_ids
 from flask import current_app as app
 import gsiqcetl.load
 from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
@@ -9,17 +9,19 @@ import gsiqcetl.bcl2fastq.utility
 import urllib.parse
 
 
-page_name = 'bcl2fastq/indexinfo'
+page_name = "bcl2fastq/indexinfo"
 
-ids = init_ids([
-    'error',
-    'run_select',
-    'bcl2fastq_url',
-    'known_index_bar',
-    'known_unknown_pie',
-    'known_fraction',
-    'unknown_index_bar'
-])
+ids = init_ids(
+    [
+        "error",
+        "run_select",
+        "bcl2fastq_url",
+        "known_index_bar",
+        "known_unknown_pie",
+        "known_fraction",
+        "unknown_index_bar",
+    ]
+)
 
 index = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
 index_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
@@ -46,29 +48,29 @@ layout = html.Div(
         # This element doesn't work correctly in a multi-app context. Left in code for further work
         # ToDO
         # https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
-        core.Location(id=ids['bcl2fastq_url'], refresh=False),
+        core.Location(id=ids["bcl2fastq_url"], refresh=False),
         core.ConfirmDialog(
-            id=ids['error'],
+            id=ids["error"],
             message=(
                 'You have input an incorrect run. Click either "Ok" or '
                 '"Cancel" to return to the most recent run.'
             ),
         ),
         core.Dropdown(
-            id=ids['run_select'],
+            id=ids["run_select"],
             #   Options is concantenated string versions of all_runs.
             options=[{"label": r, "value": r} for r in all_runs],
             value=all_runs[0],
             clearable=False,
         ),
-        core.Graph(id=ids['known_index_bar']),
+        core.Graph(id=ids["known_index_bar"]),
         html.Div(
             [
                 html.Div(
                     [
-                        core.Graph(id=ids['known_unknown_pie']),
+                        core.Graph(id=ids["known_unknown_pie"]),
                         core.Textarea(
-                            id=ids['known_fraction'],
+                            id=ids["known_fraction"],
                             style={"width": "100%"},
                             readOnly=True,
                             # This is the textbox at the bottom, hover over to see title
@@ -82,25 +84,21 @@ layout = html.Div(
                     style={"width": "25%", "display": "inline-block"},
                 ),
                 html.Div(
-                    [core.Graph(id=ids['unknown_index_bar'])],
-                    style={
-                        "width": "75%",
-                        "display": "inline-block",
-                        "float": "right",
-                    },
+                    [core.Graph(id=ids["unknown_index_bar"])],
+                    style={"width": "75%", "display": "inline-block", "float": "right"},
                 ),
             ]
         ),
     ]
 )
 
+
 def init_callbacks(dash_app):
     dash_app.config.suppress_callback_exceptions = True
 
     @dash_app.callback(
-        [Output(ids['run_select'], "value"), 
-        Output(ids['error'], "displayed")],
-        [Input(ids['bcl2fastq_url'], "pathname")],
+        [Output(ids["run_select"], "value"), Output(ids["error"], "displayed")],
+        [Input(ids["bcl2fastq_url"], "pathname")],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def change_url(pathname):
@@ -123,13 +121,14 @@ def init_callbacks(dash_app):
         else:
             return pathname[1:-2], False
 
-
     @dash_app.callback(
-        [Output(ids['known_index_bar'], "figure"),
-        Output(ids['unknown_index_bar'], "figure"),
-        Output(ids['known_unknown_pie'], "figure"),
-        Output(ids['known_fraction'], "value")],
-        [Input(ids['run_select'], "value")]
+        [
+            Output(ids["known_index_bar"], "figure"),
+            Output(ids["unknown_index_bar"], "figure"),
+            Output(ids["known_unknown_pie"], "figure"),
+            Output(ids["known_fraction"], "value"),
+        ],
+        [Input(ids["run_select"], "value")],
     )
     @dash_app.server.cache.memoize(timeout=60)
     def update_layout(run_alias):
@@ -170,16 +169,15 @@ def init_callbacks(dash_app):
             run_alias, index
         )
 
-        pie_data, textarea_fraction = create_pie_chart(
-            run, pruned, total_clusters
-        )
+        pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
 
         return (
             create_known_index_bar(run),
             create_unknown_index_bar(pruned),
             pie_data,
-            textarea_fraction
+            textarea_fraction,
         )
+
 
 @app.cache.memoize(timeout=60)
 def generate_layout(qs) -> html.Div:
@@ -223,20 +221,20 @@ def generate_layout(qs) -> html.Div:
     return html.Div(
         children=[
             core.Dropdown(
-                id=ids['run_select'],
+                id=ids["run_select"],
                 #   Options is concantenated string versions of all_runs.
                 options=[{"label": r, "value": r} for r in all_runs],
                 value=default_run,
                 clearable=False,
             ),
-            core.Graph(id=ids['known_index_bar']),
+            core.Graph(id=ids["known_index_bar"]),
             html.Div(
                 [
                     html.Div(
                         [
-                            core.Graph(id=ids['known_unknown_pie']),
+                            core.Graph(id=ids["known_unknown_pie"]),
                             core.Textarea(
-                                id=ids['known_fraction'],
+                                id=ids["known_fraction"],
                                 style={"width": "100%"},
                                 readOnly=True,
                                 # This is hover text
@@ -249,7 +247,7 @@ def generate_layout(qs) -> html.Div:
                         style={"width": "25%", "display": "inline-block"},
                     ),
                     html.Div(
-                        [core.Graph(id=ids['unknown_index_bar'])],
+                        [core.Graph(id=ids["unknown_index_bar"])],
                         style={
                             "width": "75%",
                             "display": "inline-block",
@@ -260,6 +258,7 @@ def generate_layout(qs) -> html.Div:
             ),
         ]
     )
+
 
 @app.cache.memoize(timeout=60)
 def create_known_index_bar(run):
@@ -294,6 +293,7 @@ def create_known_index_bar(run):
         },
     }
 
+
 def create_unknown_index_bar(pruned):
     """ Function to create unknown index bar  according to user selected run
             Parameters:
@@ -323,6 +323,7 @@ def create_unknown_index_bar(pruned):
         },
     }
 
+
 def create_pie_chart(run, pruned, total_clusters):
     """ Function to create pie chart and known fraction according to user selected run
              Parameters:
@@ -346,13 +347,7 @@ def create_pie_chart(run, pruned, total_clusters):
                     "marker": {"colors": ["#349600", "#ef963b"]},
                 }
             ],
-            "layout": {
-                "title": "Flow Cell Composition of Known/Unknown Indices"
-            },
+            "layout": {"title": "Flow Cell Composition of Known/Unknown Indices"},
         },
-        (
-            "Predicted clusters / produced clusters: {}%".format(
-                str(round(fraction, 1))
-            )
-        ),
+        ("Predicted clusters / produced clusters: {}%".format(str(round(fraction, 1)))),
     )

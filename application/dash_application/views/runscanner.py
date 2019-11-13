@@ -1,7 +1,7 @@
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
-from .dash_id import init_ids
+from ..dash_id import init_ids
 import dash_table
 import pandas
 import plotly.graph_objects as go
@@ -9,22 +9,22 @@ import gsiqcetl.load
 from gsiqcetl.runscanner.illumina.constants import FlowCellCacheSchema
 from gsiqcetl.pinery.instruments.constants import CacheSchema
 
-page_name = 'runscanner/sum_over_time'
+page_name = "runscanner/sum_over_time"
 
-ids = init_ids([
-    'freq_dropdown',
-    'colour_by_dropdown',
-    'bar_sum',
-    'table_tabs',
-    'table_tabs_content',
-    'raw_df_json',
-    'df_group_sum'
-])
+ids = init_ids(
+    [
+        "freq_dropdown",
+        "colour_by_dropdown",
+        "bar_sum",
+        "table_tabs",
+        "table_tabs_content",
+        "raw_df_json",
+        "df_group_sum",
+    ]
+)
 
 rs_flow = gsiqcetl.load.runscanner_illumina_flowcell(FlowCellCacheSchema.v1)
-rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns(
-    FlowCellCacheSchema.v1
-)
+rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns(FlowCellCacheSchema.v1)
 
 COL_TOTAL_YIELD = "Total Yield (GB)"
 
@@ -65,7 +65,7 @@ raw_df_table_col_names = [{"name": i, "id": i} for i in raw_df.columns]
 layout = html.Div(
     [
         core.Dropdown(
-            id=ids['freq_dropdown'],
+            id=ids["freq_dropdown"],
             options=[
                 {"label": "Daily", "value": "D"},
                 {"label": "Weekly", "value": "W"},
@@ -77,7 +77,7 @@ layout = html.Div(
             clearable=False,
         ),
         core.Dropdown(
-            id=ids['colour_by_dropdown'],
+            id=ids["colour_by_dropdown"],
             options=[
                 {"label": "Machine ID", "value": inst_col.InstrumentName},
                 {"label": "Machine Model", "value": inst_col.ModelName},
@@ -85,44 +85,43 @@ layout = html.Div(
             value=None,
             placeholder="Colour By",
         ),
-        core.Graph(id=ids['bar_sum']),
+        core.Graph(id=ids["bar_sum"]),
         core.Tabs(
-            id=ids['table_tabs'],
+            id=ids["table_tabs"],
             value="grouped",
             children=[
                 core.Tab(label="Grouped Data", value="grouped"),
                 core.Tab(label="All Data", value="all"),
             ],
         ),
-        html.Div(id=ids['table_tabs_content']),
+        html.Div(id=ids["table_tabs_content"]),
         html.Div(
-            id=ids['raw_df_json'],
+            id=ids["raw_df_json"],
             style={"display": "none"},
             children=raw_df.to_json(date_format="iso", orient="records"),
         ),
-        html.Div(id=ids['df_group_sum'], style={"display": "none"}),
+        html.Div(id=ids["df_group_sum"], style={"display": "none"}),
     ]
-) 
+)
+
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        Output(ids['bar_sum'], "figure"),
-        [Input(ids['df_group_sum'], "children"), 
-        Input(ids['colour_by_dropdown'], "value")])
+        Output(ids["bar_sum"], "figure"),
+        [
+            Input(ids["df_group_sum"], "children"),
+            Input(ids["colour_by_dropdown"], "value"),
+        ],
+    )
     @dash_app.server.cache.memoize(timeout=60)
     def create_bar_sum_fig(df_group_sum, colour_by):
         df = pandas.read_json(df_group_sum, orient="split")
 
-        layout = {
-            "yaxis": {"title": "PF Yield (GB)"},
-            "legend": {"orientation": "h"},
-        }
+        layout = {"yaxis": {"title": "PF Yield (GB)"}, "legend": {"orientation": "h"}}
 
         if colour_by is None:
             return {
-                "data": [
-                    go.Bar(x=df[rs_flow_col.StartDate], y=df[COL_TOTAL_YIELD])
-                ],
+                "data": [go.Bar(x=df[rs_flow_col.StartDate], y=df[COL_TOTAL_YIELD])],
                 "layout": layout,
             }
         else:
@@ -137,12 +136,14 @@ def init_callbacks(dash_app):
 
             return {"data": traces, "layout": layout}
 
-
     @dash_app.callback(
-        Output(ids['table_tabs_content'], "children"),
-        [Input(ids['table_tabs'], "value"),
-        Input(ids['raw_df_json'], "children"),
-        Input(ids['df_group_sum'], "children")])
+        Output(ids["table_tabs_content"], "children"),
+        [
+            Input(ids["table_tabs"], "value"),
+            Input(ids["raw_df_json"], "children"),
+            Input(ids["df_group_sum"], "children"),
+        ],
+    )
     @dash_app.server.cache.memoize(timeout=60)
     def update_table_tab(selected_tab, raw_df_json, group_df_json):
         if selected_tab == "grouped":
@@ -156,12 +157,14 @@ def init_callbacks(dash_app):
             id="test", columns=col_names, data=df.to_dict("rows")
         )
 
-
     @dash_app.callback(
-        Output(ids['df_group_sum'], "children"),
-        [Input(ids['raw_df_json'], "children"),
-        Input(ids['freq_dropdown'], "value"),
-        Input(ids['colour_by_dropdown'], "value")])
+        Output(ids["df_group_sum"], "children"),
+        [
+            Input(ids["raw_df_json"], "children"),
+            Input(ids["freq_dropdown"], "value"),
+            Input(ids["colour_by_dropdown"], "value"),
+        ],
+    )
     @dash_app.server.cache.memoize(timeout=60)
     def update_grouped_df(raw_df_json, frequency, colour_grouper):
         raw = pandas.read_json(
