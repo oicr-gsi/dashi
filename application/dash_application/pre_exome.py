@@ -155,13 +155,14 @@ def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
             mode = 'markers'
         )
         traces.append(graph)
+    traces.append(go.Scattergl( # Cutoff line
+        x=current_data[bamqc_cols.Sample],
+        y=[cutoff_line] * len(current_data),
+        mode="markers+lines", #TODO: ???
+        line={"width": 3, "color": "black", "dash": "dash"}
+    ))
     return go.Figure(
-        data=traces.append(go.Scattergl( # Cutoff line
-            x=current_data[bamqc_cols.Sample],
-            y=[cutoff_line] * len(current_data),
-            mode="markers+lines", #TODO: ???
-            line={"width": 3, "color": "black", "dash": "dash"}
-        )),
+        data=traces,
         layout = go.Layout(
             title="Reads per Start Point",
             xaxis={'visible': False},
@@ -183,16 +184,17 @@ def generateMeanInsertSize(current_data, colourby, cutoff_line):
             mode = 'markers'
         )
         traces.append(graph)
+    traces.append(go.Scattergl( # Cutoff line
+        x=current_data[bamqc_cols.Sample],
+        y=[cutoff_line] * len(current_data),
+        mode="lines",
+        line={"width": 3, "color":"black", "dash":"dash"}
+    ))
     return go.Figure(
-        data=traces.append(go.Scattergl( # Cutoff line
-            x=current_data[bamqc_cols.Sample],
-            y=[cutoff_line] * len(current_data),
-            mode="markers+lines",
-            line={"width": 3, "color":"black", "dash":"dash"}
-        )),
-    layout = go.Layout(
-        title="Mean Insert Size",
-        xaxis={'visible': False},
+        data=traces,
+        layout = go.Layout(
+            title="Mean Insert Size",
+            xaxis={'visible': False},
             yaxis={
                 'title':{
                     'text': 'Fraction'
