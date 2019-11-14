@@ -437,10 +437,13 @@ def init_callbacks(dash_app):
         data = bamqc[bamqc[bamqc_cols.Run].isin(runs)]
 
         # Group by 1st and 2nd sort
-        # TODO: idk how to actually do this
-        # TODO: project sorting will have to be done through looking at the first 4 chars
+        # TODO: this does not appear to work
         if firstsort == 'run':
-            data = data.groupby(bamqc_cols.Run).apply(lambda x:x)
+            sortby = bamqc_cols.Run
+        elif firstsort == 'project':
+            sortby = data[bamqc_cols.Sample].str[0:4]
+            
+        data = data.groupby(sortby).apply(lambda x:x)
 
         return [generateTotalReads(data),
             generateUnmappedReads(data),
