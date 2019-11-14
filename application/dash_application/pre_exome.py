@@ -50,16 +50,28 @@ def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
 
 def generateTotalReads(current_data, colourby):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = data[bamqc_cols.TotalReads] / pow(10,6),
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl(
-            x=current_data[bamqc_cols.Sample],
-            y=current_data[bamqc_cols.TotalReads] / pow(10,6),
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        )],
+        data = traces,
+        # data=[for name, data in current_data.groupby(colourby):
+        #     go.Scattergl(
+        #     x=data[bamqc_cols.Sample],
+        #     y=data[bamqc_cols.TotalReads] / pow(10,6),
+        #     name=name,
+        #     mode='markers',
+        #     marker={
+        #         'size': 1,
+        #         'line': {'width': 0.5}
+        #     }
+        # )],
         layout = go.Layout(
             title="Total Reads", #what does 'passed filter' mean
             xaxis={'visible': False,
@@ -371,22 +383,22 @@ layout = html.Div(className='body',
         html.Div(className='graphs',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, 'project')
+                    figure=generateTotalReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, 'project')
+                    figure=generateUnmappedReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, 'project')
+                    figure=generateNonprimaryReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, 'project')
+                    figure=generateOnTargetReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, 'project', 5)
+                    figure=generateReadsPerStartPoint(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, 'project', 150)
+                    figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 150)
                 )
             ]),
         html.Div(className='terminal-output',
