@@ -61,17 +61,6 @@ def generateTotalReads(current_data, colourby):
         traces.append(graph)
     return go.Figure(
         data = traces,
-        # data=[for name, data in current_data.groupby(colourby):
-        #     go.Scattergl(
-        #     x=data[bamqc_cols.Sample],
-        #     y=data[bamqc_cols.TotalReads] / pow(10,6),
-        #     name=name,
-        #     mode='markers',
-        #     marker={
-        #         'size': 1,
-        #         'line': {'width': 0.5}
-        #     }
-        # )],
         layout = go.Layout(
             title="Total Reads", #what does 'passed filter' mean
             xaxis={'visible': False,
@@ -86,16 +75,17 @@ def generateTotalReads(current_data, colourby):
     )
 
 def generateUnmappedReads(current_data, colourby):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = percentageOf(data, bamqc_cols.UnmappedReads),
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl(
-            x=current_data[bamqc_cols.Sample],
-            y=percentageOf(current_data, bamqc_cols.UnmappedReads),
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        )],
+        data=traces,
         layout = go.Layout(
             title="Unmapped Reads (%)",
             xaxis={'visible': False},
@@ -108,16 +98,17 @@ def generateUnmappedReads(current_data, colourby):
     )
 
 def generateNonprimaryReads(current_data, colourby):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = percentageOf(data, bamqc_cols.NonPrimaryReads),
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl(
-            x=current_data[bamqc_cols.Sample],
-            y=percentageOf(current_data, bamqc_cols.NonPrimaryReads),
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        )],
+        data=traces,
         layout = go.Layout(
             title="Non-Primary Reads (%)",
             xaxis={'visible': False},
@@ -130,16 +121,17 @@ def generateNonprimaryReads(current_data, colourby):
     )
 
 def generateOnTargetReads(current_data, colourby):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = data[bamqc_cols.TotalReads] / pow(10,6),
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl(
-            x=current_data[bamqc_cols.Sample],
-            y=percentageOf(current_data, bamqc_cols.ReadsOnTarget),
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        )],
+        data=traces,
         layout = go.Layout(
             title="On Target Reads (%)",
             xaxis={'visible': False},
@@ -154,21 +146,22 @@ def generateOnTargetReads(current_data, colourby):
 #TODO: Could i abstract out the cutoff line behaviour?
 #TODO: generalize x values for both graphs
 def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = percentageOf(data, bamqc_cols.ReadsPerStartPoint),
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl( # Actual data
-            x=current_data[bamqc_cols.Sample],
-            y=percentageOf(current_data, bamqc_cols.ReadsPerStartPoint),
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        ), go.Scattergl( # Cutoff line
+        data=traces.append(go.Scattergl( # Cutoff line
             x=current_data[bamqc_cols.Sample],
             y=[cutoff_line] * len(current_data),
             mode="markers+lines", #TODO: ???
             line={"width": 3, "color": "black", "dash": "dash"}
-        )],
+        )),
         layout = go.Layout(
             title="Reads per Start Point",
             xaxis={'visible': False},
@@ -181,22 +174,22 @@ def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
     )
 
 def generateMeanInsertSize(current_data, colourby, cutoff_line):
+    traces = []
+    for name, data in current_data.groupby(colourby):
+        graph = go.Scattergl(
+            x = data[bamqc_cols.Sample],
+            y = data[bamqc_cols.InsertMean],
+            name = name,
+            mode = 'markers'
+        )
+        traces.append(graph)
     return go.Figure(
-        data=[go.Scattergl( # Actual Data
-            x=current_data[bamqc_cols.Sample],
-            y=current_data[bamqc_cols.InsertMean],
-            mode='markers',
-            marker={
-                'size': 1,
-                'line': {'width': 0.5, 'color': 'red'}
-            }
-        ), go.Scattergl( # Cutoff line
+        data=traces.append(go.Scattergl( # Cutoff line
             x=current_data[bamqc_cols.Sample],
             y=[cutoff_line] * len(current_data),
             mode="markers+lines",
             line={"width": 3, "color":"black", "dash":"dash"}
-        )
-    ],
+        )),
     layout = go.Layout(
         title="Mean Insert Size",
         xaxis={'visible': False},
