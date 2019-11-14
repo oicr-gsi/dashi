@@ -139,6 +139,8 @@ def generateOnTargetReads(current_data):
         )
     )
 
+#TODO: Could i abstract out the cutoff line behaviour?
+#TODO: generalize x values for both graphs
 def generateReadsPerStartPoint(current_data, cutoff_line):
     return go.Figure(
         data=[go.Scattergl( # Actual data
@@ -193,6 +195,47 @@ def generateMeanInsertSize(current_data, cutoff_line):
             }
         )
     )
+
+def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
+    output = ""
+
+    output += "$failed_rpsp\n"
+    newline = False
+    linenumber = 0
+    for failed in data.loc[data[bamqc_cols.ReadsPerStartPoint] < reads_cutoff][bamqc_cols.Sample]:
+        if not newline:
+            output += "[{0}] ".format(linenumber)
+        output += "\"" + failed + "\"\t\t"
+        if newline:
+            output += "\n"
+        newline = not newline
+        linenumber += 1
+
+    output += "\n$failed_insr\n"
+    newline = False
+    linenumber = 0
+    for failed in data.loc[data[bamqc_cols.InsertMean] < insert_cutoff][bamqc_cols.Sample]:
+        if not newline:
+            output += "[{0}] ".format(linenumber)
+        output += "\"" + failed + "\"\t\t"
+        if newline:
+            output += "\n"
+        newline = not newline
+        linenumber += 1
+
+    output += "\n$failed_ptden\n" # TODO: Not sure this is calculated correctly
+    newline = False
+    linenumber = 0
+    for failed in data.loc[data[bamqc_cols.TotalReads] < passed_cutoff][bamqc_cols.Sample]:
+        if not newline:
+            output += "[{0}] ".format(linenumber)
+        output += "\"" + failed + "\"\t\t"
+        if newline:
+            output += "\n"
+        newline = not newline
+        linenumber += 1
+
+    return output
 
 layout = html.Div(className='body',
     children=[
@@ -349,7 +392,7 @@ layout = html.Div(className='body',
             children=[
                 core.Textarea(id=ids['terminal-output'],
                     readOnly=True,
-                    value='$'
+                    value=generateTerminalOutput(bamqc, 5, 150, 0.01) # TODO: magic numbers!! make constants
                 )
             ]),
         html.Div(className='data-table',
@@ -365,7 +408,8 @@ def init_callbacks(dash_app):
         Output(ids['non-primary-reads'], 'figure'),
         Output(ids['on-target-reads'], 'figure'),
         Output(ids['reads-per-start-point'], 'figure'),
-        Output(ids['mean-insert-size'], 'figure')],
+        Output(ids['mean-insert-size'], 'figure'),
+        Output(ids['terminal-output'], 'value')],
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
@@ -394,6 +438,7 @@ def init_callbacks(dash_app):
 
         # Group by 1st and 2nd sort
         # TODO: idk how to actually do this
+        # TODO: project sorting will have to be done through looking at the first 4 chars
         if firstsort == 'run':
             data = data.groupby(bamqc_cols.Run).apply(lambda x:x)
 
@@ -402,5 +447,6 @@ def init_callbacks(dash_app):
             generateNonprimaryReads(data),
             generateOnTargetReads(data),
             generateReadsPerStartPoint(data, reads),
-            generateMeanInsertSize(data, insertsizemean)]
+            generateMeanInsertSize(data, insertsizemean),
+            generateTerminalOutput(data, reads, insertsizemean, passedfilter)]
 
