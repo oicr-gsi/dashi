@@ -49,7 +49,7 @@ ids = init_ids([
 def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
 
-def generateTotalReads(current_data):
+def generateTotalReads(current_data, colourby):
     return go.Figure(
         data=[go.Scattergl(
             x=current_data[bamqc_cols.Sample],
@@ -73,7 +73,7 @@ def generateTotalReads(current_data):
         )
     )
 
-def generateUnmappedReads(current_data):
+def generateUnmappedReads(current_data, colourby):
     return go.Figure(
         data=[go.Scattergl(
             x=current_data[bamqc_cols.Sample],
@@ -95,7 +95,7 @@ def generateUnmappedReads(current_data):
         )
     )
 
-def generateNonprimaryReads(current_data):
+def generateNonprimaryReads(current_data, colourby):
     return go.Figure(
         data=[go.Scattergl(
             x=current_data[bamqc_cols.Sample],
@@ -117,7 +117,7 @@ def generateNonprimaryReads(current_data):
         )
     )
 
-def generateOnTargetReads(current_data):
+def generateOnTargetReads(current_data, colourby):
     return go.Figure(
         data=[go.Scattergl(
             x=current_data[bamqc_cols.Sample],
@@ -141,7 +141,7 @@ def generateOnTargetReads(current_data):
 
 #TODO: Could i abstract out the cutoff line behaviour?
 #TODO: generalize x values for both graphs
-def generateReadsPerStartPoint(current_data, cutoff_line):
+def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
     return go.Figure(
         data=[go.Scattergl( # Actual data
             x=current_data[bamqc_cols.Sample],
@@ -168,7 +168,7 @@ def generateReadsPerStartPoint(current_data, cutoff_line):
         )
     )
 
-def generateMeanInsertSize(current_data, cutoff_line):
+def generateMeanInsertSize(current_data, colourby, cutoff_line):
     return go.Figure(
         data=[go.Scattergl( # Actual Data
             x=current_data[bamqc_cols.Sample],
@@ -196,6 +196,7 @@ def generateMeanInsertSize(current_data, cutoff_line):
         )
     )
 
+# TODO: Abstract repeated behaviour
 def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output = ""
 
@@ -370,22 +371,22 @@ layout = html.Div(className='body',
         html.Div(className='graphs',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc)
+                    figure=generateTotalReads(bamqc, 'project')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc)
+                    figure=generateUnmappedReads(bamqc, 'project')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc)
+                    figure=generateNonprimaryReads(bamqc, 'project')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc)
+                    figure=generateOnTargetReads(bamqc, 'project')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, 5)
+                    figure=generateReadsPerStartPoint(bamqc, 'project', 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, 150)
+                    figure=generateMeanInsertSize(bamqc, 'project', 150)
                 )
             ]),
         html.Div(className='terminal-output',
@@ -438,18 +439,24 @@ def init_callbacks(dash_app):
 
         # Group by 1st and 2nd sort
         # TODO: this does not appear to work
+        # TODO: 2nd sort
         if firstsort == 'run':
             sortby = bamqc_cols.Run
         elif firstsort == 'project':
             sortby = data[bamqc_cols.Sample].str[0:4]
+
+        if colourby == 'run':
+            colourby_strategy = bamqc_cols.Run
+        elif colourby == 'project':
+            colourby_strategy = data[bamqc_cols.Sample].str[0:4]
             
         data = data.groupby(sortby).apply(lambda x:x)
 
-        return [generateTotalReads(data),
-            generateUnmappedReads(data),
-            generateNonprimaryReads(data),
-            generateOnTargetReads(data),
-            generateReadsPerStartPoint(data, reads),
-            generateMeanInsertSize(data, insertsizemean),
+        return [generateTotalReads(data, colourby_strategy),
+            generateUnmappedReads(data, colourby_strategy),
+            generateNonprimaryReads(data, colourby_strategy),
+            generateOnTargetReads(data, colourby_strategy),
+            generateReadsPerStartPoint(data, colourby_strategy, reads),
+            generateMeanInsertSize(data, colourby_strategy, insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter)]
 
