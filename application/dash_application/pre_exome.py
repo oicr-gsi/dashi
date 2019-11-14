@@ -152,7 +152,8 @@ def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
             x = data[bamqc_cols.Sample],
             y = percentageOf(data, bamqc_cols.ReadsPerStartPoint),
             name = name,
-            mode = 'markers'
+            mode = 'markers+text',
+            text = name
         )
         traces.append(graph)
     traces.append(go.Scattergl( # Cutoff line
