@@ -145,15 +145,27 @@ def generateOnTargetReads(current_data, colourby):
 
 #TODO: Could i abstract out the cutoff line behaviour?
 #TODO: generalize x values for both graphs
-def generateReadsPerStartPoint(current_data, colourby, cutoff_line):
+def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
     for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = percentageOf(data, bamqc_cols.ReadsPerStartPoint),
-            name = name,
-            mode = 'markers+text',
-            text = name
+            mode = marker_mode,
+            textposition="top right",
+            text = text_content,
+            name = name
         )
         traces.append(graph)
     traces.append(go.Scattergl( # Cutoff line
@@ -246,6 +258,18 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
 
     return output
 
+def generateDebugLine(click, runs, firstsort, secondsort, colourby,
+                shapeby,
+                searchsample,
+                shownames,
+                reads,
+                insertsizemean,
+                passedfilter,
+                colourby_strategy,
+                sortby,
+                data):
+    return "".join(v for k, v in locals().items())
+
 layout = html.Div(className='body',
     children=[
         html.Div(className='sidebar',
@@ -333,7 +357,7 @@ layout = html.Div(className='body',
                     core.Dropdown(id=ids['show-names'],
                         options = [
                             {'label': 'Sample', 'value': 'sample'},
-                            {'label': 'groupID', 'value': 'groupID'},
+                            {'label': 'groupID', 'value': 'group-id'},
                             {'label': 'None', 'value': 'none'}
                         ],
                         value = 'none',
@@ -391,7 +415,7 @@ layout = html.Div(className='body',
                     figure=generateOnTargetReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 5)
+                    figure=generateReadsPerStartPoint(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
                     figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 150)
@@ -407,7 +431,8 @@ layout = html.Div(className='body',
         html.Div(className='data-table',
             children=[
                 tabl.DataTable(id=ids['data-table'])
-            ])
+            ]),
+        #html.Div(id='debug')
     ]) 
 
 def init_callbacks(dash_app):
@@ -419,6 +444,7 @@ def init_callbacks(dash_app):
         Output(ids['reads-per-start-point'], 'figure'),
         Output(ids['mean-insert-size'], 'figure'),
         Output(ids['terminal-output'], 'value')],
+       # Output('debug', 'children')],
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
@@ -464,7 +490,19 @@ def init_callbacks(dash_app):
             generateUnmappedReads(data, colourby_strategy),
             generateNonprimaryReads(data, colourby_strategy),
             generateOnTargetReads(data, colourby_strategy),
-            generateReadsPerStartPoint(data, colourby_strategy, reads),
+            generateReadsPerStartPoint(data, colourby_strategy, shownames, reads),
             generateMeanInsertSize(data, colourby_strategy, insertsizemean),
-            generateTerminalOutput(data, reads, insertsizemean, passedfilter)]
+            generateTerminalOutput(data, reads, insertsizemean, passedfilter),]
+            # generateDebugLine(click, runs, firstsort, 
+            #     secondsort, 
+            #     colourby,
+            #     shapeby,
+            #     searchsample,
+            #     shownames,
+            #     reads,
+            #     insertsizemean,
+            #     passedfilter,
+            #     colourby_strategy,
+            #     sortby,
+            #     data)]
 
