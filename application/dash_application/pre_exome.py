@@ -143,7 +143,7 @@ def generateOnTargetReads(current_data, colourby):
         )
     )
 
-#TODO: Could i abstract out the cutoff line behaviour?
+#TODO: Could i abstract out the cutoff line behaviour? also the show names behaviour. Everything really
 #TODO: generalize x values for both graphs
 def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
     traces = []
@@ -171,7 +171,7 @@ def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
     traces.append(go.Scattergl( # Cutoff line
         x=current_data[bamqc_cols.Sample],
         y=[cutoff_line] * len(current_data),
-        mode="markers+lines", #TODO: ???
+        mode="lines",
         line={"width": 3, "color": "black", "dash": "dash"}
     ))
     return go.Figure(
