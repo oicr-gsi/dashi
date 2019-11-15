@@ -1,18 +1,17 @@
 import importlib
 
-prefix = 'application.dash_application.'
+prefix = "application.dash_application.views."
 
-# Please create array of module names as string, one per page
-# e.g., pagenames = ['myPage', 'myPage2']
+# An array of module names as strings, one per page
+# These are for the modules that Dash can graph
 pagenames = [
-    'bcl2fastq',
-    'url_handler',
-    'bamqc_gbovertime',
-    'runreport',
-    'runscanner',
-    'bamqc_overtime',
-    'rnaseqc',
-    'poolqc'
+    "bamqc_gbovertime",
+    "bamqc_overtime",
+    "bcl2fastq",
+    "poolqc",
+    "rnaseqc",
+    "runreport",
+    "runscanner",
 ]
 
 # Please do not edit this array
