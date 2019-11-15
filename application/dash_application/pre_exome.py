@@ -56,14 +56,28 @@ def frange(min, max, step):
 def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
 
-def generateTotalReads(current_data, colourby):
+def generateTotalReads(current_data, colourby, shownames):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
+    for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
     for name, data in current_data.groupby(colourby):
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = data[bamqc_cols.TotalReads] / pow(10,6),
             name = name,
-            mode = 'markers'
+            mode = marker_mode,
+            text = text_content,
+            textposition = "top right"
         )
         traces.append(graph)
     return go.Figure(
@@ -81,14 +95,28 @@ def generateTotalReads(current_data, colourby):
         )
     )
 
-def generateUnmappedReads(current_data, colourby):
+def generateUnmappedReads(current_data, colourby, shownames):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
+    for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
     for name, data in current_data.groupby(colourby):
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = percentageOf(data, bamqc_cols.UnmappedReads),
             name = name,
-            mode = 'markers'
+            mode = marker_mode,
+            text = text_content,
+            textposition = "top right"
         )
         traces.append(graph)
     return go.Figure(
@@ -104,14 +132,28 @@ def generateUnmappedReads(current_data, colourby):
         )
     )
 
-def generateNonprimaryReads(current_data, colourby):
+def generateNonprimaryReads(current_data, colourby, shownames):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
+    for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
     for name, data in current_data.groupby(colourby):
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = percentageOf(data, bamqc_cols.NonPrimaryReads),
             name = name,
-            mode = 'markers'
+            mode = marker_mode,
+            text = text_content,
+            textposition = "top right"
         )
         traces.append(graph)
     return go.Figure(
@@ -127,14 +169,28 @@ def generateNonprimaryReads(current_data, colourby):
         )
     )
 
-def generateOnTargetReads(current_data, colourby):
+def generateOnTargetReads(current_data, colourby, shownames):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
+    for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
     for name, data in current_data.groupby(colourby):
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = data[bamqc_cols.TotalReads] / pow(10,6),
             name = name,
-            mode = 'markers'
+            mode = marker_mode,
+            text = text_content,
+            textposition = "top right"
         )
         traces.append(graph)
     return go.Figure(
@@ -194,14 +250,28 @@ def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
         )
     )
 
-def generateMeanInsertSize(current_data, colourby, cutoff_line):
+def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
     traces = []
+    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
+    if shownames == 'none':
+        marker_mode = 'markers'
+    else:
+        marker_mode = 'markers+text'
+    for name, data in current_data.groupby(colourby):
+        if shownames == 'sample':
+            text_content = data[bamqc_cols.Sample]
+        elif shownames == 'group-id':
+            text_content = data[bamqc_cols.GroupID]
+        else:
+            text_content = None
     for name, data in current_data.groupby(colourby):
         graph = go.Scattergl(
             x = data[bamqc_cols.Sample],
             y = data[bamqc_cols.InsertMean],
             name = name,
-            mode = 'markers'
+            mode = marker_mode,
+            text = text_content,
+            textposition = "top right"
         )
         traces.append(graph)
     traces.append(go.Scattergl( # Cutoff line
@@ -410,22 +480,22 @@ layout = html.Div(className='body',
         html.Div(className='graphs',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
+                    figure=generateTotalReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
+                    figure=generateUnmappedReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
+                    figure=generateNonprimaryReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4])
+                    figure=generateOnTargetReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
                     figure=generateReadsPerStartPoint(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 150)
+                    figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 150)
                 )
             ]),
         html.Div(className='terminal-output',
@@ -491,10 +561,10 @@ def init_callbacks(dash_app):
             
         data = data.groupby(sortby).apply(lambda x:x)
 
-        return [generateTotalReads(data, colourby_strategy),
-            generateUnmappedReads(data, colourby_strategy),
-            generateNonprimaryReads(data, colourby_strategy),
-            generateOnTargetReads(data, colourby_strategy),
+        return [generateTotalReads(data, colourby_strategy, shownames),
+            generateUnmappedReads(data, colourby_strategy, shownames),
+            generateNonprimaryReads(data, colourby_strategy, shownames),
+            generateOnTargetReads(data, colourby_strategy, shownames),
             generateReadsPerStartPoint(data, colourby_strategy, shownames, reads),
-            generateMeanInsertSize(data, colourby_strategy, insertsizemean),
+            generateMeanInsertSize(data, colourby_strategy, shownames, insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),]
