@@ -10,7 +10,6 @@ import gsiqcetl.load
 
 bamqc = gsiqcetl.load.bamqc('v1')
 bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
-# TODO: group by project
 
 page_name = 'preexome'
 
@@ -45,6 +44,14 @@ ids = init_ids([
     #Data table
     'data-table'
 ])
+
+def frange(min, max, step):
+    range = []
+    i = min
+    while i <= max:
+        range.append(round(i, 2))
+        i += step
+    return range
 
 def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
@@ -373,7 +380,7 @@ layout = html.Div(className='body',
                         min = 0,
                         max = 20,
                         step = 1,
-                        #marks = {str(n):str(n) for n in range(0, 20, 2)},
+                        marks = {str(n):str(n) for n in range(0, 20, 2)},
                         value = 5
                     )
                 ]), html.Br(),
@@ -384,7 +391,7 @@ layout = html.Div(className='body',
                         min = 0,
                         max = 500,
                         step = 1,
-                        #marks = {str(n):str(n) for n in range(0, 500, 50)},
+                        marks = {str(n):str(n) for n in range(0, 500, 50)},
                         value = 150
                     )
                 ]), html.Br(),
@@ -395,7 +402,7 @@ layout = html.Div(className='body',
                         min = 0,
                         max = 0.5,
                         step = 0.005,
-                        #marks = {str(n):str(n) for n in range(0, 0.5, 0.05)},
+                        marks = {str(n):str(n) for n in frange(0, 0.5, 0.05)},
                         value = 0.01
                     )
                 ]), html.Br()
@@ -432,7 +439,6 @@ layout = html.Div(className='body',
             children=[
                 tabl.DataTable(id=ids['data-table'])
             ]),
-        #html.Div(id='debug')
     ]) 
 
 def init_callbacks(dash_app):
@@ -444,7 +450,6 @@ def init_callbacks(dash_app):
         Output(ids['reads-per-start-point'], 'figure'),
         Output(ids['mean-insert-size'], 'figure'),
         Output(ids['terminal-output'], 'value')],
-       # Output('debug', 'children')],
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
@@ -493,16 +498,3 @@ def init_callbacks(dash_app):
             generateReadsPerStartPoint(data, colourby_strategy, shownames, reads),
             generateMeanInsertSize(data, colourby_strategy, insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),]
-            # generateDebugLine(click, runs, firstsort, 
-            #     secondsort, 
-            #     colourby,
-            #     shapeby,
-            #     searchsample,
-            #     shownames,
-            #     reads,
-            #     insertsizemean,
-            #     passedfilter,
-            #     colourby_strategy,
-            #     sortby,
-            #     data)]
-
