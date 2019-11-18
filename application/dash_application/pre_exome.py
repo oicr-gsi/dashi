@@ -471,7 +471,7 @@ layout = html.Div(className='body',
                 # ]), html.Br(),
 
                 html.Label([
-                    "Colour by:",
+                    "Colour/Shape by:",
                     core.Dropdown(id=ids['colour-by'],
                         options = [
                             {'label': 'Project', 'value': 'project'},
@@ -483,18 +483,18 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br(),
 
-                html.Label([
-                    "Shape by:",
-                    core.Dropdown(id=ids['shape-by'],
-                        options = [
-                            {'label': 'Project', 'value': 'project'},
-                            #{'label': 'Run', 'value': 'run'}
-                        ],
-                        value = 'project',
-                        searchable = False,
-                        clearable = False
-                    )
-                ]), html.Br(),
+                # html.Label([
+                #     "Shape by:",
+                #     core.Dropdown(id=ids['shape-by'],
+                #         options = [
+                #             {'label': 'Project', 'value': 'project'},
+                #             {'label': 'Run', 'value': 'run'}
+                #         ],
+                #         value = 'project',
+                #         searchable = False,
+                #         clearable = False
+                #     )
+                # ]), html.Br(),
 
                 # html.Label([
                 #     "Search Sample:",
@@ -597,7 +597,7 @@ def init_callbacks(dash_app):
         State(ids['first-sort'], 'value'),
         # State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
-        State(ids['shape-by'], 'value'), #TODO
+        # State(ids['shape-by'], 'value'), #TODO
         # State(ids['search-sample'], 'value'), #TODO
         State(ids['show-names'], 'value'),
         State(ids['reads-per-start-point-slider'], 'value'),
@@ -608,7 +608,7 @@ def init_callbacks(dash_app):
             firstsort, 
             # secondsort, 
             colourby,
-            shapeby,
+            # shapeby,
             # searchsample,
             shownames,
             reads,
@@ -631,10 +631,10 @@ def init_callbacks(dash_app):
         elif colourby == 'project':
             colourby_strategy = data[bamqc_cols.Sample].str[0:4]
             
-        if shapeby == 'run': #TODO: there's 1700+ runs, not gonna be enough symbols
-            shapeby_strategy = bamqc_cols.Run
-        elif shapeby == 'project':
-            shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
+        # if shapeby == 'run': #TODO: there's 1700+ runs, not gonna be enough symbols
+        #     shapeby_strategy = bamqc_cols.Run
+        # elif shapeby == 'project':
+        #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
         
         data = data.groupby(sortby).apply(lambda x:x)
 
