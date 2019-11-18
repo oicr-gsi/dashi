@@ -488,7 +488,7 @@ layout = html.Div(className='body',
                     core.Dropdown(id=ids['shape-by'],
                         options = [
                             {'label': 'Project', 'value': 'project'},
-                            {'label': 'Run', 'value': 'run'}
+                            #{'label': 'Run', 'value': 'run'}
                         ],
                         value = 'project',
                         searchable = False,
@@ -496,10 +496,10 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br(),
 
-                html.Label([
-                    "Search Sample:",
-                    core.Input(id=ids['search-sample'])
-                ]), html.Br(),
+                # html.Label([
+                #     "Search Sample:",
+                #     core.Input(id=ids['search-sample'])
+                # ]), html.Br(),
                 
                 html.Label([
                     "Show Names:",
@@ -598,7 +598,7 @@ def init_callbacks(dash_app):
         # State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
         State(ids['shape-by'], 'value'), #TODO
-        State(ids['search-sample'], 'value'), #TODO
+        # State(ids['search-sample'], 'value'), #TODO
         State(ids['show-names'], 'value'),
         State(ids['reads-per-start-point-slider'], 'value'),
         State(ids['insert-size-mean-slider'], 'value'),
@@ -609,7 +609,7 @@ def init_callbacks(dash_app):
             # secondsort, 
             colourby,
             shapeby,
-            searchsample,
+            # searchsample,
             shownames,
             reads,
             insertsizemean,
