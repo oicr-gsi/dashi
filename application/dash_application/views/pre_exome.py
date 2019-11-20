@@ -396,7 +396,7 @@ def init_callbacks(dash_app):
         elif colourby == 'project':
             colourby_strategy = data[bamqc_cols.Sample].str[0:4]
             
-        # if shapeby == 'run': #TODO: there's 1700+ runs, not gonna be enough symbols
+        # if shapeby == 'run': 
         #     shapeby_strategy = bamqc_cols.Run
         # elif shapeby == 'project':
         #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
