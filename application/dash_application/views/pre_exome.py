@@ -2,74 +2,12 @@ import dash_html_components as html
 import dash_core_components as core
 import dash_table as tabl
 from dash.dependencies import Input, Output, State
-from .dash_id import init_ids
+from ..dash_id import init_ids
+from ..plot_builder import generate
 import plotly.graph_objects as go
 import pandas as pd
 import gsiqcetl.load
 # TODO: develop against gsiqcetl@master rather than v0.5.0 once bamqc is available
-
-# TODO: if this remains necessary i'll be mad
-ALL_SYMBOLS = ['circle', 'circle-open', 'circle-dot',
-                'circle-open-dot', 'square', 'square-open', 
-                'square-dot', 'square-open-dot', 'diamond',
-                'diamond-open', 'diamond-dot',
-                'diamond-open-dot', 'cross', 'cross-open',
-                'cross-dot', 'cross-open-dot', 'x', 'x-open',
-                'x-dot', 'x-open-dot', 'triangle-up',
-                'triangle-up-open', 'triangle-up-dot',
-                'triangle-up-open-dot', 'triangle-down',
-                'triangle-down-open', 'triangle-down-dot',
-                'triangle-down-open-dot', 'triangle-left',
-                'triangle-left-open', 'triangle-left-dot',
-                'triangle-left-open-dot', 'triangle-right',
-                'triangle-right-open', 'triangle-right-dot',
-                'triangle-right-open-dot', 'triangle-ne', 
-                'triangle-ne-open', 'triangle-ne-dot',
-                'triangle-ne-open-dot', 'triangle-se',
-                'triangle-se-open', 'triangle-se-dot',
-                'triangle-se-open-dot', 'triangle-sw',
-                'triangle-sw-open', 'triangle-sw-dot',
-                'triangle-sw-open-dot', 'triangle-nw',
-                'triangle-nw-open', 'triangle-nw-dot',
-                'triangle-nw-open-dot', 'pentagon', 
-                'pentagon-open', 'pentagon-dot',
-                'pentagon-open-dot', 'hexagon', 'hexagon-open',
-                'hexagon-dot', 'hexagon-open-dot',
-                'hexagon2', 'hexagon2-open', 'hexagon2-dot',
-                'hexagon2-open-dot', 'octagon', 
-                'octagon-open', 'octagon-dot', 
-                'octagon-open-dot', 'star',  'star-open',
-                'star-dot', 'star-open-dot', 'hexagram',
-                'hexagram-open', 'hexagram-dot',
-                'hexagram-open-dot', 'star-triangle-up', 
-                'star-triangle-up-open', 'star-triangle-up-dot',
-                'star-triangle-up-open-dot', 'star-triangle-down',
-                'star-triangle-down-open',
-                'star-triangle-down-dot',
-                'star-triangle-down-open-dot', 'star-square', 
-                'star-square-open','star-square-dot',
-                'star-square-open-dot', 'star-diamond', 
-                'star-diamond-open', 'star-diamond-dot',
-                'star-diamond-open-dot', 'diamond-tall',
-                'diamond-tall-open', 'diamond-tall-dot',
-                'diamond-tall-open-dot', 'diamond-wide', 
-                'diamond-wide-open', 'diamond-wide-dot',
-                'diamond-wide-open-dot', 'hourglass', 
-                'hourglass-open', 'bowtie', 'bowtie-open',
-                'circle-cross', 'circle-cross-open', 'circle-x',
-                'circle-x-open', 'square-cross', 
-                'square-cross-open', 'square-x', 'square-x-open',
-                'diamond-cross', 'diamond-cross-open', 
-                'diamond-x', 'diamond-x-open', 'cross-thin', 
-                'cross-thin-open', 'x-thin', 'x-thin-open', 
-                'asterisk', 'asterisk-open', 'hash', 
-                'hash-open', 'hash-dot', 'hash-open-dot', 
-                'y-up', 'y-up-open', 'y-down', 
-                'y-down-open', 'y-left', 'y-left-open',
-                'y-right', 'y-right-open', 'line-ew', 
-                'line-ew-open', 'line-ns', 'line-ns-open',
-                'line-ne', 'line-ne-open', 'line-nw', 
-                'line-nw-open']
 
 bamqc = gsiqcetl.load.bamqc('v1')
 bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
@@ -108,6 +46,7 @@ ids = init_ids([
     'data-table'
 ])
 
+# TODO: move elsewhere
 def frange(min, max, step):
     range = []
     i = min
@@ -116,253 +55,78 @@ def frange(min, max, step):
         i += step
     return range
 
-
+# TODO: move elsewhere
 def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
 
+
 def generateTotalReads(current_data, colourby, shownames):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    i = 0
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-    for name, data in current_data.groupby(colourby):
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = data[bamqc_cols.TotalReads] / pow(10,6),
-            name = name,
-            mode = marker_mode,
-            text = text_content,
-            textposition = "top right",
-            marker={
-                "symbol": ALL_SYMBOLS[i]
-            }
-        )
-        if i == len(ALL_SYMBOLS):
-            i = 0
-        else:
-            i += 1
-        traces.append(graph)
-    return go.Figure(
-        data = traces,
-        layout = go.Layout(
-            title="Total Reads", #TODO: what does 'passed filter' mean
-            xaxis={'visible': False,
-                'rangemode': 'normal',
-                'autorange': True},
-            yaxis={
-                'title': {
-                    'text': '# Reads x 10^6'
-                }
-            }
-        )
+    return generate(
+        "Total Reads",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: d[bamqc_cols.TotalReads] / pow(10,6),
+        "# Reads x 10^6",
+        colourby,
+        shownames
     )
+    
 
 def generateUnmappedReads(current_data, colourby, shownames):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-    for name, data in current_data.groupby(colourby):
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = percentageOf(data, bamqc_cols.UnmappedReads),
-            name = name,
-            mode = marker_mode,
-            text = text_content,
-            textposition = "top right"
-        )
-        traces.append(graph)
-    return go.Figure(
-        data=traces,
-        layout = go.Layout(
-            title="Unmapped Reads (%)",
-            xaxis={'visible': False},
-            yaxis={
-                'title': {
-                    'text': '%'
-                }
-            }
-        )
+    return generate(
+        "Unmapped Reads (%)",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: percentageOf(d, bamqc_cols.UnmappedReads),
+        "%",
+        colourby, 
+        shownames
     )
 
 def generateNonprimaryReads(current_data, colourby, shownames):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-    for name, data in current_data.groupby(colourby):
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = percentageOf(data, bamqc_cols.NonPrimaryReads),
-            name = name,
-            mode = marker_mode,
-            text = text_content,
-            textposition = "top right"
-        )
-        traces.append(graph)
-    return go.Figure(
-        data=traces,
-        layout = go.Layout(
-            title="Non-Primary Reads (%)",
-            xaxis={'visible': False},
-            yaxis={
-                'title':{
-                    'text': '%'
-                }
-            }
-        )
+    return generate(
+        "Non-Primary Reads (%)",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: percentageOf(d, bamqc_cols.NonPrimaryReads),
+        "%",
+        colourby,
+        shownames
     )
 
 def generateOnTargetReads(current_data, colourby, shownames):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-    for name, data in current_data.groupby(colourby):
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = data[bamqc_cols.TotalReads] / pow(10,6),
-            name = name,
-            mode = marker_mode,
-            text = text_content,
-            textposition = "top right"
-        )
-        traces.append(graph)
-    return go.Figure(
-        data=traces,
-        layout = go.Layout(
-            title="On Target Reads (%)",
-            xaxis={'visible': False},
-            yaxis={
-                'title':{
-                    'text': '%'
-                }
-            }
-        )
+    return generate(
+        "On Target Reads (%)",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: percentageOf(d, bamqc_cols.ReadsOnTarget),
+        "%",
+        colourby,
+        shownames
     )
 
-#TODO: Could i abstract out the cutoff line behaviour? also the show names behaviour. Everything really
-#TODO: generalize x values for both graphs
 def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = percentageOf(data, bamqc_cols.ReadsPerStartPoint),
-            mode = marker_mode,
-            textposition="top right",
-            text = text_content,
-            name = name
-        )
-        traces.append(graph)
-    traces.append(go.Scattergl( # Cutoff line
-        x=current_data[bamqc_cols.Sample],
-        y=[cutoff_line] * len(current_data),
-        mode="lines",
-        line={"width": 3, "color": "black", "dash": "dash"}
-    ))
-    return go.Figure(
-        data=traces,
-        layout = go.Layout(
-            title="Reads per Start Point",
-            xaxis={'visible': False},
-            yaxis={
-                'title':{
-                    'text': 'Fraction'
-                }
-            }
-        )
+    return generate(
+        "Reads per Start Point",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: percentageOf(d, bamqc_cols.ReadsPerStartPoint),
+        "Fraction",
+        colourby,
+        shownames,
+        cutoff_line
     )
 
 def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
-    traces = []
-    current_data[bamqc_cols.GroupID] = current_data[bamqc_cols.GroupID].fillna("")
-    if shownames == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
-    for name, data in current_data.groupby(colourby):
-        if shownames == 'sample':
-            text_content = data[bamqc_cols.Sample]
-        elif shownames == 'group-id':
-            text_content = data[bamqc_cols.GroupID]
-        else:
-            text_content = None
-    for name, data in current_data.groupby(colourby):
-        graph = go.Scattergl(
-            x = data[bamqc_cols.Sample],
-            y = data[bamqc_cols.InsertMean],
-            name = name,
-            mode = marker_mode,
-            text = text_content,
-            textposition = "top right"
-        )
-        traces.append(graph)
-    traces.append(go.Scattergl( # Cutoff line
-        x=current_data[bamqc_cols.Sample],
-        y=[cutoff_line] * len(current_data),
-        mode="lines",
-        line={"width": 3, "color":"black", "dash":"dash"}
-    ))
-    return go.Figure(
-        data=traces,
-        layout = go.Layout(
-            title="Mean Insert Size",
-            xaxis={'visible': False},
-            yaxis={
-                'title':{
-                    'text': 'Fraction'
-                }
-            }
-        )
+    return generate(
+        "Mean Insert Size",
+        current_data,
+        lambda d: d[bamqc_cols.Sample],
+        lambda d: d[bamqc_cols.InsertMean],
+        "Fraction",
+        colourby,
+        shownames,
+        cutoff_line
     )
 
 # TODO: Abstract repeated behaviour
@@ -597,8 +361,8 @@ def init_callbacks(dash_app):
         State(ids['first-sort'], 'value'),
         # State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
-        # State(ids['shape-by'], 'value'), #TODO
-        # State(ids['search-sample'], 'value'), #TODO
+        # State(ids['shape-by'], 'value'), #TODO?
+        # State(ids['search-sample'], 'value'), #TODO?
         State(ids['show-names'], 'value'),
         State(ids['reads-per-start-point-slider'], 'value'),
         State(ids['insert-size-mean-slider'], 'value'),
@@ -617,6 +381,7 @@ def init_callbacks(dash_app):
 
         # Apply get selected runs
         data = bamqc[bamqc[bamqc_cols.Run].isin(runs)]
+        data[bamqc_cols.GroupID] = data[bamqc_cols.GroupID].fillna("")
 
         # Group by 1st and 2nd sort
         # TODO: this does not appear to work
@@ -635,7 +400,6 @@ def init_callbacks(dash_app):
         #     shapeby_strategy = bamqc_cols.Run
         # elif shapeby == 'project':
         #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
-        
         data = data.groupby(sortby).apply(lambda x:x)
 
         return [generateTotalReads(data, colourby_strategy, shownames),

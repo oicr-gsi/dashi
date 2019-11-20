@@ -9,6 +9,7 @@ pagenames = [
     "bamqc_overtime",
     "bcl2fastq",
     "poolqc",
+    "pre_exome",
     "rnaseqc",
     "runreport",
     "runscanner",
