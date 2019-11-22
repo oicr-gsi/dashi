@@ -345,7 +345,8 @@ layout = html.Div(className='body',
             children=[
                 tabl.DataTable(id=ids['data-table'],
                     columns=[{"name": i, "id": i} for i in bamqc.columns],
-                    data=bamqc.to_dict('records')
+                    data=bamqc.to_dict('records'),
+                    export_format="csv"
                 )
             ]),
     ]) 
