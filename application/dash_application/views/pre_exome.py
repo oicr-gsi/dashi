@@ -343,7 +343,10 @@ layout = html.Div(className='body',
             ]),
         html.Div(className='data-table',
             children=[
-                tabl.DataTable(id=ids['data-table'])
+                tabl.DataTable(id=ids['data-table'],
+                    columns=[{"name": i, "id": i} for i in bamqc.columns],
+                    data=bamqc.to_dict('records')
+                )
             ]),
     ]) 
 
@@ -355,7 +358,8 @@ def init_callbacks(dash_app):
         Output(ids['on-target-reads'], 'figure'),
         Output(ids['reads-per-start-point'], 'figure'),
         Output(ids['mean-insert-size'], 'figure'),
-        Output(ids['terminal-output'], 'value')],
+        Output(ids['terminal-output'], 'value'),
+        Output(ids['data-table'], 'data')],
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
@@ -408,4 +412,5 @@ def init_callbacks(dash_app):
             generateOnTargetReads(data, colourby_strategy, shownames),
             generateReadsPerStartPoint(data, colourby_strategy, shownames, reads),
             generateMeanInsertSize(data, colourby_strategy, shownames, insertsizemean),
-            generateTerminalOutput(data, reads, insertsizemean, passedfilter),]
+            generateTerminalOutput(data, reads, insertsizemean, passedfilter),
+            data.to_dict('records')]
