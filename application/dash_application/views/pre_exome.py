@@ -131,6 +131,9 @@ def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
 
 # TODO: Abstract repeated behaviour
 def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
+    if data.empty:
+        return "No data!"
+
     output = ""
 
     output += "$failed_rpsp\n"

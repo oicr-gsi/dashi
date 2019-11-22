@@ -67,6 +67,24 @@ ALL_SYMBOLS = ['circle', 'circle-open', 'circle-dot',
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext_type, line_y=None):
+    if sorted_data.empty:
+        return go.Figure(
+        data = [go.Scattergl(
+            x = None,
+            y = None
+        )],
+        layout = go.Layout(
+            title=title_text, 
+            xaxis={'visible': False,
+                'rangemode': 'normal',
+                'autorange': True},
+            yaxis={
+                'title': {
+                    'text': axis_text
+                }
+            }
+        )
+    )
     traces = []
     grouped_data = sorted_data.groupby(colourby) #TODO: is this inefficient?
     i = 0
