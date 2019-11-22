@@ -102,7 +102,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             x=sorted_data['sample'],
             y=[line_y] * len(sorted_data),
             mode="lines",
-            line={"width": 3, "color": "black", "dash": "dash"}
+            line={"width": 3, "color": "black", "dash": "dash"},
+            name="Cutoff"
         ))
     return go.Figure(
         data = traces,
