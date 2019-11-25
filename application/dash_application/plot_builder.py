@@ -110,7 +110,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
                 "symbol": ALL_SYMBOLS[i]
             }
         )
-        if i == len(ALL_SYMBOLS):
+        if i == len(ALL_SYMBOLS)-1:
             i = 0
         else:
             i += 1
