@@ -400,11 +400,6 @@ def init_callbacks(dash_app):
             #TODO: Actually sort on Project
             sortby = [bamqc_cols.Sample]
 
-        # {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
-        # {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
-        # abel': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
-        # bel': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
-
         if secondsort == 'BAMQC_TOTALREADS':
             sortby.append(bamqc_cols.TotalReads)
         elif secondsort == 'BAMQC_INSERTMEAN':
