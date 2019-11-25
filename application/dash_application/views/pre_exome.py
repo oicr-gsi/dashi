@@ -221,21 +221,21 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br(),
 
-                # html.Label([
-                #     "2nd Sort:",
-                #     core.Dropdown(id=ids['second-sort'],
-                #         options = [
-                #             # TODO: Friendlier names
-                #             {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
-                #             {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
-                #             {'label': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
-                #             {'label': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
-                #         ],
-                #         value = 'BAMQC_TOTALREADS',
-                #         searchable = False,
-                #         clearable = False
-                #     )
-                # ]), html.Br(),
+                html.Label([
+                    "2nd Sort:",
+                    core.Dropdown(id=ids['second-sort'],
+                        options = [
+                            # TODO: Friendlier names
+                            {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
+                            {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
+                            {'label': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
+                            {'label': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
+                        ],
+                        value = 'BAMQC_TOTALREADS',
+                        searchable = False,
+                        clearable = False
+                    )
+                ]), html.Br(),
 
                 html.Label([
                     "Colour/Shape by:",
@@ -367,7 +367,7 @@ def init_callbacks(dash_app):
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
         State(ids['first-sort'], 'value'),
-        # State(ids['second-sort'], 'value'),
+        State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
         # State(ids['shape-by'], 'value'), #TODO?
         # State(ids['search-sample'], 'value'), #TODO?
@@ -378,7 +378,7 @@ def init_callbacks(dash_app):
     def updatePressed(click, 
             runs, 
             firstsort, 
-            # secondsort, 
+            secondsort, 
             colourby,
             # shapeby,
             # searchsample,
@@ -395,10 +395,25 @@ def init_callbacks(dash_app):
         # TODO: this does not appear to work
         # TODO: 2nd sort
         if firstsort == 'run':
-            sortby = bamqc_cols.Run
+            sortby = [bamqc_cols.Run]
         elif firstsort == 'project':
             #TODO: Actually sort on Project
-            sortby = bamqc_cols.Sample
+            sortby = [bamqc_cols.Sample]
+
+        # {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
+        # {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
+        # abel': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
+        # bel': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
+
+        if secondsort == 'BAMQC_TOTALREADS':
+            sortby.append(bamqc_cols.TotalReads)
+        elif secondsort == 'BAMQC_INSERTMEAN':
+            sortby.append(bamqc_cols.InsertMean)
+        elif secondsort == 'BAMQC_INSERTSD':
+            sortby.append(bamqc_cols.InsertSD)
+        elif secondsort == 'BAMQC_READSPERSTARTPOINT':
+            sortby.append(bamqc_cols.ReadsPerStartPoint)
+
         if colourby == 'run':
             colourby_strategy = bamqc_cols.Run
         elif colourby == 'project':
