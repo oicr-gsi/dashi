@@ -397,8 +397,8 @@ def init_callbacks(dash_app):
         if firstsort == 'run':
             sortby = bamqc_cols.Run
         elif firstsort == 'project':
-            sortby = data[bamqc_cols.Sample].str[0:4] #TODO: find a sane way to split on '_'
-
+            #TODO: Actually sort on Project
+            sortby = bamqc_cols.Sample
         if colourby == 'run':
             colourby_strategy = bamqc_cols.Run
         elif colourby == 'project':
@@ -408,7 +408,7 @@ def init_callbacks(dash_app):
         #     shapeby_strategy = bamqc_cols.Run
         # elif shapeby == 'project':
         #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
-        data = data.groupby(sortby).apply(lambda x:x)
+        data = data.sort_values(by=sortby)
 
         return [generateTotalReads(data, colourby_strategy, shownames),
             generateUnmappedReads(data, colourby_strategy, shownames),
