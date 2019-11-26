@@ -8,10 +8,10 @@ from ..plot_builder import generate
 import plotly.graph_objects as go
 import pandas as pd
 import gsiqcetl.load
-# TODO: develop against gsiqcetl@master rather than v0.5.0 once bamqc is available
 
-bamqc = gsiqcetl.load.bamqc('v1')
 bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
+bamqc = gsiqcetl.load.bamqc('v1').sort_values(by=[bamqc_cols.Sample, bamqc_cols.TotalReads], ascending=False)
+
 
 page_name = 'preexome'
 
@@ -419,7 +419,7 @@ def init_callbacks(dash_app):
         #     shapeby_strategy = bamqc_cols.Run
         # elif shapeby == 'project':
         #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
-        data = data.sort_values(by=sortby)
+        data = data.sort_values(by=sortby, ascending=False)
 
         return [generateTotalReads(data, colourby_strategy, shownames),
             generateUnmappedReads(data, colourby_strategy, shownames),
