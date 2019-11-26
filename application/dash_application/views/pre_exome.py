@@ -282,7 +282,6 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br(),
 
-                # TODO: there's no range() for floats
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(id=ids['reads-per-start-point-slider'],
