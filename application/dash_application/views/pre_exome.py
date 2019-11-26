@@ -2,6 +2,7 @@ import dash_html_components as html
 import dash_core_components as core
 import dash_table as tabl
 from dash.dependencies import Input, Output, State
+from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate
 import plotly.graph_objects as go
@@ -188,6 +189,7 @@ def generateDebugLine(click, runs, firstsort, secondsort, colourby,
 
 layout = html.Div(className='body',
     children=[
+        navbar("Pre-Exome"),
         html.Div(className='sidebar',
             children=[
                 # As far as I can tell, there's no named attribute for button text
