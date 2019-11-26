@@ -5,14 +5,14 @@ prefix = "application.dash_application.views."
 # An array of module names as strings, one per page
 # These are for the modules that Dash can graph
 pagenames = [
-    "bamqc_gbovertime",
-    "bamqc_overtime",
-    "bcl2fastq",
-    "poolqc",
+    # "bamqc_gbovertime",
+    # "bamqc_overtime",
+    # "bcl2fastq",
+    # "poolqc",
     "pre_exome",
-    "rnaseqc",
-    "runreport",
-    "runscanner",
+    # "rnaseqc",
+    # "runreport",
+    # "runscanner",
 ]
 
 # Please do not edit this array
