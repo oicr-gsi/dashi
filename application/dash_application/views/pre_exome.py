@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import gsiqcetl.load
 
+# TODO filter down to MiSeq runs only?
 bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
 bamqc = gsiqcetl.load.bamqc('v1').sort_values(by=[bamqc_cols.Sample, bamqc_cols.TotalReads], ascending=False)
 
