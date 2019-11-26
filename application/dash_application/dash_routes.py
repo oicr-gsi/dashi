@@ -1,10 +1,12 @@
 from dash import Dash
+import dash_bootstrap_components
 
 
 # Adds Dash to provided Flask server
 def add_dash(server):
     # Create Dash instance using Flask object as server
-    dash_app = Dash(__name__, server=server)
+    dash_app = Dash(__name__, server=server, external_stylesheets=[
+                    dash_bootstrap_components.themes.BOOTSTRAP])
 
     # Set initial Dash page's layout
     from . import known_pages_router
