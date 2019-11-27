@@ -18,7 +18,7 @@ def navbar(current):
             ),
         ],
         brand=current,
-        brand_href="#",
+        brand_style={"fontSize": "14pt"},
         color="light",
         dark=False,
         sticky="top",

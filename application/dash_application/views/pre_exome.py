@@ -191,7 +191,9 @@ def generateDebugLine(click, runs, firstsort, secondsort, colourby,
 layout = html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
-        html.Div(className='sidebar',
+        html.Div(className='row flex-container',
+                 children=[
+                     html.Div(className='sidebar four columns',
             children=[
                 # As far as I can tell, there's no named attribute for button text
                 # It's always positional
@@ -318,7 +320,7 @@ layout = html.Div(className='body',
                     )
                 ]), html.Br()
             ]),
-        html.Div(className='graphs',
+        html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
                     figure=generateTotalReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
@@ -339,6 +341,7 @@ layout = html.Div(className='body',
                     figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 150)
                 )
             ]),
+                     ]),
         html.Div(className='terminal-output',
             children=[
                 core.Textarea(id=ids['terminal-output'],
