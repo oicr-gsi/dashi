@@ -47,7 +47,8 @@ RUN_COLS = pinery.column.RunsColumn
 special_cols = {
     "Total Reads (Passed Filter)": "total_reads_pf",
     "Percent Uniq Reads": "pct_uniq_reads",
-    "Project": "project"
+    "Project": "project",
+    "Percent Correct Strand Reads": "pct_correct_strand_reads"
 }
 
 # Set points for graph cutoffs
@@ -57,6 +58,7 @@ graph_cutoffs = {
     "pf_reads": 0.01
 }
 initial_colour_col = PINERY_COL.StudyTitle
+initial_shape_col = PINERY_COL.PrepKit
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -93,23 +95,27 @@ def get_rna_data():
         (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.TotalReads] / pow(10, 6), 3)
+    rna_df[special_cols["Percent Correct Strand Reads"]] = round(
+        rna_df[RNA_COL.CorrectStrandReads] * 100
+    )
 
     # Pull in sample metadata from Pinery. Keep only the columns we care about
     pinery_samples = util.get_pinery_samples_from_active_projects()
     pinery_samples = pinery_samples[
         [
-            PINERY_COL.DV200,
+            "DV200", # FIXME
             PINERY_COL.IUSTag,
             PINERY_COL.LaneNumber,
             PINERY_COL.LibrarySourceTemplateType,
             PINERY_COL.PrepKit,
-            PINERY_COL.RIN,
+            "RIN", # FIXME
             PINERY_COL.SampleName,
             PINERY_COL.SequencerRunName,
             PINERY_COL.StudyTitle,
             PINERY_COL.TissueOrigin,
             PINERY_COL.TissuePreparation,
-            PINERY_COL.TissueType
+            PINERY_COL.TissueType,
+            PINERY_COL.GroupID,
         ]
     ]
     # Filter the Pinery samples for only RNA samples.
@@ -128,7 +134,7 @@ def get_rna_data():
 
 RNA_DF = get_rna_data()
 
-# Pull lists of attributes for sorting, shaping, and filtering on
+# Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = RNA_DF[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
 ALL_INSTRUMENT_MODELS = RNA_DF[INSTRUMENT_COLS.ModelName].sort_values().unique()
@@ -170,7 +176,7 @@ def go_figure(traces, graph_title, y_title, xaxis=None, yaxis=None):
 
 
 # Standard graph
-def scatter_graph(df, colour_by, x_col, y_col, graph_title, y_title):
+def scatter_graph(df, colour_by, shape_by, x_col, y_col, graph_title, y_title):
     traces = []
     for name, data in df.groupby(colour_by):
         traces.append(scattergl(x_col, y_col, data, name))
@@ -178,60 +184,60 @@ def scatter_graph(df, colour_by, x_col, y_col, graph_title, y_title):
     return go_figure(traces, graph_title, y_title)
 
 
-def generate_total_reads(df, colour_by):
+def generate_total_reads(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName,
+        df, colour_by, shape_by, PINERY_COL.SampleName,
         special_cols["Total Reads (Passed Filter)"],
         "Total Reads (Passed Filter)", "# Reads (10^6)")
 
 
-def generate_unique_reads(df, colour_by):
+def generate_unique_reads(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName,
+        df, colour_by, shape_by, PINERY_COL.SampleName,
         special_cols["Percent Uniq Reads"],
         "Unique Reads (Passed Filter)",
         "Percent (%)")
 
 
-def generate_reads_per_start_point(df, colour_by):
+def generate_reads_per_start_point(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName, RNA_COL.ReadsPerStartPoint,
+        df, colour_by, shape_by, PINERY_COL.SampleName, RNA_COL.ReadsPerStartPoint,
         "Reads Per Start Point", "")
 
 
-def generate_five_to_three(df, colour_by):
+def generate_five_to_three(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName, RNA_COL.Median5Primeto3PrimeBias,
+        df, colour_by, shape_by, PINERY_COL.SampleName, RNA_COL.Median5Primeto3PrimeBias,
         "5 to 3 Prime Bias", "Ratio")
 
 
-def generate_correct_read_strand(df, colour_by):
+def generate_correct_read_strand(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName,
-        RNA_COL.ProportionCorrectStrandReads, "% Correct Strand Reads",
+        df, colour_by, shape_by, PINERY_COL.SampleName,
+        special_cols["Percent Correct Strand Reads"], "% Correct Strand Reads",
         "Percent (%)")
 
 
-def generate_coding(df, colour_by):
+def generate_coding(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName, RNA_COL.ProportionCodingBases,
+        df, colour_by, shape_by, PINERY_COL.SampleName, RNA_COL.ProportionCodingBases,
         "% Coding", "Percent (%)")
 
 
-def generate_dv200(df, colour_by):
+def generate_dv200(df, colour_by, shape_by):
     return scatter_graph(
-        df, colour_by, PINERY_COL.SampleName, PINERY_COL.DV200, "DV200",
-        "DV200")
+        df, colour_by, shape_by, PINERY_COL.SampleName, "DV200",  # FIXME
+           "DV200", "DV200")
 
 
-def generate_rin(df, colour_by):
-    return scatter_graph(df, colour_by, PINERY_COL.SampleName,
-                         PINERY_COL.RIN, "RIN", "RIN")
+def generate_rin(df, colour_by, shape_by):
+    return scatter_graph(df, colour_by, shape_by, PINERY_COL.SampleName,
+                         "RIN", "RIN", "RIN") # TODO fix me with correct col...
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(
-    className="body", children=[
+layout = core.Loading(fullscreen=True, type="cube", children=[
+    html.Div(className="body", children=[
         navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
@@ -299,7 +305,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(
                     "Colour By:",
                     core.Dropdown(id=ids["colour-by"],
                                   options=shape_or_colour_by,
-                                  value=PINERY_COL.StudyTitle,
+                                  value=initial_colour_col,
                                   searchable=False,
                                   clearable=False
                                   )
@@ -310,7 +316,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(
                     "Shape By:",
                     core.Dropdown(id=ids["shape-by"],
                                   options=shape_or_colour_by,
-                                  value=PINERY_COL.PrepKit,
+                                  value=initial_shape_col,
                                   searchable=False,
                                   clearable=False
                                   )
@@ -405,36 +411,36 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(
                  core.Graph(
                      id=ids["total-reads"],
                      figure=generate_total_reads(
-                         RNA_DF, initial_colour_col)
+                         RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
-                     figure=generate_unique_reads(RNA_DF, initial_colour_col)
+                     figure=generate_unique_reads(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["reads-per-start-point"],
                      figure=generate_reads_per_start_point(
-                         RNA_DF, initial_colour_col)
+                         RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
-                     figure=generate_five_to_three(RNA_DF, initial_colour_col)
+                     figure=generate_five_to_three(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["correct-read-strand"],
-                     figure=generate_correct_read_strand(RNA_DF, initial_colour_col)
+                     figure=generate_correct_read_strand(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["coding"],
-                     figure=generate_coding(RNA_DF, initial_colour_col)
+                     figure=generate_coding(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["dv200"],
-                     figure=generate_dv200(RNA_DF, initial_colour_col)
+                     figure=generate_dv200(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["rin"],
-                     figure=generate_rin(RNA_DF, initial_colour_col)
+                     figure=generate_rin(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
              ])
 
@@ -481,12 +487,12 @@ def init_callbacks(dash_app):
         df = df.sort_values(by=sort_by)
 
         return [
-            generate_total_reads(df, colour_by),
-            generate_unique_reads(df, colour_by),
-            generate_reads_per_start_point(df, colour_by),
-            generate_five_to_three(df, colour_by),
-            generate_correct_read_strand(df, colour_by),
-            generate_coding(df, colour_by),
-            generate_dv200(df, colour_by),
-            generate_rin(df, colour_by),
+            generate_total_reads(df, colour_by, shape_by),
+            generate_unique_reads(df, colour_by, shape_by),
+            generate_reads_per_start_point(df, colour_by, shape_by),
+            generate_five_to_three(df, colour_by, shape_by),
+            generate_correct_read_strand(df, colour_by, shape_by),
+            generate_coding(df, colour_by, shape_by),
+            generate_dv200(df, colour_by, shape_by),
+            generate_rin(df, colour_by, shape_by),
         ]
