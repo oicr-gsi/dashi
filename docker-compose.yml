@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+    dashi:
+        container_name: dashi_web
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        ports:
+            - '5000:5000'
+        volumes:
+            - type: bind
+              source: ./cache_files
+              target: /cache
+            - type: bind
+              source: $HOME/.ssh/
+              target: /root/.ssh/
