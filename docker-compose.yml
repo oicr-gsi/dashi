@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
     dashi:
-        container_name: dashi_web
+        container_name: dashi
         build: 
             context: .
             dockerfile: Dockerfile
@@ -10,9 +10,13 @@ services:
         ports:
             - '5000:5000'
         volumes:
+            # location of gsi-qc-etl cache files
             - type: bind
               source: ./cache_files
               target: /cache
+            # SSH keys for access to gsi-qc-etl private repository
+            # modify this bind mount if your ssh keys are located in another
+            # location. Docker secrets cannot be used in docker compose.
             - type: bind
               source: $HOME/.ssh/
               target: /root/.ssh/
