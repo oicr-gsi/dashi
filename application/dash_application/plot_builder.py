@@ -67,6 +67,13 @@ ALL_SYMBOLS = ['circle', 'circle-open', 'circle-dot',
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext_type, line_y=None):
+    margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
     if sorted_data.empty:
         return go.Figure(
         data = [go.Scattergl(
@@ -74,7 +81,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             y = None
         )],
         layout = go.Layout(
-            title=title_text, 
+            title=title_text,
+            margin=margin,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},
@@ -126,7 +134,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
     return go.Figure(
         data = traces,
         layout = go.Layout(
-            title=title_text, 
+            title=title_text,
+            margin=margin,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},

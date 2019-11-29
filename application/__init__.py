@@ -3,7 +3,7 @@ from flask_caching import Cache
 from prometheus_flask_exporter import PrometheusMetrics
 
 ## Set up Flask application, attach extensions, and load configuration
-def create_app():
+def create_app(debug=False):
     # Construct new Flask core
     app = Flask(__name__,
             instance_relative_config=False)
@@ -23,6 +23,6 @@ def create_app():
 
         #Import Dash application
         from .dash_application import dash_routes
-        app = dash_routes.add_dash(app)
+        app = dash_routes.add_dash(app, debug)
 
         return app
