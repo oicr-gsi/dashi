@@ -2,6 +2,7 @@ import dash_html_components as html
 import dash_core_components as core
 import pandas as pd
 from dash.dependencies import Input, Output, State
+from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
 import plotly.graph_objects as go
@@ -55,6 +56,15 @@ graph_cutoffs = {
     "rrna_contamination": 50,
     "pf_reads": 0.01
 }
+initial_colour_col = PINERY_COL.StudyTitle
+
+shape_or_colour_by = [
+    {"label": "Project", "value": PINERY_COL.StudyTitle},
+    {"label": "Run", "value": PINERY_COL.SequencerRunName},
+    {"label": "Kit", "value": PINERY_COL.PrepKit},
+    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+    {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+]
 
 
 def get_rna_data():
@@ -80,8 +90,7 @@ def get_rna_data():
 
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
-        rna_df[RNA_COL.UniqReads] /
-        (rna_df[RNA_COL.TotalReads] * 100), 1)
+        (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.TotalReads] / pow(10, 6), 3)
 
@@ -108,8 +117,8 @@ def get_rna_data():
                                                    ["MR", "SM", "TR", "WT"])
 
     # Join RNAseqQc and Pinery data
-    rna_df = util.df_with_pinery_samples(rna_df, pinery_samples, util.rnaseqqc_ius_columns)
-    print(rna_df[PINERY_COL.StudyTitle])
+    rna_df = util.df_with_pinery_samples(rna_df, pinery_samples,
+                                         util.rnaseqqc_ius_columns)
 
     # Join RNAseqQc and instrument model
     rna_df = util.df_with_instrument_model(rna_df, PINERY_COL.SequencerRunName)
@@ -128,29 +137,6 @@ ALL_TISSUE_MATERIALS = RNA_DF[
 ALL_LIBRARY_DESIGNS = RNA_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()
-
-# TODO: figure out how to get passed filter values for total reads & uniq reads
-METRICS_TO_GRAPH = (
-    RNA_COL.TotalReads,
-    RNA_COL.UniqReads,
-    RNA_COL.ReadsPerStartPoint,
-    RNA_COL.Median5Primeto3PrimeBias,
-    RNA_COL.ProportionCorrectStrandReads,
-    RNA_COL.ProportionCodingBases,
-    RNA_COL.rRNAContaminationreadsaligned,
-    PINERY_COL.DV200,
-    PINERY_COL.RIN
-)
-
-# Columns on which shape and colour can be set
-SHAPE_COLOUR_COLUMN = [
-    {"name": "Project", "id": PINERY_COL.StudyTitle},
-    {"name": "Kit", "id": PINERY_COL.PrepKit},
-    {"name": "Library Design", "id": PINERY_COL.LibrarySourceTemplateType},
-    {"name": "Tissue Type", "id": PINERY_COL.TissueType},
-    {"name": "Run", "id": PINERY_COL.SequencerRunName},
-    {"name": "Tissue Prep", "id": PINERY_COL.TissuePreparation},
-]
 
 
 def scattergl(x_col, y_col, data, name):
@@ -210,7 +196,7 @@ def generate_unique_reads(df, colour_by):
 def generate_reads_per_start_point(df, colour_by):
     return scatter_graph(
         df, colour_by, PINERY_COL.SampleName, RNA_COL.ReadsPerStartPoint,
-        "Reads Per Start Point", "Ratio")
+        "Reads Per Start Point", "")
 
 
 def generate_five_to_three(df, colour_by):
@@ -244,255 +230,220 @@ def generate_rin(df, colour_by):
 
 
 # Layout elements
-layout = html.Div(className='body',
-                  children=[
-                      html.Div(className='sidebar',
-                               children=[
-                                   html.Button("Update",
-                                               id=ids['update-button']),
-                                   html.Button('Download',
-                                               id=ids['download-button']),
-                                   html.Br(),
+layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(
+    className="body", children=[
+        navbar("Pre-RNA"),
+        html.Div(className="row flex-container", children=[
+            html.Div(className="sidebar four columns", children=[
+                html.Button("Update", id=ids['update-button']),
+                html.Button('Download', id=ids['download-button']),
+                html.Br(),
 
-                                   html.Label([
-                                       "Run",
-                                       core.Dropdown(id=ids["run-id-list"],
-                                                     options=[
-                                                         {"label": run,
-                                                          "value": run} for run
-                                                         in RNA_DF[
-                                                             PINERY_COL.SequencerRunName].unique()
-                                                     ],
-                                                     value=[run for run in
-                                                            RNA_DF[
-                                                                PINERY_COL.SequencerRunName].unique()],
-                                                     multi=True
-                                                     )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Run",
+                    core.Dropdown(id=ids["run-id-list"],
+                                  options=[
+                                      {"label": run,
+                                       "value": run} for run
+                                      in RNA_DF[
+                                          PINERY_COL.SequencerRunName].unique()
+                                  ],
+                                  value=[run for run in
+                                         RNA_DF[
+                                             PINERY_COL.SequencerRunName].unique()],
+                                  multi=True
+                                  )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "First Sort:",
-                                       core.Dropdown(id=ids["first-sort"],
-                                                     options=[
-                                                         {"label": "Project",
-                                                          "value": PINERY_COL.StudyTitle},
-                                                         {"label": "Run",
-                                                          "value": RNA_COL.Run}
-                                                     ],
-                                                     value=PINERY_COL.StudyTitle,
-                                                     searchable=True,
-                                                     clearable=False
-                                                     )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "First Sort:",
+                    core.Dropdown(id=ids["first-sort"],
+                                  options=[
+                                      {"label": "Project",
+                                       "value": PINERY_COL.StudyTitle},
+                                      {"label": "Run",
+                                       "value": RNA_COL.Run}
+                                  ],
+                                  value=PINERY_COL.StudyTitle,
+                                  searchable=True,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "Second Sort:",
-                                       core.Dropdown(id=ids["second-sort"],
-                                                     options=[
-                                                         {"label": "Project",
-                                                          "value": PINERY_COL.StudyTitle},
-                                                         {"label": "Run",
-                                                          "value": PINERY_COL.SequencerRunName},
-                                                         {"label": "Kit",
-                                                          "value": PINERY_COL.PrepKit},
-                                                         {"label": "Tissue Prep",
-                                                             "value": PINERY_COL.TissuePreparation},
-                                                         {"label": "Library Design",
-                                                             "value": PINERY_COL.LibrarySourceTemplateType},
-                                                     ],
-                                                     value=PINERY_COL.PrepKit,
-                                                     searchable=True,
-                                                     clearable=False
-                                                     )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Second Sort:",
+                    core.Dropdown(id=ids["second-sort"],
+                                  options=[
+                                      {"label": "Project",
+                                       "value": PINERY_COL.StudyTitle},
+                                      {"label": "Run",
+                                       "value": PINERY_COL.SequencerRunName},
+                                      {"label": "Kit",
+                                       "value": PINERY_COL.PrepKit},
+                                      {"label": "Tissue Prep",
+                                       "value": PINERY_COL.TissuePreparation},
+                                      {
+                                          "label": "Library Design",
+                                          "value": PINERY_COL.LibrarySourceTemplateType},
+                                  ],
+                                  value=PINERY_COL.PrepKit,
+                                  searchable=True,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "Colour By:",
-                                       core.Dropdown(id=ids["colour-by"],
-                                                     options=[
-                                                         {"label": "Project",
-                                                          "value": PINERY_COL.StudyTitle},
-                                                         {"label": "Run",
-                                                          "value": PINERY_COL.SequencerRunName},
-                                                         {"label": "Kit",
-                                                          "value": PINERY_COL.PrepKit},
-                                                         {
-                                                             "label": "Tissue Prep",
-                                                             "value": PINERY_COL.TissuePreparation},
-                                                         {
-                                                             "label": "Library Design",
-                                                             "value": PINERY_COL.LibrarySourceTemplateType},
-                                                     ],
-                                                     value=PINERY_COL.StudyTitle,
-                                                     searchable=False,
-                                                     clearable=False
-                                                     )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Colour By:",
+                    core.Dropdown(id=ids["colour-by"],
+                                  options=shape_or_colour_by,
+                                  value=PINERY_COL.StudyTitle,
+                                  searchable=False,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "Shape By:",
-                                       core.Dropdown(id=ids["shape-by"],
-                                                     options=[
-                                                         {"label": "Project",
-                                                          "value": PINERY_COL.StudyTitle},
-                                                         {"label": "Run",
-                                                          "value": PINERY_COL.SequencerRunName},
-                                                         {"label": "Kit",
-                                                          "value": PINERY_COL.PrepKit},
-                                                         {
-                                                             "label": "Tissue Prep",
-                                                             "value": PINERY_COL.TissuePreparation},
-                                                         {
-                                                             "label": "Library Design",
-                                                             "value": PINERY_COL.LibrarySourceTemplateType},
-                                                     ],
-                                                     value=PINERY_COL.PrepKit,
-                                                     searchable=False,
-                                                     clearable=False
-                                                     )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Shape By:",
+                    core.Dropdown(id=ids["shape-by"],
+                                  options=shape_or_colour_by,
+                                  value=PINERY_COL.PrepKit,
+                                  searchable=False,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
 
-                                   # TODO: add "Search Sample" input
+                # TODO: add "Search Sample" input
 
-                                   # TODO: add "Show Names" dropdown
+                # TODO: add "Show Names" dropdown
+                html.Label([
+                    "Reads Per Start Point:",
+                    core.Slider(
+                        id=ids["reads-per-start-point-slider"],
+                        min=0,
+                        max=50,
+                        step=1,
+                        marks={
+                            0: "0",
+                            5: "5",
+                            10: "10",
+                            15: "15",
+                            20: "20",
+                            25: "25",
+                            30: "30",
+                            35: "35",
+                            40: "40",
+                            45: "45",
+                            50: "50"
+                        },
+                        tooltip="always_visible",
+                        value=graph_cutoffs[
+                            "reads_per_start_point"]
+                    )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "Reads Per Start Point:",
-                                       core.Slider(
-                                           id=ids["reads-per-start-point-slider"],
-                                           min=0,
-                                           max=50,
-                                           step=1,
-                                           marks={
-                                               0: "0",
-                                               5: "5",
-                                               10: "10",
-                                               15: "15",
-                                               20: "20",
-                                               25: "25",
-                                               30: "30",
-                                               35: "35",
-                                               40: "40",
-                                               45: "45",
-                                               50: "50"
-                                           },
-                                           tooltip="always_visible",
-                                           value=graph_cutoffs[
-                                               "reads_per_start_point"]
-                                           )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Ribosomal rRNA Contamination (%)",
+                    core.Slider(
+                        id=ids["rrna-contamination-slider"],
+                        min=0,
+                        max=100,
+                        step=1,
+                        marks={
+                            0: "0",
+                            10: "10",
+                            20: "20",
+                            30: "30",
+                            40: "40",
+                            50: "50",
+                            60: "60",
+                            70: "70",
+                            80: "80",
+                            90: "90",
+                            100: "100"
+                        },
+                        tooltip="always_visible",
+                        value=graph_cutoffs[
+                            "rrna_contamination"]
+                    )
+                ]),
+                html.Br(),
 
-                                   html.Label([
-                                       "Ribosomal rRNA Contamination (%)",
-                                       core.Slider(
-                                           id=ids["rrna-contamination-slider"],
-                                           min=0,
-                                           max=100,
-                                           step=1,
-                                           marks={
-                                               0: "0",
-                                               10: "10",
-                                               20: "20",
-                                               30: "30",
-                                               40: "40",
-                                               50: "50",
-                                               60: "60",
-                                               70: "70",
-                                               80: "80",
-                                               90: "90",
-                                               100: "100"
-                                           },
-                                           tooltip="always_visible",
-                                           value=graph_cutoffs[
-                                               "rrna_contamination"]
-                                           )
-                                   ]),
-                                   html.Br(),
+                html.Label([
+                    "Passed Filter Reads:",
+                    core.Slider(
+                        id=ids["passed-filter-reads-slider"],
+                        min=0,
+                        max=0.5,
+                        step=0.025,
+                        marks={
+                            0: "0",
+                            0.05: "0.05",
+                            0.1: "0.1",
+                            0.15: "0.15",
+                            0.2: "0.2",
+                            0.25: "0.25",
+                            0.3: "0.3",
+                            0.35: "0.35",
+                            0.4: "0.4",
+                            0.45: "0.45",
+                            0.5: "0.5"
+                        },
+                        tooltip="always_visible",
+                        value=graph_cutoffs["pf_reads"]
+                    )
+                ]),
+                html.Br(),
+            ]),
 
-                                   html.Label([
-                                       "Passed Filter Reads:",
-                                       core.Slider(
-                                           id=ids["passed-filter-reads-slider"],
-                                           min=0,
-                                           max=0.5,
-                                           step=0.025,
-                                           marks={
-                                               0: "0",
-                                               0.05: "0.05",
-                                               0.1: "0.1",
-                                               0.15: "0.15",
-                                               0.2: "0.2",
-                                               0.25: "0.25",
-                                               0.3: "0.3",
-                                               0.35: "0.35",
-                                               0.4: "0.4",
-                                               0.45: "0.45",
-                                               0.5: "0.5"
-                                           },
-                                           tooltip="always_visible",
-                                           value=graph_cutoffs["pf_reads"]
-                                           )
-                                   ]),
-                                   html.Br(),
-                               ]),
+            html.Div(className="seven columns",  children=[
+                 core.Graph(
+                     id=ids["total-reads"],
+                     figure=generate_total_reads(
+                         RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["unique-reads"],
+                     figure=generate_unique_reads(RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["reads-per-start-point"],
+                     figure=generate_reads_per_start_point(
+                         RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["5-to-3-prime-bias"],
+                     figure=generate_five_to_three(RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["correct-read-strand"],
+                     figure=generate_correct_read_strand(RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["coding"],
+                     figure=generate_coding(RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["dv200"],
+                     figure=generate_dv200(RNA_DF, initial_colour_col)
+                 ),
+                 core.Graph(
+                     id=ids["rin"],
+                     figure=generate_rin(RNA_DF, initial_colour_col)
+                 ),
+             ])
 
-                      # Graphs
-                      html.Div(className="graphs",
-                               children=[
-                                   core.Graph(
-                                       id=ids["total-reads"],
-                                       figure=generate_reads_per_start_point(
-                                           RNA_DF, PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["unique-reads"],
-                                       figure=generate_unique_reads(RNA_DF,
-                                                                    PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["reads-per-start-point"],
-                                       figure=generate_reads_per_start_point(
-                                           RNA_DF, PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["5-to-3-prime-bias"],
-                                       figure=generate_five_to_three(RNA_DF,
-                                                                     PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["correct-read-strand"],
-                                       figure=generate_correct_read_strand(
-                                           RNA_DF, PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["coding"],
-                                       figure=generate_coding(RNA_DF,
-                                                              PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["dv200"],
-                                       figure=generate_dv200(RNA_DF,
-                                                             PINERY_COL.StudyTitle)
-                                   ),
-                                   core.Graph(
-                                       id=ids["rin"],
-                                       figure=generate_rin(RNA_DF,
-                                                           PINERY_COL.StudyTitle)
-                                   ),
-                               ]
-                               )
+            # Add terminal output for failed samples
 
-                      # Add terminal output for failed samples
-
-                      # Add DataTable for all samples info
-                  ]
-                  )
+            # Add DataTable for all samples info
+        ])
+    ])
+])
 
 
 def init_callbacks(dash_app):
@@ -539,4 +490,3 @@ def init_callbacks(dash_app):
             generate_dv200(df, colour_by),
             generate_rin(df, colour_by),
         ]
-

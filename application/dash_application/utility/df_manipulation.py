@@ -19,7 +19,9 @@ rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient()
 _pinery_samples = _provenance_client.get_all_samples()
-_runs = _pinery_client.get_runs().runs
+_pinery_samples_info = _pinery_client.get_samples(True, False)
+_runs = _pinery_client.get_runs(True, False).runs
+
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
 
