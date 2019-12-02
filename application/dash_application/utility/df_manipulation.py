@@ -17,12 +17,14 @@ rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 
 _pinery_client = pinery.PineryClient()
-_provenance_client = pinery.PineryProvenanceClient()
+# TODO: switch this to pinery-miso-v5 as soon as possible
+_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v2")
 _pinery_samples = _provenance_client.get_all_samples()
 _runs = _pinery_client.get_runs().runs
 
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
+
 
 
 def get_pinery_samples():
@@ -31,7 +33,7 @@ def get_pinery_samples():
     pinery_samples = _pinery_samples.astype({
         PINERY_COL.SequencerRunName: 'str',
         PINERY_COL.LaneNumber: 'int64',
-        PINERY_COL.IUSTag: 'str'})
+        "IUSTag": 'str'})
     # NaN sample attrs need to be changed to a str.
     # Use the expected default values
     return pinery_samples.fillna({
