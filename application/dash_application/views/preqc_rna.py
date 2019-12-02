@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import dash_html_components as html
 import dash_core_components as core
+import dash_table as tabl
 import pandas as pd
 from dash.dependencies import Input, Output, State
 from pandas import DataFrame
@@ -41,7 +42,9 @@ ids = init_ids([
     "correct-read-strand",
     "coding",
     "dv200",
-    "rin"
+    "rin",
+
+    "data-table",
 ])
 
 RNA_COL = RnaColumn
@@ -455,6 +458,15 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             # Add terminal output for failed samples
 
             # Add DataTable for all samples info
+            html.Div(className="data-table",
+                children=[
+                    tabl.DataTable(id=ids["data-table"],
+                        columns=[{"name": i, "id": i} for i in
+                                 rnaseqqc_table_columns],
+                        data=RNA_DF.to_dict('records'),
+                        export_format="csv"
+                    )
+                ])
         ])
     ])
 ])
@@ -470,7 +482,8 @@ def init_callbacks(dash_app):
             Output(ids["correct-read-strand"], "figure"),
             Output(ids["coding"], "figure"),
             Output(ids["dv200"], "figure"),
-            Output(ids["rin"], "figure")
+            Output(ids["rin"], "figure"),
+            Output(ids["data-table"], "data"),
         ],
         [
             Input(ids["update-button"], "n_clicks")
