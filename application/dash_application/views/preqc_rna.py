@@ -513,7 +513,6 @@ def init_callbacks(dash_app):
                        second_sort,
                        colour_by,
                        shape_by):
-        print("App initiated")  # TODO: delete me
         df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
