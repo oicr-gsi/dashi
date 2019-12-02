@@ -23,3 +23,13 @@ services:
       - type: bind
         source: $HOME/.ssh/id_rsa.pub
         target: /root/.ssh/id_rsa.pub
+      - type: bind
+        source: $HOME/.ssh/known_hosts
+        target: /root/.ssh/known_hosts
+    secrets:
+      - mongo_password
+
+
+secrets:
+  mongo_password:
+    file: .mongopass
