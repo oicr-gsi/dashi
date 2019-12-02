@@ -11,6 +11,7 @@ pagenames = [
     # "poolqc",
     #" pre_exome",
     "preqc_rna",
+    "preqc_wgs",
     # "rnaseqc",
     # "runreport",
     # "runscanner",
