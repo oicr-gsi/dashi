@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import dash_html_components as html
 import dash_core_components as core
 import pandas as pd
@@ -7,7 +9,7 @@ from pandas import DataFrame
 from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
-from ..plot_builder import get_shapes_for_values, fill_in_shape_col
+from ..plot_builder import get_shapes_for_values, fill_in_shape_col, generate
 import plotly.graph_objects as go
 from gsiqcetl import QCETLCache
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
@@ -48,25 +50,37 @@ INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
-    "Total Reads (Passed Filter)": "total_reads_pf",
-    "Percent Uniq Reads": "pct_uniq_reads",
+    "Total Reads (Passed Filter)": "TotalReadsPassedFilter",
+    "Percent Uniq Reads": "PercentUniqReads",
     "Project": "project",
-    "Percent Correct Strand Reads": "pct_correct_strand_reads",
+    "Percent Correct Strand Reads": "PercentCorrectStrandReads",
     "shape": "shape",
 }
 
-# Set points for graph cutoffs
-graph_cutoffs = {
-    "reads_per_start_point": 5,
-    "rrna_contamination": 50,
-    "pf_reads": 0.01
-}
 
 
+first_col_set = [
+    PINERY_COL.SampleName, PINERY_COL.StudyTitle, PINERY_COL.LastModified,
+    special_cols["Total Reads (Passed Filter)"],
+    special_cols["Percent Uniq Reads"],
+    special_cols["Percent Correct Strand Reads"]
+]
+later_col_set = [
+    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
+    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.RIN, PINERY_COL.DV200,
+    PINERY_COL.ExternalName, PINERY_COL.GroupID, PINERY_COL.TissueOrigin,
+    PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
+]
+rnaseqqc_table_columns = [*first_col_set, *RNA_COL.keys(), *later_col_set]
+
+initial_first_sort = PINERY_COL.StudyTitle
+initial_second_sort = PINERY_COL.PrepKit
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
 initial_shapes = get_shapes_for_values(initial_shape_col)
-
+# Set points for graph cutoffs
+initial_cutoff_rpsp = 5
+initial_cutoff_pf_reads = 0.01
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -104,28 +118,12 @@ def get_rna_data():
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.TotalReads] / pow(10, 6), 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
-        rna_df[RNA_COL.CorrectStrandReads] * 100
+        (rna_df[RNA_COL.CorrectStrandReads] / rna_df[RNA_COL.TotalReads]) *
+        100, 1
     )
 
-    # Pull in sample metadata from Pinery. Keep only the columns we care about
+    # Pull in sample metadata from Pinery
     pinery_samples = util.get_pinery_samples_from_active_projects()
-    pinery_samples = pinery_samples[
-        [
-            "DV200", # FIXME
-            PINERY_COL.IUSTag,
-            PINERY_COL.LaneNumber,
-            PINERY_COL.LibrarySourceTemplateType,
-            PINERY_COL.PrepKit,
-            "RIN", # FIXME
-            PINERY_COL.SampleName,
-            PINERY_COL.SequencerRunName,
-            PINERY_COL.StudyTitle,
-            PINERY_COL.TissueOrigin,
-            PINERY_COL.TissuePreparation,
-            PINERY_COL.TissueType,
-            PINERY_COL.GroupID,
-        ]
-    ]
     # Filter the Pinery samples for only RNA samples.
     pinery_samples = util.filter_by_library_design(pinery_samples,
                                                    ["MR", "SM", "TR", "WT"])
@@ -138,6 +136,7 @@ def get_rna_data():
     rna_df = util.df_with_instrument_model(rna_df, PINERY_COL.SequencerRunName)
 
     return rna_df
+
 
 # Make the RNA dataframe
 RNA_DF = get_rna_data()
@@ -163,101 +162,114 @@ shape_or_colour_values = {
 
 # Add shape col to RNA dataframe
 RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
+# Do initial sort before graphing
+RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
 
 
-def scattergl(x_col, y_col, data, colour_val):
-    return go.Scattergl(
-        x=data[x_col],
-        y=data[y_col],
-        name="{} {}".format(colour_val[0], colour_val[1]),
-        mode="markers",
-        marker={
-            "symbol": data[special_cols["shape"]]
-        }
+def generate_total_reads(df, colour_by, shape_by, cutoff):
+    return generate(
+        "Total Reads (Passed Filter)",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        "# Reads (10^6)",
+        colour_by,
+        shape_by,
+        "none",
+        cutoff
     )
-
-
-def go_figure(traces, graph_title, y_title, xaxis=None, yaxis=None):
-    x_axis = xaxis if xaxis else {
-        "visible": False,
-        "rangemode": "normal",
-        "autorange": True
-    }
-    y_axis = yaxis if yaxis else {
-        "title": {
-            "text": y_title
-        }
-    }
-    return go.Figure(
-        data=traces,
-        layout=go.Layout(
-            title=graph_title,
-            xaxis=x_axis,
-            yaxis=y_axis
-        )
-    )
-
-
-# Standard graph
-def scatter_graph(df, colour_by, shape_by, x_col, y_col, graph_title, y_title):
-    traces = []
-    for colour_val, data in df.groupby([colour_by, shape_by]):
-        traces.append(scattergl(x_col, y_col, data, colour_val))
-
-    return go_figure(traces, graph_title, y_title)
-
-
-def generate_total_reads(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Total Reads (Passed Filter)"],
-        "Total Reads (Passed Filter)", "# Reads (10^6)")
 
 
 def generate_unique_reads(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Percent Uniq Reads"],
-        "Unique Reads (Passed Filter)", "Percent (%)")
+    return generate(
+        "Unique Reads (Passed Filter)",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Percent Uniq Reads"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
-def generate_reads_per_start_point(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        RNA_COL.ReadsPerStartPoint,
-        "Reads Per Start Point", "")
+def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
+    return generate(
+        "Reads Per Start Point",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[RNA_COL.ReadsPerStartPoint],
+        "",
+        colour_by,
+        shape_by,
+        "none",
+        cutoff
+    )
 
 
 def generate_five_to_three(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        RNA_COL.Median5Primeto3PrimeBias,
-        "5 to 3 Prime Bias", "Ratio")
+    return generate(
+        "5 to 3 Prime Bias",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
+        "Ratio",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_correct_read_strand(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Percent Correct Strand Reads"], "% Correct Strand Reads",
-        "Percent (%)")
+    return generate(
+        "% Correct Strand Reads",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Percent Correct Strand Reads"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_coding(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,  \
-                           RNA_COL.ProportionCodingBases,
-        "% Coding", "Percent (%)")
+    return generate(
+        "% Coding",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[RNA_COL.ProportionCodingBases],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_dv200(df, colour_by, shape_by):
-    return scatter_graph(df, colour_by, shape_by, PINERY_COL.SampleName,
-                         "DV200",
-           "DV200", "DV200")
+    return generate(
+        "DV200",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d["DV200"], # FIXME
+        "DV200",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_rin(df, colour_by, shape_by):
-    return scatter_graph(df, colour_by, shape_by, PINERY_COL.SampleName,
-                         "RIN", "RIN", "RIN")
+    return generate(
+        "RIN",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d["RIN"], # FIXME
+        "RIN",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 # Layout elements
@@ -292,7 +304,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": "Run",
                                        "value": RNA_COL.Run}
                                   ],
-                                  value=PINERY_COL.StudyTitle,
+                                  value=initial_first_sort,
                                   searchable=True,
                                   clearable=False
                                   )
@@ -315,7 +327,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                           "label": "Library Design",
                                           "value": PINERY_COL.LibrarySourceTemplateType},
                                   ],
-                                  value=PINERY_COL.PrepKit,
+                                  value=initial_second_sort,
                                   searchable=True,
                                   clearable=False
                                   )
@@ -368,35 +380,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                             50: "50"
                         },
                         tooltip="always_visible",
-                        value=graph_cutoffs[
-                            "reads_per_start_point"]
-                    )
-                ]),
-                html.Br(),
-
-                html.Label([
-                    "Ribosomal rRNA Contamination (%)",
-                    core.Slider(
-                        id=ids["rrna-contamination-slider"],
-                        min=0,
-                        max=100,
-                        step=1,
-                        marks={
-                            0: "0",
-                            10: "10",
-                            20: "20",
-                            30: "30",
-                            40: "40",
-                            50: "50",
-                            60: "60",
-                            70: "70",
-                            80: "80",
-                            90: "90",
-                            100: "100"
-                        },
-                        tooltip="always_visible",
-                        value=graph_cutoffs[
-                            "rrna_contamination"]
+                        value=initial_cutoff_rpsp
                     )
                 ]),
                 html.Br(),
@@ -422,7 +406,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                             0.5: "0.5"
                         },
                         tooltip="always_visible",
-                        value=graph_cutoffs["pf_reads"]
+                        value=initial_cutoff_pf_reads
                     )
                 ]),
                 html.Br(),
@@ -432,7 +416,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                  core.Graph(
                      id=ids["total-reads"],
                      figure=generate_total_reads(RNA_DF, initial_colour_col,
-                                                 initial_shape_col)
+                                                 initial_shape_col,
+                                                 initial_cutoff_pf_reads)
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
@@ -441,7 +426,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                  core.Graph(
                      id=ids["reads-per-start-point"],
                      figure=generate_reads_per_start_point(
-                         RNA_DF, initial_colour_col, initial_shape_col)
+                         RNA_DF, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
@@ -465,7 +450,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      id=ids["rin"],
                      figure=generate_rin(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
-             ])
+             ]),
 
             # Add terminal output for failed samples
 
@@ -496,6 +481,8 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
+            State(ids['reads-per-start-point-slider'], 'value'),
+            State(ids['passed-filter-reads-slider'], 'value'),
         ]
     )
     def update_pressed(click,
@@ -503,19 +490,23 @@ def init_callbacks(dash_app):
                        first_sort,
                        second_sort,
                        colour_by,
-                       shape_by):
+                       shape_by,
+                       rpsp_cutoff,
+                       total_reads_cutoff):
         df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+        dd = defaultdict(list)
 
         return [
-            generate_total_reads(df, colour_by, shape_by),
+            generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
             generate_unique_reads(df, colour_by, shape_by),
-            generate_reads_per_start_point(df, colour_by, shape_by),
+            generate_reads_per_start_point(df, colour_by, shape_by, rpsp_cutoff),
             generate_five_to_three(df, colour_by, shape_by),
             generate_correct_read_strand(df, colour_by, shape_by),
             generate_coding(df, colour_by, shape_by),
             generate_dv200(df, colour_by, shape_by),
             generate_rin(df, colour_by, shape_by),
+            df.to_dict("records", into=dd),
         ]
