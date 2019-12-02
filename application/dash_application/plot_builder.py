@@ -1,68 +1,58 @@
+from typing import List
+
 import pandas
 import plotly.graph_objects as go
 
 # TODO: if this remains necessary i'll be mad. Can we get it from plotly itself?
-ALL_SYMBOLS = ['circle', 'circle-open', 'circle-dot',
-                'circle-open-dot', 'square', 'square-open', 
-                'square-dot', 'square-open-dot', 'diamond',
-                'diamond-open', 'diamond-dot',
-                'diamond-open-dot', 'cross', 'cross-open',
-                'cross-dot', 'cross-open-dot', 'x', 'x-open',
-                'x-dot', 'x-open-dot', 'triangle-up',
-                'triangle-up-open', 'triangle-up-dot',
-                'triangle-up-open-dot', 'triangle-down',
-                'triangle-down-open', 'triangle-down-dot',
-                'triangle-down-open-dot', 'triangle-left',
-                'triangle-left-open', 'triangle-left-dot',
-                'triangle-left-open-dot', 'triangle-right',
-                'triangle-right-open', 'triangle-right-dot',
-                'triangle-right-open-dot', 'triangle-ne', 
-                'triangle-ne-open', 'triangle-ne-dot',
-                'triangle-ne-open-dot', 'triangle-se',
-                'triangle-se-open', 'triangle-se-dot',
-                'triangle-se-open-dot', 'triangle-sw',
-                'triangle-sw-open', 'triangle-sw-dot',
-                'triangle-sw-open-dot', 'triangle-nw',
-                'triangle-nw-open', 'triangle-nw-dot',
-                'triangle-nw-open-dot', 'pentagon', 
-                'pentagon-open', 'pentagon-dot',
-                'pentagon-open-dot', 'hexagon', 'hexagon-open',
-                'hexagon-dot', 'hexagon-open-dot',
-                'hexagon2', 'hexagon2-open', 'hexagon2-dot',
-                'hexagon2-open-dot', 'octagon', 
-                'octagon-open', 'octagon-dot', 
-                'octagon-open-dot', 'star',  'star-open',
-                'star-dot', 'star-open-dot', 'hexagram',
-                'hexagram-open', 'hexagram-dot',
-                'hexagram-open-dot', 'star-triangle-up', 
-                'star-triangle-up-open', 'star-triangle-up-dot',
-                'star-triangle-up-open-dot', 'star-triangle-down',
-                'star-triangle-down-open',
-                'star-triangle-down-dot',
-                'star-triangle-down-open-dot', 'star-square', 
-                'star-square-open','star-square-dot',
-                'star-square-open-dot', 'star-diamond', 
-                'star-diamond-open', 'star-diamond-dot',
-                'star-diamond-open-dot', 'diamond-tall',
-                'diamond-tall-open', 'diamond-tall-dot',
-                'diamond-tall-open-dot', 'diamond-wide', 
-                'diamond-wide-open', 'diamond-wide-dot',
-                'diamond-wide-open-dot', 'hourglass', 
-                'hourglass-open', 'bowtie', 'bowtie-open',
-                'circle-cross', 'circle-cross-open', 'circle-x',
-                'circle-x-open', 'square-cross', 
-                'square-cross-open', 'square-x', 'square-x-open',
-                'diamond-cross', 'diamond-cross-open', 
-                'diamond-x', 'diamond-x-open', 'cross-thin', 
-                'cross-thin-open', 'x-thin', 'x-thin-open', 
-                'asterisk', 'asterisk-open', 'hash', 
-                'hash-open', 'hash-dot', 'hash-open-dot', 
-                'y-up', 'y-up-open', 'y-down', 
-                'y-down-open', 'y-left', 'y-left-open',
-                'y-right', 'y-right-open', 'line-ew', 
-                'line-ew-open', 'line-ns', 'line-ns-open',
-                'line-ne', 'line-ne-open', 'line-nw', 
-                'line-nw-open']
+from pandas import DataFrame
+
+ALL_SYMBOLS = [
+    'circle', 'triangle-up', 'square', 'triangle-down', 'pentagon', 'diamond',
+    'triangle-left', 'hexagon', 'cross', 'triangle-right', 'star', 'x',
+    'hexagram', 'star-square', 'diamond-wide', 'square-cross', 'triangle-ne',
+    'octagon', 'cross-thin', 'triangle-se', 'star-triangle-up', 'asterisk',
+    'triangle-nw', 'diamond-tall', 'hash', 'triangle-sw', 'star-diamond',
+    'hourglass', 'bowtie', 'circle-cross', 'y-up', 'circle-open',
+    'triangle-up-open', 'square-open', 'triangle-down-open', 'pentagon-open',
+    'diamond-open', 'triangle-left-open', 'hexagon-open', 'cross-open',
+    'triangle-right-open', 'line-ew', 'star-open', 'x-open', 'hexagram-open',
+    'star-square-open', 'diamond-wide-open', 'square-cross-open',
+    'triangle-ne-open', 'y-down', 'octagon-open', 'cross-thin-open',
+    'triangle-se-open', 'star-triangle-up-open', 'asterisk-open',
+    'triangle-nw-open', 'line-ns', 'diamond-tall-open', 'hash-open',
+    'triangle-sw-open', 'star-diamond-open', 'hourglass-open', 'bowtie-open',
+    'circle-cross-open', 'circle-dot', 'y-left', 'triangle-up-dot',
+    'square-dot', 'triangle-down-dot', 'pentagon-dot', 'diamond-dot',
+    'triangle-left-dot', 'hexagon-dot', 'cross-dot', 'line-ne', 'y-right',
+    'triangle-right-dot', 'star-dot', 'x-dot', 'hexagram-dot', 'line-nw',
+    'star-square-dot', 'diamond-wide-dot', 'square-cross-dot', 'y-up-open',
+    'triangle-ne-dot', 'octagon-dot', 'cross-thin-dot', 'triangle-se-dot',
+    'star-triangle-up-dot', 'asterisk-dot', 'triangle-nw-dot', 'line-ew-open',
+    'diamond-tall-dot', 'hash-dot', 'triangle-sw-dot', 'star-diamond-dot',
+    'hourglass-dot', 'bowtie-dot', 'circle-cross-dot', 'circle-open-dot',
+    'y-down-open', 'triangle-up-open-dot', 'square-open-dot',
+    'triangle-down-open-dot', 'pentagon-open-dot', 'diamond-open-dot',
+    'triangle-left-open-dot', 'line-ns-open', 'hexagon-open-dot',
+    'cross-open-dot', 'triangle-right-open-dot', 'star-open-dot', 'x-open-dot',
+    'hexagram-open-dot', 'y-left-open', 'star-square-open-dot',
+    'diamond-wide-open-dot', 'square-cross-open-dot', 'triangle-ne-open-dot',
+    'octagon-open-dot', 'cross-thin-open-dot', 'line-ne-open',
+    'triangle-se-open-dot', 'star-triangle-up-open-dot', 'asterisk-open-dot',
+    'triangle-nw-open-dot', 'diamond-tall-open-dot', 'hash-open-dot',
+    'y-right-open', 'triangle-sw-open-dot', 'star-diamond-open-dot',
+    'hourglass-open-dot', 'bowtie-open-dot', 'circle-cross-open-dot',
+    'line-nw-open'
+]
+
+
+def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
+        dict):
+    all_shapes = get_shapes_for_values(shape_or_colour_values[
+                                           shape_col].tolist())
+    # for each row,
+    df['shape'] = df.apply(lambda row: all_shapes.get(row[
+        shape_col]), axis=1)
+    return df
 
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
@@ -76,23 +66,23 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             )
     if sorted_data.empty:
         return go.Figure(
-        data = [go.Scattergl(
-            x = None,
-            y = None
-        )],
-        layout = go.Layout(
-            title=title_text,
-            margin=margin,
-            xaxis={'visible': False,
-                'rangemode': 'normal',
-                'autorange': True},
-            yaxis={
-                'title': {
-                    'text': axis_text
+            data=[go.Scattergl(
+                x=None,
+                y=None
+            )],
+            layout=go.Layout(
+                title=title_text,
+                margin=margin,
+                xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
+                yaxis={
+                    'title': {
+                        'text': axis_text
+                    }
                 }
-            }
+            )
         )
-    )
     traces = []
     grouped_data = sorted_data.groupby(colourby) #TODO: is this inefficient?
     i = 0
@@ -109,12 +99,12 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             text_content = None
     for name, data in grouped_data:
         graph = go.Scattergl(
-            x = x_fn(data),
-            y = y_fn(data),
-            name = name,
-            hovertext = text_content,
-            mode = marker_mode,
-            marker = {
+            x=x_fn(data),
+            y=y_fn(data),
+            name=name,
+            hovertext=text_content,
+            mode=marker_mode,
+            marker={
                 "symbol": ALL_SYMBOLS[i]
             }
         )
@@ -123,7 +113,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
         else:
             i += 1
         traces.append(graph)
-    if line_y != None:
+    if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
             x=sorted_data['sample'],
             y=[line_y] * len(sorted_data),
@@ -146,3 +136,13 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             }
         )
     )
+
+
+def get_shapes_for_values(shapeby: List[str]):
+    shape_dict = {}
+    for index, item in enumerate(shapeby):
+        # loop back to beginning of symbols list if we run out of symbols
+        if index >= len(ALL_SYMBOLS):
+            index = index - len(ALL_SYMBOLS)
+        shape_dict[item] = ALL_SYMBOLS[index]
+    return shape_dict
