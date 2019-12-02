@@ -7,7 +7,7 @@ from pandas import DataFrame
 from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
-from ..plot_builder import get_shapes_for_values
+from ..plot_builder import get_shapes_for_values, fill_in_shape_col
 import plotly.graph_objects as go
 from gsiqcetl import QCETLCache
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
@@ -161,17 +161,8 @@ shape_or_colour_values = {
 }
 
 
-def fill_in_shape_col(df: DataFrame, shape_col: str):
-    all_shapes = get_shapes_for_values(shape_or_colour_values[
-                                           shape_col].tolist())
-    # for each row,
-    df[special_cols['shape']] = df.apply(lambda row: all_shapes.get(row[
-        shape_col]), axis=1)
-    return df
-
-
 # Add shape col to RNA dataframe
-RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col)
+RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
 
 
 def scattergl(x_col, y_col, data, colour_val):
@@ -516,7 +507,7 @@ def init_callbacks(dash_app):
         df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
-        df = fill_in_shape_col(df, shape_by)
+        df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
 
         return [
             generate_total_reads(df, colour_by, shape_by),
