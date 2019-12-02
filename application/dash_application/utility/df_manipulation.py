@@ -5,6 +5,8 @@ import gsiqcetl.column
 import pinery
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
+BAMQC_COL = gsiqcetl.column.BamQcColumn
+ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC_COL = gsiqcetl.column.RnaSeqQcColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
@@ -13,6 +15,8 @@ PROJECT_COL = pinery.column.ProjectsColumn
 pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
                       PINERY_COL.IUSTag]
 
+bamqc_ius_columns = [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes]
+ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 
