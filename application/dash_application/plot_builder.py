@@ -91,7 +91,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     traces = []
     grouped_data = sorted_data.groupby([colourby, shapeby]) #TODO: is this
     # inefficient?
-    i = 0
     if hovertext_type == 'none':
         marker_mode = 'markers'
     else:
@@ -114,10 +113,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 "symbol": data['shape']
             }
         )
-        if i == len(ALL_SYMBOLS)-1:
-            i = 0
-        else:
-            i += 1
         traces.append(graph)
     if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
