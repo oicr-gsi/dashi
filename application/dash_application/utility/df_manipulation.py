@@ -26,41 +26,41 @@ _pinery_client = pinery.PineryClient()
 # TODO: switch this to pinery-miso-v5 as soon as possible
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v2")
 _pinery_samples = _provenance_client.get_all_samples()
+# Cast the primary key/join columns to explicit types
+_pinery_samples = _pinery_samples.astype({
+    PINERY_COL.SequencerRunName: 'str',
+    PINERY_COL.LaneNumber: 'int64',
+    "IUSTag": 'str'})
+# NaN sample attrs need to be changed to a str.
+# Use the expected default values
+_pinery_samples.fillna({
+    PINERY_COL.PrepKit: "Unspecified",
+    PINERY_COL.LibrarySourceTemplateType: "NN",
+    PINERY_COL.TissueOrigin: "nn",
+    PINERY_COL.TissueType: "n",
+    PINERY_COL.TissuePreparation: "Unknown",
+    PINERY_COL.GroupID: "",
+    PINERY_COL.GroupIDDescription: ""
+})
 _runs = _pinery_client.get_runs().runs
 
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
 
+_active_projects = _projects.loc[_projects[PROJECT_COL.IsActive] == True]
+_active_projects = _active_projects[PROJECT_COL.Name].unique()
+_active_samples = _pinery_samples.loc[_pinery_samples[
+    PINERY_COL.StudyTitle].isin(
+    _active_projects)]
 
 
 def get_pinery_samples():
     """Get Pinery Sample Provenance DataFrame"""
-    # Cast the primary key/join columns to explicit types
-    pinery_samples = _pinery_samples.astype({
-        PINERY_COL.SequencerRunName: 'str',
-        PINERY_COL.LaneNumber: 'int64',
-        "IUSTag": 'str'})
-    # NaN sample attrs need to be changed to a str.
-    # Use the expected default values
-    return pinery_samples.fillna({
-        PINERY_COL.PrepKit: "Unspecified",
-        PINERY_COL.LibrarySourceTemplateType: "NN",
-        PINERY_COL.TissueOrigin: "nn",
-        PINERY_COL.TissueType: "n",
-        PINERY_COL.TissuePreparation: "Unknown",
-        PINERY_COL.GroupID: "",
-        PINERY_COL.GroupIDDescription: ""
-    })
+    return _pinery_samples
 
 
 def get_pinery_samples_from_active_projects():
-    pinery_samples = get_pinery_samples()
-    active_projects = _projects.loc[_projects[PROJECT_COL.IsActive] == True]
-    active_projects = active_projects[PROJECT_COL.Name].unique()
-    active_samples = pinery_samples.loc[pinery_samples[
-        PINERY_COL.StudyTitle].isin(
-        active_projects)]
-    return active_samples
+    return _active_samples
 
 
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
