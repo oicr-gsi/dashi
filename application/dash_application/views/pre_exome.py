@@ -287,13 +287,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     core.Dropdown(id=ids['second-sort'],
                         options=[
                             # TODO: Friendlier names
-                            {'label': 'BAMQC_TOTALREADS', 'value':
+                            {'label': 'Total Reads', 'value':
                                 BAMQC_COL.TotalReads},
-                            {'label': 'BAMQC_INSERTMEAN', 'value':
+                            {'label': 'Insert Mean', 'value':
                                 BAMQC_COL.InsertMean},
-                            {'label': 'BAMQC_INSERTSD', 'value':
+                            {'label': 'Insert SD', 'value':
                                 BAMQC_COL.InsertSD},
-                            {'label': 'BAMQC_READSPERSTARTPOINT', 'value':
+                            {'label': 'Reads Per Start Point', 'value':
                                 BAMQC_COL.ReadsPerStartPoint}
                         ],
                         value=initial_second_sort,
@@ -338,7 +338,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     core.Dropdown(id=ids['show-names'],
                         options=[
                             {'label': 'Sample', 'value': BAMQC_COL.Sample},
-                            {'label': 'groupID', 'value': PINERY_COL.GroupID},
+                            {'label': 'Group ID', 'value': PINERY_COL.GroupID},
                             {'label': 'None', 'value': 'none'}
                         ],
                         value='none',
@@ -442,7 +442,7 @@ def init_callbacks(dash_app):
         State(ids['first-sort'], 'value'),
         State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
-        State(ids['shape-by'], 'value'), #TODO?
+        State(ids['shape-by'], 'value'),
         # State(ids['search-sample'], 'value'), #TODO?
         State(ids['show-names'], 'value'),
         State(ids['reads-per-start-point-slider'], 'value'),
@@ -462,41 +462,16 @@ def init_callbacks(dash_app):
 
         # Apply get selected runs
         data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
-
-        # Group by 1st and 2nd sort
-        # TODO: this does not appear to work
-        # TODO: 2nd sort
-        if firstsort == 'run':
-            sortby = [BAMQC_COL.Run]
-        elif firstsort == 'project':
-            #TODO: Actually sort on Project
-            sortby = [BAMQC_COL.Sample]
-
-        if secondsort == 'BAMQC_TOTALREADS':
-            sortby.append(BAMQC_COL.TotalReads)
-        elif secondsort == 'BAMQC_INSERTMEAN':
-            sortby.append(BAMQC_COL.InsertMean)
-        elif secondsort == 'BAMQC_INSERTSD':
-            sortby.append(BAMQC_COL.InsertSD)
-        elif secondsort == 'BAMQC_READSPERSTARTPOINT':
-            sortby.append(BAMQC_COL.ReadsPerStartPoint)
-
-        if colourby == 'run':
-            colourby_strategy = BAMQC_COL.Run
-        elif colourby == 'project':
-            colourby_strategy = data[PINERY_COL.StudyTitle]
-
         data = fill_in_shape_col(bamqc, shapeby, shape_values)
-        data = data.sort_values(by=sortby, ascending=False)
+        data = data.sort_values(by=[firstsort, secondsort], ascending=False)
 
-        return [generateTotalReads(data, colourby_strategy, shapeby, shownames),
-            generateUnmappedReads(data, colourby_strategy, shapeby, shownames),
-            generateNonprimaryReads(data, colourby_strategy, shapeby,
-                                    shownames),
-            generateOnTargetReads(data, colourby_strategy, shapeby, shownames),
-            generateReadsPerStartPoint(data, colourby_strategy,
-                                       shapeby, shownames, reads),
-            generateMeanInsertSize(data, colourby_strategy, shapeby, shownames,
+        return [generateTotalReads(data, colourby, shapeby, shownames),
+            generateUnmappedReads(data, colourby, shapeby, shownames),
+            generateNonprimaryReads(data, colourby, shapeby, shownames),
+            generateOnTargetReads(data, colourby, shapeby, shownames),
+            generateReadsPerStartPoint(data, colourby, shapeby, shownames,
+                                       reads),
+            generateMeanInsertSize(data, colourby, shapeby, shownames,
                                    insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records')]
