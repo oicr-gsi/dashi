@@ -64,6 +64,8 @@ def get_bamqc_data():
 
     bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
 
+    bamqc_df = util.filter_by_library_design(bamqc_df, ["EX", "TS"])
+
     return bamqc_df
 
 bamqc = get_bamqc_data()
