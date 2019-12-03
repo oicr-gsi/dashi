@@ -415,7 +415,6 @@ def init_callbacks(dash_app):
 
         # Apply get selected runs
         data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
-        data[BAMQC_COL.GroupID] = data[BAMQC_COL.GroupID].fillna("")
 
         # Group by 1st and 2nd sort
         # TODO: this does not appear to work
