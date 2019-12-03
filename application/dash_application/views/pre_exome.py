@@ -52,7 +52,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
-special_cols = {} #TODO ???
+special_cols = {} #TODO 
 
 def get_bamqc_data():
     bamqc_df = QCETLCache().bamqc.bamqc
