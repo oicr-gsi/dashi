@@ -139,7 +139,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         traces.append(graph)
     if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data[PINERY_COL.SampleName], 
+            x=sorted_data['sample'], 
             y=[line_y] * len(sorted_data),
             mode="lines",
             line={"width": 1, "color": "black", "dash": "dash"},
