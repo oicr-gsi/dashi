@@ -4,7 +4,7 @@ import dash_table as tabl
 from dash.dependencies import Input, Output, State
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import generate
+from ..plot_builder import generate, fill_in_shape_col
 from ..utility import df_manipulation as util
 import plotly.graph_objects as go
 import pandas as pd
@@ -53,6 +53,7 @@ RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {} #TODO 
 
+
 def get_bamqc_data():
     bamqc_df = QCETLCache().bamqc.bamqc
     bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
@@ -68,7 +69,32 @@ def get_bamqc_data():
 
     return bamqc_df
 
+
 bamqc = get_bamqc_data()
+
+
+# Build lists of attributes for sorting, shaping, and filtering on
+ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
+ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
+
+shape_values = {
+    PINERY_COL.StudyTitle: ALL_PROJECTS,
+    BAMQC_COL.Run: ALL_RUNS,
+}
+colour_values = {
+    PINERY_COL.StudyTitle: ALL_PROJECTS,
+    BAMQC_COL.Run: ALL_RUNS,
+}
+
+initial_first_sort = PINERY_COL.StudyTitle
+initial_second_sort = BAMQC_COL.TotalReads
+initial_colour_col = BAMQC_COL.Run
+initial_shape_col = PINERY_COL.StudyTitle
+initial_cutoff_pf_reads = 0.01
+initial_cutoff_insert_size = 150
+initial_cutoff_rpsp = 5
+
+bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
 
 # TODO: move elsewhere
 def frange(min, max, step):
@@ -233,10 +259,10 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Label([
                     "Run ID", 
                     core.Dropdown(id=ids['run-id-list'],
-                        options = [
-                            {'label': x, 'value': x} for x in bamqc[BAMQC_COL.Run].unique()
+                        options=[
+                            {'label': x, 'value': x} for x in ALL_RUNS
                         ],
-                        value=[x for x in bamqc[BAMQC_COL.Run].unique()],
+                        value=[x for x in ALL_RUNS],
                         multi=True
                     )
                 ]), html.Br(),
@@ -245,56 +271,60 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     "Sort:",
                     core.Dropdown(id=ids['first-sort'],
                         options = [
-                            {'label': 'Project', 'value': 'project'},
-                            {'label': 'Run', 'value': 'run'}
+                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
+                            {'label': 'Run', 'value': BAMQC_COL.Run}
                         ],
-                        value = 'project',
-                        searchable = False,
-                        clearable = False
+                        value=initial_first_sort,
+                        searchable=False,
+                        clearable=False
                     )
                 ]), html.Br(),
 
                 html.Label([
                     "2nd Sort:",
                     core.Dropdown(id=ids['second-sort'],
-                        options = [
+                        options=[
                             # TODO: Friendlier names
-                            {'label': 'BAMQC_TOTALREADS', 'value': 'BAMQC_TOTALREADS'},
-                            {'label': 'BAMQC_INSERTMEAN', 'value': 'BAMQC_INSERTMEAN'},
-                            {'label': 'BAMQC_INSERTSD', 'value': 'BAMQC_INSERTSD'},
-                            {'label': 'BAMQC_READSPERSTARTPOINT', 'value': 'BAMQC_READSPERSTARTPOINT'}
+                            {'label': 'BAMQC_TOTALREADS', 'value':
+                                BAMQC_COL.TotalReads},
+                            {'label': 'BAMQC_INSERTMEAN', 'value':
+                                BAMQC_COL.InsertMean},
+                            {'label': 'BAMQC_INSERTSD', 'value':
+                                BAMQC_COL.InsertSD},
+                            {'label': 'BAMQC_READSPERSTARTPOINT', 'value':
+                                BAMQC_COL.ReadsPerStartPoint}
                         ],
-                        value = 'BAMQC_TOTALREADS',
-                        searchable = False,
-                        clearable = False
+                        value=initial_second_sort,
+                        searchable=False,
+                        clearable=False
                     )
                 ]), html.Br(),
 
                 html.Label([
                     "Colour by:",
                     core.Dropdown(id=ids['colour-by'],
-                        options = [
-                            {'label': 'Project', 'value': 'project'},
-                            {'label': 'Run', 'value': 'run'}
+                        options=[
+                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
+                            {'label': 'Run', 'value': BAMQC_COL.Run}
                         ],
-                        value = 'project',
-                        searchable = False,
-                        clearable = False
+                        value=initial_colour_col,
+                        searchable=False,
+                        clearable=False
                     )
                 ]), html.Br(),
 
-                # html.Label([
-                #     "Shape by:",
-                #     core.Dropdown(id=ids['shape-by'],
-                #         options = [
-                #             {'label': 'Project', 'value': 'project'},
-                #             {'label': 'Run', 'value': 'run'}
-                #         ],
-                #         value = 'project',
-                #         searchable = False,
-                #         clearable = False
-                #     )
-                # ]), html.Br(),
+                html.Label([
+                    "Shape by:",
+                    core.Dropdown(id=ids['shape-by'],
+                        options=[
+                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
+                            {'label': 'Run', 'value': BAMQC_COL.Run}
+                        ],
+                        value=initial_shape_col,
+                        searchable=False,
+                        clearable=False
+                    )
+                ]), html.Br(),
 
                 # html.Label([
                 #     "Search Sample:",
@@ -304,47 +334,47 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Label([
                     "Show Names:",
                     core.Dropdown(id=ids['show-names'],
-                        options = [
-                            {'label': 'Sample', 'value': 'sample'},
-                            {'label': 'groupID', 'value': 'group-id'},
+                        options=[
+                            {'label': 'Sample', 'value': BAMQC_COL.Sample},
+                            {'label': 'groupID', 'value': PINERY_COL.GroupID},
                             {'label': 'None', 'value': 'none'}
                         ],
-                        value = 'none',
-                        searchable = False,
-                        clearable = False
+                        value='none',
+                        searchable=False,
+                        clearable=False
                     )
                 ]), html.Br(),
 
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(id=ids['reads-per-start-point-slider'],
-                        min = 0,
-                        max = 20,
-                        step = 1,
-                        marks = {str(n):str(n) for n in range(0, 20, 2)},
-                        value = 5
+                        min=0,
+                        max=20,
+                        step=1,
+                        marks={str(n):str(n) for n in range(0, 20, 2)},
+                        value=initial_cutoff_rpsp
                     )
                 ]), html.Br(),
 
                 html.Label([
                     "Insert Size Mean:",
                     core.Slider(id=ids['insert-size-mean-slider'],
-                        min = 0,
-                        max = 500,
-                        step = 1,
-                        marks = {str(n):str(n) for n in range(0, 500, 50)},
-                        value = 150
+                        min=0,
+                        max=500,
+                        step=1,
+                        marks={str(n):str(n) for n in range(0, 500, 50)},
+                        value=initial_cutoff_insert_size
                     )
                 ]), html.Br(),
                 
                 html.Label([
                     "Passed Filter Reads:",
                     core.Slider(id=ids['passed-filter-reads-slider'],
-                        min = 0,
-                        max = 0.5,
-                        step = 0.005,
-                        marks = {str(n):str(n) for n in frange(0, 0.5, 0.05)},
-                        value = 0.01
+                        min=0,
+                        max=0.5,
+                        step=0.005,
+                        marks={str(n):str(n) for n in frange(0, 0.5, 0.05)},
+                        value=initial_cutoff_pf_reads
                     )
                 ]), html.Br()
             ]),
@@ -363,10 +393,14 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     figure=generateOnTargetReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 5)
+                    figure=generateReadsPerStartPoint(bamqc,
+                                                      bamqc[
+                                                          PINERY_COL.StudyTitle], 'none', initial_cutoff_rpsp)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 150)
+                    figure=generateMeanInsertSize(bamqc, bamqc[
+                        PINERY_COL.StudyTitle], 'none',
+                                                  initial_cutoff_insert_size)
                 )
             ]),
                      ]),
@@ -401,7 +435,7 @@ def init_callbacks(dash_app):
         State(ids['first-sort'], 'value'),
         State(ids['second-sort'], 'value'),
         State(ids['colour-by'], 'value'),
-        # State(ids['shape-by'], 'value'), #TODO?
+        State(ids['shape-by'], 'value'), #TODO?
         # State(ids['search-sample'], 'value'), #TODO?
         State(ids['show-names'], 'value'),
         State(ids['reads-per-start-point-slider'], 'value'),
@@ -412,7 +446,7 @@ def init_callbacks(dash_app):
             firstsort, 
             secondsort, 
             colourby,
-            # shapeby,
+            shapeby,
             # searchsample,
             shownames,
             reads,
@@ -444,11 +478,8 @@ def init_callbacks(dash_app):
             colourby_strategy = BAMQC_COL.Run
         elif colourby == 'project':
             colourby_strategy = data[PINERY_COL.StudyTitle]
-            
-        # if shapeby == 'run': 
-        #     shapeby_strategy = BAMQC_COL.Run
-        # elif shapeby == 'project':
-        #     shapeby_strategy = data[PINERY_COL.StudyTitle]
+
+        data = fill_in_shape_col(bamqc, shapeby, shape_values)
         data = data.sort_values(by=sortby, ascending=False)
 
         return [generateTotalReads(data, colourby_strategy, shownames),
