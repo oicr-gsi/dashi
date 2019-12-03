@@ -161,25 +161,19 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
+def get_dict_wrapped(key_list, value_list):
+    kv_dict = {}
+    index = 0
+    for item in key_list:
+        # loop back to beginning of value list
+        if index >= len(value_list):
+            index = 0
+        kv_dict[item] = value_list[index]
+        index += 1
+    return kv_dict
 
 def get_shapes_for_values(shapeby: List[str]):
-    shape_dict = {}
-    index = 0
-    for item in shapeby:
-        # loop back to beginning of symbols list if we run out of symbols
-        if index >= len(ALL_SYMBOLS):
-            index = 0
-        shape_dict[item] = ALL_SYMBOLS[index]
-        index += 1
-    return shape_dict
+    return get_dict_wrapped(shapeby, ALL_SYMBOLS)
 
 def get_colours_for_values(colourby: List[str]):
-    colour_dict = {}
-    index = 0
-    for item in colourby:
-        # loop back to beginning of colours list if we run out of symbols
-        if index >= len(PLOTLY_DEFAULT_COLOURS):
-            index = 0
-        colour_dict[item] = PLOTLY_DEFAULT_COLOURS[index]
-        index += 1
-    return colour_dict
+    return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
