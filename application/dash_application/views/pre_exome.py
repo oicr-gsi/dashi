@@ -12,7 +12,6 @@ from gsiqcetl import QCETLCache
 from gsiqcetl.column import BamQcColumn
 import pinery
 
-# # TODO filter down to MiSeq runs only?
 page_name = 'preexome'
 
 ids = init_ids([
