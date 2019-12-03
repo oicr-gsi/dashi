@@ -5,14 +5,12 @@ from dash.dependencies import Input, Output, State
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate
+from ..utility import df_manipulation as util
 import plotly.graph_objects as go
 import pandas as pd
-import gsiqcetl.load
-
-# TODO filter down to MiSeq runs only?
-bamqc_cols = gsiqcetl.load.bamqc_columns('v1')
-bamqc = gsiqcetl.load.bamqc('v1').sort_values(by=[bamqc_cols.Sample, bamqc_cols.TotalReads], ascending=False)
-
+from gsiqcetl import QCETLCache
+from gsiqcetl.column import BamQcColumn
+import pinery
 
 page_name = 'preqc-exome'
 
@@ -48,6 +46,30 @@ ids = init_ids([
     'data-table'
 ])
 
+BAMQC_COL = BamQcColumn
+PINERY_COL = pinery.column.SampleProvenanceColumn
+INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
+RUN_COLS = pinery.column.RunsColumn
+
+special_cols = {} #TODO 
+
+def get_bamqc_data():
+    bamqc_df = QCETLCache().bamqc.bamqc
+    bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
+
+    pinery_samples = util.get_pinery_samples_from_active_projects()
+    # TODO filter??
+
+    bamqc_df = util.df_with_pinery_samples(bamqc_df, pinery_samples, util.bamqc_ius_columns)
+
+    bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
+
+    bamqc_df = util.filter_by_library_design(bamqc_df, ["EX", "TS"])
+
+    return bamqc_df
+
+bamqc = get_bamqc_data()
+
 # TODO: move elsewhere
 def frange(min, max, step):
     range = []
@@ -59,15 +81,15 @@ def frange(min, max, step):
 
 # TODO: move elsewhere
 def percentageOf(data, bamqc_column):
-    return (data[bamqc_column] / data[bamqc_cols.TotalReads]) * 100
+    return (data[bamqc_column] / data[BAMQC_COL.TotalReads]) * 100
 
 
 def generateTotalReads(current_data, colourby, shownames):
     return generate(
         "Total Reads",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: d[bamqc_cols.TotalReads] / pow(10,6),
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[BAMQC_COL.TotalReads] / pow(10,6),
         "# Reads x 10^6",
         colourby,
         shownames
@@ -78,8 +100,8 @@ def generateUnmappedReads(current_data, colourby, shownames):
     return generate(
         "Unmapped Reads (%)",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: percentageOf(d, bamqc_cols.UnmappedReads),
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: percentageOf(d, BAMQC_COL.UnmappedReads),
         "%",
         colourby, 
         shownames
@@ -89,8 +111,8 @@ def generateNonprimaryReads(current_data, colourby, shownames):
     return generate(
         "Non-Primary Reads (%)",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: percentageOf(d, bamqc_cols.NonPrimaryReads),
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: percentageOf(d, BAMQC_COL.NonPrimaryReads),
         "%",
         colourby,
         shownames
@@ -100,8 +122,8 @@ def generateOnTargetReads(current_data, colourby, shownames):
     return generate(
         "On Target Reads (%)",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: percentageOf(d, bamqc_cols.ReadsOnTarget),
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: percentageOf(d, BAMQC_COL.ReadsOnTarget),
         "%",
         colourby,
         shownames
@@ -111,8 +133,8 @@ def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
     return generate(
         "Reads per Start Point",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: percentageOf(d, bamqc_cols.ReadsPerStartPoint),
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: percentageOf(d, BAMQC_COL.ReadsPerStartPoint),
         "Fraction",
         colourby,
         shownames,
@@ -123,8 +145,8 @@ def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
     return generate(
         "Mean Insert Size",
         current_data,
-        lambda d: d[bamqc_cols.Sample],
-        lambda d: d[bamqc_cols.InsertMean],
+        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[BAMQC_COL.InsertMean],
         "Fraction",
         colourby,
         shownames,
@@ -141,7 +163,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "$failed_rpsp\n"
     newline = False
     linenumber = 0
-    for failed in data.loc[data[bamqc_cols.ReadsPerStartPoint] < reads_cutoff][bamqc_cols.Sample]:
+    for failed in data.loc[data[BAMQC_COL.ReadsPerStartPoint] < reads_cutoff][BAMQC_COL.Sample]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -153,7 +175,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "\n$failed_insr\n"
     newline = False
     linenumber = 0
-    for failed in data.loc[data[bamqc_cols.InsertMean] < insert_cutoff][bamqc_cols.Sample]:
+    for failed in data.loc[data[BAMQC_COL.InsertMean] < insert_cutoff][BAMQC_COL.Sample]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -165,7 +187,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "\n$failed_ptden\n" # TODO: Not sure this is calculated correctly
     newline = False
     linenumber = 0
-    for failed in data.loc[data[bamqc_cols.TotalReads] < passed_cutoff][bamqc_cols.Sample]:
+    for failed in data.loc[data[BAMQC_COL.TotalReads] < passed_cutoff][BAMQC_COL.Sample]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -206,9 +228,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     "Run ID", 
                     core.Dropdown(id=ids['run-id-list'],
                         options = [
-                            {'label': x, 'value': x} for x in bamqc[bamqc_cols.Run].unique()
+                            {'label': x, 'value': x} for x in bamqc[BAMQC_COL.Run].unique()
                         ],
-                        value=[x for x in bamqc[bamqc_cols.Run].unique()],
+                        value=[x for x in bamqc[BAMQC_COL.Run].unique()],
                         multi=True
                     )
                 ]), html.Br(),
@@ -323,22 +345,22 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
+                    figure=generateTotalReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
+                    figure=generateUnmappedReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
+                    figure=generateNonprimaryReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none')
+                    figure=generateOnTargetReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 5)
+                    figure=generateReadsPerStartPoint(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, bamqc[bamqc_cols.Sample].str[0:4], 'none', 150)
+                    figure=generateMeanInsertSize(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 150)
                 )
             ]),
                      ]),
@@ -392,36 +414,35 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        data = bamqc[bamqc[bamqc_cols.Run].isin(runs)]
-        data[bamqc_cols.GroupID] = data[bamqc_cols.GroupID].fillna("")
+        data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
 
         # Group by 1st and 2nd sort
         # TODO: this does not appear to work
         # TODO: 2nd sort
         if firstsort == 'run':
-            sortby = [bamqc_cols.Run]
+            sortby = [BAMQC_COL.Run]
         elif firstsort == 'project':
             #TODO: Actually sort on Project
-            sortby = [bamqc_cols.Sample]
+            sortby = [BAMQC_COL.Sample]
 
         if secondsort == 'BAMQC_TOTALREADS':
-            sortby.append(bamqc_cols.TotalReads)
+            sortby.append(BAMQC_COL.TotalReads)
         elif secondsort == 'BAMQC_INSERTMEAN':
-            sortby.append(bamqc_cols.InsertMean)
+            sortby.append(BAMQC_COL.InsertMean)
         elif secondsort == 'BAMQC_INSERTSD':
-            sortby.append(bamqc_cols.InsertSD)
+            sortby.append(BAMQC_COL.InsertSD)
         elif secondsort == 'BAMQC_READSPERSTARTPOINT':
-            sortby.append(bamqc_cols.ReadsPerStartPoint)
+            sortby.append(BAMQC_COL.ReadsPerStartPoint)
 
         if colourby == 'run':
-            colourby_strategy = bamqc_cols.Run
+            colourby_strategy = BAMQC_COL.Run
         elif colourby == 'project':
-            colourby_strategy = data[bamqc_cols.Sample].str[0:4]
+            colourby_strategy = data[PINERY_COL.StudyTitle]
             
         # if shapeby == 'run': 
-        #     shapeby_strategy = bamqc_cols.Run
+        #     shapeby_strategy = BAMQC_COL.Run
         # elif shapeby == 'project':
-        #     shapeby_strategy = data[bamqc_cols.Sample].str[0:4]
+        #     shapeby_strategy = data[PINERY_COL.StudyTitle]
         data = data.sort_values(by=sortby, ascending=False)
 
         return [generateTotalReads(data, colourby_strategy, shownames),

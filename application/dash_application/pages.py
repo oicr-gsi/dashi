@@ -9,7 +9,7 @@ pagenames = [
     # "bamqc_overtime",
     # "bcl2fastq",
     # "poolqc",
-    #" pre_exome",
+    "pre_exome",
     "preqc_rna",
     "preqc_wgs",
     # "rnaseqc",
