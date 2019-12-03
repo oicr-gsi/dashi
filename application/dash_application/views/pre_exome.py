@@ -13,9 +13,6 @@ from gsiqcetl.column import BamQcColumn
 import pinery
 
 # # TODO filter down to MiSeq runs only?
-# BAMQC_COL = gsiqcetl.load.bamqc_columns('v1')
-# bamqc = gsiqcetl.load.bamqc('v1').sort_values(by=[BAMQC_COL.Sample, BAMQC_COL.TotalReads], ascending=False)
-
 page_name = 'preexome'
 
 ids = init_ids([
