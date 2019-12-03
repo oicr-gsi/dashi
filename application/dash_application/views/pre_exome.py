@@ -4,7 +4,7 @@ import dash_table as tabl
 from dash.dependencies import Input, Output, State
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import generate, fill_in_shape_col
+from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
 from ..utility import df_manipulation as util
 import plotly.graph_objects as go
 import pandas as pd
@@ -95,6 +95,7 @@ initial_cutoff_insert_size = 150
 initial_cutoff_rpsp = 5
 
 bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
+bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
 
 # TODO: move elsewhere
 def frange(min, max, step):
@@ -463,6 +464,7 @@ def init_callbacks(dash_app):
         # Apply get selected runs
         data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
         data = fill_in_shape_col(bamqc, shapeby, shape_values)
+        data = fill_in_colour_col(bamqc, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
 
         return [generateTotalReads(data, colourby, shapeby, shownames),
