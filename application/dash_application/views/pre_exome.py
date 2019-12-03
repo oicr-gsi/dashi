@@ -345,22 +345,22 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none')
+                    figure=generateTotalReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none')
+                    figure=generateUnmappedReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none')
+                    figure=generateNonprimaryReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none')
+                    figure=generateOnTargetReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none', 5)
+                    figure=generateReadsPerStartPoint(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 5)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, bamqc[BAMQC_COL.Sample].str[0:4], 'none', 150)
+                    figure=generateMeanInsertSize(bamqc, bamqc[PINERY_COL.StudyTitle], 'none', 150)
                 )
             ]),
                      ]),
@@ -437,12 +437,12 @@ def init_callbacks(dash_app):
         if colourby == 'run':
             colourby_strategy = BAMQC_COL.Run
         elif colourby == 'project':
-            colourby_strategy = data[BAMQC_COL.Sample].str[0:4]
+            colourby_strategy = data[PINERY_COL.StudyTitle]
             
         # if shapeby == 'run': 
         #     shapeby_strategy = BAMQC_COL.Run
         # elif shapeby == 'project':
-        #     shapeby_strategy = data[BAMQC_COL.Sample].str[0:4]
+        #     shapeby_strategy = data[PINERY_COL.StudyTitle]
         data = data.sort_values(by=sortby, ascending=False)
 
         return [generateTotalReads(data, colourby_strategy, shownames),
