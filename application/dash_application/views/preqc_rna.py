@@ -254,7 +254,7 @@ def generate_dv200(df, colour_by, shape_by):
         "DV200",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d["DV200"], # FIXME
+        lambda d: d[PINERY_COL.DV200],
         "DV200",
         colour_by,
         shape_by,
@@ -267,7 +267,7 @@ def generate_rin(df, colour_by, shape_by):
         "RIN",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d["RIN"], # FIXME
+        lambda d: d[PINERY_COL.RIN],
         "RIN",
         colour_by,
         shape_by,
