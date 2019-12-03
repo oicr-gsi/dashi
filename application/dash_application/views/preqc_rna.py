@@ -77,7 +77,7 @@ later_col_set = [
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.keys(), *later_col_set]
 
 initial_first_sort = PINERY_COL.StudyTitle
-initial_second_sort = PINERY_COL.PrepKit
+initial_second_sort = RNA_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
 initial_shapes = get_shapes_for_values(initial_shape_col)
@@ -318,17 +318,18 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     "Second Sort:",
                     core.Dropdown(id=ids["second-sort"],
                                   options=[
-                                      {"label": "Project",
-                                       "value": PINERY_COL.StudyTitle},
-                                      {"label": "Run",
-                                       "value": PINERY_COL.SequencerRunName},
-                                      {"label": "Kit",
-                                       "value": PINERY_COL.PrepKit},
-                                      {"label": "Tissue Prep",
-                                       "value": PINERY_COL.TissuePreparation},
-                                      {
-                                          "label": "Library Design",
-                                          "value": PINERY_COL.LibrarySourceTemplateType},
+                                      {"label": "Total Reads",
+                                       "value": RNA_COL.TotalReads},
+                                      {"label": "% Unique Reads",
+                                       "value": special_cols["Percent Uniq Reads"]},
+                                      {"label": "Reads Per Start Point",
+                                       "value": RNA_COL.ReadsPerStartPoint},
+                                      {"label": "5Prime to 3Prime Bias",
+                                       "value": RNA_COL.Median5Primeto3PrimeBias},
+                                      {"label": "% Correct Read Strand",
+                                        "value": RNA_COL.CorrectStrandReads},
+                                      {"label": "% Coding",
+                                        "value": RNA_COL.ProportionCodingBases}
                                   ],
                                   value=initial_second_sort,
                                   searchable=True,
