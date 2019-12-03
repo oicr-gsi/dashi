@@ -53,14 +53,22 @@ _active_samples = _pinery_samples.loc[_pinery_samples[
     PINERY_COL.StudyTitle].isin(
     _active_projects)]
 
+_runs_with_instruments = _runs.copy(deep=True).merge(
+        _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
+                      INSTRUMENTS_COL.InstrumentID]],
+        how="left",
+        left_on=[RUN_COL.InstrumentID],
+        right_on=[INSTRUMENTS_COL.InstrumentID]
+    )
+
 
 def get_pinery_samples():
     """Get Pinery Sample Provenance DataFrame"""
-    return _pinery_samples
+    return _pinery_samples.copy(deep=True)
 
 
 def get_pinery_samples_from_active_projects():
-    return _active_samples
+    return _active_samples.copy(deep=True)
 
 
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
@@ -86,15 +94,9 @@ def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
 
 def df_with_instrument_model(df: DataFrame, run_col: str):
     """Add the instrument model column to a DataFrame."""
-    runs = _runs.merge(
-        _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
-                      INSTRUMENTS_COL.InstrumentID]],
-        how="left",
-        left_on=[RUN_COL.InstrumentID],
-        right_on=[INSTRUMENTS_COL.InstrumentID]
-    )
+    r_i = _runs_with_instruments.copy(deep=True)
     return df.merge(
-        runs[[INSTRUMENTS_COL.ModelName, RUN_COL.Name]],
+        r_i[[INSTRUMENTS_COL.ModelName, RUN_COL.Name]],
         how="left",
         left_on=run_col,
         right_on=[RUN_COL.Name]
