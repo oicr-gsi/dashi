@@ -28,8 +28,12 @@ services:
         target: /root/.ssh/known_hosts
     secrets:
       - mongo_password
+#      - ssh_passphrase
 
-
+# If your SSH key requires a passphrase, uncomment out the `ssh_passphrase` lines in the dashi service and in the secrets section below
+# Create a file at .passphrase that contains your passphrase. No other changes are necessary.
 secrets:
   mongo_password:
     file: .mongopass
+#  ssh_passphrase:
+#    file: .passphrase

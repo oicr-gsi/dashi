@@ -1,0 +1,8 @@
+#!/usr/bin/expect -f
+# usage: enter_passphrase $(cat passphrase_file)
+set passphrase [lindex $argv 0]
+spawn ssh-add /root/.ssh/id_rsa
+expect "Enter passphrase for /root/.ssh/id_rsa:"
+send "$passphrase\n";
+expect "Identity added: /root/.ssh/id_rsa *"
+interact
