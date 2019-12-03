@@ -30,14 +30,42 @@ need to pass in your SSH keys to permit download and installation.
 
 1. Ensure your ssh key has been added to OICR's Bitbucket and you can access and
    clone
-   [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse).
+   [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse). 
 2. Download the gsi-qc-etl cache data to `cache_files` (or modify
    docker-compose.yml to point to the correct location). The current location for
    this on OICR's cluster is at
-   `/.mounts/labs/mcphersonlab/public/slazic/2019-01-16-GSI_ETL/dev_cache_files`.
+   `/scratch2/groups/gsi/<development or production>/qcetl`.
 3. Build the container with `docker-compose build`. Note that this completes
    installation of gsi-qc-etl before launching the app.
 4. Launch with `docker-compose up`.`
 
 Then navigate to [http://localhost:5000](http://localhost:5000).
 
+
+
+# Troubleshooting
+
+**1. `docker-compose up` fails with `git@bitbucket.oicr.on.ca: Permission denied (publickey).
+  fatal: Could not read from remote repository. Please make sure you have the correct access rights and the repository exists.`
+
+This is likely due to an error with binding your SSH key into the container. The
+SSH key is required to install the gsi-qc-etl dependency. Follow these steps for
+troubleshooting:
+
+1. Try to clone gsi-qc-etl: `git clone ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git`. 
+    If this fails, check that you have correct permissions to the repository
+    [https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse)
+2. Check that your SSH key is located in `~/.ssh/`. If it is not, change the
+    bind paths in `docker-compose.yml` for id_rsa, id_rsa.pub, and known_hosts.
+3. Check if your SSH key requires a passphrase. If it is prompting from inside
+    the container, it will fail. Create a private file with your SSH key
+    passphrase. Open `docker-compose.yml` and uncomment out the
+    `ssh_passphrase` lines in the dashi service and in the `secrets` section,
+    and point docker-compose to your passphrase file in the secrets section.
+    When next launching the container, the start.sh script will automatically
+    provide the passphrase upon request.
+
+
+**2. `docker-compose up` fails with `ModuleNotFoundError: No module named 'gsiqcetl'` **
+
+Likely gsi-qc-etl failed to download. Check the Troubleshooting tip #1.

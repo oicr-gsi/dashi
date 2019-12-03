@@ -5,3 +5,4 @@ venv
 cache_files
 .idea
 .mongopass
+.passphrase
