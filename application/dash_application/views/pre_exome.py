@@ -92,6 +92,7 @@ def generateTotalReads(current_data, colourby, shownames):
         lambda d: d[BAMQC_COL.TotalReads] / pow(10,6),
         "# Reads x 10^6",
         colourby,
+        PINERY_COL.StudyTitle,
         shownames
     )
     
@@ -103,7 +104,8 @@ def generateUnmappedReads(current_data, colourby, shownames):
         lambda d: d[BAMQC_COL.Sample],
         lambda d: percentageOf(d, BAMQC_COL.UnmappedReads),
         "%",
-        colourby, 
+        colourby,
+        PINERY_COL.StudyTitle,
         shownames
     )
 
@@ -115,6 +117,7 @@ def generateNonprimaryReads(current_data, colourby, shownames):
         lambda d: percentageOf(d, BAMQC_COL.NonPrimaryReads),
         "%",
         colourby,
+        PINERY_COL.StudyTitle,
         shownames
     )
 
@@ -126,6 +129,7 @@ def generateOnTargetReads(current_data, colourby, shownames):
         lambda d: percentageOf(d, BAMQC_COL.ReadsOnTarget),
         "%",
         colourby,
+        PINERY_COL.StudyTitle,
         shownames
     )
 
@@ -137,6 +141,7 @@ def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
         lambda d: percentageOf(d, BAMQC_COL.ReadsPerStartPoint),
         "Fraction",
         colourby,
+        PINERY_COL.StudyTitle,
         shownames,
         cutoff_line
     )
@@ -149,6 +154,7 @@ def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
         lambda d: d[BAMQC_COL.InsertMean],
         "Fraction",
         colourby,
+        PINERY_COL.StudyTitle,
         shownames,
         cutoff_line
     )
@@ -265,7 +271,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ]), html.Br(),
 
                 html.Label([
-                    "Colour/Shape by:",
+                    "Colour by:",
                     core.Dropdown(id=ids['colour-by'],
                         options = [
                             {'label': 'Project', 'value': 'project'},
