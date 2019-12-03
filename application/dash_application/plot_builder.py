@@ -60,7 +60,8 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
 
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext_type, line_y=None):
+def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
+             hovertext_type, line_y=None):
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -88,7 +89,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
             )
         )
     traces = []
-    grouped_data = sorted_data.groupby(colourby) #TODO: is this inefficient?
+    grouped_data = sorted_data.groupby([colourby, shapeby]) #TODO: is this
+    # inefficient?
     i = 0
     if hovertext_type == 'none':
         marker_mode = 'markers'
@@ -105,11 +107,11 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
-            name=name,
+            name="{} {}".format(name[0], name[1]),
             hovertext=text_content,
             mode=marker_mode,
             marker={
-                "symbol": ALL_SYMBOLS[i]
+                "symbol": data['shape']
             }
         )
         if i == len(ALL_SYMBOLS)-1:
@@ -119,10 +121,11 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, hovertext
         traces.append(graph)
     if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data['sample'],
+            x=sorted_data["sampleName"], # TODO: improve this? Should be
+            # PINERY_COL.SampleName once everything uses PINERY_COL
             y=[line_y] * len(sorted_data),
             mode="lines",
-            line={"width": 3, "color": "black", "dash": "dash"},
+            line={"width": 1, "color": "black", "dash": "dash"},
             name="Cutoff"
         ))
     return go.Figure(

@@ -1,3 +1,5 @@
+import datetime
+import pandas as pd
 from pandas import DataFrame
 from typing import List
 
@@ -63,13 +65,23 @@ def get_pinery_samples_from_active_projects():
 
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
-    """Do an outer merge between the DataFrame and Pinery samples data."""
-    return df.merge(
+    """Do an outer merge between the DataFrame and modern Pinery samples 
+    data."""
+    df = df.merge(
         pinery_samples,
-        how="outer",
+        how="right",
         left_on=ius_cols,
         right_on=pinery_ius_columns
     )
+    # drop items with no Pinery data, because they must be old
+    df = df.dropna(subset=[PINERY_COL.SampleName])
+    # drop items with Pinery data that is definitely old
+    #  (pre-MISO, aka pre-April 2017)
+    is_modern = pd.to_datetime(df[PINERY_COL.CreateDate]).apply(
+        lambda x:
+        x > datetime.date(2017, 4, 1))
+    df = df[is_modern]
+    return df
 
 
 def df_with_instrument_model(df: DataFrame, run_col: str):
