@@ -26,41 +26,49 @@ _pinery_client = pinery.PineryClient()
 # TODO: switch this to pinery-miso-v5 as soon as possible
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v2")
 _pinery_samples = _provenance_client.get_all_samples()
+# Cast the primary key/join columns to explicit types
+_pinery_samples = _pinery_samples.astype({
+    PINERY_COL.SequencerRunName: 'str',
+    PINERY_COL.LaneNumber: 'int64',
+    "IUSTag": 'str'})
+# NaN sample attrs need to be changed to a str.
+# Use the expected default values
+_pinery_samples.fillna({
+    PINERY_COL.PrepKit: "Unspecified",
+    PINERY_COL.LibrarySourceTemplateType: "NN",
+    PINERY_COL.TissueOrigin: "nn",
+    PINERY_COL.TissueType: "n",
+    PINERY_COL.TissuePreparation: "Unknown",
+    PINERY_COL.GroupID: "",
+    PINERY_COL.GroupIDDescription: ""
+})
 _runs = _pinery_client.get_runs().runs
 
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
 
+_active_projects = _projects.loc[_projects[PROJECT_COL.IsActive] == True]
+_active_projects = _active_projects[PROJECT_COL.Name].unique()
+_active_samples = _pinery_samples.loc[_pinery_samples[
+    PINERY_COL.StudyTitle].isin(
+    _active_projects)]
+
+_runs_with_instruments = _runs.copy(deep=True).merge(
+        _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
+                      INSTRUMENTS_COL.InstrumentID]],
+        how="left",
+        left_on=[RUN_COL.InstrumentID],
+        right_on=[INSTRUMENTS_COL.InstrumentID]
+    )
 
 
 def get_pinery_samples():
     """Get Pinery Sample Provenance DataFrame"""
-    # Cast the primary key/join columns to explicit types
-    pinery_samples = _pinery_samples.astype({
-        PINERY_COL.SequencerRunName: 'str',
-        PINERY_COL.LaneNumber: 'int64',
-        "IUSTag": 'str'})
-    # NaN sample attrs need to be changed to a str.
-    # Use the expected default values
-    return pinery_samples.fillna({
-        PINERY_COL.PrepKit: "Unspecified",
-        PINERY_COL.LibrarySourceTemplateType: "NN",
-        PINERY_COL.TissueOrigin: "nn",
-        PINERY_COL.TissueType: "n",
-        PINERY_COL.TissuePreparation: "Unknown",
-        PINERY_COL.GroupID: "",
-        PINERY_COL.GroupIDDescription: ""
-    })
+    return _pinery_samples.copy(deep=True)
 
 
 def get_pinery_samples_from_active_projects():
-    pinery_samples = get_pinery_samples()
-    active_projects = _projects.loc[_projects[PROJECT_COL.IsActive] == True]
-    active_projects = active_projects[PROJECT_COL.Name].unique()
-    active_samples = pinery_samples.loc[pinery_samples[
-        PINERY_COL.StudyTitle].isin(
-        active_projects)]
-    return active_samples
+    return _active_samples.copy(deep=True)
 
 
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
@@ -86,15 +94,9 @@ def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
 
 def df_with_instrument_model(df: DataFrame, run_col: str):
     """Add the instrument model column to a DataFrame."""
-    runs = _runs.merge(
-        _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
-                      INSTRUMENTS_COL.InstrumentID]],
-        how="left",
-        left_on=[RUN_COL.InstrumentID],
-        right_on=[INSTRUMENTS_COL.InstrumentID]
-    )
+    r_i = _runs_with_instruments.copy(deep=True)
     return df.merge(
-        runs[[INSTRUMENTS_COL.ModelName, RUN_COL.Name]],
+        r_i[[INSTRUMENTS_COL.ModelName, RUN_COL.Name]],
         how="left",
         left_on=run_col,
         right_on=[RUN_COL.Name]

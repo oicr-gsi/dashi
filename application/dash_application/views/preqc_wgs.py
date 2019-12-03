@@ -114,23 +114,8 @@ def get_wgs_data():
         wgs_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
         wgs_df[BAMQC_COL.TotalReads], 3)
 
-    # Pull in sample metadata from Pinery. Keep only the columns we care about
+    # Pull in sample metadata from Pinery.
     pinery_samples = util.get_pinery_samples_from_active_projects()
-    pinery_samples = pinery_samples[
-        [
-            PINERY_COL.IUSTag,
-            PINERY_COL.LaneNumber,
-            PINERY_COL.LibrarySourceTemplateType,
-            PINERY_COL.PrepKit,
-            PINERY_COL.SampleName,
-            PINERY_COL.SequencerRunName,
-            PINERY_COL.StudyTitle,
-            PINERY_COL.TissueOrigin,
-            PINERY_COL.TissuePreparation,
-            PINERY_COL.TissueType,
-            PINERY_COL.GroupID,
-        ]
-    ]
     # Filter the Pinery samples for only WG samples.
     pinery_samples = util.filter_by_library_design(pinery_samples,
                                                    ["WG"])

@@ -46,11 +46,6 @@
     box-sizing: border-box;
 }
 
-.Select--multi {
-    overflow-y: auto;
-    max-height: 50vh;
-}
-
 /* For devices larger than 400px */
 @media (min-width: 400px) {
     .container {
