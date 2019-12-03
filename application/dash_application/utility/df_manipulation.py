@@ -24,7 +24,7 @@ rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
 
 _pinery_client = pinery.PineryClient()
 # TODO: switch this to pinery-miso-v5 as soon as possible
-_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v2")
+_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
 _pinery_samples = _provenance_client.get_all_samples()
 # Cast the primary key/join columns to explicit types
 _pinery_samples = _pinery_samples.astype({
