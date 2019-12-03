@@ -110,7 +110,7 @@ def percentageOf(data, bamqc_column):
     return (data[bamqc_column] / data[BAMQC_COL.TotalReads]) * 100
 
 
-def generateTotalReads(current_data, colourby, shownames):
+def generateTotalReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Total Reads",
         current_data,
@@ -118,12 +118,12 @@ def generateTotalReads(current_data, colourby, shownames):
         lambda d: d[BAMQC_COL.TotalReads] / pow(10,6),
         "# Reads x 10^6",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames
     )
     
 
-def generateUnmappedReads(current_data, colourby, shownames):
+def generateUnmappedReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Unmapped Reads (%)",
         current_data,
@@ -131,11 +131,11 @@ def generateUnmappedReads(current_data, colourby, shownames):
         lambda d: percentageOf(d, BAMQC_COL.UnmappedReads),
         "%",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames
     )
 
-def generateNonprimaryReads(current_data, colourby, shownames):
+def generateNonprimaryReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Non-Primary Reads (%)",
         current_data,
@@ -143,11 +143,11 @@ def generateNonprimaryReads(current_data, colourby, shownames):
         lambda d: percentageOf(d, BAMQC_COL.NonPrimaryReads),
         "%",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames
     )
 
-def generateOnTargetReads(current_data, colourby, shownames):
+def generateOnTargetReads(current_data, colourby, shapeby, shownames):
     return generate(
         "On Target Reads (%)",
         current_data,
@@ -155,11 +155,12 @@ def generateOnTargetReads(current_data, colourby, shownames):
         lambda d: percentageOf(d, BAMQC_COL.ReadsOnTarget),
         "%",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames
     )
 
-def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
+def generateReadsPerStartPoint(current_data, colourby, shapeby, shownames,
+                               cutoff_line):
     return generate(
         "Reads per Start Point",
         current_data,
@@ -167,12 +168,13 @@ def generateReadsPerStartPoint(current_data, colourby, shownames, cutoff_line):
         lambda d: percentageOf(d, BAMQC_COL.ReadsPerStartPoint),
         "Fraction",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames,
         cutoff_line
     )
 
-def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
+def generateMeanInsertSize(current_data, colourby, shapeby, shownames,
+                           cutoff_line):
     return generate(
         "Mean Insert Size",
         current_data,
@@ -180,7 +182,7 @@ def generateMeanInsertSize(current_data, colourby, shownames, cutoff_line):
         lambda d: d[BAMQC_COL.InsertMean],
         "Fraction",
         colourby,
-        PINERY_COL.StudyTitle,
+        shapeby,
         shownames,
         cutoff_line
     )
@@ -381,25 +383,30 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
+                    figure=generateTotalReads(bamqc, initial_colour_col,
+                                              initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
+                    figure=generateUnmappedReads(bamqc, initial_colour_col,
+                                                 initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
+                    figure=generateNonprimaryReads(bamqc, initial_colour_col,
+                                                   initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, bamqc[PINERY_COL.StudyTitle], 'none')
+                    figure=generateOnTargetReads(bamqc, initial_colour_col,
+                                                 initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
                     figure=generateReadsPerStartPoint(bamqc,
-                                                      bamqc[
-                                                          PINERY_COL.StudyTitle], 'none', initial_cutoff_rpsp)
+                                                      initial_colour_col,
+                                                      initial_shape_col,
+                                                      'none', initial_cutoff_rpsp)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, bamqc[
-                        PINERY_COL.StudyTitle], 'none',
+                    figure=generateMeanInsertSize(bamqc, initial_colour_col,
+                           initial_shape_col, 'none',
                                                   initial_cutoff_insert_size)
                 )
             ]),
@@ -482,11 +489,14 @@ def init_callbacks(dash_app):
         data = fill_in_shape_col(bamqc, shapeby, shape_values)
         data = data.sort_values(by=sortby, ascending=False)
 
-        return [generateTotalReads(data, colourby_strategy, shownames),
-            generateUnmappedReads(data, colourby_strategy, shownames),
-            generateNonprimaryReads(data, colourby_strategy, shownames),
-            generateOnTargetReads(data, colourby_strategy, shownames),
-            generateReadsPerStartPoint(data, colourby_strategy, shownames, reads),
-            generateMeanInsertSize(data, colourby_strategy, shownames, insertsizemean),
+        return [generateTotalReads(data, colourby_strategy, shapeby, shownames),
+            generateUnmappedReads(data, colourby_strategy, shapeby, shownames),
+            generateNonprimaryReads(data, colourby_strategy, shapeby,
+                                    shownames),
+            generateOnTargetReads(data, colourby_strategy, shapeby, shownames),
+            generateReadsPerStartPoint(data, colourby_strategy,
+                                       shapeby, shownames, reads),
+            generateMeanInsertSize(data, colourby_strategy, shapeby, shownames,
+                                   insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records')]
