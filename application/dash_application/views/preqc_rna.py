@@ -342,9 +342,15 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": "5Prime to 3Prime Bias",
                                        "value": RNA_COL.Median5Primeto3PrimeBias},
                                       {"label": "% Correct Read Strand",
-                                        "value": RNA_COL.CorrectStrandReads},
+                                       "value": RNA_COL.CorrectStrandReads},
                                       {"label": "% Coding",
-                                        "value": RNA_COL.ProportionCodingBases}
+                                       "value": RNA_COL.ProportionCodingBases},
+                                      {"label": "% rRNA Contamination",
+                                       "value": RNA_COL.rRNAContaminationreadsaligned},
+                                      {"label": "DV200",
+                                       "value": PINERY_COL.DV200},
+                                      {"label": "RIN",
+                                       "value": PINERY_COL.RIN}
                                   ],
                                   value=initial_second_sort,
                                   searchable=True,
