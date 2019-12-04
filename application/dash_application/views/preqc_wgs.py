@@ -63,8 +63,6 @@ graph_cutoffs = {
 
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-# initial_shapes = get_shapes_for_values(initial_shape_col)
-# initial_colour = get_colours_for_values(initial_colour_col)
 
 
 shape_or_colour_by = [

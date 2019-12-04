@@ -80,7 +80,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = PINERY_COL.PrepKit
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-#initial_shapes = get_shapes_for_values(initial_shape_col)
+
 # Set points for graph cutoffs
 initial_cutoff_rpsp = 5
 initial_cutoff_pf_reads = 0.01
