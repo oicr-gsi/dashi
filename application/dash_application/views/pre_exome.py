@@ -42,9 +42,6 @@ ids = init_ids([
     'reads-per-start-point',
     'mean-insert-size',
 
-    # Terminal output
-    'terminal-output',
-
     #Data table
     'data-table'
 ])
@@ -197,50 +194,6 @@ def generateMeanInsertSize(current_data, colourby, shapeby, shownames,
         cutoff_line
     )
 
-# TODO: Abstract repeated behaviour
-def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
-    if data.empty:
-        return "No data!"
-
-    output = ""
-
-    output += "$failed_rpsp\n"
-    newline = False
-    linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.ReadsPerStartPoint] < reads_cutoff][PINERY_COL.SampleName]:
-        if not newline:
-            output += "[{0}] ".format(linenumber)
-        output += "\"" + failed + "\"\t\t"
-        if newline:
-            output += "\n"
-        newline = not newline
-        linenumber += 1
-
-    output += "\n$failed_insr\n"
-    newline = False
-    linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.InsertMean] < insert_cutoff][PINERY_COL.SampleName]:
-        if not newline:
-            output += "[{0}] ".format(linenumber)
-        output += "\"" + failed + "\"\t\t"
-        if newline:
-            output += "\n"
-        newline = not newline
-        linenumber += 1
-
-    output += "\n$failed_ptden\n" # TODO: Not sure this is calculated correctly
-    newline = False
-    linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.TotalReads] < passed_cutoff][PINERY_COL.SampleName]:
-        if not newline:
-            output += "[{0}] ".format(linenumber)
-        output += "\"" + failed + "\"\t\t"
-        if newline:
-            output += "\n"
-        newline = not newline
-        linenumber += 1
-
-    return output
 
 layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className='body',
     children=[
@@ -409,13 +362,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                                   initial_cutoff_insert_size)
                 )
             ]),
-                     ]),
-        html.Div(className='terminal-output',
-            children=[
-                html.Pre(generateTerminalOutput(empty_bamqc, 5, 150, 0.01),  # TODO: magic numbers!! make constants
-                         id=ids['terminal-output'],
-                )
-            ]),
+        ]),
+
         html.Div(className='data-table',
             children=[
                 build_table(ids["data-table"], ex_table_columns, empty_bamqc,
@@ -431,7 +379,6 @@ def init_callbacks(dash_app):
         Output(ids['on-target-reads'], 'figure'),
         Output(ids['reads-per-start-point'], 'figure'),
         Output(ids['mean-insert-size'], 'figure'),
-        Output(ids['terminal-output'], 'value'),
         Output(ids['data-table'], 'data')],
         [Input(ids['update-button'], 'n_clicks')],
         [State(ids['run-id-list'], 'value'),
@@ -475,6 +422,5 @@ def init_callbacks(dash_app):
                                        reads),
             generateMeanInsertSize(data, colourby, shapeby, shownames,
                                    insertsizemean),
-            generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records', into=dd)
         ]
