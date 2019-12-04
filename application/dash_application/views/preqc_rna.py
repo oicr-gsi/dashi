@@ -41,6 +41,7 @@ ids = init_ids([
     "5-to-3-prime-bias",
     "correct-read-strand",
     "coding",
+    "rrna-contam",
     "dv200",
     "rin",
 
@@ -250,6 +251,19 @@ def generate_coding(df, colour_by, shape_by):
     )
 
 
+def generate_rrna_contam(df, colour_by, shape_by):
+    return generate(
+        "% Ribosomal RNA",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
+        "Percent(%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
+
+
 def generate_dv200(df, colour_by, shape_by):
     return generate(
         "DV200",
@@ -447,6 +461,11 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      id=ids["coding"],
                      figure=generate_coding(RNA_DF, initial_colour_col, initial_shape_col)
                  ),
+                core.Graph(
+                    id=ids["rrna-contam"],
+                    figure=generate_rrna_contam(RNA_DF, initial_colour_col,
+                                                initial_shape_col)
+                ),
                  core.Graph(
                      id=ids["dv200"],
                      figure=generate_dv200(RNA_DF, initial_colour_col, initial_shape_col)
@@ -483,6 +502,7 @@ def init_callbacks(dash_app):
             Output(ids["5-to-3-prime-bias"], "figure"),
             Output(ids["correct-read-strand"], "figure"),
             Output(ids["coding"], "figure"),
+            Output(ids["rrna-contam"], "figure"),
             Output(ids["dv200"], "figure"),
             Output(ids["rin"], "figure"),
             Output(ids["data-table"], "data"),
@@ -522,6 +542,7 @@ def init_callbacks(dash_app):
             generate_five_to_three(df, colour_by, shape_by),
             generate_correct_read_strand(df, colour_by, shape_by),
             generate_coding(df, colour_by, shape_by),
+            generate_rrna_contam(df, colour_by, shape_by),
             generate_dv200(df, colour_by, shape_by),
             generate_rin(df, colour_by, shape_by),
             df.to_dict("records", into=dd),
