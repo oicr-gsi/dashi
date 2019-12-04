@@ -489,7 +489,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     tabl.DataTable(id=ids["data-table"],
                         columns=[{"name": i, "id": i} for i in
                                  rnaseqqc_table_columns],
-                        data=RNA_DF.to_dict('records'),
+                        data=EMPTY_RNA.to_dict('records'),
                         export_format="csv"
                     )
                 ])
