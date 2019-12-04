@@ -458,6 +458,7 @@ def init_callbacks(dash_app):
             generate_duplication(df, colour_by, shape_by),
             generate_purity(df, colour_by, shape_by),
             generate_ploidy(df, colour_by, shape_by),
+            generate_unmapped_reads(df, colour_by, shape_by),
             generate_non_primary(df, colour_by, shape_by),
             generate_on_target_reads(df, colour_by, shape_by),
         ]
