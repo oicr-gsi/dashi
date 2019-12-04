@@ -157,6 +157,8 @@ shape_or_colour_values = {
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 
+EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
+
 
 def generate_total_reads(df, colour_by, shape_by):
     return generate(
@@ -385,43 +387,43 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             html.Div(className="seven columns", children=[
                 core.Graph(
                      id=ids["total-reads"],
-                     figure=generate_total_reads(WGS_DF, initial_colour_col,
+                     figure=generate_total_reads(EMPTY_WGS, initial_colour_col,
                                                  initial_shape_col)
                      ),
                 core.Graph(
                     id=ids["mean-insert"],
                     figure=generate_mean_insert_size(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["duplication"],
                     figure=generate_duplication(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["purity"],
-                    figure=generate_purity(WGS_DF,
+                    figure=generate_purity(EMPTY_WGS,
                                            initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["ploidy"],
-                    figure=generate_ploidy(WGS_DF,
+                    figure=generate_ploidy(EMPTY_WGS,
                                            initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["unmapped-reads"],
                     figure=generate_unmapped_reads(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["non-primary-reads"],
                     figure=generate_non_primary(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["on-target-reads"],
                     figure=generate_on_target_reads(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
             ])
 

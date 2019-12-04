@@ -97,6 +97,8 @@ initial_cutoff_rpsp = 5
 bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
 bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
 
+empty_bamqc = pd.DataFrame(columns=bamqc.columns)
+
 # TODO: move elsewhere
 def frange(min, max, step):
     range = []
@@ -386,29 +388,29 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(bamqc, initial_colour_col,
+                    figure=generateTotalReads(empty_bamqc, initial_colour_col,
                                               initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(bamqc, initial_colour_col,
+                    figure=generateUnmappedReads(empty_bamqc, initial_colour_col,
                                                  initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(bamqc, initial_colour_col,
+                    figure=generateNonprimaryReads(empty_bamqc, initial_colour_col,
                                                    initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(bamqc, initial_colour_col,
+                    figure=generateOnTargetReads(empty_bamqc, initial_colour_col,
                                                  initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(bamqc,
+                    figure=generateReadsPerStartPoint(empty_bamqc,
                                                       initial_colour_col,
                                                       initial_shape_col,
                                                       'none', initial_cutoff_rpsp)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(bamqc, initial_colour_col,
+                    figure=generateMeanInsertSize(empty_bamqc, initial_colour_col,
                            initial_shape_col, 'none',
                                                   initial_cutoff_insert_size)
                 )
@@ -416,15 +418,15 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                      ]),
         html.Div(className='terminal-output',
             children=[
-                html.Pre(generateTerminalOutput(bamqc, 5, 150, 0.01),  # TODO: magic numbers!! make constants
+                html.Pre(generateTerminalOutput(empty_bamqc, 5, 150, 0.01),  # TODO: magic numbers!! make constants
                          id=ids['terminal-output'],
                 )
             ]),
         html.Div(className='data-table',
             children=[
                 tabl.DataTable(id=ids['data-table'],
-                    columns=[{"name": i, "id": i} for i in bamqc.columns],
-                    data=bamqc.to_dict('records'),
+                    columns=[{"name": i, "id": i} for i in empty_bamqc.columns],
+                    data=empty_bamqc.to_dict('records'),
                     export_format="csv"
                 )
             ]),
@@ -465,8 +467,8 @@ def init_callbacks(dash_app):
 
         # Apply get selected runs
         data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
-        data = fill_in_shape_col(bamqc, shapeby, shape_values)
-        data = fill_in_colour_col(bamqc, colourby, colour_values)
+        data = fill_in_shape_col(data, shapeby, shape_values)
+        data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
 
         return [generateTotalReads(data, colourby, shapeby, shownames),
