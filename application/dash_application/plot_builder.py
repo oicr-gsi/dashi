@@ -122,12 +122,10 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     else:
         marker_mode = 'markers+text'
     for name, data in grouped_data:
-        if hovertext_type == 'sample':
-            text_content = data['sample']
-        elif hovertext_type == 'group-id':
-            text_content = data['group id']
-        else:
+        if hovertext_type == 'none':
             text_content = None
+        else:
+            text_content = data[hovertext_type]
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
