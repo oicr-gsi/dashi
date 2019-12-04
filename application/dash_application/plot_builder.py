@@ -49,7 +49,6 @@ ALL_SYMBOLS = [
     'line-nw-open'
 ]
 
-# TODO: these are muddy and bad
 PLOTLY_DEFAULT_COLOURS=[
     '#1f77b4',  # muted blue
     '#ff7f0e',  # safety orange
