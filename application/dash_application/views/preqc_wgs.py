@@ -1,7 +1,8 @@
+from collections import defaultdict
+
 import dash_core_components as core
 import dash_html_components as html
 import numpy
-import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 import pandas as pd
 import gsiqcetl.column
@@ -10,6 +11,7 @@ from gsiqcetl import QCETLCache
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import get_shapes_for_values, fill_in_shape_col, fill_in_colour_col, generate
+from ..table_builder import build_table
 from ..utility import df_manipulation as util
 
 """ Set up elements needed for page """
