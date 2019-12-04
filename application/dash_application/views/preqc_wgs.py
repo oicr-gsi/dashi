@@ -39,7 +39,9 @@ ids = init_ids([
     "ploidy",
     "unmapped-reads",
     "non-primary-reads",
-    "on-target-reads"
+    "on-target-reads",
+
+    "data-table",
 ])
 
 BAMQC_COL = gsiqcetl.column.BamQcColumn
@@ -49,24 +51,42 @@ INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
-    "Total Reads (Passed Filter)": "total_reads_pf",
-    "Unmapped Reads": "unmapped_reads_pct",
-    "Non-Primary Reads": "non_primary_reads_pct",
-    "On-target Reads": "on_target_reads_pct",
-    "Purity": "purity_pct",
-    "Project": "project",
-    "shape": "shape",
+    "Total Reads (Passed Filter)": "total reads passed filter",
+    "Unmapped Reads": "percent unmapped reads",
+    "Non-Primary Reads": "percent non-primary reads",
+    "On-target Reads": "percent on-target reads",
+    "Purity": "percent purity",
 }
 
-# Set points for graph cutoffs
-graph_cutoffs = {
-    "pf_reads": 0.01
-}
+# Specify which columns to display in the DataTable
+first_col_set = [
+    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
+    special_cols["Total Reads (Passed Filter)"],
+    special_cols["Unmapped Reads"],
+    special_cols["Non-Primary Reads"],
+    special_cols["On-target Reads"],
+    special_cols["Purity"]
+]
+most_bamqc_cols = [*BAMQC_COL.values()]
+most_bamqc_cols.remove(BAMQC_COL.BamFile)
+later_col_set = [
+    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
+    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
+    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
+    PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
+]
+wgs_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
 
+# Set initial values for dropdown menus
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
+
+# Set initial points for graph cutoff lines
+graph_cutoffs = {
+    "pf_reads": 0.01
+}
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -154,7 +174,6 @@ shape_or_colour_values = {
     PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
     PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
 }
-
 
 # Add shape col to WG dataframe
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
@@ -431,11 +450,14 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     figure=generate_on_target_reads(
                         EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
-            ])
+            ]),
 
-            # Add terminal output for failed samples
-
-            # Add DataTable for all samples info
+            # DataTable for all samples info
+            html.Div(className="data-table",
+                children=[
+                    build_table(ids["data-table"], wgs_table_columns, WGS_DF,
+                                BAMQC_COL.TotalReads)
+                ])
         ])
     ])
 ])
@@ -451,7 +473,8 @@ def init_callbacks(dash_app):
             Output(ids["ploidy"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["non-primary-reads"], "figure"),
-            Output(ids["on-target-reads"], "figure")
+            Output(ids["on-target-reads"], "figure"),
+            Output(ids["data-table"], "data"),
         ],
         [
             Input(ids["update-button"], "n_clicks")
@@ -478,6 +501,7 @@ def init_callbacks(dash_app):
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
+        dd = defaultdict(list)
 
         return [
             generate_total_reads(df, colour_by, shape_by),
@@ -488,6 +512,7 @@ def init_callbacks(dash_app):
             generate_unmapped_reads(df, colour_by, shape_by),
             generate_non_primary(df, colour_by, shape_by),
             generate_on_target_reads(df, colour_by, shape_by),
+            df.to_dict("records", into=dd),
         ]
 
     @dash_app.callback(
