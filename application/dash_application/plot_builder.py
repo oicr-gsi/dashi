@@ -128,7 +128,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             text_content = data['group id']
         else:
             text_content = None
-    for name, data in grouped_data:
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
