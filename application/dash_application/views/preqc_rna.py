@@ -52,17 +52,14 @@ INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
-    "Total Reads (Passed Filter)": "TotalReadsPassedFilter",
-    "Percent Uniq Reads": "PercentUniqReads",
-    "Project": "project",
-    "Percent Correct Strand Reads": "PercentCorrectStrandReads",
-    "shape": "shape",
+    "Total Reads (Passed Filter)": "Total Reads PassedFilter",
+    "Percent Uniq Reads": "Percent Unique Reads",
+    "Percent Correct Strand Reads": "Percent Correct Strand Reads",
 }
 
-
-
+# Specify which columns to display in the DataTable
 first_col_set = [
-    PINERY_COL.SampleName, PINERY_COL.StudyTitle, PINERY_COL.LastModified,
+    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
     special_cols["Total Reads (Passed Filter)"],
     special_cols["Percent Uniq Reads"],
     special_cols["Percent Correct Strand Reads"]
@@ -73,14 +70,15 @@ later_col_set = [
     PINERY_COL.ExternalName, PINERY_COL.GroupID, PINERY_COL.TissueOrigin,
     PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
-rnaseqqc_table_columns = [*first_col_set, *RNA_COL.keys(), *later_col_set]
+rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
 
+# Set initial values for dropdown menus
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = RNA_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
 
-# Set points for graph cutoffs
+# Set initial points for graph cutoff lines
 initial_cutoff_rpsp = 5
 initial_cutoff_pf_reads = 0.01
 

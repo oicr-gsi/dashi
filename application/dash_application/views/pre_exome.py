@@ -1,14 +1,15 @@
+from collections import defaultdict
+
 import dash_html_components as html
 import dash_core_components as core
-import dash_table as tabl
 from dash.dependencies import Input, Output, State
+import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
+from ..table_builder import build_table
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
-import plotly.graph_objects as go
-import pandas as pd
 from gsiqcetl import QCETLCache
 from gsiqcetl.column import BamQcColumn
 import pinery
@@ -88,10 +89,28 @@ colour_values = {
     BAMQC_COL.Run: ALL_RUNS,
 }
 
+# Specify which columns to display in the DataTable
+first_col_set = [
+    PINERY_COL.SampelName, PINERY_COL.StudyTitle,
+]
+most_bamqc_cols = [*BAMQC_COL.values()]
+most_bamqc_cols.remove(BAMQC_COL.BamFile)
+later_col_set = [
+    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
+    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
+    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
+    PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
+    INSTRUMENT_COLS.ModelName
+]
+ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
+
+# Set initial values for dropdown menus
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = BAMQC_COL.Run
 initial_shape_col = PINERY_COL.StudyTitle
+
+# Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
 initial_cutoff_insert_size = 150
 initial_cutoff_rpsp = 5
@@ -235,6 +254,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Update', id=ids['update-button']),
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
+                html.Br(),
+
                 html.Label([
                     "Run ID", 
                     html.Button('Add All', id=ids["all-runs"], className="inline"),
@@ -397,11 +418,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             ]),
         html.Div(className='data-table',
             children=[
-                tabl.DataTable(id=ids['data-table'],
-                    columns=[{"name": i, "id": i} for i in empty_bamqc.columns],
-                    data=empty_bamqc.to_dict('records'),
-                    export_format="csv"
-                )
+                build_table(ids["data-table"], ex_table_columns, empty_bamqc,
+                            BAMQC_COL.TotalReads)
             ]),
     ])])
 
@@ -440,14 +458,16 @@ def init_callbacks(dash_app):
 
         # Apply get selected runs
         if not runs:
-            data = pd.DataFrame(columns=bamqc.columns)
+            data = pd.DataFrame(columns=empty_bamqc.columns)
         else:
             data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
+        dd = defaultdict(list)
 
-        return [generateTotalReads(data, colourby, shapeby, shownames),
+        return [
+            generateTotalReads(data, colourby, shapeby, shownames),
             generateUnmappedReads(data, colourby, shapeby, shownames),
             generateNonprimaryReads(data, colourby, shapeby, shownames),
             generateOnTargetReads(data, colourby, shapeby, shownames),
@@ -456,11 +476,5 @@ def init_callbacks(dash_app):
             generateMeanInsertSize(data, colourby, shapeby, shownames,
                                    insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
-            data.to_dict('records')]
-
-    @dash_app.callback(
-        Output(ids['run-id-list'], 'value'),
-        [Input(ids["all-runs"], 'n_clicks')]
-    )
-    def allButtonClicked(click):
-        return [x for x in ALL_RUNS]
+            data.to_dict('records', into=dd)
+        ]
