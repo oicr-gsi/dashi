@@ -113,6 +113,10 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     traces = []
     grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
+    if colourby == shapeby:
+        name_format = lambda n: "{0}".format(n[0])
+    else:
+        name_format = lambda n: "{0} {1}".format(n[0], n[1])
     if hovertext_type == 'none':
         marker_mode = 'markers'
     else:
@@ -128,7 +132,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
-            name="{} {}".format(name[0], name[1]),
+            name=name_format(name),
             hovertext=text_content,
             mode=marker_mode,
             marker={
