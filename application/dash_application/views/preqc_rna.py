@@ -2,16 +2,13 @@ from collections import defaultdict
 
 import dash_html_components as html
 import dash_core_components as core
-import dash_table as tabl
-import pandas as pd
 from dash.dependencies import Input, Output, State
-from pandas import DataFrame
 
 from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
-import plotly.graph_objects as go
+from ..table_builder import build_table
 from gsiqcetl import QCETLCache
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
@@ -487,15 +484,11 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
             # Add terminal output for failed samples
 
-            # Add DataTable for all samples info
+            # DataTable for all samples info
             html.Div(className="data-table",
                 children=[
-                    tabl.DataTable(id=ids["data-table"],
-                        columns=[{"name": i, "id": i} for i in
-                                 rnaseqqc_table_columns],
-                        data=EMPTY_RNA.to_dict('records'),
-                        export_format="csv"
-                    )
+                    build_table(ids["data-table"], rnaseqqc_table_columns,
+                                EMPTY_RNA, RNA_COL.TotalReads)
                 ])
         ])
     ])
@@ -538,7 +531,7 @@ def init_callbacks(dash_app):
                        rpsp_cutoff,
                        total_reads_cutoff):
         if not runs:
-            df = pd.DataFrame(columns=RNA_DF.columns)
+            df = pd.DataFrame(columns=EMPTY_RNA.columns)
         else:
             df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
