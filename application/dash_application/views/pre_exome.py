@@ -18,6 +18,8 @@ ids = init_ids([
     # Buttons
     'update-button',
     'download-button',
+    'all',
+    'clear',
 
     # Sidebar controls
     'run-id-list',
@@ -260,16 +262,14 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
 
-                html.Button('Select All', "all"),
-                html.Button('Remove All', "clear"),
+                html.Button('Add All', id=ids["all"]),
+                html.Button('Clear All', id=ids["clear"]),
                 html.Br(),
 
                 html.Label([
                     "Run ID", 
                     core.Dropdown(id=ids['run-id-list'],
-                        options=[
-                            {'label': x, 'value': x} for x in ALL_RUNS
-                        ],
+                        options=[{'label': x, 'value': x} for x in ALL_RUNS],
                         multi=True
                     )
                 ]), html.Br(),
@@ -428,8 +428,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='data-table',
             children=[
                 tabl.DataTable(id=ids['data-table'],
-                    columns=[{"name": i, "id": i} for i in empty_bamqc.columns],
-                    data=empty_bamqc.to_dict('records'),
+                    columns=[{"name": i, "id": i} for i in bamqc.columns],
+                    data=bamqc.to_dict('records'),
                     export_format="csv"
                 )
             ]),
@@ -487,3 +487,17 @@ def init_callbacks(dash_app):
                                    insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records')]
+
+    # @dash_app.callback(
+    #     Output(ids['run-id-list'], 'value'),
+    #     [Input(ids['clear'], 'n_clicks')]
+    # )
+    # def clearButtonClicked(click):
+    #     return []
+
+    @dash_app.callback(
+        Output(ids['run-id-list'], 'value'),
+        [Input(ids['all'], 'n_clicks')]
+    )
+    def allButtonClicked(click):
+        return [x for x in ALL_RUNS]
