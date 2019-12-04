@@ -265,7 +265,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         options=[
                             {'label': x, 'value': x} for x in ALL_RUNS
                         ],
-                        value=[x for x in ALL_RUNS],
                         multi=True
                     )
                 ]), html.Br(),

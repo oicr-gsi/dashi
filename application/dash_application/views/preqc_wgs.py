@@ -279,7 +279,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": run,
                                        "value": run} for run in ALL_RUNS
                     ],
-                        value=[run for run in ALL_RUNS],
                         multi=True
                     )
                 ]),
