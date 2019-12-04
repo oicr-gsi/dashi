@@ -12,7 +12,7 @@ services:
     volumes:
       # location of gsi-qc-etl cache files
       - type: bind
-        source: ./cache_files
+        source: $HOME/qcetl
         target: /cache
       # SSH keys for access to gsi-qc-etl private repository
       # modify this bind mount if your ssh keys are located in another

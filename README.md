@@ -6,12 +6,24 @@ transcriptomic data. It is built on top of
 OICR's private QC data integration system, and so is currently of limited
 utility to external parties. Please contact us for more information.
 
+# Requirements
+* Access to [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse)
+* A running [pinery](https://github.com/oicr-gsi/pinery) install
+* A running MongoDB installation with provenance data and the password for the
+    same. See
+    [Historical Provenance MongoDB](https://wiki.oicr.on.ca/display/GSI/Historical+Provenance+MongoDB)
+    (OICR internal)
+
+
 ## Setup on bare metal
 
 1. Install python3, pip
 1. Setup new virtual environment
 1. `pip install -r requirements.txt`
-1. Set the GSI_ETL_CACHE_DIR environment variable
+1. Set the required environment variables. For example URLS, see [.docker/start.sh](.docker/start.sh).
+    * `PINERY_URL` : location of Pinery (LIMS API) instance
+    * `MONGO_URL` : location of MongoDB with provenance data
+    * `GSI_QC_ETL_ROOT_DIRECTORY` : location of gsi-qc-etl cache files (not code)
 1. `flask run` **OR** `gunicorn --bind 0.0.0.0:5000 wsgi:app`
 
 
@@ -25,19 +37,20 @@ need to pass in your SSH keys to permit download and installation.
 **Requirements**
 * Docker 18.09.6+
 * Docker compose 1.23.1+
-* Access to [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse)
-
 
 1. Ensure your ssh key has been added to OICR's Bitbucket and you can access and
    clone
    [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse). 
-2. Download the gsi-qc-etl cache data to `cache_files` (or modify
+2. Download the gsi-qc-etl cache data to `$HOME/qcetl` (or modify
    docker-compose.yml to point to the correct location). The current location for
    this on OICR's cluster is at
    `/scratch2/groups/gsi/<development or production>/qcetl`.
-3. Build the container with `docker-compose build`. Note that this completes
-   installation of gsi-qc-etl before launching the app.
-4. Launch with `docker-compose up`.`
+3. Create a file at `.mongopass` with the password to the MongoDB database and
+    make sure the location in docker-compose.yml is correct in `secrets`.
+4. Build the container with `docker-compose build`. 
+5. Launch with `docker-compose up`. Note that this completes installation of
+    gsi-qc-etl before launching the app.
+`
 
 Then navigate to [http://0.0.0.0:5000/](http://0.0.0.0:5000/).
 
@@ -62,6 +75,7 @@ troubleshooting:
     passphrase. Open `docker-compose.yml` and uncomment out the
     `ssh_passphrase` lines in the dashi service and in the `secrets` section,
     and point docker-compose to your passphrase file in the secrets section.
+    Do a fresh build of the compose file, ie. `docker-compose build --no-cache`.
     When next launching the container, the start.sh script will automatically
     provide the passphrase upon request.
 
@@ -69,3 +83,10 @@ troubleshooting:
 **2. `docker-compose up` fails with `ModuleNotFoundError: No module named 'gsiqcetl'`**
 
 Likely gsi-qc-etl failed to download. Check the Troubleshooting tip #1.
+
+**3. `docker-compose up` is not starting and reporting messages like : `dashi    | [2019-12-04 22:08:06 +0000] [54] [CRITICAL] WORKER TIMEOUT (pid:113) 
+    dashi    | [2019-12-04 22:08:06 +0000] [113] [INFO] Worker exiting (pid: 113)
+    dashi    | [2019-12-04 22:08:07 +0000] [120] [INFO] Booting worker with pid: 120`
+ 
+
+Gunicorn and Docker dislike each other. Try using `flask run` instead.

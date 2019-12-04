@@ -10,7 +10,7 @@ COPY *.py requirements.txt /dashi/
 
 # Requirements for pytables (HDF5) and scipy (blas and la and fortran) and expect for passing a passphrase to ssh-agent
 RUN apt-get -yy update && apt-get -yy install libhdf5-serial-dev libblas3 liblapack3 liblapack-dev libblas-dev gfortran expect
-RUN pip install --trusted-host pypi.python.org $(awk '!/git\+ssh.*/' requirements.txt) && pip install gunicorn
+RUN pip install --trusted-host pypi.python.org $(awk '!/git\+ssh.*/' requirements.txt)
 
 COPY application /dashi/application/
 

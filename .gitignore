@@ -2,7 +2,6 @@ __pycache__
 venv
 .env
 .vscode
-cache_files
 .idea
 .mongopass
 .passphrase
