@@ -3,3 +3,5 @@ venv
 .env
 .vscode
 .idea
+.mongopass
+.passphrase

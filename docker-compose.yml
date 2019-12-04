@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  dashi:
+    container_name: dashi
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - '5000:5000'
+    volumes:
+      # location of gsi-qc-etl cache files
+      - type: bind
+        source: $HOME/qcetl
+        target: /cache
+      # SSH keys for access to gsi-qc-etl private repository
+      # modify this bind mount if your ssh keys are located in another
+      # location. Docker secrets cannot be used in docker compose.
+      - type: bind
+        source: $HOME/.ssh/id_rsa
+        target: /root/.ssh/id_rsa
+      - type: bind
+        source: $HOME/.ssh/id_rsa.pub
+        target: /root/.ssh/id_rsa.pub
+      - type: bind
+        source: $HOME/.ssh/known_hosts
+        target: /root/.ssh/known_hosts
+    secrets:
+      - mongo_password
+#      - ssh_passphrase
+
+# If your SSH key requires a passphrase, uncomment out the `ssh_passphrase` lines in the dashi service and in the secrets section below
+# Create a file at .passphrase that contains your passphrase. No other changes are necessary.
+secrets:
+  mongo_password:
+    file: .mongopass
+#  ssh_passphrase:
+#    file: .passphrase
