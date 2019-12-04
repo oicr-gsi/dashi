@@ -115,7 +115,7 @@ def generateTotalReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Total Reads",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.TotalReads] / pow(10,6),
         "# Reads x 10^6",
         colourby,
@@ -128,7 +128,7 @@ def generateUnmappedReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Unmapped Reads (%)",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: percentageOf(d, BAMQC_COL.UnmappedReads),
         "%",
         colourby,
@@ -140,7 +140,7 @@ def generateNonprimaryReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Non-Primary Reads (%)",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: percentageOf(d, BAMQC_COL.NonPrimaryReads),
         "%",
         colourby,
@@ -152,7 +152,7 @@ def generateOnTargetReads(current_data, colourby, shapeby, shownames):
     return generate(
         "On Target Reads (%)",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: percentageOf(d, BAMQC_COL.ReadsOnTarget),
         "%",
         colourby,
@@ -165,7 +165,7 @@ def generateReadsPerStartPoint(current_data, colourby, shapeby, shownames,
     return generate(
         "Reads per Start Point",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: percentageOf(d, BAMQC_COL.ReadsPerStartPoint),
         "Fraction",
         colourby,
@@ -179,7 +179,7 @@ def generateMeanInsertSize(current_data, colourby, shapeby, shownames,
     return generate(
         "Mean Insert Size",
         current_data,
-        lambda d: d[BAMQC_COL.Sample],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
         "Fraction",
         colourby,
@@ -198,7 +198,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "$failed_rpsp\n"
     newline = False
     linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.ReadsPerStartPoint] < reads_cutoff][BAMQC_COL.Sample]:
+    for failed in data.loc[data[BAMQC_COL.ReadsPerStartPoint] < reads_cutoff][PINERY_COL.SampleName]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -210,7 +210,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "\n$failed_insr\n"
     newline = False
     linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.InsertMean] < insert_cutoff][BAMQC_COL.Sample]:
+    for failed in data.loc[data[BAMQC_COL.InsertMean] < insert_cutoff][PINERY_COL.SampleName]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -222,7 +222,7 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
     output += "\n$failed_ptden\n" # TODO: Not sure this is calculated correctly
     newline = False
     linenumber = 0
-    for failed in data.loc[data[BAMQC_COL.TotalReads] < passed_cutoff][BAMQC_COL.Sample]:
+    for failed in data.loc[data[BAMQC_COL.TotalReads] < passed_cutoff][PINERY_COL.SampleName]:
         if not newline:
             output += "[{0}] ".format(linenumber)
         output += "\"" + failed + "\"\t\t"
@@ -338,7 +338,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     "Show Names:",
                     core.Dropdown(id=ids['show-names'],
                         options=[
-                            {'label': 'Sample', 'value': BAMQC_COL.Sample},
+                            {'label': 'Sample', 'value': PINERY_COL.SampleName},
                             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
                             {'label': 'None', 'value': 'none'}
                         ],

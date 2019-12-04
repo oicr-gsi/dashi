@@ -9,7 +9,7 @@ import pinery
 from gsiqcetl import QCETLCache
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import get_shapes_for_values, fill_in_shape_col
+from ..plot_builder import get_shapes_for_values, fill_in_shape_col, fill_in_colour_col
 from ..utility import df_manipulation as util
 
 """ Set up elements needed for page """
@@ -63,7 +63,8 @@ graph_cutoffs = {
 
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-initial_shapes = get_shapes_for_values(initial_shape_col)
+# initial_shapes = get_shapes_for_values(initial_shape_col)
+# initial_colour = get_colours_for_values(initial_colour_col)
 
 
 shape_or_colour_by = [
@@ -156,6 +157,7 @@ shape_or_colour_values = {
 
 # Add shape col to WG dataframe
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
+WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 
 
 def scattergl(x_col, y_col, data, colour_val):
@@ -450,6 +452,7 @@ def init_callbacks(dash_app):
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+        df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
 
         return [
             generate_total_reads(df, colour_by, shape_by),

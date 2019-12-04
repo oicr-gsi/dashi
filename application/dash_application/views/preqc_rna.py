@@ -10,7 +10,7 @@ from pandas import DataFrame
 from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
-from ..plot_builder import get_shapes_for_values, fill_in_shape_col, generate
+from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
 import plotly.graph_objects as go
 from gsiqcetl import QCETLCache
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
@@ -80,7 +80,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = PINERY_COL.PrepKit
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-initial_shapes = get_shapes_for_values(initial_shape_col)
+#initial_shapes = get_shapes_for_values(initial_shape_col)
 # Set points for graph cutoffs
 initial_cutoff_rpsp = 5
 initial_cutoff_pf_reads = 0.01
@@ -165,6 +165,7 @@ shape_or_colour_values = {
 
 # Add shape col to RNA dataframe
 RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
+RNA_DF = fill_in_colour_col(RNA_DF, initial_colour_col, shape_or_colour_values)
 # Do initial sort before graphing
 RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
 
@@ -510,6 +511,7 @@ def init_callbacks(dash_app):
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+        df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
         dd = defaultdict(list)
 
         return [
