@@ -39,14 +39,14 @@ need to pass in your SSH keys to permit download and installation.
    installation of gsi-qc-etl before launching the app.
 4. Launch with `docker-compose up`.`
 
-Then navigate to [http://localhost:5000](http://localhost:5000).
+Then navigate to [http://0.0.0.0:5000/](http://0.0.0.0:5000/).
 
 
 
 # Troubleshooting
 
 **1. `docker-compose up` fails with `git@bitbucket.oicr.on.ca: Permission denied (publickey).
-  fatal: Could not read from remote repository. Please make sure you have the correct access rights and the repository exists.`
+  fatal: Could not read from remote repository. Please make sure you have the correct access rights and the repository exists.`**
 
 This is likely due to an error with binding your SSH key into the container. The
 SSH key is required to install the gsi-qc-etl dependency. Follow these steps for
@@ -66,6 +66,6 @@ troubleshooting:
     provide the passphrase upon request.
 
 
-**2. `docker-compose up` fails with `ModuleNotFoundError: No module named 'gsiqcetl'` **
+**2. `docker-compose up` fails with `ModuleNotFoundError: No module named 'gsiqcetl'`**
 
 Likely gsi-qc-etl failed to download. Check the Troubleshooting tip #1.
