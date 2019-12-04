@@ -260,6 +260,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
 
+                html.Button('Select All', "all"),
+                html.Button('Remove All', "clear"),
+                html.Br(),
 
                 html.Label([
                     "Run ID", 
