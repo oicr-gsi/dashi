@@ -9,7 +9,7 @@ import pinery
 from gsiqcetl import QCETLCache
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import get_shapes_for_values, fill_in_shape_col, fill_in_colour_col
+from ..plot_builder import get_shapes_for_values, fill_in_shape_col, fill_in_colour_col, generate
 from ..utility import df_manipulation as util
 
 """ Set up elements needed for page """
@@ -158,99 +158,108 @@ WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 
 
-def scattergl(x_col, y_col, data, colour_val):
-    return go.Scattergl(
-        x=data[x_col],
-        y=data[y_col],
-        name="{} {}".format(colour_val[0], colour_val[1]),
-        mode="markers",
-        marker={
-            "symbol": data[special_cols["shape"]]
-        }
-    )
-
-
-def go_figure(traces, graph_title, y_title, xaxis=None, yaxis=None):
-    x_axis = xaxis if xaxis else {
-        "visible": False,
-        "rangemode": "normal",
-        "autorange": True
-    }
-    y_axis = yaxis if yaxis else {
-        "title": {
-            "text": y_title
-        }
-    }
-    return go.Figure(
-        data=traces,
-        layout=go.Layout(
-            title=graph_title,
-            xaxis=x_axis,
-            yaxis=y_axis
-        )
-    )
-
-
-# Standard graph
-def scatter_graph(df, colour_by, shape_by, x_col, y_col, graph_title, y_title):
-    traces = []
-    for colour_val, data in df.groupby([colour_by, shape_by]):
-        traces.append(scattergl(x_col, y_col, data, colour_val))
-
-    return go_figure(traces, graph_title, y_title)
-
-
 def generate_total_reads(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Total Reads (Passed Filter)"],
-        "Total Reads (Passed Filter)", "# Reads (10^6)")
+    return generate(
+        "Total Reads (Passed Filter)",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        "# Reads (10^6)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_mean_insert_size(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        BAMQC_COL.InsertMean,
-        "Insert Mean", "Base Pairs")
+    return generate(
+        "Insert Mean",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[BAMQC_COL.InsertMean],
+        "Base Pairs",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_duplication(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-        "Duplication", "Percent (%)")
+    return generate(
+        "Duplication",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_unmapped_reads(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Unmapped Reads"],
-        "Unmapped Reads", "Percent (%)")
+    return generate(
+        "Unmapped Reads",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Unmapped Reads"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_non_primary(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["Non-Primary Reads"], "Non-Primary Reads",
-        "Percent (%)")
+    return generate(
+        "Non-Primary Reads",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Non-Primary Reads"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_on_target_reads(df, colour_by, shape_by):
-    return scatter_graph(
-        df, colour_by, shape_by, PINERY_COL.SampleName,
-        special_cols["On-target Reads"],
-        "On-target Reads", "Percent (%)")
+    return generate(
+        "On-target Reads Reads",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["On-target Reads"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_purity(df, colour_by, shape_by):
-    return scatter_graph(df, colour_by, shape_by, PINERY_COL.SampleName,
-                         special_cols["Purity"],
-                         "Purity", "Percent (%)")
+    return generate(
+        "Purity",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Purity"]],
+        "Percent (%)",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 def generate_ploidy(df, colour_by, shape_by):
-    return scatter_graph(df, colour_by, shape_by, PINERY_COL.SampleName,
-                         ICHOR_COL.Ploidy, "Ploidy", "")
+    return generate(
+        "Ploidy",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[ICHOR_COL.Ploidy],
+        "",
+        colour_by,
+        shape_by,
+        "none"
+    )
 
 
 # Layout elements
