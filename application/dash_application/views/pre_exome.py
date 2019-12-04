@@ -117,7 +117,9 @@ bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
-def generate_total_reads(current_data, colourby, shapeby, shownames):
+
+def generate_total_reads(current_data, colourby, shapeby, shownames,
+                         cutoff_line):
     return generate(
         "Total Reads",
         current_data,
@@ -126,7 +128,8 @@ def generate_total_reads(current_data, colourby, shapeby, shownames):
         "# Reads x 10^6",
         colourby,
         shapeby,
-        shownames
+        shownames,
+        cutoff_line
     )
     
 
@@ -338,7 +341,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             children=[
                 core.Graph(id=ids['total-reads'],
                     figure=generate_total_reads(empty_bamqc, initial_colour_col,
-                                              initial_shape_col, 'none')
+                                                initial_shape_col, 'none',
+                                                initial_cutoff_pf_reads)
                 ),
                 core.Graph(id=ids['unmapped-reads'],
                     figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
@@ -407,7 +411,7 @@ def init_callbacks(dash_app):
             shapeby,
             # searchsample,
             shownames,
-            reads,
+            readsperstartpoint,
             insertsizemean,
             passedfilter):
 
@@ -422,12 +426,13 @@ def init_callbacks(dash_app):
         dd = defaultdict(list)
 
         return [
-            generate_total_reads(data, colourby, shapeby, shownames),
+            generate_total_reads(data, colourby, shapeby, shownames,
+                                 passedfilter),
             generate_unmapped_reads(data, colourby, shapeby, shownames),
             generate_nonprimary_reads(data, colourby, shapeby, shownames),
             generate_on_target_reads(data, colourby, shapeby, shownames),
             generate_reads_per_start_point(data, colourby, shapeby, shownames,
-                                       reads),
+                                       readsperstartpoint),
             generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
             data.to_dict('records', into=dd)
