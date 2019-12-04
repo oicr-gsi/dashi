@@ -2,9 +2,10 @@ from typing import List
 
 import pandas
 import plotly.graph_objects as go
-
-# TODO: if this remains necessary i'll be mad. Can we get it from plotly itself?
 from pandas import DataFrame
+import pinery
+
+PINERY_COL = pinery.column.SampleProvenanceColumn
 
 ALL_SYMBOLS = [
     'circle', 'triangle-up', 'square', 'triangle-down', 'pentagon', 'diamond',
@@ -48,6 +49,19 @@ ALL_SYMBOLS = [
     'line-nw-open'
 ]
 
+PLOTLY_DEFAULT_COLOURS=[
+    '#1f77b4',  # muted blue
+    '#ff7f0e',  # safety orange
+    '#2ca02c',  # cooked asparagus green
+    '#d62728',  # brick red
+    '#9467bd',  # muted purple
+    '#8c564b',  # chestnut brown
+    '#e377c2',  # raspberry yogurt pink
+    '#7f7f7f',  # middle gray
+    '#bcbd22',  # curry yellow-green
+    '#17becf'   # blue-teal
+]
+
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
@@ -58,6 +72,14 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         shape_col]), axis=1)
     return df
 
+def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
+        dict):
+    all_colours = get_colours_for_values(shape_or_colour_values[
+                                           colour_col].tolist())
+    # for each row,
+    df['colour'] = df.apply(lambda row: all_colours.get(row[
+        colour_col]), axis=1)
+    return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
@@ -89,40 +111,35 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             )
         )
     traces = []
-    grouped_data = sorted_data.groupby([colourby, shapeby]) #TODO: is this
-    # inefficient?
-    i = 0
+    grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
+    if colourby == shapeby:
+        name_format = lambda n: "{0}".format(n[0])
+    else:
+        name_format = lambda n: "{0} {1}".format(n[0], n[1])
     if hovertext_type == 'none':
         marker_mode = 'markers'
     else:
         marker_mode = 'markers+text'
     for name, data in grouped_data:
-        if hovertext_type == 'sample':
-            text_content = data['sample']
-        elif hovertext_type == 'group-id':
-            text_content = data['group id']
-        else:
+        if hovertext_type == 'none':
             text_content = None
-    for name, data in grouped_data:
+        else:
+            text_content = data[hovertext_type]
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
-            name="{} {}".format(name[0], name[1]),
+            name=name_format(name),
             hovertext=text_content,
             mode=marker_mode,
             marker={
-                "symbol": data['shape']
+                "symbol": data['shape'],
+                "color": data['colour'] # Please note the 'u'
             }
         )
-        if i == len(ALL_SYMBOLS)-1:
-            i = 0
-        else:
-            i += 1
         traces.append(graph)
     if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data["sampleName"], # TODO: improve this? Should be
-            # PINERY_COL.SampleName once everything uses PINERY_COL
+            x=sorted_data[PINERY_COL.SampleName], 
             y=[line_y] * len(sorted_data),
             mode="lines",
             line={"width": 1, "color": "black", "dash": "dash"},
@@ -144,12 +161,19 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
+def get_dict_wrapped(key_list, value_list):
+    kv_dict = {}
+    index = 0
+    for item in key_list:
+        # loop back to beginning of value list
+        if index >= len(value_list):
+            index = 0
+        kv_dict[item] = value_list[index]
+        index += 1
+    return kv_dict
 
 def get_shapes_for_values(shapeby: List[str]):
-    shape_dict = {}
-    for index, item in enumerate(shapeby):
-        # loop back to beginning of symbols list if we run out of symbols
-        if index >= len(ALL_SYMBOLS):
-            index = index - len(ALL_SYMBOLS)
-        shape_dict[item] = ALL_SYMBOLS[index]
-    return shape_dict
+    return get_dict_wrapped(shapeby, ALL_SYMBOLS)
+
+def get_colours_for_values(colourby: List[str]):
+    return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
