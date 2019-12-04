@@ -284,18 +284,21 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ]), html.Br(),
 
                 html.Label([
-                    "2nd Sort:",
+                    "Second Sort:",
                     core.Dropdown(id=ids['second-sort'],
                         options=[
-                            # TODO: Friendlier names
-                            {'label': 'Total Reads', 'value':
-                                BAMQC_COL.TotalReads},
-                            {'label': 'Insert Mean', 'value':
-                                BAMQC_COL.InsertMean},
-                            {'label': 'Insert SD', 'value':
-                                BAMQC_COL.InsertSD},
-                            {'label': 'Reads Per Start Point', 'value':
-                                BAMQC_COL.ReadsPerStartPoint}
+                            {"label": "Total Reads",
+                             "value": BAMQC_COL.TotalReads},
+                            {"label": "Unmapped Reads",
+                             "value": BAMQC_COL.UnmappedReads},
+                            {"label": "Non-primary Reads",
+                             "value": BAMQC_COL.NonPrimaryReads},
+                            {"label": "On-target Reads",
+                             "value": BAMQC_COL.ReadsOnTarget},
+                            {"label": "Reads per Start Point",
+                             "value": BAMQC_COL.ReadsPerStartPoint},
+                            {"label": "Mean Insert Size",
+                             "value": BAMQC_COL.InsertMean}
                         ],
                         value=initial_second_sort,
                         searchable=False,
