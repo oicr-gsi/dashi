@@ -225,7 +225,7 @@ def generate_non_primary(df, colour_by, shape_by):
 
 def generate_on_target_reads(df, colour_by, shape_by):
     return generate(
-        "On-target Reads Reads",
+        "On-target Reads",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On-target Reads"]],
