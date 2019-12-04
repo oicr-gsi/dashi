@@ -41,7 +41,7 @@ _pinery_samples.fillna({
     PINERY_COL.GroupID: "",
     PINERY_COL.GroupIDDescription: ""
 })
-_runs = _pinery_client.get_runs().runs
+_runs = _pinery_client.get_runs(False).runs
 
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
