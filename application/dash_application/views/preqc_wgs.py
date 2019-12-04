@@ -5,6 +5,7 @@ import dash_html_components as html
 import numpy
 from dash.dependencies import Input, Output, State
 import pandas as pd
+
 import gsiqcetl.column
 import pinery
 from gsiqcetl import QCETLCache
@@ -519,5 +520,5 @@ def init_callbacks(dash_app):
         Output(ids['run-id-list'], 'value'),
         [Input(ids['all-runs'], 'n_clicks')]
     )
-    def allButtonClicked(click):
+    def all_runs_button_clicked(click):
         return [x for x in ALL_RUNS]

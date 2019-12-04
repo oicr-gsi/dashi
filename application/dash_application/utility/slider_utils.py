@@ -6,5 +6,5 @@ def frange(min, max, step):
         i += step
     return range
 
-def percentageOf(data, numerator_col, denominator_col):
+def percentage_of(data, numerator_col, denominator_col):
     return (data[numerator_col] / data[denominator_col]) * 100

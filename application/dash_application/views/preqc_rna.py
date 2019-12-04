@@ -3,6 +3,7 @@ from collections import defaultdict
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
+import pandas as pd
 
 from . import navbar
 from ..dash_id import init_ids
@@ -555,5 +556,5 @@ def init_callbacks(dash_app):
         Output(ids['run-id-list'], 'value'),
         [Input(ids['all-runs'], 'n_clicks')]
     )
-    def allButtonClicked(click):
+    def all_runs_button_clicked(click):
         return [x for x in ALL_RUNS]

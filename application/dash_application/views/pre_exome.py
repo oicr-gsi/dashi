@@ -51,7 +51,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
-special_cols = {} #TODO 
+special_cols = {}
 
 
 def get_bamqc_data():
@@ -88,7 +88,7 @@ colour_values = {
 
 # Specify which columns to display in the DataTable
 first_col_set = [
-    PINERY_COL.SampelName, PINERY_COL.StudyTitle,
+    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
 ]
 most_bamqc_cols = [*BAMQC_COL.values()]
 most_bamqc_cols.remove(BAMQC_COL.BamFile)
@@ -117,7 +117,7 @@ bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
-def generateTotalReads(current_data, colourby, shapeby, shownames):
+def generate_total_reads(current_data, colourby, shapeby, shownames):
     return generate(
         "Total Reads",
         current_data,
@@ -130,49 +130,52 @@ def generateTotalReads(current_data, colourby, shapeby, shownames):
     )
     
 
-def generateUnmappedReads(current_data, colourby, shapeby, shownames):
+def generate_unmapped_reads(current_data, colourby, shapeby, shownames):
     return generate(
         "Unmapped Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentageOf(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
+        lambda d: slider_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
         shownames
     )
 
-def generateNonprimaryReads(current_data, colourby, shapeby, shownames):
+
+def generate_nonprimary_reads(current_data, colourby, shapeby, shownames):
     return generate(
         "Non-Primary Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentageOf(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
+        lambda d: slider_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
         shownames
     )
 
-def generateOnTargetReads(current_data, colourby, shapeby, shownames):
+
+def generate_on_target_reads(current_data, colourby, shapeby, shownames):
     return generate(
         "On Target Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentageOf(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
+        lambda d: slider_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
         shownames
     )
 
-def generateReadsPerStartPoint(current_data, colourby, shapeby, shownames,
+
+def generate_reads_per_start_point(current_data, colourby, shapeby, shownames,
                                cutoff_line):
     return generate(
         "Reads per Start Point",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentageOf(d, BAMQC_COL.ReadsPerStartPoint, BAMQC_COL.TotalReads),
+        lambda d: slider_utils.percentage_of(d, BAMQC_COL.ReadsPerStartPoint, BAMQC_COL.TotalReads),
         "Fraction",
         colourby,
         shapeby,
@@ -180,7 +183,8 @@ def generateReadsPerStartPoint(current_data, colourby, shapeby, shownames,
         cutoff_line
     )
 
-def generateMeanInsertSize(current_data, colourby, shapeby, shownames,
+
+def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
                            cutoff_line):
     return generate(
         "Mean Insert Size",
@@ -202,8 +206,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                  children=[
                      html.Div(className='sidebar four columns',
             children=[
-                # As far as I can tell, there's no named attribute for button text
-                # It's always positional
                 html.Button('Update', id=ids['update-button']),
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
@@ -335,29 +337,29 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='seven columns',
             children=[
                 core.Graph(id=ids['total-reads'],
-                    figure=generateTotalReads(empty_bamqc, initial_colour_col,
+                    figure=generate_total_reads(empty_bamqc, initial_colour_col,
                                               initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['unmapped-reads'],
-                    figure=generateUnmappedReads(empty_bamqc, initial_colour_col,
+                    figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
                                                  initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['non-primary-reads'],
-                    figure=generateNonprimaryReads(empty_bamqc, initial_colour_col,
+                    figure=generate_nonprimary_reads(empty_bamqc, initial_colour_col,
                                                    initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['on-target-reads'],
-                    figure=generateOnTargetReads(empty_bamqc, initial_colour_col,
+                    figure=generate_on_target_reads(empty_bamqc, initial_colour_col,
                                                  initial_shape_col, 'none')
                 ),
                 core.Graph(id=ids['reads-per-start-point'],
-                    figure=generateReadsPerStartPoint(empty_bamqc,
+                    figure=generate_reads_per_start_point(empty_bamqc,
                                                       initial_colour_col,
                                                       initial_shape_col,
                                                       'none', initial_cutoff_rpsp)
                 ),
                 core.Graph(id=ids['mean-insert-size'],
-                    figure=generateMeanInsertSize(empty_bamqc, initial_colour_col,
+                    figure=generate_mean_insert_size(empty_bamqc, initial_colour_col,
                            initial_shape_col, 'none',
                                                   initial_cutoff_insert_size)
                 )
@@ -371,27 +373,33 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             ]),
     ])])
 
+
 def init_callbacks(dash_app):
     @dash_app.callback(
-        [Output(ids['total-reads'], 'figure'),
-        Output(ids['unmapped-reads'], 'figure'),
-        Output(ids['non-primary-reads'], 'figure'),
-        Output(ids['on-target-reads'], 'figure'),
-        Output(ids['reads-per-start-point'], 'figure'),
-        Output(ids['mean-insert-size'], 'figure'),
-        Output(ids['data-table'], 'data')],
+        [
+            Output(ids['total-reads'], 'figure'),
+            Output(ids['unmapped-reads'], 'figure'),
+            Output(ids['non-primary-reads'], 'figure'),
+            Output(ids['on-target-reads'], 'figure'),
+            Output(ids['reads-per-start-point'], 'figure'),
+            Output(ids['mean-insert-size'], 'figure'),
+            Output(ids['data-table'], 'data')
+        ],
         [Input(ids['update-button'], 'n_clicks')],
-        [State(ids['run-id-list'], 'value'),
-        State(ids['first-sort'], 'value'),
-        State(ids['second-sort'], 'value'),
-        State(ids['colour-by'], 'value'),
-        State(ids['shape-by'], 'value'),
-        # State(ids['search-sample'], 'value'), #TODO?
-        State(ids['show-names'], 'value'),
-        State(ids['reads-per-start-point-slider'], 'value'),
-        State(ids['insert-size-mean-slider'], 'value'),
-        State(ids['passed-filter-reads-slider'], 'value')])
-    def updatePressed(click, 
+        [
+            State(ids['run-id-list'], 'value'),
+            State(ids['first-sort'], 'value'),
+            State(ids['second-sort'], 'value'),
+            State(ids['colour-by'], 'value'),
+            State(ids['shape-by'], 'value'),
+            # State(ids['search-sample'], 'value'), #TODO?
+            State(ids['show-names'], 'value'),
+            State(ids['reads-per-start-point-slider'], 'value'),
+            State(ids['insert-size-mean-slider'], 'value'),
+            State(ids['passed-filter-reads-slider'], 'value')
+        ]
+    )
+    def update_pressed(click,
             runs, 
             firstsort, 
             secondsort, 
@@ -414,13 +422,20 @@ def init_callbacks(dash_app):
         dd = defaultdict(list)
 
         return [
-            generateTotalReads(data, colourby, shapeby, shownames),
-            generateUnmappedReads(data, colourby, shapeby, shownames),
-            generateNonprimaryReads(data, colourby, shapeby, shownames),
-            generateOnTargetReads(data, colourby, shapeby, shownames),
-            generateReadsPerStartPoint(data, colourby, shapeby, shownames,
+            generate_total_reads(data, colourby, shapeby, shownames),
+            generate_unmapped_reads(data, colourby, shapeby, shownames),
+            generate_nonprimary_reads(data, colourby, shapeby, shownames),
+            generate_on_target_reads(data, colourby, shapeby, shownames),
+            generate_reads_per_start_point(data, colourby, shapeby, shownames,
                                        reads),
-            generateMeanInsertSize(data, colourby, shapeby, shownames,
+            generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
             data.to_dict('records', into=dd)
         ]
+
+    @dash_app.callback(
+        Output(ids['run-id-list'], 'value'),
+        [Input(ids['all-runs'], 'n_clicks')]
+    )
+    def all_runs_button_clicked(click):
+        return [x for x in ALL_RUNS]
