@@ -60,10 +60,10 @@ graph_cutoffs = {
     "pf_reads": 0.01
 }
 
-
+initial_first_sort = PINERY_COL.StudyTitle
+initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -294,7 +294,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": "Run",
                                        "value": BAMQC_COL.Run}
                     ],
-                        value=PINERY_COL.StudyTitle,
+                        value=initial_first_sort,
                         searchable=True,
                         clearable=False
                     )
@@ -305,8 +305,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     "Second Sort:",
                     core.Dropdown(id=ids["second-sort"],
                                   options=[
-                                      {"label": "Project",
-                                       "value": PINERY_COL.StudyTitle},
+                                      {"label": "Total Reads",
+                                       "value": BAMQC_COL.TotalReads},
                                       {"label": "Run",
                                        "value": PINERY_COL.SequencerRunName},
                                       {"label": "Kit",
@@ -314,7 +314,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": "Tissue Prep",
                                        "value": PINERY_COL.TissuePreparation},
                     ],
-                        value=PINERY_COL.PrepKit,
+                        value=initial_second_sort,
                         searchable=True,
                         clearable=False
                     )
