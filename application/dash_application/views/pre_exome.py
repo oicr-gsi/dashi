@@ -263,7 +263,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Br(),
 
                 html.Button('Add All', id=ids["all"]),
-                html.Button('Clear All', id=ids["clear"]),
                 html.Br(),
 
                 html.Label([
@@ -487,13 +486,6 @@ def init_callbacks(dash_app):
                                    insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records')]
-
-    # @dash_app.callback(
-    #     Output(ids['run-id-list'], 'value'),
-    #     [Input(ids['clear'], 'n_clicks')]
-    # )
-    # def clearButtonClicked(click):
-    #     return []
 
     @dash_app.callback(
         Output(ids['run-id-list'], 'value'),
