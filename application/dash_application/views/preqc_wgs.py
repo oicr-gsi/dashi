@@ -21,7 +21,6 @@ page_name = "preqc-wgs"
 ids = init_ids([
     # Buttons
     "update-button",
-    "download-button",
     "all-runs",
 
     # Sidebar controls
@@ -294,7 +293,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
-                html.Button('Download', id=ids['download-button']),
                 html.Br(),
 
                 html.Button('Add All', id=ids["all-runs"]),
