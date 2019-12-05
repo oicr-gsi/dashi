@@ -18,7 +18,7 @@ ids = init_ids([
     # Buttons
     'update-button',
     'download-button',
-    'all',
+    'all-runs',
 
     # Sidebar controls
     'run-id-list',
@@ -249,7 +249,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
 
-                html.Button('Add All', id=ids["all"]),
+                html.Button('Add All', id=ids["all-runs"]),
                 html.Br(),
 
                 html.Label([
@@ -476,7 +476,7 @@ def init_callbacks(dash_app):
 
     @dash_app.callback(
         Output(ids['run-id-list'], 'value'),
-        [Input(ids['all'], 'n_clicks')]
+        [Input(ids["all-runs"], 'n_clicks')]
     )
     def allButtonClicked(click):
         return [x for x in ALL_RUNS]
