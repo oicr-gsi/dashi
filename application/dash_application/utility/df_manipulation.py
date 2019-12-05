@@ -116,7 +116,8 @@ def df_with_instrument_model(df: DataFrame, run_col: str):
     """Add the instrument model column to a DataFrame."""
     r_i = _runs_with_instruments.copy(deep=True)
     return df.merge(
-        r_i[[INSTRUMENTS_COL.ModelName, RUN_COL.Name]],
+        r_i[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
+             RUN_COL.Name]],
         how="left",
         left_on=run_col,
         right_on=[RUN_COL.Name]

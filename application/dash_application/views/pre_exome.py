@@ -18,10 +18,12 @@ page_name = 'preqc-exome'
 ids = init_ids([
     # Buttons
     'update-button',
-    'all-runs',
 
     # Sidebar controls
+    'all-runs',
     'run-id-list',
+    'all-instruments',
+    'instruments-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -74,7 +76,9 @@ bamqc = get_bamqc_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
-
+ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
+    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
+    INSTRUMENT_COLS.ModelName].sort_values().unique()
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -210,14 +214,30 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Update', id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-                html.Button('Add All', id=ids["all-runs"], className="inline"),
-                html.Label([
-                    "Run",
-                    core.Dropdown(id=ids['run-id-list'],
-                        options=[{'label': x, 'value': x} for x in ALL_RUNS],
-                        multi=True
-                    )
-                ]), html.Br(),
+                core.Loading(type="circle", children=[
+                    html.Button('Add All', id=ids["all-runs"], className="inline"),
+                    html.Label([
+                        "Run",
+                        core.Dropdown(id=ids['run-id-list'],
+                            options=[{'label': x, 'value': x} for x in ALL_RUNS],
+                            multi=True)
+                    ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Instruments", id=ids["all-instruments"],
+                                className="inline"),
+                    html.Label([
+                       "Instruments",
+                        core.Dropdown(id=ids["instruments-list"],
+                                      options=[
+                                          {"label": instrument,
+                                           "value": instrument} for instrument in
+                                          ILLUMINA_INSTRUMENT_MODELS
+                                      ],
+                                      multi=True)
+                        ]),
+                ]),
+                html.Br(),
                 
                 html.Label([
                     "Sort:",
@@ -388,6 +408,7 @@ def init_callbacks(dash_app):
         [Input(ids['update-button'], 'n_clicks')],
         [
             State(ids['run-id-list'], 'value'),
+            State(ids['instruments-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -400,7 +421,8 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(click,
-            runs, 
+            runs,
+            instruments,
             firstsort, 
             secondsort, 
             colourby,
@@ -412,10 +434,15 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        if not runs:
+        if not runs and not instruments:
             data = pd.DataFrame(columns=empty_bamqc.columns)
         else:
-            data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
+            data = bamqc
+
+        if runs:
+            data = data[data[BAMQC_COL.Run].isin(runs)]
+        if instruments:
+            data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
@@ -438,5 +465,12 @@ def init_callbacks(dash_app):
         Output(ids['run-id-list'], 'value'),
         [Input(ids['all-runs'], 'n_clicks')]
     )
-    def all_runs_button_clicked(click):
+    def all_runs_requested(click):
         return [x for x in ALL_RUNS]
+
+    @dash_app.callback(
+        Output(ids['instruments-list'], 'value'),
+        [Input(ids['all-instruments'], 'n_clicks')]
+    )
+    def all_instruments_requested(click):
+        return [x for x in ILLUMINA_INSTRUMENT_MODELS]

@@ -19,10 +19,12 @@ page_name = "preqc-rna"
 ids = init_ids([
     # Buttons
     "update-button",
-    "all-runs",
 
     # Sidebar controls
+    "all-runs",
     "run-id-list",
+    "all-instruments",
+    "instruments-list",
     "first-sort",
     "second-sort",
     "colour-by",
@@ -143,7 +145,9 @@ RNA_DF = get_rna_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = RNA_DF[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
-ALL_INSTRUMENT_MODELS = RNA_DF[INSTRUMENT_COLS.ModelName].sort_values().unique()
+ILLUMINA_INSTRUMENT_MODELS = RNA_DF.loc[RNA_DF[
+    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
+    INSTRUMENT_COLS.ModelName].sort_values().unique()
 ALL_TISSUE_MATERIALS = RNA_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = RNA_DF[
@@ -152,7 +156,7 @@ ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()[::-1]  # reverse the list
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
-    PINERY_COL.SequencerRunName: ALL_RUNS,
+    RNA_COL.Run: ALL_RUNS,
     PINERY_COL.PrepKit: ALL_KITS,
     PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
     PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
@@ -294,16 +298,32 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Button("Update", id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-                html.Button('Add All', id=ids["all-runs"], className="inline"),
-                html.Label([
-                    "Run",    
-                    core.Dropdown(id=ids["run-id-list"],
-                                  options=[
-                                      {"label": run,
-                                       "value": run} for run in ALL_RUNS
-                                  ],
-                                  multi=True
-                                  )
+                core.Loading(type="circle", children=[
+                    html.Button('Add All', id=ids["all-runs"],
+                        className="inline"),
+                    html.Label([
+                        "Runs",
+                        core.Dropdown(id=ids["run-id-list"],
+                                      options=[
+                                          {"label": run,
+                                           "value": run} for run in ALL_RUNS
+                                      ],
+                                      multi=True)
+                    ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Instruments", id=ids["all-instruments"],
+                                className="inline"),
+                    html.Label([
+                       "Instruments",
+                        core.Dropdown(id=ids["instruments-list"],
+                                      options=[
+                                          {"label": instrument,
+                                           "value": instrument} for instrument in
+                                          ILLUMINA_INSTRUMENT_MODELS
+                                      ],
+                                      multi=True)
+                        ]),
                 ]),
                 html.Br(),
 
@@ -508,6 +528,7 @@ def init_callbacks(dash_app):
         ],
         [
             State(ids['run-id-list'], 'value'),
+            State(ids['instruments-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -518,16 +539,22 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        runs,
+                       instruments,
                        first_sort,
                        second_sort,
                        colour_by,
                        shape_by,
                        rpsp_cutoff,
                        total_reads_cutoff):
-        if not runs:
-            df = pd.DataFrame(columns=EMPTY_RNA.columns)
+        if not runs and not instruments:
+            df = EMPTY_RNA
         else:
-            df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
+            df = RNA_DF
+
+        if runs:
+            df = df[df[RNA_COL.Run].isin(runs)]
+        if instruments:
+            df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
@@ -551,5 +578,12 @@ def init_callbacks(dash_app):
         Output(ids['run-id-list'], 'value'),
         [Input(ids['all-runs'], 'n_clicks')]
     )
-    def all_runs_button_clicked(click):
+    def all_runs_requested(click):
         return [x for x in ALL_RUNS]
+
+    @dash_app.callback(
+        Output(ids['instruments-list'], 'value'),
+        [Input(ids['all-instruments'], 'n_clicks')]
+    )
+    def all_instruments_requested(click):
+        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
