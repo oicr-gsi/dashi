@@ -19,7 +19,6 @@ page_name = 'preqc-exome'
 ids = init_ids([
     # Buttons
     'update-button',
-    'download-button',
     'all-runs',
 
     # Sidebar controls
@@ -210,7 +209,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                      html.Div(className='sidebar four columns',
             children=[
                 html.Button('Update', id=ids['update-button']),
-                html.Button('Download', id=ids['download-button']),
                 html.Br(),
                 html.Br(),
 
