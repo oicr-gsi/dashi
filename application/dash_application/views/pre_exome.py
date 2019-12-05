@@ -236,18 +236,6 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
 
     return output
 
-def generateDebugLine(click, runs, firstsort, secondsort, colourby,
-                shapeby,
-                searchsample,
-                shownames,
-                reads,
-                insertsizemean,
-                passedfilter,
-                colourby_strategy,
-                sortby,
-                data):
-    return "".join(v for k, v in locals().items())
-
 layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
