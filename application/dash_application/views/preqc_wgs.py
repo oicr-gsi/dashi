@@ -54,13 +54,11 @@ INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
-    "Total Reads (Passed Filter)": "total_reads_pf",
-    "Unmapped Reads": "unmapped_reads_pct",
-    "Non-Primary Reads": "non_primary_reads_pct",
-    "On-target Reads": "on_target_reads_pct",
-    "Purity": "purity_pct",
-    "Project": "project",
-    "shape": "shape",
+    "Total Reads (Passed Filter)": "total reads passed filter",
+    "Unmapped Reads": "percent unmapped reads",
+    "Non-Primary Reads": "percent non-primary reads",
+    "On-target Reads": "percent on-target reads",
+    "Purity": "percent purity",
 }
 
 # Specify which columns to display in the DataTable
@@ -108,12 +106,16 @@ def get_wgs_data():
     # Get the BamQC data
     cache = QCETLCache()
 
-    ichorcna_df = cache.ichorcna.ichorcna[[ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes, ICHOR_COL.Ploidy, ICHOR_COL.TumorFraction]]
+    ichorcna_df = cache.ichorcna.ichorcna[[ICHOR_COL.Run,
+                                           ICHOR_COL.Lane,
+                                           ICHOR_COL.Barcodes,
+                                           ICHOR_COL.Ploidy,
+                                           ICHOR_COL.TumorFraction]]
     bamqc_df = cache.bamqc3.bamqc3
-    wgs_df = bamqc_df.merge(ichorcna_df,
-                                       how="left",
-                                       left_on=[BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes],
-                                       right_on=[ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes])
+    wgs_df = bamqc_df.merge(
+        ichorcna_df, how="left", left_on=[
+            BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes], right_on=[
+            ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes])
     # Cast the primary key/join columns to explicit types
     wgs_df = util.df_with_normalized_ius_columns(
         wgs_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
@@ -162,7 +164,7 @@ ALL_TISSUE_MATERIALS = WGS_DF[
 ALL_LIBRARY_DESIGNS = WGS_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ALL_RUNS = WGS_DF[BAMQC_COL.Run].sort_values().unique()[
-           ::-1]  # reverse the list
+    ::-1]  # reverse the list
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
@@ -177,6 +179,7 @@ WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 
 EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
+
 
 def generate_total_reads(df, colour_by, shape_by, cutoff):
     return generate(
@@ -291,7 +294,11 @@ def generate_ploidy(df, colour_by, shape_by):
     )
 
 
-def generate_terminal_output(data, initial_cutoff_rpsp, initial_cutoff_insert_mean, initial_cutoff_pf_reads):
+def generate_terminal_output(
+        data,
+        initial_cutoff_rpsp,
+        initial_cutoff_insert_mean,
+        initial_cutoff_pf_reads):
     return terminal_output(data, [
         ('rpsp', BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
         ('insert_mean', BAMQC_COL.InsertMean, initial_cutoff_insert_mean),
@@ -515,19 +522,19 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
             ]),
-            html.Div(className='terminal-output',
-                     children=[
-                         html.Pre(generate_terminal_output(EMPTY_WGS, initial_cutoff_rpsp, initial_cutoff_insert_mean,
-                                                           initial_cutoff_pf_reads),
-                                  id=ids['terminal-output'],
-                                  )
-                     ]),
-            html.Div(className='data-table',
-                     children=[
-                    build_table(ids["data-table"], wgs_table_columns, WGS_DF,
-                                BAMQC_COL.TotalReads)
-                     ]),
-        ])
+        ]),
+        html.Div(className='terminal-output',
+                 children=[
+                     html.Pre(generate_terminal_output(EMPTY_WGS, initial_cutoff_rpsp, initial_cutoff_insert_mean,
+                                                       initial_cutoff_pf_reads),
+                              id=ids['terminal-output'],
+                              )
+                 ]),
+        html.Div(className='data-table',
+                 children=[
+                     build_table(ids["data-table"], wgs_table_columns, WGS_DF,
+                                 BAMQC_COL.TotalReads)
+                 ]),
     ])
 ])
 
@@ -566,7 +573,10 @@ def init_callbacks(dash_app):
                        first_sort,
                        second_sort,
                        colour_by,
-                       shape_by, total_reads_cutoff, insert_mean_cutoff, rpsp_cutoff):
+                       shape_by,
+                       total_reads_cutoff,
+                       insert_mean_cutoff,
+                       rpsp_cutoff):
         if not runs:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
@@ -590,3 +600,10 @@ def init_callbacks(dash_app):
             generate_terminal_output(df, rpsp_cutoff, insert_mean_cutoff, total_reads_cutoff),
             df.to_dict('records', into=dd),
         ]
+
+    @dash_app.callback(
+        Output(ids['run-id-list'], 'value'),
+        [Input(ids['all-runs'], 'n_clicks')]
+    )
+    def all_runs_button_clicked(click):
+        return [x for x in ALL_RUNS]
