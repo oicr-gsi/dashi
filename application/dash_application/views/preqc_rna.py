@@ -10,7 +10,6 @@ from ..dash_id import init_ids
 from ..utility import df_manipulation as util
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
 from ..table_builder import build_table
-from gsiqcetl import QCETLCache
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 
@@ -107,7 +106,7 @@ def get_rna_data():
     #  * QCETLCache().rnaseqqc.rnaseqqc: returns the DataFrame/cache named
     #  "rnaseqqc" within the rnaseqqc cache (as some caches like bcl2fastq
     #  contain multiple DataFrame/caches)
-    rna_df = QCETLCache().rnaseqqc.rnaseqqc
+    rna_df = util.get_rnaseqqc()
     # Cast the primary key/join columns to explicit types
     rna_df = util.df_with_normalized_ius_columns(rna_df, RNA_COL.Run,
                                                  RNA_COL.Lane, RNA_COL.Barcodes)

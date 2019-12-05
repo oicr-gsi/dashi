@@ -10,7 +10,6 @@ from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
 from ..table_builder import build_table
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
-from gsiqcetl import QCETLCache
 from gsiqcetl.column import BamQcColumn
 import pinery
 
@@ -54,7 +53,7 @@ special_cols = {}
 
 
 def get_bamqc_data():
-    bamqc_df = QCETLCache().bamqc.bamqc
+    bamqc_df = util.get_bamqc()
     bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
 
     pinery_samples = util.get_pinery_samples_from_active_projects()
