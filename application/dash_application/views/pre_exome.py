@@ -211,10 +211,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Update', id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-
+                html.Button('Add All', id=ids["all-runs"], className="inline"),
                 html.Label([
                     "Run",
-                    html.Button('Add All', id=ids["all-runs"], className="inline"),
                     core.Dropdown(id=ids['run-id-list'],
                         options=[{'label': x, 'value': x} for x in ALL_RUNS],
                         multi=True
@@ -394,7 +393,7 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
-            # State(ids['search-sample'], 'value'), #TODO?
+            #State(ids['search-sample'], 'value'), #TODO?
             State(ids['show-names'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['insert-size-mean-slider'], 'value'),
@@ -407,7 +406,7 @@ def init_callbacks(dash_app):
             secondsort, 
             colourby,
             shapeby,
-            # searchsample,
+            #searchsample,
             shownames,
             readsperstartpoint,
             insertsizemean,
