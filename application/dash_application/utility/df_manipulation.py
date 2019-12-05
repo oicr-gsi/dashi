@@ -80,14 +80,9 @@ def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
         left_on=ius_cols,
         right_on=pinery_ius_columns
     )
-    # drop items with no Pinery data, because they must be old
+    # Drop metrics with no corresponding Pinery data. This should only happen
+    # if data is very old or stale
     df = df.dropna(subset=[PINERY_COL.SampleName])
-    # drop items with Pinery data that is definitely old
-    #  (pre-MISO, aka pre-April 2017)
-    is_modern = pd.to_datetime(df[PINERY_COL.CreateDate]).apply(
-        lambda x:
-        x > datetime.date(2017, 4, 1))
-    df = df[is_modern]
     return df
 
 
