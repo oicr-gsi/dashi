@@ -294,12 +294,11 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
                 html.Br(),
-
-                html.Button('Add All', id=ids["all-runs"]),
                 html.Br(),
 
                 html.Label([
                     "Run",
+                    html.Button('Add All', id=ids["all-runs"], className="inline"),
                     core.Dropdown(id=ids["run-id-list"],
                                   options=[
                                       {"label": run,
