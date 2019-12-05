@@ -3,7 +3,7 @@ import dash_html_components as html
 import numpy
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
-
+import pandas as pd
 import gsiqcetl.column
 import pinery
 from gsiqcetl import QCETLCache
