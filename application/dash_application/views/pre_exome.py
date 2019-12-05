@@ -213,7 +213,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Br(),
 
                 html.Label([
-                    "Run ID", 
+                    "Run",
                     html.Button('Add All', id=ids["all-runs"], className="inline"),
                     core.Dropdown(id=ids['run-id-list'],
                         options=[{'label': x, 'value': x} for x in ALL_RUNS],
