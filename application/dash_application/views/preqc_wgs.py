@@ -464,7 +464,10 @@ def init_callbacks(dash_app):
                        second_sort,
                        colour_by,
                        shape_by):
-        df = WGS_DF[WGS_DF[BAMQC_COL.Run].isin(runs)]
+        if not runs:
+            df = pd.DataFrame(columns=WGS_DF.columns)
+        else:
+            df = WGS_DF[WGS_DF[BAMQC_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

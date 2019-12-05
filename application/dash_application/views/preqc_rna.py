@@ -533,7 +533,10 @@ def init_callbacks(dash_app):
                        shape_by,
                        rpsp_cutoff,
                        total_reads_cutoff):
-        df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
+        if not runs:
+            df = pd.DataFrame(columns=RNA_DF.columns)
+        else:
+            df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

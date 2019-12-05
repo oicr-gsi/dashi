@@ -466,7 +466,10 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
+        if not runs:
+            data = pd.DataFrame(columns=bamqc.columns)
+        else:
+            data = bamqc[bamqc[BAMQC_COL.Run].isin(runs)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
