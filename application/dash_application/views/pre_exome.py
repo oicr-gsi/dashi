@@ -19,6 +19,7 @@ ids = init_ids([
     # Buttons
     'update-button',
     'download-button',
+    'all-runs',
 
     # Sidebar controls
     'run-id-list',
@@ -222,18 +223,6 @@ def generateTerminalOutput(data, reads_cutoff, insert_cutoff, passed_cutoff):
 
     return output
 
-def generateDebugLine(click, runs, firstsort, secondsort, colourby,
-                shapeby,
-                searchsample,
-                shownames,
-                reads,
-                insertsizemean,
-                passedfilter,
-                colourby_strategy,
-                sortby,
-                data):
-    return "".join(v for k, v in locals().items())
-
 layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
@@ -246,14 +235,11 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Update', id=ids['update-button']),
                 html.Button('Download', id=ids['download-button']),
                 html.Br(),
-
-
                 html.Label([
                     "Run ID", 
+                    html.Button('Add All', id=ids["all-runs"], className="inline"),
                     core.Dropdown(id=ids['run-id-list'],
-                        options=[
-                            {'label': x, 'value': x} for x in ALL_RUNS
-                        ],
+                        options=[{'label': x, 'value': x} for x in ALL_RUNS],
                         multi=True
                     )
                 ]), html.Br(),
@@ -471,3 +457,10 @@ def init_callbacks(dash_app):
                                    insertsizemean),
             generateTerminalOutput(data, reads, insertsizemean, passedfilter),
             data.to_dict('records')]
+
+    @dash_app.callback(
+        Output(ids['run-id-list'], 'value'),
+        [Input(ids["all-runs"], 'n_clicks')]
+    )
+    def allButtonClicked(click):
+        return [x for x in ALL_RUNS]

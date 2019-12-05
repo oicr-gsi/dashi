@@ -366,6 +366,14 @@ input[type="button"].button-primary:focus {
     border-color: #1eaedb;
 }
 
+.button.inline,
+button.inline {
+    height: 15px;
+    line-height: 15px;
+    padding: 0 10px;
+    float: right;
+}
+
 /* Forms
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 input[type="email"],
