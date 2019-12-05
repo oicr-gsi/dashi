@@ -27,6 +27,19 @@
     border-color: #d2ecf7;
 }
 
+.sidebar .Select-clear-zone {
+    vertical-align: top;
+}
+
+.sidebar .Select-clear {
+    font-size: 25px;
+    font-weight: bolder;
+}
+
+.sidebar .Select-arrow {
+    visibility: hidden;
+}
+
 .data-table .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner table {
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
