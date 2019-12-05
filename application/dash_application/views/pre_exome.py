@@ -19,7 +19,6 @@ ids = init_ids([
     'update-button',
     'download-button',
     'all',
-    'clear',
 
     # Sidebar controls
     'run-id-list',
