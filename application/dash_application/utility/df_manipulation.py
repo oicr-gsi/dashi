@@ -3,6 +3,7 @@ import pandas as pd
 from pandas import DataFrame
 from typing import List
 
+from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
 
@@ -21,6 +22,15 @@ bamqc_ius_columns = [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
+
+"""
+Open a single instance of each cache, and use copies for the reports. 
+"""
+cache = QCETLCache()
+_rnaseqqc = cache.rnaseqqc.rnaseqqc
+_bamqc = cache.bamqc.bamqc
+_bamqc3 = cache.bamqc3.bamqc3
+_ichorcna = cache.ichorcna.ichorcna
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
@@ -59,6 +69,22 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
         left_on=[RUN_COL.InstrumentID],
         right_on=[INSTRUMENTS_COL.InstrumentID]
     )
+
+
+def get_rnaseqqc():
+    return _rnaseqqc.copy(deep=True)
+
+
+def get_bamqc():
+    return _bamqc.copy(deep=True)
+
+
+def get_bamqc3():
+    return _bamqc3.copy(deep=True)
+
+
+def get_ichorcna():
+    return _ichorcna.copy(deep=True)
 
 
 def get_pinery_samples():

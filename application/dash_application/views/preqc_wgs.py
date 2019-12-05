@@ -7,7 +7,6 @@ import pandas as pd
 
 import gsiqcetl.column
 import pinery
-from gsiqcetl import QCETLCache
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import terminal_output, fill_in_shape_col, fill_in_colour_col, generate
@@ -104,14 +103,14 @@ def get_wgs_data():
       * Runs (needed to join Pinery to Instruments)
     """
     # Get the BamQC data
-    cache = QCETLCache()
 
-    ichorcna_df = cache.ichorcna.ichorcna[[ICHOR_COL.Run,
+    ichorcna_df = util.get_ichorcna()
+    ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
                                            ICHOR_COL.Lane,
                                            ICHOR_COL.Barcodes,
                                            ICHOR_COL.Ploidy,
                                            ICHOR_COL.TumorFraction]]
-    bamqc_df = cache.bamqc3.bamqc3
+    bamqc_df = util.get_bamqc3()
     wgs_df = bamqc_df.merge(
         ichorcna_df, how="left", left_on=[
             BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes], right_on=[
