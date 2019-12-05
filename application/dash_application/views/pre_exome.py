@@ -6,6 +6,7 @@ from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
 from ..utility import df_manipulation as util
+from ..utility import slider_utils
 import plotly.graph_objects as go
 import pandas as pd
 from gsiqcetl import QCETLCache
@@ -99,20 +100,6 @@ bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
-# TODO: move elsewhere
-def frange(min, max, step):
-    range = []
-    i = min
-    while i <= max:
-        range.append(round(i, 2))
-        i += step
-    return range
-
-# TODO: move elsewhere
-def percentageOf(data, bamqc_column):
-    return (data[bamqc_column] / data[BAMQC_COL.TotalReads]) * 100
-
-
 def generateTotalReads(current_data, colourby, shapeby, shownames):
     return generate(
         "Total Reads",
@@ -131,7 +118,7 @@ def generateUnmappedReads(current_data, colourby, shapeby, shownames):
         "Unmapped Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: percentageOf(d, BAMQC_COL.UnmappedReads),
+        lambda d: slider_utils.percentageOf(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -143,7 +130,7 @@ def generateNonprimaryReads(current_data, colourby, shapeby, shownames):
         "Non-Primary Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: percentageOf(d, BAMQC_COL.NonPrimaryReads),
+        lambda d: slider_utils.percentageOf(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -155,7 +142,7 @@ def generateOnTargetReads(current_data, colourby, shapeby, shownames):
         "On Target Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: percentageOf(d, BAMQC_COL.ReadsOnTarget),
+        lambda d: slider_utils.percentageOf(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -168,7 +155,7 @@ def generateReadsPerStartPoint(current_data, colourby, shapeby, shownames,
         "Reads per Start Point",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: percentageOf(d, BAMQC_COL.ReadsPerStartPoint),
+        lambda d: slider_utils.percentageOf(d, BAMQC_COL.ReadsPerStartPoint, BAMQC_COL.TotalReads),
         "Fraction",
         colourby,
         shapeby,
@@ -380,7 +367,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         min=0,
                         max=0.5,
                         step=0.005,
-                        marks={str(n):str(n) for n in frange(0, 0.5, 0.05)},
+                        marks={str(n):str(n) for n in slider_utils.frange(0, 0.5, 0.05)},
                         value=initial_cutoff_pf_reads
                     )
                 ]), html.Br()
