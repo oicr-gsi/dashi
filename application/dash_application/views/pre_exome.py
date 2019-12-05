@@ -414,8 +414,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
         html.Div(className='data-table',
             children=[
                 tabl.DataTable(id=ids['data-table'],
-                    columns=[{"name": i, "id": i} for i in bamqc.columns],
-                    data=bamqc.to_dict('records'),
+                    columns=[{"name": i, "id": i} for i in empty_bamqc.columns],
+                    data=_empty_bamqc.to_dict('records'),
                     export_format="csv"
                 )
             ]),
