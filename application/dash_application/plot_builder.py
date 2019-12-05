@@ -66,24 +66,28 @@ PLOTLY_DEFAULT_COLOURS=[
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
-    df['shape'] = pandas.Series
-    if not df.empty:
+    if df.empty:
+        df['shape'] = pandas.Series
+    else:
         all_shapes = get_shapes_for_values(shape_or_colour_values[
                                             shape_col].tolist())
-        # for each row,
-        df['shape'] = df.apply(lambda row: all_shapes.get(row[
-            shape_col]), axis=1)
+        # for each row, apply the shape according the shape col's value
+        shape_col = df.apply(lambda row: all_shapes.get(row[shape_col]),
+                             axis=1)
+        df = df.assign(shape=shape_col.values)
     return df
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict):
-    df['colour'] = pandas.Series
-    if not df.empty:
+    if df.empty:
+        df['colour'] = pandas.Series
+    else:
         all_colours = get_colours_for_values(shape_or_colour_values[
                                             colour_col].tolist())
-        # for each row,
-        df['colour'] = df.apply(lambda row: all_colours.get(row[
-            colour_col]), axis=1)
+        # for each row, apply the colour according the colour col's value
+        colour_col = df.apply(lambda row: all_colours.get(row[colour_col]),
+                             axis=1)
+        df = df.assign(colour=colour_col.values)
     return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
