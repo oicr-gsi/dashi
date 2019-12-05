@@ -65,20 +65,24 @@ PLOTLY_DEFAULT_COLOURS=[
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
-    all_shapes = get_shapes_for_values(shape_or_colour_values[
-                                           shape_col].tolist())
-    # for each row,
-    df['shape'] = df.apply(lambda row: all_shapes.get(row[
-        shape_col]), axis=1)
+    df['shape'] = pandas.Series
+    if not df.empty:
+        all_shapes = get_shapes_for_values(shape_or_colour_values[
+                                            shape_col].tolist())
+        # for each row,
+        df['shape'] = df.apply(lambda row: all_shapes.get(row[
+            shape_col]), axis=1)
     return df
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict):
-    all_colours = get_colours_for_values(shape_or_colour_values[
-                                           colour_col].tolist())
-    # for each row,
-    df['colour'] = df.apply(lambda row: all_colours.get(row[
-        colour_col]), axis=1)
+    df['colour'] = pandas.Series
+    if not df.empty:
+        all_colours = get_colours_for_values(shape_or_colour_values[
+                                            colour_col].tolist())
+        # for each row,
+        df['colour'] = df.apply(lambda row: all_colours.get(row[
+            colour_col]), axis=1)
     return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters

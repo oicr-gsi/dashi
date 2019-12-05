@@ -3,7 +3,7 @@ import dash_html_components as html
 import numpy
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
-
+import pandas as pd
 import gsiqcetl.column
 import pinery
 from gsiqcetl import QCETLCache
@@ -157,6 +157,8 @@ shape_or_colour_values = {
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 
+EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
+
 
 def generate_total_reads(df, colour_by, shape_by):
     return generate(
@@ -279,7 +281,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": run,
                                        "value": run} for run in ALL_RUNS
                     ],
-                        value=[run for run in ALL_RUNS],
                         multi=True
                     )
                 ]),
@@ -386,43 +387,43 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             html.Div(className="seven columns", children=[
                 core.Graph(
                      id=ids["total-reads"],
-                     figure=generate_total_reads(WGS_DF, initial_colour_col,
+                     figure=generate_total_reads(EMPTY_WGS, initial_colour_col,
                                                  initial_shape_col)
                      ),
                 core.Graph(
                     id=ids["mean-insert"],
                     figure=generate_mean_insert_size(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["duplication"],
                     figure=generate_duplication(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["purity"],
-                    figure=generate_purity(WGS_DF,
+                    figure=generate_purity(EMPTY_WGS,
                                            initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["ploidy"],
-                    figure=generate_ploidy(WGS_DF,
+                    figure=generate_ploidy(EMPTY_WGS,
                                            initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["unmapped-reads"],
                     figure=generate_unmapped_reads(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["non-primary-reads"],
                     figure=generate_non_primary(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
                 core.Graph(
                     id=ids["on-target-reads"],
                     figure=generate_on_target_reads(
-                        WGS_DF, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
             ])
 
@@ -463,7 +464,10 @@ def init_callbacks(dash_app):
                        second_sort,
                        colour_by,
                        shape_by):
-        df = WGS_DF[WGS_DF[BAMQC_COL.Run].isin(runs)]
+        if not runs:
+            df = pd.DataFrame(columns=WGS_DF.columns)
+        else:
+            df = WGS_DF[WGS_DF[BAMQC_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

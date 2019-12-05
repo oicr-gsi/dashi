@@ -169,7 +169,7 @@ RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
 RNA_DF = fill_in_colour_col(RNA_DF, initial_colour_col, shape_or_colour_values)
 # Do initial sort before graphing
 RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
-
+EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
 
 def generate_total_reads(df, colour_by, shape_by, cutoff):
     return generate(
@@ -307,7 +307,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       {"label": run,
                                        "value": run} for run in ALL_RUNS
                                   ],
-                                  value=[run for run in ALL_RUNS],
                                   multi=True
                                   )
                 ]),
@@ -440,45 +439,45 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             html.Div(className="seven columns",  children=[
                  core.Graph(
                      id=ids["total-reads"],
-                     figure=generate_total_reads(RNA_DF, initial_colour_col,
+                     figure=generate_total_reads(EMPTY_RNA, initial_colour_col,
                                                  initial_shape_col,
                                                  initial_cutoff_pf_reads)
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
-                     figure=generate_unique_reads(RNA_DF, initial_colour_col, initial_shape_col)
+                     figure=generate_unique_reads(EMPTY_RNA, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["reads-per-start-point"],
                      figure=generate_reads_per_start_point(
-                         RNA_DF, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
+                         EMPTY_RNA, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
-                     figure=generate_five_to_three(RNA_DF,
+                     figure=generate_five_to_three(EMPTY_RNA,
                                                    initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["correct-read-strand"],
-                     figure=generate_correct_read_strand(RNA_DF,
+                     figure=generate_correct_read_strand(EMPTY_RNA,
                           initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["coding"],
-                     figure=generate_coding(RNA_DF, initial_colour_col, initial_shape_col)
+                     figure=generate_coding(EMPTY_RNA, initial_colour_col, initial_shape_col)
                  ),
                 core.Graph(
                     id=ids["rrna-contam"],
-                    figure=generate_rrna_contam(RNA_DF, initial_colour_col,
+                    figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
                                                 initial_shape_col)
                 ),
                  core.Graph(
                      id=ids["dv200"],
-                     figure=generate_dv200(RNA_DF, initial_colour_col, initial_shape_col)
+                     figure=generate_dv200(EMPTY_RNA, initial_colour_col, initial_shape_col)
                  ),
                  core.Graph(
                      id=ids["rin"],
-                     figure=generate_rin(RNA_DF, initial_colour_col, initial_shape_col)
+                     figure=generate_rin(EMPTY_RNA, initial_colour_col, initial_shape_col)
                  ),
              ]),
 
@@ -490,7 +489,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     tabl.DataTable(id=ids["data-table"],
                         columns=[{"name": i, "id": i} for i in
                                  rnaseqqc_table_columns],
-                        data=RNA_DF.to_dict('records'),
+                        data=EMPTY_RNA.to_dict('records'),
                         export_format="csv"
                     )
                 ])
@@ -534,7 +533,10 @@ def init_callbacks(dash_app):
                        shape_by,
                        rpsp_cutoff,
                        total_reads_cutoff):
-        df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
+        if not runs:
+            df = pd.DataFrame(columns=RNA_DF.columns)
+        else:
+            df = RNA_DF[RNA_DF[RNA_COL.Run].isin(runs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
