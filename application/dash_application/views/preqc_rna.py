@@ -25,6 +25,8 @@ ids = init_ids([
     "run-id-list",
     "all-instruments",
     "instruments-list",
+    "all-projects",
+    "projects-list",
     "first-sort",
     "second-sort",
     "colour-by",
@@ -325,6 +327,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       multi=True)
                         ]),
                 ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Projects", id=ids["all-projects"],
+                                className="inline"),
+                    html.Label([
+                        "Projects",
+                        core.Dropdown(id=ids["projects-list"],
+                                      options=[
+                                          {"label": project,
+                                           "value": project} for project
+                                          in ALL_PROJECTS
+                                      ],
+                                      multi=True)
+                    ]),
+                ]),
                 html.Br(),
 
                 html.Label([
@@ -529,6 +545,7 @@ def init_callbacks(dash_app):
         [
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
+            State(ids['projects-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -540,13 +557,14 @@ def init_callbacks(dash_app):
     def update_pressed(click,
                        runs,
                        instruments,
+                       projects,
                        first_sort,
                        second_sort,
                        colour_by,
                        shape_by,
                        rpsp_cutoff,
                        total_reads_cutoff):
-        if not runs and not instruments:
+        if not runs and not instruments and not projects:
             df = EMPTY_RNA
         else:
             df = RNA_DF
@@ -555,6 +573,8 @@ def init_callbacks(dash_app):
             df = df[df[RNA_COL.Run].isin(runs)]
         if instruments:
             df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
+        if projects:
+            df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
@@ -587,3 +607,10 @@ def init_callbacks(dash_app):
     )
     def all_instruments_requested(click):
         return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+
+    @dash_app.callback(
+        Output(ids['projects-list'], 'value'),
+        [Input(ids['all-projects'], 'n_clicks')]
+    )
+    def all_projects_requested(click):
+        return [x for x in ALL_PROJECTS]

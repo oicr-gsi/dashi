@@ -24,6 +24,8 @@ ids = init_ids([
     'run-id-list',
     'all-instruments',
     'instruments-list',
+    'all-projects',
+    'projects-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -237,6 +239,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                       multi=True)
                         ]),
                 ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Projects", id=ids["all-projects"],
+                                className="inline"),
+                    html.Label([
+                        "Projects",
+                        core.Dropdown(id=ids["projects-list"],
+                                      options=[
+                                          {"label": project,
+                                           "value": project} for project
+                                          in ALL_PROJECTS
+                                      ],
+                                      multi=True)
+                    ]),
+                ]),
                 html.Br(),
                 
                 html.Label([
@@ -409,6 +425,7 @@ def init_callbacks(dash_app):
         [
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
+            State(ids['projects-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -423,6 +440,7 @@ def init_callbacks(dash_app):
     def update_pressed(click,
             runs,
             instruments,
+            projects,
             firstsort, 
             secondsort, 
             colourby,
@@ -434,7 +452,7 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        if not runs and not instruments:
+        if not runs and not instruments and not projects:
             data = pd.DataFrame(columns=empty_bamqc.columns)
         else:
             data = bamqc
@@ -443,6 +461,8 @@ def init_callbacks(dash_app):
             data = data[data[BAMQC_COL.Run].isin(runs)]
         if instruments:
             data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
+        if projects:
+            data = data[data[PINERY_COL.StudyTitle].isin(instruments)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
@@ -474,3 +494,10 @@ def init_callbacks(dash_app):
     )
     def all_instruments_requested(click):
         return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+
+    @dash_app.callback(
+        Output(ids['projects-list'], 'value'),
+        [Input(ids['all-projects'], 'n_clicks')]
+    )
+    def all_projects_requested(click):
+        return [x for x in ALL_PROJECTS]
