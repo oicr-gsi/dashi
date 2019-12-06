@@ -2,7 +2,6 @@ from collections import defaultdict
 
 import dash_core_components as core
 import dash_html_components as html
-import numpy
 from dash.dependencies import Input, Output, State
 import pandas as pd
 
@@ -11,7 +10,7 @@ import pinery
 from gsiqcetl import QCETLCache
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import get_shapes_for_values, fill_in_shape_col, fill_in_colour_col, generate
+from ..plot_builder import terminal_output, fill_in_shape_col, fill_in_colour_col, generate
 from ..table_builder import build_table
 from ..utility import df_manipulation as util
 
@@ -29,11 +28,14 @@ ids = init_ids([
     "second-sort",
     "colour-by",
     "shape-by",
+    "reads-per-start-point-slider",
+    "insert-mean-slider",
     "passed-filter-reads-slider",
 
     # Graphs
     "total-reads",
     "mean-insert",
+    "reads-per-start-point",
     "duplication",
     "purity",
     "ploidy",
@@ -41,10 +43,11 @@ ids = init_ids([
     "non-primary-reads",
     "on-target-reads",
 
+    "terminal-output",
     "data-table",
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQcColumn
+BAMQC_COL = gsiqcetl.column.BamQc3Column
 ICHOR_COL = gsiqcetl.column.IchorCnaColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
@@ -67,26 +70,22 @@ first_col_set = [
     special_cols["On-target Reads"],
     special_cols["Purity"]
 ]
-most_bamqc_cols = [*BAMQC_COL.values()]
-most_bamqc_cols.remove(BAMQC_COL.BamFile)
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
     PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
     PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
     PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
-wgs_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
+wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *ICHOR_COL.values(), *later_col_set]
 
 # Set initial values for dropdown menus
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-
-# Set initial points for graph cutoff lines
-graph_cutoffs = {
-    "pf_reads": 0.01
-}
+initial_cutoff_pf_reads = 0.01
+initial_cutoff_insert_mean = 150
+initial_cutoff_rpsp = 5
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -106,17 +105,17 @@ def get_wgs_data():
     """
     # Get the BamQC data
     cache = QCETLCache()
-    if True:  # DELETE(amasella): once IchorCNA data is available
-        wgs_df = cache.bamqc.bamqc
-        wgs_df[ICHOR_COL.Ploidy] = numpy.NaN
-        wgs_df[ICHOR_COL.TumorFraction] = numpy.NaN
-        # This doesn't seem to exist even though it should
-        wgs_df[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION] = numpy.NaN
-    else:
-        wgs_df = cache.bamqc.bamqc.merge(cache.ichorcna.ichorcna[[ICHOR_COL.Ploidy, ICHOR_COL.TumorFraction]],
-                                         how="left",
-                                         left_on=[BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes],
-                                         right_on=[ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes])
+
+    ichorcna_df = cache.ichorcna.ichorcna[[ICHOR_COL.Run,
+                                           ICHOR_COL.Lane,
+                                           ICHOR_COL.Barcodes,
+                                           ICHOR_COL.Ploidy,
+                                           ICHOR_COL.TumorFraction]]
+    bamqc_df = cache.bamqc3.bamqc3
+    wgs_df = bamqc_df.merge(
+        ichorcna_df, how="left", left_on=[
+            BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes], right_on=[
+            ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes])
     # Cast the primary key/join columns to explicit types
     wgs_df = util.df_with_normalized_ius_columns(
         wgs_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
@@ -182,7 +181,7 @@ WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
 EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
 
 
-def generate_total_reads(df, colour_by, shape_by):
+def generate_total_reads(df, colour_by, shape_by, cutoff):
     return generate(
         "Total Reads (Passed Filter)",
         df,
@@ -191,11 +190,12 @@ def generate_total_reads(df, colour_by, shape_by):
         "# Reads (10^6)",
         colour_by,
         shape_by,
-        "none"
+        "none",
+        cutoff
     )
 
 
-def generate_mean_insert_size(df, colour_by, shape_by):
+def generate_mean_insert_size(df, colour_by, shape_by, cutoff):
     return generate(
         "Insert Mean",
         df,
@@ -204,8 +204,16 @@ def generate_mean_insert_size(df, colour_by, shape_by):
         "Base Pairs",
         colour_by,
         shape_by,
-        "none"
+        "none",
+        cutoff
     )
+
+
+def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
+    return generate("Reads per Start Point",
+                    df, lambda d: d[PINERY_COL.SampleName],
+                    lambda d: d[BAMQC_COL.ReadsPerStartPoint],
+                    "Reads", colour_by, shape_by, "none", cutoff)
 
 
 def generate_duplication(df, colour_by, shape_by):
@@ -284,6 +292,18 @@ def generate_ploidy(df, colour_by, shape_by):
         shape_by,
         "none"
     )
+
+
+def generate_terminal_output(
+        data,
+        initial_cutoff_rpsp,
+        initial_cutoff_insert_mean,
+        initial_cutoff_pf_reads):
+    return terminal_output(data, [
+        ('rpsp', BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+        ('insert_mean', BAMQC_COL.InsertMean, initial_cutoff_insert_mean),
+        ('reads_pf', special_cols["Total Reads (Passed Filter)"], initial_cutoff_pf_reads),
+    ])
 
 
 # Layout elements
@@ -377,7 +397,32 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 # TODO: add "Search Sample" input
 
                 # TODO: add "Show Names" dropdown
-                # TODO: add cut-off sliders
+                html.Label([
+                    "Reads Per Start Point:",
+                    core.Slider(
+                        id=ids["reads-per-start-point-slider"],
+                        min=0,
+                        max=50,
+                        step=1,
+                        marks={i * 5: str(i * 5) for i in range(0, 10)},
+                        tooltip="always_visible",
+                        value=initial_cutoff_rpsp
+                    )
+                ]),
+                html.Br(),
+                html.Label([
+                    "Insert Mean:",
+                    core.Slider(
+                        id=ids["insert-mean-slider"],
+                        min=0,
+                        max=500,
+                        step=10,
+                        marks={i * 50: str(i * 50) for i in range(0, 10)},
+                        tooltip="always_visible",
+                        value=initial_cutoff_insert_mean
+                    )
+                ]),
+                html.Br(),
 
                 html.Label([
                     "Passed Filter Reads:",
@@ -386,21 +431,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=0.5,
                         step=0.025,
-                        marks={
-                            0: "0",
-                            0.05: "0.05",
-                            0.1: "0.1",
-                            0.15: "0.15",
-                            0.2: "0.2",
-                            0.25: "0.25",
-                            0.3: "0.3",
-                            0.35: "0.35",
-                            0.4: "0.4",
-                            0.45: "0.45",
-                            0.5: "0.5"
-                        },
+                        marks={i * 0.05: str(i * 0.05) for i in range(0, 10)},
                         tooltip="always_visible",
-                        value=graph_cutoffs["pf_reads"]
+                        value=initial_cutoff_pf_reads
                     )
                 ]),
                 html.Br(),
@@ -408,14 +441,19 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
             html.Div(className="seven columns", children=[
                 core.Graph(
-                     id=ids["total-reads"],
-                     figure=generate_total_reads(EMPTY_WGS, initial_colour_col,
-                                                 initial_shape_col)
-                     ),
+                    id=ids["total-reads"],
+                    figure=generate_total_reads(EMPTY_WGS, initial_colour_col,
+                                                initial_shape_col, initial_cutoff_pf_reads)
+                ),
                 core.Graph(
                     id=ids["mean-insert"],
                     figure=generate_mean_insert_size(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col, initial_cutoff_insert_mean)
+                ),
+                core.Graph(
+                    id=ids["reads-per-start-point"],
+                    figure=generate_reads_per_start_point(
+                        EMPTY_WGS, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
                 ),
                 core.Graph(
                     id=ids["duplication"],
@@ -448,14 +486,19 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         EMPTY_WGS, initial_colour_col, initial_shape_col)
                 ),
             ]),
-
-            # DataTable for all samples info
-            html.Div(className="data-table",
-                children=[
-                    build_table(ids["data-table"], wgs_table_columns, WGS_DF,
-                                BAMQC_COL.TotalReads)
-                ])
-        ])
+        ]),
+        html.Div(className='terminal-output',
+                 children=[
+                     html.Pre(generate_terminal_output(EMPTY_WGS, initial_cutoff_rpsp, initial_cutoff_insert_mean,
+                                                       initial_cutoff_pf_reads),
+                              id=ids['terminal-output'],
+                              )
+                 ]),
+        html.Div(className='data-table',
+                 children=[
+                     build_table(ids["data-table"], wgs_table_columns, WGS_DF,
+                                 BAMQC_COL.TotalReads)
+                 ]),
     ])
 ])
 
@@ -465,12 +508,14 @@ def init_callbacks(dash_app):
         [
             Output(ids["total-reads"], "figure"),
             Output(ids["mean-insert"], "figure"),
+            Output(ids["reads-per-start-point"], "figure"),
             Output(ids["duplication"], "figure"),
             Output(ids["purity"], "figure"),
             Output(ids["ploidy"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["non-primary-reads"], "figure"),
             Output(ids["on-target-reads"], "figure"),
+            Output(ids["terminal-output"], "value"),
             Output(ids["data-table"], "data"),
         ],
         [
@@ -482,6 +527,9 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
+            State(ids["reads-per-start-point-slider"], 'value'),
+            State(ids["insert-mean-slider"], 'value'),
+            State(ids["passed-filter-reads-slider"], 'value'),
         ]
     )
     def update_pressed(click,
@@ -489,7 +537,10 @@ def init_callbacks(dash_app):
                        first_sort,
                        second_sort,
                        colour_by,
-                       shape_by):
+                       shape_by,
+                       total_reads_cutoff,
+                       insert_mean_cutoff,
+                       rpsp_cutoff):
         if not runs:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
@@ -501,15 +552,17 @@ def init_callbacks(dash_app):
         dd = defaultdict(list)
 
         return [
-            generate_total_reads(df, colour_by, shape_by),
-            generate_mean_insert_size(df, colour_by, shape_by),
+            generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
+            generate_mean_insert_size(df, colour_by, shape_by, insert_mean_cutoff),
+            generate_reads_per_start_point(df, colour_by, shape_by, rpsp_cutoff),
             generate_duplication(df, colour_by, shape_by),
             generate_purity(df, colour_by, shape_by),
             generate_ploidy(df, colour_by, shape_by),
             generate_unmapped_reads(df, colour_by, shape_by),
             generate_non_primary(df, colour_by, shape_by),
             generate_on_target_reads(df, colour_by, shape_by),
-            df.to_dict("records", into=dd),
+            generate_terminal_output(df, rpsp_cutoff, insert_mean_cutoff, total_reads_cutoff),
+            df.to_dict('records', into=dd),
         ]
 
     @dash_app.callback(
