@@ -6,8 +6,8 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
-from ..table_builder import table_tabs, cutoff_table_data
+from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, fill_in_size_col
+from ..table_builder import build_table
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
 from gsiqcetl.column import BamQcColumn
@@ -96,6 +96,7 @@ ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
     INSTRUMENT_COLS.ModelName].sort_values().unique()
 ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
+
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -133,6 +134,7 @@ initial_cutoff_rpsp = 5
 
 bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
 bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
+bamqc = fill_in_size_col(bamqc)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
@@ -547,6 +549,7 @@ def init_callbacks(dash_app):
 
         if searchsample:
             data.loc[data[PINERY_COL.SampleName].isin(searchsample), 'colour'] = '#F00'
+        data = fill_in_size_col(data)
 
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)

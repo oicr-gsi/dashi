@@ -90,6 +90,11 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         df = df.assign(colour=colour_col.values)
     return df
 
+def fill_in_size_col(df: DataFrame):
+    df['markersize'] = 12
+    df.loc[df['colour']=="#F00", 'markersize'] = 30
+    return df
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_type, line_y=None):
@@ -142,7 +147,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             mode=marker_mode,
             marker={
                 "symbol": data['shape'],
-                "color": data['colour'] # Please note the 'u'
+                "color": data['colour'], # Please note the 'u'
+                "size": data['markersize']
             }
         )
         traces.append(graph)
