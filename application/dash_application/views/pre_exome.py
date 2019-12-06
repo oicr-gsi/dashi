@@ -19,6 +19,7 @@ ids = init_ids([
     # Buttons
     'update-button',
 
+
     # Sidebar controls
     'all-runs',
     'run-id-list',
@@ -94,6 +95,7 @@ ALL_LIBRARY_DESIGNS = bamqc[
 ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
     INSTRUMENT_COLS.ModelName].sort_values().unique()
+ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -358,10 +360,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     )
                 ]), html.Br(),
 
-                # html.Label([
-                #     "Search Sample:",
-                #     core.Input(id=ids['search-sample'])
-                # ]), html.Br(),
+                html.Label([
+                    "Search Sample:",
+                    core.Dropdown(id=ids['search-sample'],
+                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
+                        multi = True
+                    )
+                ]), html.Br(),
                 
                 html.Label([
                     "Show Names:",
@@ -492,7 +497,7 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
-            #State(ids['search-sample'], 'value'), #TODO?
+            State(ids['search-sample'], 'value'), 
             State(ids['show-names'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['insert-size-mean-slider'], 'value'),
@@ -511,7 +516,7 @@ def init_callbacks(dash_app):
             secondsort, 
             colourby,
             shapeby,
-            #searchsample,
+            searchsample,
             shownames,
             readsperstartpoint,
             insertsizemean,
@@ -539,6 +544,10 @@ def init_callbacks(dash_app):
         data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
+
+        if searchsample:
+            data.loc[data[PINERY_COL.SampleName].isin(searchsample), 'colour'] = '#F00'
+
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)
         (failure_df, failure_columns ) =cutoff_table_data(data, [
@@ -571,31 +580,3 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         return [x for x in ALL_RUNS]
-
-    @dash_app.callback(
-        Output(ids['instruments-list'], 'value'),
-        [Input(ids['all-instruments'], 'n_clicks')]
-    )
-    def all_instruments_requested(click):
-        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
-
-    @dash_app.callback(
-        Output(ids['projects-list'], 'value'),
-        [Input(ids['all-projects'], 'n_clicks')]
-    )
-    def all_projects_requested(click):
-        return [x for x in ALL_PROJECTS]
-
-    @dash_app.callback(
-        Output(ids['kits-list'], 'value'),
-        [Input(ids['all-kits'], 'n_clicks')]
-    )
-    def all_kits_requested(click):
-        return [x for x in ALL_KITS]
-
-    @dash_app.callback(
-        Output(ids['library-designs-list'], 'value'),
-        [Input(ids['all-library-designs'], 'n_clicks')]
-    )
-    def all_library_designs_requested(click):
-        return [x for x in ALL_LIBRARY_DESIGNS]
