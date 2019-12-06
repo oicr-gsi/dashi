@@ -462,7 +462,7 @@ def init_callbacks(dash_app):
         if instruments:
             data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
-            data = data[data[PINERY_COL.StudyTitle].isin(instruments)]
+            data = data[data[PINERY_COL.StudyTitle].isin(projects)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
