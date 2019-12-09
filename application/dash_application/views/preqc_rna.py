@@ -9,7 +9,7 @@ from . import navbar
 from ..dash_id import init_ids
 from ..utility import df_manipulation as util
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
-from ..table_builder import build_table
+from ..table_builder import table_tabs, cutoff_table_data
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 
@@ -42,6 +42,7 @@ ids = init_ids([
     "dv200",
     "rin",
 
+    "failed-samples",
     "data-table",
 ])
 
@@ -475,15 +476,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      figure=generate_rin(EMPTY_RNA, initial_colour_col, initial_shape_col)
                  ),
              ]),
-
-            # Add terminal output for failed samples
-
-            # DataTable for all samples info
-            html.Div(className="data-table",
-                children=[
-                    build_table(ids["data-table"], rnaseqqc_table_columns,
-                                EMPTY_RNA, RNA_COL.TotalReads)
-                ])
+            table_tabs(
+                ids["failed-samples"],
+                ids["data-table"],
+                EMPTY_RNA,
+                rnaseqqc_table_columns,
+                RNA_COL.TotalReads,
+                [
+                    ('Reads per Start Point Cutoff',
+                     RNA_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                    ('Total Reads Cutoff',
+                     special_cols["Total Reads (Passed Filter)"],
+                     initial_cutoff_pf_reads),
+                ]
+            )
         ])
     ])
 ])
@@ -501,6 +507,8 @@ def init_callbacks(dash_app):
             Output(ids["rrna-contam"], "figure"),
             Output(ids["dv200"], "figure"),
             Output(ids["rin"], "figure"),
+            Output(ids["failed-samples"], "columns"),
+            Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
         ],
         [
@@ -533,7 +541,10 @@ def init_callbacks(dash_app):
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
         dd = defaultdict(list)
-
+        (failure_df, failure_columns) = cutoff_table_data(df, [
+            ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint, rpsp_cutoff),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
+        ])
         return [
             generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
             generate_unique_reads(df, colour_by, shape_by),
@@ -544,6 +555,7 @@ def init_callbacks(dash_app):
             generate_rrna_contam(df, colour_by, shape_by),
             generate_dv200(df, colour_by, shape_by),
             generate_rin(df, colour_by, shape_by),
+            failure_columns, failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
         ]
         

@@ -9,8 +9,8 @@ import gsiqcetl.column
 import pinery
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import terminal_output, fill_in_shape_col, fill_in_colour_col, generate
-from ..table_builder import build_table
+from ..plot_builder import fill_in_shape_col, fill_in_colour_col, generate
+from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 
 """ Set up elements needed for page """
@@ -42,7 +42,7 @@ ids = init_ids([
     "non-primary-reads",
     "on-target-reads",
 
-    "terminal-output",
+    "failed-samples",
     "data-table",
 ])
 
@@ -106,10 +106,10 @@ def get_wgs_data():
 
     ichorcna_df = util.get_ichorcna()
     ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
-                                           ICHOR_COL.Lane,
-                                           ICHOR_COL.Barcodes,
-                                           ICHOR_COL.Ploidy,
-                                           ICHOR_COL.TumorFraction]]
+                               ICHOR_COL.Lane,
+                               ICHOR_COL.Barcodes,
+                               ICHOR_COL.Ploidy,
+                               ICHOR_COL.TumorFraction]]
     bamqc_df = util.get_bamqc3()
     wgs_df = bamqc_df.merge(
         ichorcna_df, how="left", left_on=[
@@ -293,18 +293,6 @@ def generate_ploidy(df, colour_by, shape_by):
     )
 
 
-def generate_terminal_output(
-        data,
-        initial_cutoff_rpsp,
-        initial_cutoff_insert_mean,
-        initial_cutoff_pf_reads):
-    return terminal_output(data, [
-        ('rpsp', BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
-        ('insert_mean', BAMQC_COL.InsertMean, initial_cutoff_insert_mean),
-        ('reads_pf', special_cols["Total Reads (Passed Filter)"], initial_cutoff_pf_reads),
-    ])
-
-
 # Layout elements
 layout = core.Loading(fullscreen=True, type="cube", children=[
     html.Div(className="body", children=[
@@ -486,18 +474,21 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 ),
             ]),
         ]),
-        html.Div(className='terminal-output',
-                 children=[
-                     html.Pre(generate_terminal_output(EMPTY_WGS, initial_cutoff_rpsp, initial_cutoff_insert_mean,
-                                                       initial_cutoff_pf_reads),
-                              id=ids['terminal-output'],
-                              )
-                 ]),
-        html.Div(className='data-table',
-                 children=[
-                     build_table(ids["data-table"], wgs_table_columns, WGS_DF,
-                                 BAMQC_COL.TotalReads)
-                 ]),
+        table_tabs(
+            ids["failed-samples"],
+            ids["data-table"],
+            EMPTY_WGS,
+            wgs_table_columns,
+            BAMQC_COL.TotalReads,
+            [
+                ('Reads per Start Point Cutoff',
+                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+                 initial_cutoff_insert_mean),
+                ('Total Reads Cutoff',
+                 special_cols["Total Reads (Passed Filter)"],
+                 initial_cutoff_pf_reads),
+            ])
     ])
 ])
 
@@ -514,7 +505,8 @@ def init_callbacks(dash_app):
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["non-primary-reads"], "figure"),
             Output(ids["on-target-reads"], "figure"),
-            Output(ids["terminal-output"], "value"),
+            Output(ids["failed-samples"], "columns"),
+            Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
         ],
         [
@@ -549,6 +541,11 @@ def init_callbacks(dash_app):
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
         dd = defaultdict(list)
+        (failure_df, failure_columns) = cutoff_table_data(df, [
+            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff),
+            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
+        ])
 
         return [
             generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
@@ -560,7 +557,8 @@ def init_callbacks(dash_app):
             generate_unmapped_reads(df, colour_by, shape_by),
             generate_non_primary(df, colour_by, shape_by),
             generate_on_target_reads(df, colour_by, shape_by),
-            generate_terminal_output(df, rpsp_cutoff, insert_mean_cutoff, total_reads_cutoff),
+            failure_columns,
+            failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
         ]
 
