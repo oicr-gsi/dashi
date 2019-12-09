@@ -174,6 +174,7 @@ ALL_LIBRARY_DESIGNS = WGS_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ALL_RUNS = WGS_DF[BAMQC_COL.Run].sort_values().unique()[
     ::-1]  # reverse the list
+ALL_SAMPLES = WGS_DF[PINERY_COL.SampleName].sort_values().unique()
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
@@ -186,6 +187,7 @@ shape_or_colour_values = {
 # Add shape col to WG dataframe
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
+WGS_DF = fill_in_size_col(WGS_DF)
 
 EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
 
@@ -435,7 +437,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 ]),
                 html.Br(),
 
-                # TODO: add "Search Sample" input
+                html.Label([
+                    "Highlight Samples:",
+                    core.Dropdown(id=ids['search-sample'],
+                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
+                        multi = True
+                    )
+                ]), html.Br(),
 
                 # TODO: add "Show Names" dropdown
                 util.run_range(ids["date-range"]),
@@ -580,8 +588,6 @@ def init_callbacks(dash_app):
             State(ids["reads-per-start-point-slider"], 'value'),
             State(ids["insert-mean-slider"], 'value'),
             State(ids["passed-filter-reads-slider"], 'value'),
-            State(ids["date-range"], 'start_date'),
-            State(ids["date-range"], 'end_date'),
         ]
     )
     def update_pressed(click,
@@ -615,16 +621,13 @@ def init_callbacks(dash_app):
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-        df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
+        df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+        df = fill_in_size_col(df)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint,
-             rpsp_cutoff, False),
-            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff,
-             True),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed "
-                                                "Filter)"],
-             total_reads_cutoff, True),
+            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff),
+            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
         ])
 
         return [

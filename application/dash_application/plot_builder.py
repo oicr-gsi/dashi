@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import pandas
 import plotly.graph_objects as go
@@ -165,6 +165,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         traces.append(go.Scattergl( # Draw highlighted items on top
             x=x_fn(highlight_df),
             y=y_fn(highlight_df),
+            name="Highlighted Samples",
             mode='markers',
             marker={
                 "symbol": highlight_df['shape'],
@@ -205,3 +206,25 @@ def get_shapes_for_values(shapeby: List[str]):
 def get_colours_for_values(colourby: List[str]):
     return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
 
+def terminal_output(data:DataFrame, limits:List[Tuple[str, str, float]]) -> str:
+    if data.empty:
+        return "No data!"
+
+    output = ""
+
+    for (name, column, cutoff) in limits:
+        output += "$failed_%s\n" %name
+        newline = False
+        linenumber = 0
+        for failed in data.loc[data[column] < cutoff][pinery.column.SampleProvenanceColumn.SampleName]:
+            if not newline:
+                output += "[{0}] ".format(linenumber)
+            output += "\"" + failed + "\"\t\t"
+            if newline:
+                output += "\n"
+            newline = not newline
+            linenumber += 1
+    if output:
+        return output
+    else:
+        return "All samples within cutoffs"

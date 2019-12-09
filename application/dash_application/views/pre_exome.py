@@ -19,7 +19,6 @@ ids = init_ids([
     # Buttons
     'update-button',
 
-
     # Sidebar controls
     'all-runs',
     'run-id-list',
@@ -363,7 +362,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ]), html.Br(),
 
                 html.Label([
-                    "Search Sample:",
+                    "Highlight Samples:",
                     core.Dropdown(id=ids['search-sample'],
                         options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
                         multi = True
@@ -583,3 +582,4 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         return [x for x in ALL_RUNS]
+

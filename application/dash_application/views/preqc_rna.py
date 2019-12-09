@@ -165,7 +165,7 @@ ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()[::-1]  # reverse the list
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
-    RNA_COL.Run: ALL_RUNS,
+    PINERY_COL.SequencerRunName: ALL_RUNS,
     PINERY_COL.PrepKit: ALL_KITS,
     PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
     PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
@@ -175,6 +175,7 @@ shape_or_colour_values = {
 # Add shape col to RNA dataframe
 RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
 RNA_DF = fill_in_colour_col(RNA_DF, initial_colour_col, shape_or_colour_values)
+RNA_DF = fill_in_size_col(RNA_DF)
 # Do initial sort before graphing
 RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
 EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
@@ -446,7 +447,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 ]),
                 html.Br(),
 
-                # TODO: add "Search Sample" input
+                html.Label([
+                    "Highlight Samples:",
+                    core.Dropdown(id=ids['search-sample'],
+                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
+                        multi = True
+                    )
+                ]), html.Br(),
 
                 # TODO: add "Show Names" dropdown
                 util.run_range(ids["date-range"]),
@@ -612,7 +619,8 @@ def init_callbacks(dash_app):
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-        df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
+        df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+        df = fill_in_size_col(df)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
             ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint,
@@ -642,31 +650,3 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         return [x for x in ALL_RUNS]
-
-    @dash_app.callback(
-        Output(ids['instruments-list'], 'value'),
-        [Input(ids['all-instruments'], 'n_clicks')]
-    )
-    def all_instruments_requested(click):
-        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
-
-    @dash_app.callback(
-        Output(ids['projects-list'], 'value'),
-        [Input(ids['all-projects'], 'n_clicks')]
-    )
-    def all_projects_requested(click):
-        return [x for x in ALL_PROJECTS]
-
-    @dash_app.callback(
-        Output(ids['kits-list'], 'value'),
-        [Input(ids['all-kits'], 'n_clicks')]
-    )
-    def all_kits_requested(click):
-        return [x for x in ALL_KITS]
-
-    @dash_app.callback(
-        Output(ids['library-designs-list'], 'value'),
-        [Input(ids['all-library-designs'], 'n_clicks')]
-    )
-    def all_library_designs_requested(click):
-        return [x for x in ALL_LIBRARY_DESIGNS]
