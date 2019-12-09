@@ -98,6 +98,7 @@ def fill_in_size_col(df: DataFrame):
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_type, line_y=None):
+    highlight_df = sorted_data.loc[sorted_data['markersize']==30]
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -159,6 +160,17 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             mode="lines",
             line={"width": 1, "color": "black", "dash": "dash"},
             name="Cutoff"
+        ))
+    if not highlight_df.empty:
+        traces.append(go.Scattergl( # Draw highlighted items on top
+            x=x_fn(highlight_df),
+            y=y_fn(highlight_df),
+            mode='markers',
+            marker={
+                "symbol": highlight_df['shape'],
+                "color": highlight_df['colour'],
+                "size": highlight_df['markersize']
+            }
         ))
     return go.Figure(
         data = traces,
