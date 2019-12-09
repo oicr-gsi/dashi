@@ -90,9 +90,10 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         df = df.assign(colour=colour_col.values)
     return df
 
-def fill_in_size_col(df: DataFrame):
+def fill_in_size_col(df: DataFrame, highlight_samples=None):
     df['markersize'] = 12
-    df.loc[df['colour']=="#F00", 'markersize'] = 30
+    if highlight_samples:
+        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = 30
     return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
