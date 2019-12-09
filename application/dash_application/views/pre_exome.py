@@ -7,7 +7,7 @@ import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
-from ..table_builder import build_table
+from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
 from gsiqcetl.column import BamQcColumn
@@ -41,6 +41,7 @@ ids = init_ids([
     'mean-insert-size',
 
     #Data table
+    'failed-samples',
     'data-table'
 ])
 
@@ -49,12 +50,15 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
-special_cols = {}
+special_cols = {
+    "Total Reads (Passed Filter)": "Total Reads PassedFilter",
+}
 
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc()
     bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
+    bamqc_df[special_cols["Total Reads (Passed Filter)"]] = bamqc_df[BAMQC_COL.TotalReads] / 1e6
 
     pinery_samples = util.get_pinery_samples_from_active_projects()
     # TODO filter??
@@ -122,7 +126,7 @@ def generate_total_reads(current_data, colourby, shapeby, shownames,
         "Total Reads",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.TotalReads] / pow(10,6),
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# Reads x 10^6",
         colourby,
         shapeby,
@@ -365,13 +369,24 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 )
             ]),
         ]),
-
-        html.Div(className='data-table',
-            children=[
-                build_table(ids["data-table"], ex_table_columns, empty_bamqc,
-                            BAMQC_COL.TotalReads)
-            ]),
-    ])])
+        table_tabs(
+            ids["failed-samples"],
+            ids["data-table"],
+            empty_bamqc,
+            ex_table_columns,
+            BAMQC_COL.TotalReads,
+            [
+                ('Reads per Start Point Cutoff',
+                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+                 initial_cutoff_insert_size),
+                ('Total Reads Cutoff',
+                 special_cols["Total Reads (Passed Filter)"],
+                 initial_cutoff_pf_reads),
+            ]
+         )
+    ])
+])
 
 
 def init_callbacks(dash_app):
@@ -383,6 +398,8 @@ def init_callbacks(dash_app):
             Output(ids['on-target-reads'], 'figure'),
             Output(ids['reads-per-start-point'], 'figure'),
             Output(ids['mean-insert-size'], 'figure'),
+            Output(ids["failed-samples"], "columns"),
+            Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data')
         ],
         [Input(ids['update-button'], 'n_clicks')],
@@ -420,7 +437,11 @@ def init_callbacks(dash_app):
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)
-
+        (failure_df, failure_columns ) =cutoff_table_data(data, [
+                ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, readsperstartpoint),
+                ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insertsizemean),
+                ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], passedfilter),
+            ])
         return [
             generate_total_reads(data, colourby, shapeby, shownames,
                                  passedfilter),
@@ -431,6 +452,7 @@ def init_callbacks(dash_app):
                                        readsperstartpoint),
             generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
+            failure_columns, failure_df.to_dict('records'),
             data.to_dict('records', into=dd)
         ]
 

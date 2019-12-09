@@ -1,7 +1,11 @@
-from typing import List
+from typing import Dict, List, Tuple
 
+import dash_core_components as core
+import dash_html_components as html
 import dash_table as tabl
 from pandas import DataFrame
+
+import pinery
 
 
 def build_table(table_id: str, columns: List[str], df: DataFrame, filter_on:
@@ -25,3 +29,89 @@ def build_table(table_id: str, columns: List[str], df: DataFrame, filter_on:
             "fontWeight": "bold"
         }
     )
+
+
+def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+    output = []
+    for _, row in data.iterrows():
+        failures = {}
+        has_failures = False
+        for (name, column, cutoff) in limits:
+            if row[column] < cutoff:
+                failures[name] = "Failed (%d)" % row[column]
+                has_failures = True
+            else:
+                failures[name] = "Passed (%d)" % row[column]
+        if has_failures:
+            failures[pinery.column.SampleProvenanceColumn.SampleName] = row[
+                pinery.column.SampleProvenanceColumn.SampleName]
+            failures[pinery.column.SampleProvenanceColumn.SequencerRunName] = row[
+                pinery.column.SampleProvenanceColumn.SequencerRunName]
+            failures[pinery.column.SampleProvenanceColumn.LaneNumber] = row[
+                pinery.column.SampleProvenanceColumn.LaneNumber]
+            failures[pinery.column.SampleProvenanceColumn.IUSTag] = row[pinery.column.SampleProvenanceColumn.IUSTag]
+            output.append(failures)
+
+    return (DataFrame(output), [{"name": pinery.column.SampleProvenanceColumn.SampleName,
+                                 "id": pinery.column.SampleProvenanceColumn.SampleName},
+                                {"name": pinery.column.SampleProvenanceColumn.SequencerRunName,
+                                 "id": pinery.column.SampleProvenanceColumn.SequencerRunName},
+                                {"name": pinery.column.SampleProvenanceColumn.LaneNumber,
+                                 "id": pinery.column.SampleProvenanceColumn.LaneNumber},
+                                {"name": pinery.column.SampleProvenanceColumn.IUSTag,
+                                 "id": pinery.column.SampleProvenanceColumn.IUSTag},
+                                *({"name": "%s (%d)" % (name, cutoff), "id": name} for (name, _, cutoff) in limits)])
+
+
+def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, float]]):
+    (failure_df, columns) = cutoff_table_data(data, limits)
+    return tabl.DataTable(
+        id=table_id,
+        columns=columns,
+        data=failure_df.to_dict('records'),
+        export_format="csv",
+        style_data_conditional=[
+            {
+                "if": {"row_index": "odd"},
+                "backgroundColor": "rgb(248, 248, 248)"
+            },
+            *({
+                "if": {"column_id": name, "filter_query": "{%s} contains 'Failed'" % name},
+                "backgroundColor": "pink"
+
+            } for (name, _, _) in limits)
+        ],
+        style_header={
+            "backgroundColor": "rgb(230, 230, 230)",
+            "fontWeight": "bold"
+        }
+    )
+
+
+def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str], filter_on: str,
+               limits: List[Tuple[str, str, float]]):
+    return core.Tabs(
+        [
+            core.Tab(
+                label="Failed Samples",
+                children=[
+                    html.Div(
+                        className='data-table',
+                        children=[
+                            cutoff_table(
+                                failed_id,
+                                empty_data,
+                                limits)]),
+                ]),
+            core.Tab(
+                label="Raw Data",
+                children=[
+                    html.Div(
+                        className='data-table',
+                        children=[
+                            build_table(
+                                data_id,
+                                table_columns,
+                                empty_data,
+                                filter_on)]),
+                ])])
