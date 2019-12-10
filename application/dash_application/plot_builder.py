@@ -63,6 +63,7 @@ PLOTLY_DEFAULT_COLOURS=[
     '#17becf'   # blue-teal
 ]
 
+BIG_MARKER_SIZE = 20
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
@@ -93,13 +94,13 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
 def fill_in_size_col(df: DataFrame, highlight_samples=None):
     df['markersize'] = 12
     if highlight_samples:
-        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = 30
+        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_type, line_y=None):
-    highlight_df = sorted_data.loc[sorted_data['markersize']==30]
+    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -171,7 +172,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             marker={
                 "symbol": highlight_df['shape'],
                 "color": highlight_df['colour'],
-                "size": highlight_df['markersize']
+                "size": highlight_df['markersize'],
+                "opacity": 1
             }
         ))
     return go.Figure(
