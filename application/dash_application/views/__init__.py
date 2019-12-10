@@ -28,3 +28,4 @@ def navbar(current):
         dark=False,
         sticky="top",
     )
+

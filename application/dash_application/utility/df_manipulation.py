@@ -1,8 +1,13 @@
 import datetime
-import pandas as pd
-from pandas import DataFrame
-from typing import List
 
+import dash_core_components as core
+import dash_html_components as html
+import datetime
+import pandas
+from pandas import DataFrame
+from typing import List, Tuple
+
+import pinery.column
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
@@ -19,12 +24,15 @@ pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
                       PINERY_COL.IUSTag]
 
 bamqc_ius_columns = [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes]
-ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
+ichorcna_ius_columns = [
+    ICHORCNA_COL.Run,
+    ICHORCNA_COL.Lane,
+    ICHORCNA_COL.Barcodes]
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 
 """
-Open a single instance of each cache, and use copies for the reports. 
+Open a single instance of each cache, and use copies for the reports.
 """
 cache = QCETLCache()
 _rnaseqqc = cache.rnaseqqc.rnaseqqc
@@ -52,23 +60,27 @@ _pinery_samples.fillna({
     PINERY_COL.GroupIDDescription: ""
 })
 _runs = _pinery_client.get_runs(False).runs
+_runs[pinery.column.RunsColumn.StartDate] = pandas.to_datetime(
+    _runs[pinery.column.RunsColumn.StartDate], utc=True)
+_runs[pinery.column.RunsColumn.CompletionDate] = pandas.to_datetime(
+    _runs[pinery.column.RunsColumn.CompletionDate], utc=True)
 
 _instruments = _pinery_client.get_instruments_with_models()
 _projects = _pinery_client.get_projects()
 
-_active_projects = _projects.loc[_projects[PROJECT_COL.IsActive] == True]
+_active_projects = _projects.loc[_projects[PROJECT_COL.IsActive]]
 _active_projects = _active_projects[PROJECT_COL.Name].unique()
 _active_samples = _pinery_samples.loc[_pinery_samples[
     PINERY_COL.StudyTitle].isin(
     _active_projects)]
 
 _runs_with_instruments = _runs.copy(deep=True).merge(
-        _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
-                      INSTRUMENTS_COL.InstrumentID]],
-        how="left",
-        left_on=[RUN_COL.InstrumentID],
-        right_on=[INSTRUMENTS_COL.InstrumentID]
-    )
+    _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
+                  INSTRUMENTS_COL.InstrumentID]],
+    how="left",
+    left_on=[RUN_COL.InstrumentID],
+    right_on=[INSTRUMENTS_COL.InstrumentID]
+)
 
 
 def get_rnaseqqc():
@@ -98,7 +110,7 @@ def get_pinery_samples_from_active_projects():
 
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
-    """Do an outer merge between the DataFrame and modern Pinery samples 
+    """Do an outer merge between the DataFrame and modern Pinery samples
     data."""
     df = df.merge(
         pinery_samples,
@@ -135,3 +147,24 @@ def df_with_normalized_ius_columns(df: DataFrame, run_col: str, lane_col: str,
 
 def filter_by_library_design(df: DataFrame, library_designs: List[str]):
     return df[df[PINERY_COL.LibrarySourceTemplateType].isin(library_designs)]
+
+
+def run_range(id: str) -> html.Label:
+    start = _runs[pinery.column.RunsColumn.StartDate].min(skipna=True)
+    end = _runs[pinery.column.RunsColumn.CompletionDate].max(skipna=True)
+    return html.Label(["Run Date:",
+                       core.DatePickerRange(id=id,
+                                            day_size=50,
+                                            min_date_allowed=start,
+                                            start_date=start,
+                                            max_date_allowed=end,
+                                            end_date=end,
+                                            display_format="YYYY-MMM-DD"),
+                       html.Br(),
+                       ])
+
+
+def runs_in_range(start_date, end_date) -> pandas.Series:
+    allowed_runs = _runs[(_runs[pinery.column.RunsColumn.StartDate] > start_date) & (
+        _runs[pinery.column.RunsColumn.CompletionDate] < end_date)]
+    return allowed_runs[pinery.column.RunsColumn.Name]

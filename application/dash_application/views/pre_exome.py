@@ -39,6 +39,7 @@ ids = init_ids([
     'reads-per-start-point-slider',
     'insert-size-mean-slider',
     'passed-filter-reads-slider',
+    "date-range",
 
     #Graphs
     'total-reads',
@@ -375,6 +376,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     )
                 ]), html.Br(),
 
+                util.run_range(ids["date-range"]),
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(id=ids['reads-per-start-point-slider'],
@@ -492,7 +494,9 @@ def init_callbacks(dash_app):
             State(ids['show-names'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['insert-size-mean-slider'], 'value'),
-            State(ids['passed-filter-reads-slider'], 'value')
+            State(ids['passed-filter-reads-slider'], 'value'),
+            State(ids["date-range"], 'start_date'),
+            State(ids["date-range"], 'end_date'),
         ]
     )
     def update_pressed(click,
@@ -509,7 +513,9 @@ def init_callbacks(dash_app):
             shownames,
             readsperstartpoint,
             insertsizemean,
-            passedfilter):
+            passedfilter,
+            start_date,
+            end_date):
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
@@ -528,6 +534,7 @@ def init_callbacks(dash_app):
         if library_designs:
             data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
+        data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
