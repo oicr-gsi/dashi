@@ -27,6 +27,8 @@ ids = init_ids([
     "instruments-list",
     "all-projects",
     "projects-list",
+    "all-kits",
+    "kits-list",
     "first-sort",
     "second-sort",
     "colour-by",
@@ -350,6 +352,19 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       multi=True)
                     ]),
                 ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Kits", id=ids["all-kits"],
+                                className="inline"),
+                    html.Label([
+                       "Kits",
+                        core.Dropdown(id=ids["kits-list"],
+                                      options=[
+                                          {"label": kit,
+                                           "value": kit} for kit in ALL_KITS
+                                      ],
+                                      multi=True)
+                        ]),
+                ]),
                 html.Br(),
 
                 html.Label([
@@ -553,6 +568,7 @@ def init_callbacks(dash_app):
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
+            State(ids['kits-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -566,6 +582,7 @@ def init_callbacks(dash_app):
                        runs,
                        instruments,
                        projects,
+                       kits,
                        first_sort,
                        second_sort,
                        colour_by,
@@ -573,7 +590,7 @@ def init_callbacks(dash_app):
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        rpsp_cutoff):
-        if not runs and not instruments and not projects:
+        if not runs and not instruments and not projects and not kits:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
             df = WGS_DF
@@ -584,6 +601,8 @@ def init_callbacks(dash_app):
             df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
+        if kits:
+            df = df[df[PINERY_COL.PrepKit].isin(kits)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
@@ -630,3 +649,10 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['kits-list'], 'value'),
+        [Input(ids['all-kits'], 'n_clicks')]
+    )
+    def all_kits_requested(click):
+        return [x for x in ALL_KITS]
