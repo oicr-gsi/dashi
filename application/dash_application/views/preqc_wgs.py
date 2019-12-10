@@ -37,6 +37,7 @@ ids = init_ids([
     "reads-per-start-point-slider",
     "insert-mean-slider",
     "passed-filter-reads-slider",
+    "date-range",
 
     # Graphs
     "total-reads",
@@ -437,6 +438,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 # TODO: add "Search Sample" input
 
                 # TODO: add "Show Names" dropdown
+                util.run_range(ids["date-range"]),
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(
@@ -578,6 +580,8 @@ def init_callbacks(dash_app):
             State(ids["reads-per-start-point-slider"], 'value'),
             State(ids["insert-mean-slider"], 'value'),
             State(ids["passed-filter-reads-slider"], 'value'),
+            State(ids["date-range"], 'start_date'),
+            State(ids["date-range"], 'end_date'),
         ]
     )
     def update_pressed(click,
@@ -591,7 +595,9 @@ def init_callbacks(dash_app):
                        shape_by,
                        total_reads_cutoff,
                        insert_mean_cutoff,
-                       rpsp_cutoff):
+                       rpsp_cutoff,
+                       start_date,
+                       end_date):
         if not runs and not instruments and not projects and not kits:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
@@ -605,6 +611,7 @@ def init_callbacks(dash_app):
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
+        df = df[df[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

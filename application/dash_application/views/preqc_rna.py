@@ -39,6 +39,7 @@ ids = init_ids([
     "reads-per-start-point-slider",
     "rrna-contamination-slider",
     "passed-filter-reads-slider",
+    "date-range",
 
     # Graphs
     "total-reads",
@@ -448,6 +449,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 # TODO: add "Search Sample" input
 
                 # TODO: add "Show Names" dropdown
+                util.run_range(ids["date-range"]),
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(
@@ -572,6 +574,8 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['passed-filter-reads-slider'], 'value'),
+            State(ids["date-range"], 'start_date'),
+            State(ids["date-range"], 'end_date'),
         ]
     )
     def update_pressed(click,
@@ -585,7 +589,9 @@ def init_callbacks(dash_app):
                        colour_by,
                        shape_by,
                        rpsp_cutoff,
-                       total_reads_cutoff):
+                       total_reads_cutoff,
+                       start_date,
+                       end_date):
         if not runs and not instruments and not projects and not kits and not library_designs:
             df = EMPTY_RNA
         else:
@@ -602,6 +608,7 @@ def init_callbacks(dash_app):
         if library_designs:
             df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
+        df = df[df[RNA_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
