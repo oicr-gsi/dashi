@@ -2,16 +2,19 @@ import dash_bootstrap_components as dbc
 
 
 def navbar(current):
+    def menu_item(label, link):
+        return dbc.DropdownMenuItem(label,
+                                    href=link,
+                                    external_link=True,
+                                    disabled=current == label,
+                                    style={"fontSize": "12pt"})
     return dbc.NavbarSimple(
         children=[
             dbc.DropdownMenu(
                 children=[
-                    dbc.DropdownMenuItem("Pre-Exome", href="preqc-exome",
-                                         style={"fontSize": "12pt"}),
-                    dbc.DropdownMenuItem("Pre-WGS", href="preqc-wgs",
-                                         style={"fontSize": "12pt"}),
-                    dbc.DropdownMenuItem("Pre-RNA", href="preqc-rna",
-                                         style={"fontSize": "12pt"})
+                    menu_item("Pre-Exome", "preqc-exome"),
+                    menu_item("Pre-WGS", "preqc-wgs"),
+                    menu_item("Pre-RNA", "preqc-rna")
                 ],
                 nav=True,
                 in_navbar=True,
