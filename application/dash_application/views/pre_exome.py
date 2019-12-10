@@ -26,6 +26,8 @@ ids = init_ids([
     'instruments-list',
     'all-projects',
     'projects-list',
+    'all-kits',
+    'kits-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -85,6 +87,7 @@ ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
 ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
     INSTRUMENT_COLS.ModelName].sort_values().unique()
+ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -256,6 +259,19 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                       ],
                                       multi=True)
                     ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Kits", id=ids["all-kits"],
+                                className="inline"),
+                    html.Label([
+                       "Kits",
+                        core.Dropdown(id=ids["kits-list"],
+                                      options=[
+                                          {"label": kit,
+                                           "value": kit} for kit in ALL_KITS
+                                      ],
+                                      multi=True)
+                        ]),
                 ]),
                 html.Br(),
                 
@@ -447,6 +463,7 @@ def init_callbacks(dash_app):
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
+            State(ids['kits-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -462,6 +479,7 @@ def init_callbacks(dash_app):
             runs,
             instruments,
             projects,
+            kits,
             firstsort, 
             secondsort, 
             colourby,
@@ -473,7 +491,7 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        if not runs and not instruments and not projects:
+        if not runs and not instruments and not projects and not kits:
             data = pd.DataFrame(columns=empty_bamqc.columns)
         else:
             data = bamqc
@@ -484,6 +502,8 @@ def init_callbacks(dash_app):
             data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
             data = data[data[PINERY_COL.StudyTitle].isin(projects)]
+        if kits:
+            data = data[data[PINERY_COL.PrepKit].isin(kits)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
@@ -503,7 +523,8 @@ def init_callbacks(dash_app):
                                        readsperstartpoint),
             generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
-            failure_columns, failure_df.to_dict('records'),
+            failure_columns,
+            failure_df.to_dict('records'),
             data.to_dict('records', into=dd)
         ]
 
@@ -527,3 +548,10 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['kits-list'], 'value'),
+        [Input(ids['all-kits'], 'n_clicks')]
+    )
+    def all_kits_requested(click):
+        return [x for x in ALL_KITS]
