@@ -19,10 +19,14 @@ page_name = "preqc-wgs"
 ids = init_ids([
     # Buttons
     "update-button",
-    "all-runs",
 
     # Sidebar controls
+    "all-runs",
     "run-id-list",
+    "all-instruments",
+    "instruments-list",
+    "all-projects",
+    "projects-list",
     "first-sort",
     "second-sort",
     "colour-by",
@@ -156,8 +160,10 @@ WGS_DF = get_wgs_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = WGS_DF[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_KITS = WGS_DF[PINERY_COL.PrepKit].sort_values().unique()
-ALL_INSTRUMENT_MODELS = WGS_DF[INSTRUMENT_COLS.ModelName].sort_values(
-).unique()
+ILLUMINA_INSTRUMENT_MODELS = WGS_DF[WGS_DF[
+    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
+    INSTRUMENT_COLS.ModelName].sort_values().unique()
+
 ALL_TISSUE_MATERIALS = WGS_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = WGS_DF[
@@ -302,16 +308,47 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Button("Update", id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-                html.Button('Add All', id=ids["all-runs"], className="inline"),
-                html.Label([
-                    "Run",
-                    core.Dropdown(id=ids["run-id-list"],
-                                  options=[
-                                      {"label": run,
-                                       "value": run} for run in ALL_RUNS
-                    ],
-                        multi=True
-                    )
+                core.Loading(type="circle", children=[
+                    html.Button('Add All', id=ids["all-runs"], className="inline"),
+                    html.Label([
+                        "Run",
+                        core.Dropdown(id=ids["run-id-list"],
+                                      options=[
+                                          {"label": run,
+                                           "value": run} for run in ALL_RUNS
+                        ],
+                            multi=True
+                        )
+                    ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Instruments", id=ids["all-instruments"],
+                                className="inline"),
+                    html.Label([
+                        "Instruments",
+                        core.Dropdown(id=ids["instruments-list"],
+                                      options=[
+                                          {"label": instrument,
+                                           "value": instrument} for instrument
+                                          in
+                                          ILLUMINA_INSTRUMENT_MODELS
+                                      ],
+                                      multi=True)
+                    ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Projects", id=ids["all-projects"],
+                                className="inline"),
+                    html.Label([
+                        "Projects",
+                        core.Dropdown(id=ids["projects-list"],
+                                      options=[
+                                          {"label": project,
+                                           "value": project} for project
+                                          in ALL_PROJECTS
+                                      ],
+                                      multi=True)
+                    ]),
                 ]),
                 html.Br(),
 
@@ -514,6 +551,8 @@ def init_callbacks(dash_app):
         ],
         [
             State(ids['run-id-list'], 'value'),
+            State(ids['instruments-list'], 'value'),
+            State(ids['projects-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -525,6 +564,8 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        runs,
+                       instruments,
+                       projects,
                        first_sort,
                        second_sort,
                        colour_by,
@@ -532,10 +573,17 @@ def init_callbacks(dash_app):
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        rpsp_cutoff):
-        if not runs:
+        if not runs and not instruments and not projects:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
-            df = WGS_DF[WGS_DF[BAMQC_COL.Run].isin(runs)]
+            df = WGS_DF
+
+        if runs:
+            df = df[df[BAMQC_COL.Run].isin(runs)]
+        if instruments:
+            df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
+        if projects:
+            df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
@@ -566,5 +614,19 @@ def init_callbacks(dash_app):
         Output(ids['run-id-list'], 'value'),
         [Input(ids['all-runs'], 'n_clicks')]
     )
-    def all_runs_button_clicked(click):
+    def all_runs_requested(click):
         return [x for x in ALL_RUNS]
+
+    @dash_app.callback(
+        Output(ids['instruments-list'], 'value'),
+        [Input(ids['all-instruments'], 'n_clicks')]
+    )
+    def all_instruments_requested(click):
+        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+
+    @dash_app.callback(
+        Output(ids['projects-list'], 'value'),
+        [Input(ids['all-projects'], 'n_clicks')]
+    )
+    def all_projects_requested(click):
+        return [x for x in ALL_PROJECTS]
