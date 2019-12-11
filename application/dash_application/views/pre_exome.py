@@ -28,6 +28,8 @@ ids = init_ids([
     'projects-list',
     'all-kits',
     'kits-list',
+    'all-library-designs',
+    'library-designs-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -84,10 +86,12 @@ bamqc = get_bamqc_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
+ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
+ALL_LIBRARY_DESIGNS = bamqc[
+    PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
     INSTRUMENT_COLS.ModelName].sort_values().unique()
-ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -272,6 +276,21 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                       ],
                                       multi=True)
                         ]),
+                ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Library Designs", id=ids[
+                        "all-library-designs"],
+                                className="inline"),
+                    html.Label([
+                        "Library Designs",
+                        core.Dropdown(id=ids["library-designs-list"],
+                                      options=[
+                                          {"label": ld,
+                                           "value": ld} for ld
+                                          in ALL_LIBRARY_DESIGNS
+                                      ],
+                                      multi=True)
+                    ]),
                 ]),
                 html.Br(),
                 
@@ -464,6 +483,7 @@ def init_callbacks(dash_app):
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
             State(ids['kits-list'], 'value'),
+            State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -480,6 +500,7 @@ def init_callbacks(dash_app):
             instruments,
             projects,
             kits,
+            library_designs,
             firstsort, 
             secondsort, 
             colourby,
@@ -491,7 +512,7 @@ def init_callbacks(dash_app):
             passedfilter):
 
         # Apply get selected runs
-        if not runs and not instruments and not projects and not kits:
+        if not runs and not instruments and not projects and not kits and not library_designs:
             data = pd.DataFrame(columns=empty_bamqc.columns)
         else:
             data = bamqc
@@ -504,6 +525,9 @@ def init_callbacks(dash_app):
             data = data[data[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             data = data[data[PINERY_COL.PrepKit].isin(kits)]
+        if library_designs:
+            data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
+                library_designs)]
         data = fill_in_shape_col(data, shapeby, shape_values)
         data = fill_in_colour_col(data, colourby, colour_values)
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
@@ -555,3 +579,10 @@ def init_callbacks(dash_app):
     )
     def all_kits_requested(click):
         return [x for x in ALL_KITS]
+
+    @dash_app.callback(
+        Output(ids['library-designs-list'], 'value'),
+        [Input(ids['all-library-designs'], 'n_clicks')]
+    )
+    def all_library_designs_requested(click):
+        return [x for x in ALL_LIBRARY_DESIGNS]
