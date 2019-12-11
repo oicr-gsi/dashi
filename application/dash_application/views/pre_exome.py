@@ -346,7 +346,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         min=0,
                         max=20,
                         step=1,
-                        marks={str(n):str(n) for n in range(0, 20, 2)},
+                        marks={str(n): str(n) for n in range(0, 21, 2)},
+                        tooltip="always_visible",
                         value=initial_cutoff_rpsp
                     )
                 ]), html.Br(),
@@ -357,7 +358,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         min=0,
                         max=500,
                         step=1,
-                        marks={str(n):str(n) for n in range(0, 500, 50)},
+                        marks={str(n): str(n) for n in range(0, 501, 50)},
+                        tooltip="always_visible",
                         value=initial_cutoff_insert_size
                     )
                 ]), html.Br(),
@@ -368,59 +370,61 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         min=0,
                         max=0.5,
                         step=0.005,
-                        marks={str(n):str(n) for n in slider_utils.frange(0, 0.5, 0.05)},
+                        marks={str(n): str(n)
+                               for n in slider_utils.frange(0, 0.51, 0.05)},
+                        tooltip="always_visible",
                         value=initial_cutoff_pf_reads
                     )
                 ]), html.Br()
             ]),
-        html.Div(className='seven columns',
-            children=[
-                core.Graph(id=ids['total-reads'],
-                    figure=generate_total_reads(empty_bamqc, initial_colour_col,
-                                                initial_shape_col, 'none',
-                                                initial_cutoff_pf_reads)
-                ),
-                core.Graph(id=ids['unmapped-reads'],
-                    figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
-                                                 initial_shape_col, 'none')
-                ),
-                core.Graph(id=ids['non-primary-reads'],
-                    figure=generate_nonprimary_reads(empty_bamqc, initial_colour_col,
-                                                   initial_shape_col, 'none')
-                ),
-                core.Graph(id=ids['on-target-reads'],
-                    figure=generate_on_target_reads(empty_bamqc, initial_colour_col,
-                                                 initial_shape_col, 'none')
-                ),
-                core.Graph(id=ids['reads-per-start-point'],
-                    figure=generate_reads_per_start_point(empty_bamqc,
-                                                      initial_colour_col,
-                                                      initial_shape_col,
-                                                      'none', initial_cutoff_rpsp)
-                ),
-                core.Graph(id=ids['mean-insert-size'],
-                    figure=generate_mean_insert_size(empty_bamqc, initial_colour_col,
-                           initial_shape_col, 'none',
-                                                  initial_cutoff_insert_size)
-                )
+            html.Div(className='seven columns',
+                children=[
+                    core.Graph(id=ids['total-reads'],
+                        figure=generate_total_reads(empty_bamqc, initial_colour_col,
+                                                    initial_shape_col, 'none',
+                                                    initial_cutoff_pf_reads)
+                    ),
+                    core.Graph(id=ids['unmapped-reads'],
+                        figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
+                                                     initial_shape_col, 'none')
+                    ),
+                    core.Graph(id=ids['non-primary-reads'],
+                        figure=generate_nonprimary_reads(empty_bamqc, initial_colour_col,
+                                                       initial_shape_col, 'none')
+                    ),
+                    core.Graph(id=ids['on-target-reads'],
+                        figure=generate_on_target_reads(empty_bamqc, initial_colour_col,
+                                                     initial_shape_col, 'none')
+                    ),
+                    core.Graph(id=ids['reads-per-start-point'],
+                        figure=generate_reads_per_start_point(empty_bamqc,
+                                                          initial_colour_col,
+                                                          initial_shape_col,
+                                                          'none', initial_cutoff_rpsp)
+                    ),
+                    core.Graph(id=ids['mean-insert-size'],
+                        figure=generate_mean_insert_size(empty_bamqc, initial_colour_col,
+                               initial_shape_col, 'none',
+                                                      initial_cutoff_insert_size)
+                    )
+                ]),
             ]),
-        ]),
-        table_tabs(
-            ids["failed-samples"],
-            ids["data-table"],
-            empty_bamqc,
-            ex_table_columns,
-            BAMQC_COL.TotalReads,
-            [
-                ('Reads per Start Point Cutoff',
-                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
-                ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                 initial_cutoff_insert_size),
-                ('Total Reads Cutoff',
-                 special_cols["Total Reads (Passed Filter)"],
-                 initial_cutoff_pf_reads),
-            ]
-         )
+            table_tabs(
+                ids["failed-samples"],
+                ids["data-table"],
+                empty_bamqc,
+                ex_table_columns,
+                BAMQC_COL.TotalReads,
+                [
+                    ('Reads per Start Point Cutoff',
+                     BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                    ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+                     initial_cutoff_insert_size),
+                    ('Total Reads Cutoff',
+                     special_cols["Total Reads (Passed Filter)"],
+                     initial_cutoff_pf_reads),
+                ]
+            )
     ])
 ])
 

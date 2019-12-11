@@ -12,6 +12,7 @@ from ..dash_id import init_ids
 from ..plot_builder import fill_in_shape_col, fill_in_colour_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
+from ..utility import slider_utils
 
 """ Set up elements needed for page """
 page_name = "preqc-wgs"
@@ -428,7 +429,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=50,
                         step=1,
-                        marks={i * 5: str(i * 5) for i in range(0, 10)},
+                        marks={str(n): str(n) for n in range(0, 51, 10)},
                         tooltip="always_visible",
                         value=initial_cutoff_rpsp
                     )
@@ -441,7 +442,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=500,
                         step=10,
-                        marks={i * 50: str(i * 50) for i in range(0, 10)},
+                        marks={str(n): str(n) for n in range(0, 501, 50)},
                         tooltip="always_visible",
                         value=initial_cutoff_insert_mean
                     )
@@ -455,7 +456,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=0.5,
                         step=0.025,
-                        marks={i * 0.05: str(i * 0.05) for i in range(0, 10)},
+                        marks={str(n): str(n)
+                               for n in slider_utils.frange(0, 0.51, 0.05)},
                         tooltip="always_visible",
                         value=initial_cutoff_pf_reads
                     )
