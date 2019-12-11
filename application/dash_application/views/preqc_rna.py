@@ -29,6 +29,8 @@ ids = init_ids([
     "projects-list",
     "all-kits",
     "kits-list",
+    "all-library-designs",
+    "library-designs-list",
     "first-sort",
     "second-sort",
     "colour-by",
@@ -357,6 +359,21 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                       multi=True)
                         ]),
                 ]),
+                core.Loading(type="circle", children=[
+                    html.Button("All Library Designs", id=ids[
+                        "all-library-designs"],
+                                className="inline"),
+                    html.Label([
+                        "Library Designs",
+                        core.Dropdown(id=ids["library-designs-list"],
+                                      options=[
+                                          {"label": ld,
+                                           "value": ld} for ld
+                                          in ALL_LIBRARY_DESIGNS
+                                      ],
+                                      multi=True)
+                    ]),
+                ]),
                 html.Br(),
 
                 html.Label([
@@ -570,6 +587,7 @@ def init_callbacks(dash_app):
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
             State(ids['kits-list'], 'value'),
+            State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -583,13 +601,14 @@ def init_callbacks(dash_app):
                        instruments,
                        projects,
                        kits,
+                       library_designs,
                        first_sort,
                        second_sort,
                        colour_by,
                        shape_by,
                        rpsp_cutoff,
                        total_reads_cutoff):
-        if not runs and not instruments and not projects and not kits:
+        if not runs and not instruments and not projects and not kits and not library_designs:
             df = EMPTY_RNA
         else:
             df = RNA_DF
@@ -602,6 +621,9 @@ def init_callbacks(dash_app):
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
+        if library_designs:
+            df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
+                library_designs)]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
@@ -653,3 +675,10 @@ def init_callbacks(dash_app):
     )
     def all_kits_requested(click):
         return [x for x in ALL_KITS]
+
+    @dash_app.callback(
+        Output(ids['library-designs-list'], 'value'),
+        [Input(ids['all-library-designs'], 'n_clicks')]
+    )
+    def all_library_designs_requested(click):
+        return [x for x in ALL_LIBRARY_DESIGNS]
