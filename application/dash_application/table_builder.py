@@ -3,8 +3,8 @@ from typing import Dict, List, Tuple
 import dash_core_components as core
 import dash_html_components as html
 import dash_table as tabl
+import numpy
 from pandas import DataFrame
-
 import pinery
 
 
@@ -37,7 +37,10 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float]]) -> 
         failures = {}
         has_failures = False
         for (name, column, cutoff) in limits:
-            if row[column] < cutoff:
+            if numpy.isnan(row[column]):
+                failures[name] = "Missing"
+                has_failures = True
+            elif row[column] < cutoff:
                 failures[name] = "Failed (%d)" % row[column]
                 has_failures = True
             else:
@@ -77,9 +80,14 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, fl
             },
             *({
                 "if": {"column_id": name, "filter_query": "{%s} contains 'Failed'" % name},
-                "backgroundColor": "pink"
+                "backgroundColor": "mistyrose"
 
-            } for (name, _, _) in limits)
+            } for (name, _, _) in limits),
+            *({
+                "if": {"column_id": name, "filter_query": "{%s} = 'Missing'" % name},
+                "backgroundColor": "papayawhip"
+
+            } for (name, _, _) in limits),
         ],
         style_header={
             "backgroundColor": "rgb(230, 230, 230)",
