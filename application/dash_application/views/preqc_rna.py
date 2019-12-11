@@ -7,9 +7,10 @@ import pandas as pd
 
 from . import navbar
 from ..dash_id import init_ids
-from ..utility import df_manipulation as util
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
+from ..utility import df_manipulation as util
+from ..utility import slider_utils
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 
@@ -422,19 +423,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=50,
                         step=1,
-                        marks={
-                            0: "0",
-                            5: "5",
-                            10: "10",
-                            15: "15",
-                            20: "20",
-                            25: "25",
-                            30: "30",
-                            35: "35",
-                            40: "40",
-                            45: "45",
-                            50: "50"
-                        },
+                        marks={str(n): str(n) for n in range(0, 51, 5)},
                         tooltip="always_visible",
                         value=initial_cutoff_rpsp
                     )
@@ -448,19 +437,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         min=0,
                         max=0.5,
                         step=0.025,
-                        marks={
-                            0: "0",
-                            0.05: "0.05",
-                            0.1: "0.1",
-                            0.15: "0.15",
-                            0.2: "0.2",
-                            0.25: "0.25",
-                            0.3: "0.3",
-                            0.35: "0.35",
-                            0.4: "0.4",
-                            0.45: "0.45",
-                            0.5: "0.5"
-                        },
+                        marks={str(n): str(n)
+                               for n in slider_utils.frange(0, 0.51, 0.05)},
                         tooltip="always_visible",
                         value=initial_cutoff_pf_reads
                     )
