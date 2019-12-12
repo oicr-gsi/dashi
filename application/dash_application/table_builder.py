@@ -31,20 +31,22 @@ def build_table(table_id: str, columns: List[str], df: DataFrame, filter_on:
     )
 
 
-def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
+]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     output = []
     for _, row in data.iterrows():
         failures = {}
         has_failures = False
-        for (name, column, cutoff) in limits:
+        for (name, column, cutoff, fail_below) in limits:
             if numpy.isnan(row[column]):
                 failures[name] = "Missing"
                 has_failures = True
-            elif row[column] < cutoff:
-                failures[name] = "Failed (%d)" % row[column]
+            elif (fail_below and row[column] < cutoff) or (
+                    not fail_below and row[column] > cutoff):
+                failures[name] = "Failed ({0:.3f})".format(row[column])
                 has_failures = True
             else:
-                failures[name] = "Passed (%d)" % row[column]
+                failures[name] = "Passed ({0:.3f})".format(row[column])
         if has_failures:
             failures[pinery.column.SampleProvenanceColumn.SampleName] = row[
                 pinery.column.SampleProvenanceColumn.SampleName]
@@ -63,7 +65,9 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float]]) -> 
                                  "id": pinery.column.SampleProvenanceColumn.LaneNumber},
                                 {"name": pinery.column.SampleProvenanceColumn.IUSTag,
                                  "id": pinery.column.SampleProvenanceColumn.IUSTag},
-                                *({"name": "%s (%d)" % (name, cutoff), "id": name} for (name, _, cutoff) in limits)])
+                                *({"name": "%s (%d)" % (name, cutoff),
+                                   "id": name} for (name, _, cutoff, _
+                                                    ) in limits)])
 
 
 def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, float]]):
@@ -82,12 +86,12 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, fl
                 "if": {"column_id": name, "filter_query": "{%s} contains 'Failed'" % name},
                 "backgroundColor": "mistyrose"
 
-            } for (name, _, _) in limits),
+            } for (name, *_) in limits),
             *({
                 "if": {"column_id": name, "filter_query": "{%s} = 'Missing'" % name},
                 "backgroundColor": "papayawhip"
 
-            } for (name, _, _) in limits),
+            } for (name, *_) in limits),
         ],
         style_header={
             "backgroundColor": "rgb(230, 230, 230)",
