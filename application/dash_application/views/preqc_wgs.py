@@ -195,11 +195,11 @@ EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
 
 def generate_total_reads(df, colour_by, shape_by, cutoff):
     return generate(
-        "Total Reads (Passed Filter)",
+        "Passed Filter Reads",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# Reads (10^6)",
+        "# PF Reads x 10^6",
         colour_by,
         shape_by,
         "none",
@@ -209,7 +209,7 @@ def generate_total_reads(df, colour_by, shape_by, cutoff):
 
 def generate_mean_insert_size(df, colour_by, shape_by, cutoff):
     return generate(
-        "Insert Mean",
+        "Mean Insert Size",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
@@ -222,19 +222,26 @@ def generate_mean_insert_size(df, colour_by, shape_by, cutoff):
 
 
 def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
-    return generate("Reads per Start Point",
-                    df, lambda d: d[PINERY_COL.SampleName],
-                    lambda d: d[BAMQC_COL.ReadsPerStartPoint],
-                    "Reads", colour_by, shape_by, "none", cutoff)
+    return generate(
+        "Reads per Start Point",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[BAMQC_COL.ReadsPerStartPoint],
+        None,
+        colour_by,
+        shape_by,
+        "none",
+        cutoff
+    )
 
 
 def generate_duplication(df, colour_by, shape_by):
     return generate(
-        "Duplication",
+        "Duplication (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -243,11 +250,11 @@ def generate_duplication(df, colour_by, shape_by):
 
 def generate_unmapped_reads(df, colour_by, shape_by):
     return generate(
-        "Unmapped Reads",
+        "Unmapped Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -256,11 +263,11 @@ def generate_unmapped_reads(df, colour_by, shape_by):
 
 def generate_non_primary(df, colour_by, shape_by):
     return generate(
-        "Non-Primary Reads",
+        "Non-Primary Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -269,11 +276,11 @@ def generate_non_primary(df, colour_by, shape_by):
 
 def generate_on_target_reads(df, colour_by, shape_by):
     return generate(
-        "On-target Reads",
+        "On Target Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On-target Reads"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -286,7 +293,7 @@ def generate_purity(df, colour_by, shape_by):
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Purity"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
