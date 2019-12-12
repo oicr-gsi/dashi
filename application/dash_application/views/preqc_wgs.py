@@ -538,12 +538,12 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             BAMQC_COL.TotalReads,
             [
                 ('Reads per Start Point Cutoff',
-                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                 initial_cutoff_insert_mean),
+                 initial_cutoff_insert_mean, True),
                 ('Total Reads Cutoff',
                  special_cols["Total Reads (Passed Filter)"],
-                 initial_cutoff_pf_reads),
+                 initial_cutoff_pf_reads, True),
             ])
     ])
 ])
@@ -618,9 +618,13 @@ def init_callbacks(dash_app):
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff),
-            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
+            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint,
+             rpsp_cutoff, False),
+            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff,
+             True),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed "
+                                                "Filter)"],
+             total_reads_cutoff, True),
         ])
 
         return [

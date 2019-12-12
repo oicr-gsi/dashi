@@ -126,7 +126,7 @@ def get_rna_data():
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[RNA_COL.TotalReads] / pow(10, 6), 3)
+        rna_df[RNA_COL.TotalReads] / 1e6, 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
         (rna_df[RNA_COL.CorrectStrandReads] / rna_df[RNA_COL.TotalReads]) *
         100, 1
@@ -465,7 +465,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Br(),
 
                 html.Label([
-                    "Passed Filter Reads:",
+                    "Total Reads (Passed Filter) * 10^6:",
                     core.Slider(
                         id=ids["passed-filter-reads-slider"],
                         min=0,
@@ -532,10 +532,10 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 RNA_COL.TotalReads,
                 [
                     ('Reads per Start Point Cutoff',
-                     RNA_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                     RNA_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
-                     initial_cutoff_pf_reads),
+                     initial_cutoff_pf_reads, True),
                 ]
             )
         ])
@@ -615,8 +615,11 @@ def init_callbacks(dash_app):
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint, rpsp_cutoff),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
+            ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint,
+             rpsp_cutoff, False),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed "
+                                                "Filter)"],
+             total_reads_cutoff, True),
         ])
         return [
             generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),

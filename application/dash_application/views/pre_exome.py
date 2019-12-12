@@ -67,7 +67,8 @@ special_cols = {
 def get_bamqc_data():
     bamqc_df = util.get_bamqc()
     bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
-    bamqc_df[special_cols["Total Reads (Passed Filter)"]] = bamqc_df[BAMQC_COL.TotalReads] / 1e6
+    bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
 
     pinery_samples = util.get_pinery_samples_from_active_projects()
     # TODO filter??
@@ -374,7 +375,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         searchable=False,
                         clearable=False
                     )
-                ]), html.Br(),
+                ]),
+                html.Br(),
 
                 util.run_range(ids["date-range"]),
                 html.Label([
@@ -402,7 +404,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ]), html.Br(),
                 
                 html.Label([
-                    "Passed Filter Reads:",
+                    "Total Reads (Passed Filter) * 10^6:",
                     core.Slider(id=ids['passed-filter-reads-slider'],
                         min=0,
                         max=0.5,
@@ -454,12 +456,12 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 BAMQC_COL.TotalReads,
                 [
                     ('Reads per Start Point Cutoff',
-                     BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp),
+                     BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                     ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                     initial_cutoff_insert_size),
+                     initial_cutoff_insert_size, True),
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
-                     initial_cutoff_pf_reads),
+                     initial_cutoff_pf_reads, True),
                 ]
             )
     ])
@@ -540,9 +542,13 @@ def init_callbacks(dash_app):
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)
         (failure_df, failure_columns ) =cutoff_table_data(data, [
-                ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, readsperstartpoint),
-                ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insertsizemean),
-                ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], passedfilter),
+                ('Reads per Start Point Cutoff',
+                 BAMQC_COL.ReadsPerStartPoint, readsperstartpoint, False),
+                ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insertsizemean,
+                 True),
+                ('Total Reads Cutoff', special_cols["Total Reads (Passed "
+                                                    "Filter)"], passedfilter,
+                 True),
             ])
         return [
             generate_total_reads(data, colourby, shapeby, shownames,
