@@ -43,10 +43,10 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
                 has_failures = True
             elif (fail_below and row[column] < cutoff) or (
                     not fail_below and row[column] > cutoff):
-                failures[name] = "Failed (%d)" % row[column]
+                failures[name] = "Failed ({0:.3f})".format(row[column])
                 has_failures = True
             else:
-                failures[name] = "Passed (%d)" % row[column]
+                failures[name] = "Passed ({0:.3f})".format(row[column])
         if has_failures:
             failures[pinery.column.SampleProvenanceColumn.SampleName] = row[
                 pinery.column.SampleProvenanceColumn.SampleName]
@@ -86,12 +86,12 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, fl
                 "if": {"column_id": name, "filter_query": "{%s} contains 'Failed'" % name},
                 "backgroundColor": "mistyrose"
 
-            } for (name, _, _, _) in limits),
+            } for (name, *_) in limits),
             *({
                 "if": {"column_id": name, "filter_query": "{%s} = 'Missing'" % name},
                 "backgroundColor": "papayawhip"
 
-            } for (name, _, _, _) in limits),
+            } for (name, *_) in limits),
         ],
         style_header={
             "backgroundColor": "rgb(230, 230, 230)",
