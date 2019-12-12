@@ -184,11 +184,11 @@ EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
 
 def generate_total_reads(df, colour_by, shape_by, cutoff):
     return generate(
-        "Total Reads (Passed Filter)",
+        "Passed Filter Reads",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# Reads (10^6)",
+        "# PF Reads (10^6)",
         colour_by,
         shape_by,
         "none",
@@ -198,11 +198,11 @@ def generate_total_reads(df, colour_by, shape_by, cutoff):
 
 def generate_unique_reads(df, colour_by, shape_by):
     return generate(
-        "Unique Reads (Passed Filter)",
+        "Unique Passed Filter Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Uniq Reads"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -211,11 +211,11 @@ def generate_unique_reads(df, colour_by, shape_by):
 
 def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
     return generate(
-        "Reads Per Start Point",
+        "Reads per Start Point",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.ReadsPerStartPoint],
-        "",
+        None,
         colour_by,
         shape_by,
         "none",
@@ -238,11 +238,11 @@ def generate_five_to_three(df, colour_by, shape_by):
 
 def generate_correct_read_strand(df, colour_by, shape_by):
     return generate(
-        "% Correct Strand Reads",
+        "Correct Strand Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Correct Strand Reads"]],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -251,11 +251,11 @@ def generate_correct_read_strand(df, colour_by, shape_by):
 
 def generate_coding(df, colour_by, shape_by):
     return generate(
-        "% Coding",
+        "Coding (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.ProportionCodingBases],
-        "Percent (%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -264,11 +264,11 @@ def generate_coding(df, colour_by, shape_by):
 
 def generate_rrna_contam(df, colour_by, shape_by):
     return generate(
-        "% Ribosomal RNA",
+        "Ribosomal RNA (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
-        "Percent(%)",
+        "%",
         colour_by,
         shape_by,
         "none"
@@ -281,7 +281,7 @@ def generate_dv200(df, colour_by, shape_by):
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.DV200],
-        "DV200",
+        "",
         colour_by,
         shape_by,
         "none"
@@ -294,7 +294,7 @@ def generate_rin(df, colour_by, shape_by):
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.RIN],
-        "RIN",
+        "",
         colour_by,
         shape_by,
         "none"
