@@ -546,8 +546,9 @@ def init_callbacks(dash_app):
             data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
         data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
-        data = fill_in_shape_col(data, shapeby, shape_values)
-        data = fill_in_colour_col(data, colourby, colour_values, searchsample)
+        data = fill_in_shape_col(data, shapeby, shape_or_colour_values)
+        data = fill_in_colour_col(data, colourby, shape_or_colour_values,
+                                  searchsample)
 
         data = fill_in_size_col(data, searchsample)
 
