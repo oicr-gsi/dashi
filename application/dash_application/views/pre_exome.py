@@ -6,8 +6,8 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col
-from ..table_builder import table_tabs, cutoff_table_data
+from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, fill_in_size_col
+from ..table_builder import build_table, table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
 from gsiqcetl.column import BamQcColumn
@@ -94,6 +94,8 @@ ALL_LIBRARY_DESIGNS = bamqc[
 ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
     INSTRUMENT_COLS.ModelName].sort_values().unique()
+ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
+
 shape_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     BAMQC_COL.Run: ALL_RUNS,
@@ -131,6 +133,7 @@ initial_cutoff_rpsp = 5
 
 bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
 bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
+bamqc = fill_in_size_col(bamqc)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
@@ -358,10 +361,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     )
                 ]), html.Br(),
 
-                # html.Label([
-                #     "Search Sample:",
-                #     core.Input(id=ids['search-sample'])
-                # ]), html.Br(),
+                html.Label([
+                    "Highlight Samples:",
+                    core.Dropdown(id=ids['search-sample'],
+                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
+                        multi = True
+                    )
+                ]), html.Br(),
                 
                 html.Label([
                     "Show Names:",
@@ -492,7 +498,7 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
-            #State(ids['search-sample'], 'value'), #TODO?
+            State(ids['search-sample'], 'value'), 
             State(ids['show-names'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['insert-size-mean-slider'], 'value'),
@@ -511,7 +517,7 @@ def init_callbacks(dash_app):
             secondsort, 
             colourby,
             shapeby,
-            #searchsample,
+            searchsample,
             shownames,
             readsperstartpoint,
             insertsizemean,
@@ -538,7 +544,10 @@ def init_callbacks(dash_app):
                 library_designs)]
         data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_values)
-        data = fill_in_colour_col(data, colourby, colour_values)
+        data = fill_in_colour_col(data, colourby, colour_values, searchsample)
+
+        data = fill_in_size_col(data, searchsample)
+
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)
         (failure_df, failure_columns ) =cutoff_table_data(data, [

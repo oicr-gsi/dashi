@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import pandas
 import plotly.graph_objects as go
@@ -63,6 +63,7 @@ PLOTLY_DEFAULT_COLOURS=[
     '#17becf'   # blue-teal
 ]
 
+BIG_MARKER_SIZE = 20
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
@@ -78,7 +79,7 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict):
+        dict, highlight_samples=None):
     if df.empty:
         df['colour'] = pandas.Series
     else:
@@ -88,11 +89,20 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         colour_col = df.apply(lambda row: all_colours.get(row[colour_col]),
                              axis=1)
         df = df.assign(colour=colour_col.values)
+        if highlight_samples:
+            df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'colour'] = '#F00'
+    return df
+
+def fill_in_size_col(df: DataFrame, highlight_samples=None):
+    df['markersize'] = 12
+    if highlight_samples:
+        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_type, line_y=None):
+    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -138,7 +148,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             mode="markers",
             marker={
                 "symbol": data['shape'],
-                "color": data['colour'] # Please note the 'u'
+                "color": data['colour'], # Please note the 'u'
+                "size": data['markersize']
             }
         )
         traces.append(graph)
@@ -149,6 +160,19 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             mode="lines",
             line={"width": 1, "color": "black", "dash": "dash"},
             name="Cutoff"
+        ))
+    if not highlight_df.empty:
+        traces.append(go.Scattergl( # Draw highlighted items on top
+            x=x_fn(highlight_df),
+            y=y_fn(highlight_df),
+            name="Highlighted Samples",
+            mode='markers',
+            marker={
+                "symbol": highlight_df['shape'],
+                "color": highlight_df['colour'],
+                "size": highlight_df['markersize'],
+                "opacity": 1
+            }
         ))
     return go.Figure(
         data = traces,
@@ -183,3 +207,25 @@ def get_shapes_for_values(shapeby: List[str]):
 def get_colours_for_values(colourby: List[str]):
     return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
 
+def terminal_output(data:DataFrame, limits:List[Tuple[str, str, float]]) -> str:
+    if data.empty:
+        return "No data!"
+
+    output = ""
+
+    for (name, column, cutoff) in limits:
+        output += "$failed_%s\n" %name
+        newline = False
+        linenumber = 0
+        for failed in data.loc[data[column] < cutoff][pinery.column.SampleProvenanceColumn.SampleName]:
+            if not newline:
+                output += "[{0}] ".format(linenumber)
+            output += "\"" + failed + "\"\t\t"
+            if newline:
+                output += "\n"
+            newline = not newline
+            linenumber += 1
+    if output:
+        return output
+    else:
+        return "All samples within cutoffs"
