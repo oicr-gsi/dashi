@@ -63,6 +63,13 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
 }
 
+shape_or_colour_by = [
+    {"label": "Project", "value": PINERY_COL.StudyTitle},
+    {"label": "Run", "value": PINERY_COL.SequencerRunName},
+    {"label": "Kit", "value": PINERY_COL.PrepKit},
+    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+    {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+]
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc()
@@ -89,6 +96,8 @@ bamqc = get_bamqc_data()
 ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
 ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
+ALL_TISSUE_MATERIALS = bamqc[
+    PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = bamqc[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
@@ -96,14 +105,6 @@ ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
     INSTRUMENT_COLS.ModelName].sort_values().unique()
 ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
 
-shape_values = {
-    PINERY_COL.StudyTitle: ALL_PROJECTS,
-    BAMQC_COL.Run: ALL_RUNS,
-}
-colour_values = {
-    PINERY_COL.StudyTitle: ALL_PROJECTS,
-    BAMQC_COL.Run: ALL_RUNS,
-}
 
 # Specify which columns to display in the DataTable
 first_col_set = [
@@ -124,15 +125,23 @@ ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
-initial_shape_col = BAMQC_COL.Run
+initial_shape_col = PINERY_COL.SequencerRunName
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
 initial_cutoff_insert_size = 150
 initial_cutoff_rpsp = 5
 
-bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_values)
-bamqc = fill_in_colour_col(bamqc, initial_colour_col, colour_values)
+shape_or_colour_values = {
+    PINERY_COL.StudyTitle: ALL_PROJECTS,
+    PINERY_COL.SequencerRunName: ALL_RUNS,
+    PINERY_COL.PrepKit: ALL_KITS,
+    PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
+    PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
+}
+
+bamqc = fill_in_shape_col(bamqc, initial_shape_col, shape_or_colour_values)
+bamqc = fill_in_colour_col(bamqc, initial_colour_col, shape_or_colour_values)
 bamqc = fill_in_size_col(bamqc)
 
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
@@ -338,10 +347,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Label([
                     "Colour by:",
                     core.Dropdown(id=ids['colour-by'],
-                        options=[
-                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
-                            {'label': 'Run', 'value': BAMQC_COL.Run}
-                        ],
+                        options=shape_or_colour_by,
                         value=initial_colour_col,
                         searchable=False,
                         clearable=False
@@ -351,10 +357,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Label([
                     "Shape by:",
                     core.Dropdown(id=ids['shape-by'],
-                        options=[
-                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
-                            {'label': 'Run', 'value': BAMQC_COL.Run}
-                        ],
+                        options=shape_or_colour_by,
                         value=initial_shape_col,
                         searchable=False,
                         clearable=False

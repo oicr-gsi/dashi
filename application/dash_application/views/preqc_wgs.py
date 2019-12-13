@@ -99,7 +99,7 @@ shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
     {"label": "Run", "value": PINERY_COL.SequencerRunName},
     {"label": "Kit", "value": PINERY_COL.PrepKit},
-    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation}
 ]
 
 
@@ -181,8 +181,7 @@ shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     PINERY_COL.SequencerRunName: ALL_RUNS,
     PINERY_COL.PrepKit: ALL_KITS,
-    PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
-    PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
+    PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS
 }
 
 # Add shape col to WG dataframe
