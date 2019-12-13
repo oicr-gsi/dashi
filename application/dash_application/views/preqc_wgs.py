@@ -12,7 +12,7 @@ from ..dash_id import init_ids
 from ..plot_builder import fill_in_shape_col, fill_in_colour_col, fill_in_size_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
-from ..utility import slider_utils
+from ..utility import sidebar_utils
 
 """ Set up elements needed for page """
 page_name = "preqc-wgs"
@@ -39,6 +39,7 @@ ids = init_ids([
     "insert-mean-slider",
     "passed-filter-reads-slider",
     "date-range",
+    "show-names",
 
     # Graphs
     "total-reads",
@@ -91,6 +92,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
+initial_shownames_val = 'none'
 initial_cutoff_pf_reads = 0.01
 initial_cutoff_insert_mean = 150
 initial_cutoff_rpsp = 5
@@ -192,7 +194,7 @@ WGS_DF = fill_in_size_col(WGS_DF)
 EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
 
 
-def generate_total_reads(df, colour_by, shape_by, cutoff):
+def generate_total_reads(df, colour_by, shape_by, shownames, cutoff):
     return generate(
         "Passed Filter Reads",
         df,
@@ -201,12 +203,12 @@ def generate_total_reads(df, colour_by, shape_by, cutoff):
         "# PF Reads x 10^6",
         colour_by,
         shape_by,
-        "none",
+        shownames,
         cutoff
     )
 
 
-def generate_mean_insert_size(df, colour_by, shape_by, cutoff):
+def generate_mean_insert_size(df, colour_by, shape_by, shownames, cutoff):
     return generate(
         "Mean Insert Size",
         df,
@@ -215,12 +217,12 @@ def generate_mean_insert_size(df, colour_by, shape_by, cutoff):
         "Base Pairs",
         colour_by,
         shape_by,
-        "none",
+        shownames,
         cutoff
     )
 
 
-def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
+def generate_reads_per_start_point(df, colour_by, shape_by, shownames, cutoff):
     return generate(
         "Reads per Start Point",
         df,
@@ -229,12 +231,12 @@ def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
         None,
         colour_by,
         shape_by,
-        "none",
+        shownames,
         cutoff
     )
 
 
-def generate_duplication(df, colour_by, shape_by):
+def generate_duplication(df, colour_by, shape_by, shownames):
     return generate(
         "Duplication (%)",
         df,
@@ -243,11 +245,11 @@ def generate_duplication(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
-def generate_unmapped_reads(df, colour_by, shape_by):
+def generate_unmapped_reads(df, colour_by, shape_by, shownames):
     return generate(
         "Unmapped Reads (%)",
         df,
@@ -256,11 +258,11 @@ def generate_unmapped_reads(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
-def generate_non_primary(df, colour_by, shape_by):
+def generate_non_primary(df, colour_by, shape_by, shownames):
     return generate(
         "Non-Primary Reads (%)",
         df,
@@ -269,11 +271,11 @@ def generate_non_primary(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
-def generate_on_target_reads(df, colour_by, shape_by):
+def generate_on_target_reads(df, colour_by, shape_by, shownames):
     return generate(
         "On Target Reads (%)",
         df,
@@ -282,11 +284,11 @@ def generate_on_target_reads(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
-def generate_purity(df, colour_by, shape_by):
+def generate_purity(df, colour_by, shape_by, shownames):
     return generate(
         "Purity",
         df,
@@ -295,11 +297,11 @@ def generate_purity(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
-def generate_ploidy(df, colour_by, shape_by):
+def generate_ploidy(df, colour_by, shape_by, shownames):
     return generate(
         "Ploidy",
         df,
@@ -308,7 +310,7 @@ def generate_ploidy(df, colour_by, shape_by):
         "",
         colour_by,
         shape_by,
-        "none"
+        shownames
     )
 
 
@@ -450,10 +452,29 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
                         multi = True
                     )
-                ]), html.Br(),
+                ]),
+                html.Br(),
 
-                # TODO: add "Show Names" dropdown
+                html.Label([
+                    "Show Names:",
+                    core.Dropdown(id=ids['show-names'],
+                                  options=[
+                                      {'label': 'Sample',
+                                       'value': PINERY_COL.SampleName},
+                                      {'label': 'Group ID',
+                                       'value': PINERY_COL.GroupID},
+                                      {'label': 'None', 'value': 'none'}
+                                  ],
+                                  value=initial_shownames_val,
+                                  searchable=False,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
+
                 util.run_range(ids["date-range"]),
+                html.Br(),
+
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(
@@ -489,7 +510,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         max=0.5,
                         step=0.025,
                         marks={str(n): str(n)
-                               for n in slider_utils.frange(0, 0.51, 0.05)},
+                               for n in sidebar_utils.frange(0, 0.51, 0.05)},
                         tooltip="always_visible",
                         value=initial_cutoff_pf_reads
                     )
@@ -501,47 +522,59 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 core.Graph(
                     id=ids["total-reads"],
                     figure=generate_total_reads(EMPTY_WGS, initial_colour_col,
-                                                initial_shape_col, initial_cutoff_pf_reads)
+                                                initial_shape_col,
+                                                initial_shownames_val,
+                                                initial_cutoff_pf_reads)
                 ),
                 core.Graph(
                     id=ids["mean-insert"],
                     figure=generate_mean_insert_size(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col, initial_cutoff_insert_mean)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val, initial_cutoff_insert_mean)
                 ),
                 core.Graph(
                     id=ids["reads-per-start-point"],
                     figure=generate_reads_per_start_point(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val, initial_cutoff_rpsp)
                 ),
                 core.Graph(
                     id=ids["duplication"],
                     figure=generate_duplication(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val)
                 ),
                 core.Graph(
                     id=ids["purity"],
                     figure=generate_purity(EMPTY_WGS,
-                                           initial_colour_col, initial_shape_col)
+                                           initial_colour_col,
+                                           initial_shape_col,
+                                           initial_shownames_val)
                 ),
                 core.Graph(
                     id=ids["ploidy"],
                     figure=generate_ploidy(EMPTY_WGS,
-                                           initial_colour_col, initial_shape_col)
+                                           initial_colour_col,
+                                           initial_shape_col,
+                                           initial_shownames_val)
                 ),
                 core.Graph(
                     id=ids["unmapped-reads"],
                     figure=generate_unmapped_reads(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val)
                 ),
                 core.Graph(
                     id=ids["non-primary-reads"],
                     figure=generate_non_primary(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val)
                 ),
                 core.Graph(
                     id=ids["on-target-reads"],
                     figure=generate_on_target_reads(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col)
+                        EMPTY_WGS, initial_colour_col, initial_shape_col,
+                        initial_shownames_val)
                 ),
             ]),
         ]),
@@ -592,7 +625,8 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
-            State(ids['search-sample'], 'value'), 
+            State(ids['search-sample'], 'value'),
+            State(ids['show-names'], 'value'),
             State(ids["reads-per-start-point-slider"], 'value'),
             State(ids["insert-mean-slider"], 'value'),
             State(ids["passed-filter-reads-slider"], 'value'),
@@ -610,6 +644,7 @@ def init_callbacks(dash_app):
                        colour_by,
                        shape_by,
                        searchsample,
+                       show_names,
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        rpsp_cutoff,
@@ -642,15 +677,18 @@ def init_callbacks(dash_app):
         ])
 
         return [
-            generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
-            generate_mean_insert_size(df, colour_by, shape_by, insert_mean_cutoff),
-            generate_reads_per_start_point(df, colour_by, shape_by, rpsp_cutoff),
-            generate_duplication(df, colour_by, shape_by),
-            generate_purity(df, colour_by, shape_by),
-            generate_ploidy(df, colour_by, shape_by),
-            generate_unmapped_reads(df, colour_by, shape_by),
-            generate_non_primary(df, colour_by, shape_by),
-            generate_on_target_reads(df, colour_by, shape_by),
+            generate_total_reads(df, colour_by, shape_by,
+                                 show_names, total_reads_cutoff),
+            generate_mean_insert_size(df, colour_by, shape_by, show_names,
+                                      insert_mean_cutoff),
+            generate_reads_per_start_point(df, colour_by, shape_by,
+                                           show_names, rpsp_cutoff),
+            generate_duplication(df, colour_by, shape_by, show_names),
+            generate_purity(df, colour_by, shape_by, show_names),
+            generate_ploidy(df, colour_by, shape_by, show_names),
+            generate_unmapped_reads(df, colour_by, shape_by, show_names),
+            generate_non_primary(df, colour_by, shape_by, show_names),
+            generate_on_target_reads(df, colour_by, shape_by, show_names),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
