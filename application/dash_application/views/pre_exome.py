@@ -581,3 +581,30 @@ def init_callbacks(dash_app):
     def all_runs_requested(click):
         return [x for x in ALL_RUNS]
 
+    @dash_app.callback(
+        Output(ids['instruments-list'], 'value'),
+        [Input(ids['all-instruments'], 'n_clicks')]
+    )
+    def all_instruments_requested(click):
+        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+
+    @dash_app.callback(
+        Output(ids['projects-list'], 'value'),
+        [Input(ids['all-projects'], 'n_clicks')]
+    )
+    def all_projects_requested(click):
+        return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['kits-list'], 'value'),
+        [Input(ids['all-kits'], 'n_clicks')]
+    )
+    def all_kits_requested(click):
+        return [x for x in ALL_KITS]
+
+    @dash_app.callback(
+        Output(ids['library-designs-list'], 'value'),
+        [Input(ids['all-library-designs'], 'n_clicks')]
+    )
+    def all_library_designs_requested(click):
+        return [x for x in ALL_LIBRARY_DESIGNS]
