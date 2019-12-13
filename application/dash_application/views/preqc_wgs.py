@@ -100,6 +100,7 @@ shape_or_colour_by = [
     {"label": "Run", "value": PINERY_COL.SequencerRunName},
     {"label": "Kit", "value": PINERY_COL.PrepKit},
     {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+    {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
 ]
 
 
