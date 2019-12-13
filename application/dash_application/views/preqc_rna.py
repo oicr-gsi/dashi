@@ -7,7 +7,7 @@ import pandas as pd
 
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import fill_in_colour_col, fill_in_shape_col, generate
+from ..plot_builder import fill_in_colour_col, fill_in_shape_col, fill_in_size_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
@@ -36,6 +36,7 @@ ids = init_ids([
     "second-sort",
     "colour-by",
     "shape-by",
+    "search-sample",
     "reads-per-start-point-slider",
     "rrna-contamination-slider",
     "passed-filter-reads-slider",
@@ -162,6 +163,7 @@ ALL_TISSUE_MATERIALS = RNA_DF[
 ALL_LIBRARY_DESIGNS = RNA_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
 ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()[::-1]  # reverse the list
+ALL_SAMPLES = RNA_DF[PINERY_COL.SampleName].sort_values().unique()
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
@@ -579,6 +581,7 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
+            State(ids['search-sample'], 'value'), 
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['passed-filter-reads-slider'], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -595,6 +598,7 @@ def init_callbacks(dash_app):
                        second_sort,
                        colour_by,
                        shape_by,
+                       searchsample,
                        rpsp_cutoff,
                        total_reads_cutoff,
                        start_date,
@@ -620,7 +624,7 @@ def init_callbacks(dash_app):
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-        df = fill_in_size_col(df)
+        df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
             ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint,

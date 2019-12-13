@@ -7,7 +7,7 @@ import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, fill_in_size_col
-from ..table_builder import build_table
+from ..table_builder import build_table, table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
 from gsiqcetl.column import BamQcColumn
@@ -544,11 +544,9 @@ def init_callbacks(dash_app):
                 library_designs)]
         data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_values)
-        data = fill_in_colour_col(data, colourby, colour_values)
+        data = fill_in_colour_col(data, colourby, colour_values, searchsample)
 
-        if searchsample:
-            data.loc[data[PINERY_COL.SampleName].isin(searchsample), 'colour'] = '#F00'
-        data = fill_in_size_col(data)
+        data = fill_in_size_col(data, searchsample)
 
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)

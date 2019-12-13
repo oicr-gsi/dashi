@@ -79,7 +79,7 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict):
+        dict, highlight_samples=None):
     if df.empty:
         df['colour'] = pandas.Series
     else:
@@ -89,6 +89,8 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         colour_col = df.apply(lambda row: all_colours.get(row[colour_col]),
                              axis=1)
         df = df.assign(colour=colour_col.values)
+        if highlight_samples:
+            df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
 def fill_in_size_col(df: DataFrame, highlight_samples=None):

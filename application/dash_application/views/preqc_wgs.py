@@ -9,7 +9,7 @@ import gsiqcetl.column
 import pinery
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import fill_in_shape_col, fill_in_colour_col, generate
+from ..plot_builder import fill_in_shape_col, fill_in_colour_col, fill_in_size_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import slider_utils
@@ -34,6 +34,7 @@ ids = init_ids([
     "second-sort",
     "colour-by",
     "shape-by",
+    "search-sample",
     "reads-per-start-point-slider",
     "insert-mean-slider",
     "passed-filter-reads-slider",
@@ -585,9 +586,12 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
+            State(ids['search-sample'], 'value'), 
             State(ids["reads-per-start-point-slider"], 'value'),
             State(ids["insert-mean-slider"], 'value'),
             State(ids["passed-filter-reads-slider"], 'value'),
+            State(ids["date-range"], 'start_date'),
+            State(ids["date-range"], 'end_date')
         ]
     )
     def update_pressed(click,
@@ -599,6 +603,7 @@ def init_callbacks(dash_app):
                        second_sort,
                        colour_by,
                        shape_by,
+                       searchsample,
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        rpsp_cutoff,
@@ -622,12 +627,12 @@ def init_callbacks(dash_app):
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
         df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-        df = fill_in_size_col(df)
+        df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff),
-            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff),
+            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff, False),
+            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff, True),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff, True),
         ])
 
         return [
