@@ -145,6 +145,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             y=y_fn(data),
             name=name_format(name),
             hovertext=text_content,
+            showlegend=True,
             mode="markers",
             marker={
                 "symbol": data['shape'],
