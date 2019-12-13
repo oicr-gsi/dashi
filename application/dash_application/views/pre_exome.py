@@ -121,8 +121,8 @@ ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
 # Set initial values for dropdown menus
 initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
-initial_colour_col = BAMQC_COL.Run
-initial_shape_col = PINERY_COL.StudyTitle
+initial_colour_col = PINERY_COL.StudyTitle
+initial_shape_col = BAMQC_COL.Run
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
