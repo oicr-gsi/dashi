@@ -125,10 +125,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         name_format = lambda n: "{0}".format(n[0])
     else:
         name_format = lambda n: "{0} {1}".format(n[0], n[1])
-    if hovertext_type == 'none':
-        marker_mode = 'markers'
-    else:
-        marker_mode = 'markers+text'
     for name, data in grouped_data:
         if hovertext_type == 'none':
             text_content = None
@@ -139,7 +135,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             y=y_fn(data),
             name=name_format(name),
             hovertext=text_content,
-            mode=marker_mode,
+            mode="markers",
             marker={
                 "symbol": data['shape'],
                 "color": data['colour'] # Please note the 'u'
