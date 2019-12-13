@@ -10,7 +10,7 @@ from ..dash_id import init_ids
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, fill_in_size_col, generate
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
-from ..utility import slider_utils
+from ..utility import sidebar_utils
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 
@@ -37,6 +37,7 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
+    "show-names",
     "reads-per-start-point-slider",
     "rrna-contamination-slider",
     "passed-filter-reads-slider",
@@ -88,6 +89,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = RNA_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
+initial_shownames_val = 'none'
 
 # Set initial points for graph cutoff lines
 initial_cutoff_rpsp = 5
@@ -182,7 +184,7 @@ RNA_DF = fill_in_size_col(RNA_DF)
 RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
 EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
 
-def generate_total_reads(df, colour_by, shape_by, cutoff):
+def generate_total_reads(df, colour_by, shape_by, show_names, cutoff):
     return generate(
         "Passed Filter Reads",
         df,
@@ -191,12 +193,12 @@ def generate_total_reads(df, colour_by, shape_by, cutoff):
         "# PF Reads (10^6)",
         colour_by,
         shape_by,
-        "none",
+        show_names,
         cutoff
     )
 
 
-def generate_unique_reads(df, colour_by, shape_by):
+def generate_unique_reads(df, colour_by, shape_by, show_names):
     return generate(
         "Unique Passed Filter Reads (%)",
         df,
@@ -205,11 +207,11 @@ def generate_unique_reads(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
+def generate_reads_per_start_point(df, colour_by, shape_by, show_names, cutoff):
     return generate(
         "Reads per Start Point",
         df,
@@ -218,12 +220,12 @@ def generate_reads_per_start_point(df, colour_by, shape_by, cutoff):
         None,
         colour_by,
         shape_by,
-        "none",
+        show_names,
         cutoff
     )
 
 
-def generate_five_to_three(df, colour_by, shape_by):
+def generate_five_to_three(df, colour_by, shape_by, show_names):
     return generate(
         "5 to 3 Prime Bias",
         df,
@@ -232,11 +234,11 @@ def generate_five_to_three(df, colour_by, shape_by):
         "Ratio",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_correct_read_strand(df, colour_by, shape_by):
+def generate_correct_read_strand(df, colour_by, shape_by, show_names):
     return generate(
         "Correct Strand Reads (%)",
         df,
@@ -245,11 +247,11 @@ def generate_correct_read_strand(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_coding(df, colour_by, shape_by):
+def generate_coding(df, colour_by, shape_by, show_names):
     return generate(
         "Coding (%)",
         df,
@@ -258,11 +260,11 @@ def generate_coding(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_rrna_contam(df, colour_by, shape_by):
+def generate_rrna_contam(df, colour_by, shape_by, show_names):
     return generate(
         "Ribosomal RNA (%)",
         df,
@@ -271,11 +273,11 @@ def generate_rrna_contam(df, colour_by, shape_by):
         "%",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_dv200(df, colour_by, shape_by):
+def generate_dv200(df, colour_by, shape_by, show_names):
     return generate(
         "DV200",
         df,
@@ -284,11 +286,11 @@ def generate_dv200(df, colour_by, shape_by):
         "",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
-def generate_rin(df, colour_by, shape_by):
+def generate_rin(df, colour_by, shape_by, show_names):
     return generate(
         "RIN",
         df,
@@ -297,7 +299,7 @@ def generate_rin(df, colour_by, shape_by):
         "",
         colour_by,
         shape_by,
-        "none"
+        show_names
     )
 
 
@@ -457,8 +459,26 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     )
                 ]), html.Br(),
 
-                # TODO: add "Show Names" dropdown
+                html.Label([
+                    "Show Names:",
+                    core.Dropdown(id=ids["show-names"],
+                                  options=[
+                                      {'label': 'Sample',
+                                       'value': PINERY_COL.SampleName},
+                                      {'label': 'Group ID',
+                                       'value': PINERY_COL.GroupID},
+                                      {'label': 'None', 'value': 'none'}
+                                  ],
+                                  value=initial_shownames_val,
+                                  searchable=False,
+                                  clearable=False
+                                  )
+                ]),
+                html.Br(),
+
                 util.run_range(ids["date-range"]),
+                html.Br(),
+
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(
@@ -481,7 +501,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         max=0.5,
                         step=0.025,
                         marks={str(n): str(n)
-                               for n in slider_utils.frange(0, 0.51, 0.05)},
+                               for n in sidebar_utils.frange(0, 0.51, 0.05)},
                         tooltip="always_visible",
                         value=initial_cutoff_pf_reads
                     )
@@ -494,43 +514,58 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      id=ids["total-reads"],
                      figure=generate_total_reads(EMPTY_RNA, initial_colour_col,
                                                  initial_shape_col,
+                                                 initial_shownames_val,
                                                  initial_cutoff_pf_reads)
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
-                     figure=generate_unique_reads(EMPTY_RNA, initial_colour_col, initial_shape_col)
+                     figure=generate_unique_reads(EMPTY_RNA, initial_colour_col,
+                                                  initial_shape_col,
+                                                  initial_shownames_val)
                  ),
                  core.Graph(
                      id=ids["reads-per-start-point"],
                      figure=generate_reads_per_start_point(
-                         EMPTY_RNA, initial_colour_col, initial_shape_col, initial_cutoff_rpsp)
+                         EMPTY_RNA, initial_colour_col, initial_shape_col,
+                         initial_shownames_val, initial_cutoff_rpsp)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
                      figure=generate_five_to_three(EMPTY_RNA,
-                                                   initial_colour_col, initial_shape_col)
+                                                   initial_colour_col,
+                                                   initial_shape_col,
+                                                   initial_shownames_val)
                  ),
                  core.Graph(
                      id=ids["correct-read-strand"],
                      figure=generate_correct_read_strand(EMPTY_RNA,
-                          initial_colour_col, initial_shape_col)
+                                                         initial_colour_col,
+                                                         initial_shape_col,
+                                                         initial_shownames_val)
                  ),
                  core.Graph(
                      id=ids["coding"],
-                     figure=generate_coding(EMPTY_RNA, initial_colour_col, initial_shape_col)
+                     figure=generate_coding(EMPTY_RNA, initial_colour_col,
+                                            initial_shape_col,
+                                            initial_shownames_val)
                  ),
                 core.Graph(
                     id=ids["rrna-contam"],
                     figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
-                                                initial_shape_col)
+                                                initial_shape_col,
+                                                initial_shownames_val)
                 ),
                  core.Graph(
                      id=ids["dv200"],
-                     figure=generate_dv200(EMPTY_RNA, initial_colour_col, initial_shape_col)
+                     figure=generate_dv200(EMPTY_RNA, initial_colour_col,
+                                           initial_shape_col,
+                                           initial_shownames_val)
                  ),
                  core.Graph(
                      id=ids["rin"],
-                     figure=generate_rin(EMPTY_RNA, initial_colour_col, initial_shape_col)
+                     figure=generate_rin(EMPTY_RNA, initial_colour_col,
+                                         initial_shape_col,
+                                         initial_shownames_val)
                  ),
              ]),
             table_tabs(
@@ -581,7 +616,8 @@ def init_callbacks(dash_app):
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
-            State(ids['search-sample'], 'value'), 
+            State(ids['search-sample'], 'value'),
+            State(ids['show-names'], 'value'),
             State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['passed-filter-reads-slider'], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -599,6 +635,7 @@ def init_callbacks(dash_app):
                        colour_by,
                        shape_by,
                        searchsample,
+                       show_names,
                        rpsp_cutoff,
                        total_reads_cutoff,
                        start_date,
@@ -634,15 +671,17 @@ def init_callbacks(dash_app):
              total_reads_cutoff, True),
         ])
         return [
-            generate_total_reads(df, colour_by, shape_by, total_reads_cutoff),
-            generate_unique_reads(df, colour_by, shape_by),
-            generate_reads_per_start_point(df, colour_by, shape_by, rpsp_cutoff),
-            generate_five_to_three(df, colour_by, shape_by),
-            generate_correct_read_strand(df, colour_by, shape_by),
-            generate_coding(df, colour_by, shape_by),
-            generate_rrna_contam(df, colour_by, shape_by),
-            generate_dv200(df, colour_by, shape_by),
-            generate_rin(df, colour_by, shape_by),
+            generate_total_reads(df, colour_by, shape_by,
+                                 show_names, total_reads_cutoff),
+            generate_unique_reads(df, colour_by, shape_by, show_names),
+            generate_reads_per_start_point(df, colour_by, shape_by,
+                                           show_names, rpsp_cutoff),
+            generate_five_to_three(df, colour_by, shape_by, show_names),
+            generate_correct_read_strand(df, colour_by, shape_by, show_names),
+            generate_coding(df, colour_by, shape_by, show_names),
+            generate_rrna_contam(df, colour_by, shape_by, show_names),
+            generate_dv200(df, colour_by, shape_by, show_names),
+            generate_rin(df, colour_by, shape_by, show_names),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),

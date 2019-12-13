@@ -9,7 +9,7 @@ from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, fill_in_size_col
 from ..table_builder import build_table, table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
-from ..utility import slider_utils
+from ..utility import sidebar_utils
 from gsiqcetl.column import BamQcColumn
 import pinery
 
@@ -126,6 +126,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = BAMQC_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.SequencerRunName
+initial_shownames_val = 'none'
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
@@ -167,7 +168,7 @@ def generate_unmapped_reads(current_data, colourby, shapeby, shownames):
         "Unmapped Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
+        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -180,7 +181,7 @@ def generate_nonprimary_reads(current_data, colourby, shapeby, shownames):
         "Non-Primary Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
+        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -193,7 +194,7 @@ def generate_on_target_reads(current_data, colourby, shapeby, shownames):
         "On Target Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: slider_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
+        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
         "%",
         colourby,
         shapeby,
@@ -380,7 +381,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
                             {'label': 'None', 'value': 'none'}
                         ],
-                        value='none',
+                        value=initial_shownames_val,
                         searchable=False,
                         clearable=False
                     )
@@ -388,6 +389,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Br(),
 
                 util.run_range(ids["date-range"]),
+                html.Br(),
+
                 html.Label([
                     "Reads Per Start Point:",
                     core.Slider(id=ids['reads-per-start-point-slider'],
@@ -415,45 +418,56 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Label([
                     "Total Reads (Passed Filter) * 10^6:",
                     core.Slider(id=ids['passed-filter-reads-slider'],
-                        min=0,
-                        max=0.5,
-                        step=0.005,
-                        marks={str(n): str(n)
-                               for n in slider_utils.frange(0, 0.51, 0.05)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_pf_reads
-                    )
+                                min=0,
+                                max=0.5,
+                                step=0.005,
+                                marks={str(n): str(n)
+                                       for n in sidebar_utils.frange(0, 0.51, 0.05)},
+                                tooltip="always_visible",
+                                value=initial_cutoff_pf_reads
+                                )
                 ]), html.Br()
             ]),
             html.Div(className='seven columns',
                 children=[
                     core.Graph(id=ids['total-reads'],
-                        figure=generate_total_reads(empty_bamqc, initial_colour_col,
-                                                    initial_shape_col, 'none',
+                        figure=generate_total_reads(empty_bamqc,
+                                                    initial_colour_col,
+                                                    initial_shape_col,
+                                                    initial_shownames_val,
                                                     initial_cutoff_pf_reads)
                     ),
                     core.Graph(id=ids['unmapped-reads'],
-                        figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
-                                                     initial_shape_col, 'none')
+                        figure=generate_unmapped_reads(empty_bamqc,
+                                                       initial_colour_col,
+                                                       initial_shape_col,
+                                                       initial_shownames_val)
                     ),
                     core.Graph(id=ids['non-primary-reads'],
-                        figure=generate_nonprimary_reads(empty_bamqc, initial_colour_col,
-                                                       initial_shape_col, 'none')
+                        figure=generate_nonprimary_reads(empty_bamqc,
+                                                         initial_colour_col,
+                                                         initial_shape_col,
+                                                         initial_shownames_val)
                     ),
                     core.Graph(id=ids['on-target-reads'],
-                        figure=generate_on_target_reads(empty_bamqc, initial_colour_col,
-                                                     initial_shape_col, 'none')
+                        figure=generate_on_target_reads(empty_bamqc,
+                                                        initial_colour_col,
+                                                        initial_shape_col,
+                                                        initial_shownames_val)
                     ),
                     core.Graph(id=ids['reads-per-start-point'],
                         figure=generate_reads_per_start_point(empty_bamqc,
-                                                          initial_colour_col,
-                                                          initial_shape_col,
-                                                          'none', initial_cutoff_rpsp)
+                                                        initial_colour_col,
+                                                        initial_shape_col,
+                                                        initial_shownames_val,
+                                                        initial_cutoff_rpsp)
                     ),
                     core.Graph(id=ids['mean-insert-size'],
-                        figure=generate_mean_insert_size(empty_bamqc, initial_colour_col,
-                               initial_shape_col, 'none',
-                                                      initial_cutoff_insert_size)
+                        figure=generate_mean_insert_size(empty_bamqc,
+                                                         initial_colour_col,
+                                                         initial_shape_col,
+                                                         initial_shownames_val,
+                                                         initial_cutoff_insert_size)
                     )
                 ]),
             ]),
