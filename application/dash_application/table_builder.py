@@ -70,7 +70,9 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
                                                     ) in limits)])
 
 
-def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, float]]):
+def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
+                                                                    float,
+                                                                    bool]]):
     (failure_df, columns) = cutoff_table_data(data, limits)
     return tabl.DataTable(
         id=table_id,
@@ -101,7 +103,7 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str, fl
 
 
 def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str], filter_on: str,
-               limits: List[Tuple[str, str, float]]):
+               limits: List[Tuple[str, str, float, bool]]):
     return core.Tabs(
         [
             core.Tab(

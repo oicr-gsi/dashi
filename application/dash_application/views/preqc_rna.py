@@ -7,7 +7,8 @@ import pandas as pd
 
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import fill_in_colour_col, fill_in_shape_col, fill_in_size_col, generate
+from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
+    fill_in_size_col, generate, generate_total_reads, generate_reads_per_start_point
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -184,19 +185,6 @@ RNA_DF = fill_in_size_col(RNA_DF)
 RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
 EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
 
-def generate_total_reads(df, colour_by, shape_by, show_names, cutoff):
-    return generate(
-        "Passed Filter Reads",
-        df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads (10^6)",
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff
-    )
-
 
 def generate_unique_reads(df, colour_by, shape_by, show_names):
     return generate(
@@ -208,20 +196,6 @@ def generate_unique_reads(df, colour_by, shape_by, show_names):
         colour_by,
         shape_by,
         show_names
-    )
-
-
-def generate_reads_per_start_point(df, colour_by, shape_by, show_names, cutoff):
-    return generate(
-        "Reads per Start Point",
-        df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.ReadsPerStartPoint],
-        None,
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff
     )
 
 
@@ -312,187 +286,76 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Button("Update", id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-                core.Loading(type="circle", children=[
-                    html.Button('Add All', id=ids["all-runs"],
-                        className="inline"),
-                    html.Label([
-                        "Runs",
-                        core.Dropdown(id=ids["run-id-list"],
-                                      options=[
-                                          {"label": run,
-                                           "value": run} for run in ALL_RUNS
-                                      ],
-                                      multi=True)
-                    ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Instruments", id=ids["all-instruments"],
-                                className="inline"),
-                    html.Label([
-                       "Instruments",
-                        core.Dropdown(id=ids["instruments-list"],
-                                      options=[
-                                          {"label": instrument,
-                                           "value": instrument} for instrument in
-                                          ILLUMINA_INSTRUMENT_MODELS
-                                      ],
-                                      multi=True)
-                        ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Projects", id=ids["all-projects"],
-                                className="inline"),
-                    html.Label([
-                        "Projects",
-                        core.Dropdown(id=ids["projects-list"],
-                                      options=[
-                                          {"label": project,
-                                           "value": project} for project
-                                          in ALL_PROJECTS
-                                      ],
-                                      multi=True)
-                    ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Kits", id=ids["all-kits"],
-                                className="inline"),
-                    html.Label([
-                       "Kits",
-                        core.Dropdown(id=ids["kits-list"],
-                                      options=[
-                                          {"label": kit,
-                                           "value": kit} for kit in ALL_KITS
-                                      ],
-                                      multi=True)
-                        ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Library Designs", id=ids[
-                        "all-library-designs"],
-                                className="inline"),
-                    html.Label([
-                        "Library Designs",
-                        core.Dropdown(id=ids["library-designs-list"],
-                                      options=[
-                                          {"label": ld,
-                                           "value": ld} for ld
-                                          in ALL_LIBRARY_DESIGNS
-                                      ],
-                                      multi=True)
-                    ]),
-                ]),
+
+                # Filters
+                sidebar_utils.select_runs(ids["all-runs"],
+                                          ids["run-id-list"], ALL_RUNS),
+
+                util.run_range_input(ids["date-range"]),
+
+                sidebar_utils.select_instruments(ids["all-instruments"],
+                                                 ids["instruments-list"],
+                                                 ILLUMINA_INSTRUMENT_MODELS),
+
+                sidebar_utils.select_projects(ids["all-projects"],
+                                              ids["projects-list"],
+                                              ALL_PROJECTS),
+
+                sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
+                                          ALL_KITS),
+
+                sidebar_utils.select_library_designs(
+                    ids["all-library-designs"], ids["library-designs-list"],
+                    ALL_LIBRARY_DESIGNS),
+
                 html.Br(),
 
-                html.Label([
-                    "First Sort:",
-                    core.Dropdown(id=ids["first-sort"],
-                                  options=[
-                                      {"label": "Project",
-                                       "value": PINERY_COL.StudyTitle},
-                                      {"label": "Run",
-                                       "value": RNA_COL.Run}
-                                  ],
-                                  value=initial_first_sort,
-                                  searchable=True,
-                                  clearable=False
-                                  )
-                ]),
+                # Sort, colour, and shape
+                sidebar_utils.select_first_sort(ids["first-sort"],
+                                                initial_first_sort),
+
+                sidebar_utils.select_second_sort(
+                    ids["second-sort"],
+                    initial_second_sort,
+                    [
+                        {"label": "Total Reads",
+                         "value": RNA_COL.TotalReads},
+                        {"label": "% Unique Reads",
+                         "value": special_cols["Percent Uniq Reads"]},
+                        {"label": "Reads Per Start Point",
+                         "value": RNA_COL.ReadsPerStartPoint},
+                        {"label": "5Prime to 3Prime Bias",
+                         "value": RNA_COL.Median5Primeto3PrimeBias},
+                        {"label": "% Correct Read Strand",
+                         "value": RNA_COL.CorrectStrandReads},
+                        {"label": "% Coding",
+                         "value": RNA_COL.ProportionCodingBases},
+                        {"label": "% rRNA Contamination",
+                         "value": RNA_COL.rRNAContaminationreadsaligned},
+                        {"label": "DV200",
+                         "value": PINERY_COL.DV200},
+                        {"label": "RIN",
+                         "value": PINERY_COL.RIN}
+                    ]
+                ),
+
+                sidebar_utils.select_colour_by(ids["colour-by"],
+                                               shape_or_colour_by,
+                                               initial_colour_col),
+
+                sidebar_utils.select_shape_by(ids["shape-by"],
+                                              shape_or_colour_by,
+                                              initial_shape_col),
+
+                sidebar_utils.highlight_samples_input(ids['search-sample'],
+                                                      ALL_SAMPLES),
+
+                sidebar_utils.show_names_input(ids["show-names"],
+                                               initial_shownames_val),
+
                 html.Br(),
 
-                html.Label([
-                    "Second Sort:",
-                    core.Dropdown(id=ids["second-sort"],
-                                  options=[
-                                      {"label": "Total Reads",
-                                       "value": RNA_COL.TotalReads},
-                                      {"label": "% Unique Reads",
-                                       "value": special_cols["Percent Uniq Reads"]},
-                                      {"label": "Reads Per Start Point",
-                                       "value": RNA_COL.ReadsPerStartPoint},
-                                      {"label": "5Prime to 3Prime Bias",
-                                       "value": RNA_COL.Median5Primeto3PrimeBias},
-                                      {"label": "% Correct Read Strand",
-                                       "value": RNA_COL.CorrectStrandReads},
-                                      {"label": "% Coding",
-                                       "value": RNA_COL.ProportionCodingBases},
-                                      {"label": "% rRNA Contamination",
-                                       "value": RNA_COL.rRNAContaminationreadsaligned},
-                                      {"label": "DV200",
-                                       "value": PINERY_COL.DV200},
-                                      {"label": "RIN",
-                                       "value": PINERY_COL.RIN}
-                                  ],
-                                  value=initial_second_sort,
-                                  searchable=True,
-                                  clearable=False
-                                  )
-                ]),
-                html.Br(),
-
-                html.Label([
-                    "Colour By:",
-                    core.Dropdown(id=ids["colour-by"],
-                                  options=shape_or_colour_by,
-                                  value=initial_colour_col,
-                                  searchable=False,
-                                  clearable=False
-                                  )
-                ]),
-                html.Br(),
-
-                html.Label([
-                    "Shape By:",
-                    core.Dropdown(id=ids["shape-by"],
-                                  options=shape_or_colour_by,
-                                  value=initial_shape_col,
-                                  searchable=False,
-                                  clearable=False
-                                  )
-                ]),
-                html.Br(),
-
-                html.Label([
-                    "Highlight Samples:",
-                    core.Dropdown(id=ids['search-sample'],
-                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
-                        multi = True
-                    )
-                ]), html.Br(),
-
-                html.Label([
-                    "Show Names:",
-                    core.Dropdown(id=ids["show-names"],
-                                  options=[
-                                      {'label': 'Sample',
-                                       'value': PINERY_COL.SampleName},
-                                      {'label': 'Group ID',
-                                       'value': PINERY_COL.GroupID},
-                                      {'label': 'None', 'value': 'none'}
-                                  ],
-                                  value=initial_shownames_val,
-                                  searchable=False,
-                                  clearable=False
-                                  )
-                ]),
-                html.Br(),
-
-                util.run_range(ids["date-range"]),
-                html.Br(),
-
-                html.Label([
-                    "Reads Per Start Point:",
-                    core.Slider(
-                        id=ids["reads-per-start-point-slider"],
-                        min=0,
-                        max=50,
-                        step=1,
-                        marks={str(n): str(n) for n in range(0, 51, 5)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_rpsp
-                    )
-                ]),
-                html.Br(),
-
+                # Cutoff Sliders
                 html.Label([
                     "Total Reads (Passed Filter) * 10^6:",
                     core.Slider(
@@ -506,16 +369,35 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         value=initial_cutoff_pf_reads
                     )
                 ]),
+
+                html.Label([
+                    "Reads Per Start Point:",
+                    core.Slider(
+                        id=ids["reads-per-start-point-slider"],
+                        min=0,
+                        max=50,
+                        step=1,
+                        marks={str(n): str(n) for n in range(0, 51, 5)},
+                        tooltip="always_visible",
+                        value=initial_cutoff_rpsp
+                    )
+                ]),
+
                 html.Br(),
             ]),
 
+            # Graphs
             html.Div(className="seven columns",  children=[
                  core.Graph(
                      id=ids["total-reads"],
-                     figure=generate_total_reads(EMPTY_RNA, initial_colour_col,
-                                                 initial_shape_col,
-                                                 initial_shownames_val,
-                                                 initial_cutoff_pf_reads)
+                     figure=generate_total_reads(
+                         EMPTY_RNA,
+                         PINERY_COL.SampleName,
+                         special_cols["Total Reads (Passed Filter)"],
+                         initial_colour_col,
+                         initial_shape_col,
+                         initial_shownames_val,
+                         initial_cutoff_pf_reads)
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
@@ -526,8 +408,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                  core.Graph(
                      id=ids["reads-per-start-point"],
                      figure=generate_reads_per_start_point(
-                         EMPTY_RNA, initial_colour_col, initial_shape_col,
-                         initial_shownames_val, initial_cutoff_rpsp)
+                         EMPTY_RNA,
+                         PINERY_COL.SampleName,
+                         RNA_COL.ReadsPerStartPoint,
+                         initial_colour_col,
+                         initial_shape_col,
+                         initial_shownames_val,
+                         initial_cutoff_rpsp)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
@@ -549,12 +436,12 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                             initial_shape_col,
                                             initial_shownames_val)
                  ),
-                core.Graph(
-                    id=ids["rrna-contam"],
-                    figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
-                                                initial_shape_col,
-                                                initial_shownames_val)
-                ),
+                 core.Graph(
+                     id=ids["rrna-contam"],
+                     figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
+                                                 initial_shape_col,
+                                                 initial_shownames_val)
+                 ),
                  core.Graph(
                      id=ids["dv200"],
                      figure=generate_dv200(EMPTY_RNA, initial_colour_col,
@@ -568,6 +455,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                          initial_shownames_val)
                  ),
              ]),
+
+            # Tables
             table_tabs(
                 ids["failed-samples"],
                 ids["data-table"],
@@ -671,11 +560,14 @@ def init_callbacks(dash_app):
              total_reads_cutoff, True),
         ])
         return [
-            generate_total_reads(df, colour_by, shape_by,
-                                 show_names, total_reads_cutoff),
+            generate_total_reads(
+                df, PINERY_COL.SampleName,
+                special_cols["Total Reads (Passed Filter)"], colour_by,
+                shape_by, show_names, total_reads_cutoff),
             generate_unique_reads(df, colour_by, shape_by, show_names),
-            generate_reads_per_start_point(df, colour_by, shape_by,
-                                           show_names, rpsp_cutoff),
+            generate_reads_per_start_point(
+                df, PINERY_COL.SampleName, RNA_COL.ReadsPerStartPoint,
+                colour_by, shape_by, show_names, rpsp_cutoff),
             generate_five_to_three(df, colour_by, shape_by, show_names),
             generate_correct_read_strand(df, colour_by, shape_by, show_names),
             generate_coding(df, colour_by, shape_by, show_names),

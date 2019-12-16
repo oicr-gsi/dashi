@@ -149,7 +149,7 @@ def filter_by_library_design(df: DataFrame, library_designs: List[str]):
     return df[df[PINERY_COL.LibrarySourceTemplateType].isin(library_designs)]
 
 
-def run_range(id: str) -> html.Label:
+def run_range_input(id: str) -> html.Label:
     start = _runs[pinery.column.RunsColumn.StartDate].min(skipna=True)
     end = datetime.datetime.now()
     return html.Label(["Run Date:",

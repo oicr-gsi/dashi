@@ -6,7 +6,8 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
-from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, fill_in_size_col
+from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
+    fill_in_size_col, generate_reads_per_start_point, generate_total_reads
 from ..table_builder import build_table, table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -148,21 +149,6 @@ bamqc = fill_in_size_col(bamqc)
 empty_bamqc = pd.DataFrame(columns=bamqc.columns)
 
 
-def generate_total_reads(current_data, colourby, shapeby, shownames,
-                         cutoff_line):
-    return generate(
-        "Passed Filter Reads",
-        current_data,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads x 10^6",
-        colourby,
-        shapeby,
-        shownames,
-        cutoff_line
-    )
-    
-
 def generate_unmapped_reads(current_data, colourby, shapeby, shownames):
     return generate(
         "Unmapped Reads (%)",
@@ -202,21 +188,6 @@ def generate_on_target_reads(current_data, colourby, shapeby, shownames):
     )
 
 
-def generate_reads_per_start_point(current_data, colourby, shapeby, shownames,
-                               cutoff_line):
-    return generate(
-        "Reads per Start Point",
-        current_data,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.ReadsPerStartPoint],
-        None,
-        colourby,
-        shapeby,
-        shownames,
-        cutoff_line
-    )
-
-
 def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
                            cutoff_line):
     return generate(
@@ -242,90 +213,38 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Button('Update', id=ids['update-button']),
                 html.Br(),
                 html.Br(),
-                core.Loading(type="circle", children=[
-                    html.Button('Add All', id=ids["all-runs"], className="inline"),
-                    html.Label([
-                        "Run",
-                        core.Dropdown(id=ids['run-id-list'],
-                            options=[{'label': x, 'value': x} for x in ALL_RUNS],
-                            multi=True)
-                    ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Instruments", id=ids["all-instruments"],
-                                className="inline"),
-                    html.Label([
-                       "Instruments",
-                        core.Dropdown(id=ids["instruments-list"],
-                                      options=[
-                                          {"label": instrument,
-                                           "value": instrument} for instrument in
-                                          ILLUMINA_INSTRUMENT_MODELS
-                                      ],
-                                      multi=True)
-                        ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Projects", id=ids["all-projects"],
-                                className="inline"),
-                    html.Label([
-                        "Projects",
-                        core.Dropdown(id=ids["projects-list"],
-                                      options=[
-                                          {"label": project,
-                                           "value": project} for project
-                                          in ALL_PROJECTS
-                                      ],
-                                      multi=True)
-                    ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Kits", id=ids["all-kits"],
-                                className="inline"),
-                    html.Label([
-                       "Kits",
-                        core.Dropdown(id=ids["kits-list"],
-                                      options=[
-                                          {"label": kit,
-                                           "value": kit} for kit in ALL_KITS
-                                      ],
-                                      multi=True)
-                        ]),
-                ]),
-                core.Loading(type="circle", children=[
-                    html.Button("All Library Designs", id=ids[
-                        "all-library-designs"],
-                                className="inline"),
-                    html.Label([
-                        "Library Designs",
-                        core.Dropdown(id=ids["library-designs-list"],
-                                      options=[
-                                          {"label": ld,
-                                           "value": ld} for ld
-                                          in ALL_LIBRARY_DESIGNS
-                                      ],
-                                      multi=True)
-                    ]),
-                ]),
-                html.Br(),
-                
-                html.Label([
-                    "Sort:",
-                    core.Dropdown(id=ids['first-sort'],
-                        options = [
-                            {'label': 'Project', 'value': PINERY_COL.StudyTitle},
-                            {'label': 'Run', 'value': BAMQC_COL.Run}
-                        ],
-                        value=initial_first_sort,
-                        searchable=False,
-                        clearable=False
-                    )
-                ]), html.Br(),
 
-                html.Label([
-                    "Second Sort:",
-                    core.Dropdown(id=ids['second-sort'],
-                        options=[
+                # Filters
+                sidebar_utils.select_runs(ids["all-runs"],
+                                          ids["run-id-list"], ALL_RUNS),
+
+                util.run_range_input(ids["date-range"]),
+
+                sidebar_utils.select_instruments(ids["all-instruments"],
+                                                 ids["instruments-list"],
+                                                 ILLUMINA_INSTRUMENT_MODELS),
+
+                sidebar_utils.select_projects(ids["all-projects"],
+                                              ids["projects-list"],
+                                              ALL_PROJECTS),
+
+                sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
+                                          ALL_KITS),
+
+                sidebar_utils.select_library_designs(
+                    ids["all-library-designs"], ids["library-designs-list"],
+                    ALL_LIBRARY_DESIGNS),
+
+                html.Br(),
+
+                # Sort, colour, and shape
+                sidebar_utils.select_first_sort(ids['first-sort'],
+                                                initial_first_sort),
+
+                sidebar_utils.select_second_sort(
+                    ids['second-sort'],
+                    initial_second_sort,
+                    [
                             {"label": "Total Reads",
                              "value": BAMQC_COL.TotalReads},
                             {"label": "Unmapped Reads",
@@ -338,58 +257,39 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                              "value": BAMQC_COL.ReadsPerStartPoint},
                             {"label": "Mean Insert Size",
                              "value": BAMQC_COL.InsertMean}
-                        ],
-                        value=initial_second_sort,
-                        searchable=False,
-                        clearable=False
-                    )
-                ]), html.Br(),
+                    ]
+                ),
 
-                html.Label([
-                    "Colour by:",
-                    core.Dropdown(id=ids['colour-by'],
-                        options=shape_or_colour_by,
-                        value=initial_colour_col,
-                        searchable=False,
-                        clearable=False
-                    )
-                ]), html.Br(),
+                sidebar_utils.select_colour_by(ids['colour-by'],
+                                              shape_or_colour_by,
+                                              initial_colour_col),
 
-                html.Label([
-                    "Shape by:",
-                    core.Dropdown(id=ids['shape-by'],
-                        options=shape_or_colour_by,
-                        value=initial_shape_col,
-                        searchable=False,
-                        clearable=False
-                    )
-                ]), html.Br(),
+                sidebar_utils.select_shape_by(ids['shape-by'],
+                                             shape_or_colour_by,
+                                             initial_shape_col),
 
-                html.Label([
-                    "Highlight Samples:",
-                    core.Dropdown(id=ids['search-sample'],
-                        options = [{'label': x, 'value': x} for x in ALL_SAMPLES],
-                        multi = True
-                    )
-                ]), html.Br(),
+                sidebar_utils.highlight_samples_input(ids['search-sample'],
+                                                      ALL_SAMPLES),
                 
-                html.Label([
-                    "Show Names:",
-                    core.Dropdown(id=ids['show-names'],
-                        options=[
-                            {'label': 'Sample', 'value': PINERY_COL.SampleName},
-                            {'label': 'Group ID', 'value': PINERY_COL.GroupID},
-                            {'label': 'None', 'value': 'none'}
-                        ],
-                        value=initial_shownames_val,
-                        searchable=False,
-                        clearable=False
-                    )
-                ]),
+                sidebar_utils.show_names_input(ids['show-names'],
+                                               initial_shownames_val),
+
                 html.Br(),
 
-                util.run_range(ids["date-range"]),
-                html.Br(),
+                # Cutoff sliders
+                html.Label([
+                    "Total Reads (Passed Filter) * 10^6:",
+                    core.Slider(id=ids['passed-filter-reads-slider'],
+                                min=0,
+                                max=0.5,
+                                step=0.005,
+                                marks={str(n): str(n)
+                                       for n in
+                                       sidebar_utils.frange(0, 0.51, 0.05)},
+                                tooltip="always_visible",
+                                value=initial_cutoff_pf_reads
+                                )
+                ]), html.Br(),
 
                 html.Label([
                     "Reads Per Start Point:",
@@ -414,28 +314,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                         value=initial_cutoff_insert_size
                     )
                 ]), html.Br(),
-                
-                html.Label([
-                    "Total Reads (Passed Filter) * 10^6:",
-                    core.Slider(id=ids['passed-filter-reads-slider'],
-                                min=0,
-                                max=0.5,
-                                step=0.005,
-                                marks={str(n): str(n)
-                                       for n in sidebar_utils.frange(0, 0.51, 0.05)},
-                                tooltip="always_visible",
-                                value=initial_cutoff_pf_reads
-                                )
-                ]), html.Br()
             ]),
+
+            # Graphs
             html.Div(className='seven columns',
                 children=[
                     core.Graph(id=ids['total-reads'],
-                        figure=generate_total_reads(empty_bamqc,
-                                                    initial_colour_col,
-                                                    initial_shape_col,
-                                                    initial_shownames_val,
-                                                    initial_cutoff_pf_reads)
+                        figure=generate_total_reads(
+                            empty_bamqc,
+                            PINERY_COL.SampleName,
+                            special_cols["Total Reads (Passed Filter)"],
+                            initial_colour_col,
+                            initial_shape_col,
+                            initial_shownames_val,
+                            initial_cutoff_pf_reads)
                     ),
                     core.Graph(id=ids['unmapped-reads'],
                         figure=generate_unmapped_reads(empty_bamqc,
@@ -456,11 +348,14 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                                         initial_shownames_val)
                     ),
                     core.Graph(id=ids['reads-per-start-point'],
-                        figure=generate_reads_per_start_point(empty_bamqc,
-                                                        initial_colour_col,
-                                                        initial_shape_col,
-                                                        initial_shownames_val,
-                                                        initial_cutoff_rpsp)
+                        figure=generate_reads_per_start_point(
+                            empty_bamqc,
+                            PINERY_COL.SampleName,
+                            BAMQC_COL.ReadsPerStartPoint,
+                            initial_colour_col,
+                            initial_shape_col,
+                            initial_shownames_val,
+                            initial_cutoff_rpsp)
                     ),
                     core.Graph(id=ids['mean-insert-size'],
                         figure=generate_mean_insert_size(empty_bamqc,
@@ -471,6 +366,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                     )
                 ]),
             ]),
+
+            # Tables
             table_tabs(
                 ids["failed-samples"],
                 ids["data-table"],
@@ -578,13 +475,16 @@ def init_callbacks(dash_app):
                  True),
             ])
         return [
-            generate_total_reads(data, colourby, shapeby, shownames,
-                                 passedfilter),
+            generate_total_reads(
+                data, PINERY_COL.SampleName,
+                special_cols["Total Reads (Passed Filter)"], colourby,
+                shapeby, shownames, passedfilter),
             generate_unmapped_reads(data, colourby, shapeby, shownames),
             generate_nonprimary_reads(data, colourby, shapeby, shownames),
             generate_on_target_reads(data, colourby, shapeby, shownames),
-            generate_reads_per_start_point(data, colourby, shapeby, shownames,
-                                       readsperstartpoint),
+            generate_reads_per_start_point(
+                data, PINERY_COL.SampleName, BAMQC_COL.ReadsPerStartPoint,
+                colourby, shapeby, shownames, readsperstartpoint),
             generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
             failure_columns,
