@@ -151,7 +151,7 @@ def filter_by_library_design(df: DataFrame, library_designs: List[str]):
 
 def run_range(id: str) -> html.Label:
     start = _runs[pinery.column.RunsColumn.StartDate].min(skipna=True)
-    end = _runs[pinery.column.RunsColumn.CompletionDate].max(skipna=True)
+    end = datetime.datetime.now()
     return html.Label(["Run Date:",
                        core.DatePickerRange(id=id,
                                             day_size=50,
@@ -165,6 +165,7 @@ def run_range(id: str) -> html.Label:
 
 
 def runs_in_range(start_date, end_date) -> pandas.Series:
-    allowed_runs = _runs[(_runs[pinery.column.RunsColumn.StartDate] > start_date) & (
-        _runs[pinery.column.RunsColumn.CompletionDate] < end_date)]
+    allowed_runs = _runs[(_runs[pinery.column.RunsColumn.StartDate] >=
+                          start_date) & (
+        _runs[pinery.column.RunsColumn.CompletionDate] <= end_date)]
     return allowed_runs[pinery.column.RunsColumn.Name]
