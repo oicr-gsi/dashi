@@ -61,6 +61,7 @@ PLOTLY_DEFAULT_COLOURS=[
 
 BIG_MARKER_SIZE = 20
 
+
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
     if df.empty:
@@ -73,6 +74,7 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
                              axis=1)
         df = df.assign(shape=shape_col.values)
     return df
+
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict, highlight_samples=None):
@@ -89,11 +91,13 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
             df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
+
 def fill_in_size_col(df: DataFrame, highlight_samples=None):
     df['markersize'] = 12
     if highlight_samples:
         df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
+
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
@@ -187,6 +191,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
+
 def get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0
@@ -198,31 +203,42 @@ def get_dict_wrapped(key_list, value_list):
         index += 1
     return kv_dict
 
+
 def get_shapes_for_values(shapeby: List[str]):
     return get_dict_wrapped(shapeby, ALL_SYMBOLS)
+
 
 def get_colours_for_values(colourby: List[str]):
     return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
 
-def terminal_output(data:DataFrame, limits:List[Tuple[str, str, float]]) -> str:
-    if data.empty:
-        return "No data!"
 
-    output = ""
+# Generators for graphs used on multiple pages
+def generate_total_reads(df: DataFrame, x_col: str, y_col: str, colour_by:
+        str, shape_by: str, show_names: str, cutoff_line) -> go.Figure:
+    return generate(
+        "Passed Filter Reads",
+        df,
+        lambda d: d[x_col],
+        lambda d: d[y_col],
+        "# PF Reads X 10^6",
+        colour_by,
+        shape_by,
+        show_names,
+        cutoff_line
+    )
 
-    for (name, column, cutoff) in limits:
-        output += "$failed_%s\n" %name
-        newline = False
-        linenumber = 0
-        for failed in data.loc[data[column] < cutoff][pinery.column.SampleProvenanceColumn.SampleName]:
-            if not newline:
-                output += "[{0}] ".format(linenumber)
-            output += "\"" + failed + "\"\t\t"
-            if newline:
-                output += "\n"
-            newline = not newline
-            linenumber += 1
-    if output:
-        return output
-    else:
-        return "All samples within cutoffs"
+
+def generate_reads_per_start_point(df: DataFrame, x_col: str, y_col: str,
+        colour_by: str, shape_by: str, show_names: str, cutoff_line) -> \
+        go.Figure:
+    return generate(
+        "Reads per Start Point",
+        df,
+        lambda d: d[x_col],
+        lambda d: d[y_col],
+        None,
+        colour_by,
+        shape_by,
+        show_names,
+        cutoff_line
+    )
