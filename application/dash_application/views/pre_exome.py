@@ -240,6 +240,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             children=[
                 html.Button('Update', id=ids['update-button']),
                 html.Br(),
+                html.Div(id="debug"),
                 html.Br(),
                 core.Loading(type="circle", children=[
                     html.Button('Add All', id=ids["all-runs"], className="inline"),
@@ -488,7 +489,8 @@ def init_callbacks(dash_app):
             Output(ids['mean-insert-size'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
-            Output(ids['data-table'], 'data')
+            Output(ids['data-table'], 'data'),
+            Output("debug", "children")
         ],
         [Input(ids['update-button'], 'n_clicks')],
         [
@@ -510,6 +512,7 @@ def init_callbacks(dash_app):
             State(ids["date-range"], 'end_date'),
         ]
     )
+    #@dash_app.server.cache.cached(timeout=60)
     def update_pressed(click,
             runs,
             instruments,
@@ -575,7 +578,8 @@ def init_callbacks(dash_app):
                                    insertsizemean),
             failure_columns,
             failure_df.to_dict('records'),
-            data.to_dict('records', into=dd)
+            data.to_dict('records', into=dd),
+            click
         ]
 
     @dash_app.callback(
