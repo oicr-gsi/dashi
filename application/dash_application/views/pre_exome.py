@@ -7,8 +7,8 @@ import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
-    fill_in_size_col, generate_reads_per_start_point, generate_total_reads
-from ..table_builder import build_table, table_tabs, cutoff_table_data
+    fill_in_size_col, generate_total_reads
+from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from gsiqcetl.column import BamQcColumn
@@ -37,7 +37,6 @@ ids = init_ids([
     'shape-by',
     'search-sample',
     'show-names',
-    'reads-per-start-point-slider',
     'insert-size-mean-slider',
     'passed-filter-reads-slider',
     "date-range",
@@ -47,7 +46,6 @@ ids = init_ids([
     'unmapped-reads',
     'non-primary-reads',
     'on-target-reads',
-    'reads-per-start-point',
     'mean-insert-size',
 
     #Data table
@@ -130,7 +128,6 @@ initial_shownames_val = 'none'
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
 initial_cutoff_insert_size = 150
-initial_cutoff_rpsp = 5
 
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
@@ -251,8 +248,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                              "value": BAMQC_COL.NonPrimaryReads},
                             {"label": "On-target Reads",
                              "value": BAMQC_COL.ReadsOnTarget},
-                            {"label": "Reads per Start Point",
-                             "value": BAMQC_COL.ReadsPerStartPoint},
                             {"label": "Mean Insert Size",
                              "value": BAMQC_COL.InsertMean}
                     ]
@@ -287,18 +282,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                 tooltip="always_visible",
                                 value=initial_cutoff_pf_reads
                                 )
-                ]), html.Br(),
-
-                html.Label([
-                    "Reads Per Start Point:",
-                    core.Slider(id=ids['reads-per-start-point-slider'],
-                        min=0,
-                        max=20,
-                        step=1,
-                        marks={str(n): str(n) for n in range(0, 21, 2)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_rpsp
-                    )
                 ]), html.Br(),
 
                 html.Label([
@@ -345,16 +328,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                                                         initial_shape_col,
                                                         initial_shownames_val)
                     ),
-                    core.Graph(id=ids['reads-per-start-point'],
-                        figure=generate_reads_per_start_point(
-                            empty_bamqc,
-                            PINERY_COL.SampleName,
-                            BAMQC_COL.ReadsPerStartPoint,
-                            initial_colour_col,
-                            initial_shape_col,
-                            initial_shownames_val,
-                            initial_cutoff_rpsp)
-                    ),
                     core.Graph(id=ids['mean-insert-size'],
                         figure=generate_mean_insert_size(empty_bamqc,
                                                          initial_colour_col,
@@ -373,8 +346,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ex_table_columns,
                 BAMQC_COL.TotalReads,
                 [
-                    ('Reads per Start Point Cutoff',
-                     BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                     ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
                      initial_cutoff_insert_size, True),
                     ('Total Reads Cutoff',
@@ -393,7 +364,6 @@ def init_callbacks(dash_app):
             Output(ids['unmapped-reads'], 'figure'),
             Output(ids['non-primary-reads'], 'figure'),
             Output(ids['on-target-reads'], 'figure'),
-            Output(ids['reads-per-start-point'], 'figure'),
             Output(ids['mean-insert-size'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
@@ -412,7 +382,6 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'), 
             State(ids['show-names'], 'value'),
-            State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['insert-size-mean-slider'], 'value'),
             State(ids['passed-filter-reads-slider'], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -431,7 +400,6 @@ def init_callbacks(dash_app):
             shapeby,
             searchsample,
             shownames,
-            readsperstartpoint,
             insertsizemean,
             passedfilter,
             start_date,
@@ -464,8 +432,6 @@ def init_callbacks(dash_app):
         data = data.sort_values(by=[firstsort, secondsort], ascending=False)
         dd = defaultdict(list)
         (failure_df, failure_columns ) =cutoff_table_data(data, [
-                ('Reads per Start Point Cutoff',
-                 BAMQC_COL.ReadsPerStartPoint, readsperstartpoint, False),
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insertsizemean,
                  True),
                 ('Total Reads Cutoff', special_cols["Total Reads (Passed "
@@ -480,9 +446,6 @@ def init_callbacks(dash_app):
             generate_unmapped_reads(data, colourby, shapeby, shownames),
             generate_nonprimary_reads(data, colourby, shapeby, shownames),
             generate_on_target_reads(data, colourby, shapeby, shownames),
-            generate_reads_per_start_point(
-                data, PINERY_COL.SampleName, BAMQC_COL.ReadsPerStartPoint,
-                colourby, shapeby, shownames, readsperstartpoint),
             generate_mean_insert_size(data, colourby, shapeby, shownames,
                                    insertsizemean),
             failure_columns,
