@@ -43,10 +43,10 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
                 has_failures = True
             elif (fail_below and row[column] < cutoff) or (
                     not fail_below and row[column] > cutoff):
-                failures[name] = "Failed ({0:.3f})".format(row[column])
+                failures[name] = "Failed ({:.3f})".format(row[column])
                 has_failures = True
             else:
-                failures[name] = "Passed ({0:.3f})".format(row[column])
+                failures[name] = "Passed ({:.3f})".format(row[column])
         if has_failures:
             failures[pinery.column.SampleProvenanceColumn.SampleName] = row[
                 pinery.column.SampleProvenanceColumn.SampleName]
@@ -65,7 +65,7 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
                                  "id": pinery.column.SampleProvenanceColumn.LaneNumber},
                                 {"name": pinery.column.SampleProvenanceColumn.IUSTag,
                                  "id": pinery.column.SampleProvenanceColumn.IUSTag},
-                                *({"name": "%s (%d)" % (name, cutoff),
+                                *({"name": "{} ({:.3f})".format(name, cutoff),
                                    "id": name} for (name, _, cutoff, _
                                                     ) in limits)])
 
