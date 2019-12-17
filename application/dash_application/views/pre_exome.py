@@ -231,7 +231,7 @@ def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
     )
 
 
-layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className='body',
+layout = html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
         html.Div(className='row flex-container',
@@ -427,34 +427,34 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             ]),
             html.Div(className='seven columns',
                 children=[
-                    core.Graph(id=ids['total-reads'],
+                    core.Loading(type="cube", children=[core.Graph(id=ids['total-reads'],
                         figure=generate_total_reads(empty_bamqc, initial_colour_col,
                                                     initial_shape_col, 'none',
                                                     initial_cutoff_pf_reads)
-                    ),
-                    core.Graph(id=ids['unmapped-reads'],
+                    )]),
+                    core.Loading(type="cube", children=[core.Graph(id=ids['unmapped-reads'],
                         figure=generate_unmapped_reads(empty_bamqc, initial_colour_col,
                                                      initial_shape_col, 'none')
-                    ),
-                    core.Graph(id=ids['non-primary-reads'],
+                    )]),
+                    core.Loading(type="cube", children=[core.Graph(id=ids['non-primary-reads'],
                         figure=generate_nonprimary_reads(empty_bamqc, initial_colour_col,
                                                        initial_shape_col, 'none')
-                    ),
-                    core.Graph(id=ids['on-target-reads'],
+                    )]),
+                    core.Loading(type="cube", children=[core.Graph(id=ids['on-target-reads'],
                         figure=generate_on_target_reads(empty_bamqc, initial_colour_col,
                                                      initial_shape_col, 'none')
-                    ),
-                    core.Graph(id=ids['reads-per-start-point'],
+                    )]),
+                    core.Loading(type="cube", children=[core.Graph(id=ids['reads-per-start-point'],
                         figure=generate_reads_per_start_point(empty_bamqc,
                                                           initial_colour_col,
                                                           initial_shape_col,
                                                           'none', initial_cutoff_rpsp)
-                    ),
-                    core.Graph(id=ids['mean-insert-size'],
+                    )]),
+                    core.Loading(type="cube", children=[core.Graph(id=ids['mean-insert-size'],
                         figure=generate_mean_insert_size(empty_bamqc, initial_colour_col,
                                initial_shape_col, 'none',
                                                       initial_cutoff_insert_size)
-                    )
+                    )])
                 ]),
             ]),
             table_tabs(
@@ -474,7 +474,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 ]
             )
     ])
-])
+
 
 
 def init_callbacks(dash_app):
