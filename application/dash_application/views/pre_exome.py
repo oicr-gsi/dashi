@@ -101,9 +101,7 @@ ALL_TISSUE_MATERIALS = bamqc[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = bamqc[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
-ILLUMINA_INSTRUMENT_MODELS = bamqc[bamqc[
-    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
-    INSTRUMENT_COLS.ModelName].sort_values().unique()
+ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
 ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
 
 
@@ -220,16 +218,16 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
 
                 util.run_range_input(ids["date-range"]),
 
-                sidebar_utils.select_instruments(ids["all-instruments"],
-                                                 ids["instruments-list"],
-                                                 ILLUMINA_INSTRUMENT_MODELS),
-
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
 
                 sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                           ALL_KITS),
+
+                sidebar_utils.select_instruments(ids["all-instruments"],
+                                                 ids["instruments-list"],
+                                                 ILLUMINA_INSTRUMENT_MODELS),
 
                 sidebar_utils.select_library_designs(
                     ids["all-library-designs"], ids["library-designs-list"],
