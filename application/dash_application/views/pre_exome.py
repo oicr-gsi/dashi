@@ -240,7 +240,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
             children=[
                 html.Button('Update', id=ids['update-button']),
                 html.Br(),
-                html.Div(id="debug"),
                 html.Br(),
                 core.Loading(type="circle", children=[
                     html.Button('Add All', id=ids["all-runs"], className="inline"),
@@ -489,8 +488,7 @@ def init_callbacks(dash_app):
             Output(ids['mean-insert-size'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
-            Output(ids['data-table'], 'data'),
-            Output("debug", "children")
+            Output(ids['data-table'], 'data')
         ],
         [Input(ids['update-button'], 'n_clicks')],
         [
@@ -512,7 +510,6 @@ def init_callbacks(dash_app):
             State(ids["date-range"], 'end_date'),
         ]
     )
-    #@dash_app.server.cache.cached(timeout=60)
     def update_pressed(click,
             runs,
             instruments,
@@ -530,7 +527,41 @@ def init_callbacks(dash_app):
             passedfilter,
             start_date,
             end_date):
-
+        return update_pressed_content(runs,
+            instruments,
+            projects,
+            kits,
+            library_designs,
+            firstsort, 
+            secondsort, 
+            colourby,
+            shapeby,
+            searchsample,
+            shownames,
+            readsperstartpoint,
+            insertsizemean,
+            passedfilter,
+            start_date,
+            end_date)
+        
+    @dash_app.server.cache.memoize(timeout=999)
+    def update_pressed_content(
+            runs,
+            instruments,
+            projects,
+            kits,
+            library_designs,
+            firstsort, 
+            secondsort, 
+            colourby,
+            shapeby,
+            searchsample,
+            shownames,
+            readsperstartpoint,
+            insertsizemean,
+            passedfilter,
+            start_date,
+            end_date):
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
             data = pd.DataFrame(columns=empty_bamqc.columns)
@@ -578,8 +609,7 @@ def init_callbacks(dash_app):
                                    insertsizemean),
             failure_columns,
             failure_df.to_dict('records'),
-            data.to_dict('records', into=dd),
-            click
+            data.to_dict('records', into=dd)
         ]
 
     @dash_app.callback(
