@@ -36,8 +36,8 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
-    "insert-mean-slider",
-    "passed-filter-reads-slider",
+    "insert-mean-cutoff",
+    "passed-filter-reads-cutoff",
     "date-range",
     "show-names",
 
@@ -351,33 +351,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                                                initial_shownames_val),
                 html.Br(),
 
-                # Cutoff sliders
+                # Cutoffs
                 html.Label([
                     "Insert Mean:",
-                    core.Slider(
-                        id=ids["insert-mean-slider"],
-                        min=0,
-                        max=500,
-                        step=10,
-                        marks={str(n): str(n) for n in range(0, 501, 50)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_insert_mean
-                    )
+                    core.Input(id=ids["insert-mean-cutoff"],
+                               type="number",
+                               value=initial_cutoff_insert_mean)
                 ]),
                 html.Br(),
 
                 html.Label([
                     "Passed Filter Reads:",
-                    core.Slider(
-                        id=ids["passed-filter-reads-slider"],
-                        min=0,
-                        max=0.5,
-                        step=0.025,
-                        marks={str(n): str(n)
-                               for n in sidebar_utils.frange(0, 0.51, 0.05)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_pf_reads
-                    )
+                    core.Input(id=ids["passed-filter-reads-cutoff"],
+                               type="number",
+                               value=initial_cutoff_pf_reads)
                 ]),
                 html.Br(),
             ]),
@@ -486,8 +473,8 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
             State(ids['show-names'], 'value'),
-            State(ids["insert-mean-slider"], 'value'),
-            State(ids["passed-filter-reads-slider"], 'value'),
+            State(ids["insert-mean-cutoff"], 'value'),
+            State(ids["passed-filter-reads-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date')
         ]

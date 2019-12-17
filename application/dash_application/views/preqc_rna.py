@@ -39,8 +39,8 @@ ids = init_ids([
     "shape-by",
     "search-sample",
     "show-names",
-    "rrna-contamination-slider",
-    "passed-filter-reads-slider",
+    "rrna-contamination-cutoff",
+    "passed-filter-reads-cutoff",
     "date-range",
 
     # Graphs
@@ -92,6 +92,7 @@ initial_shownames_val = 'none'
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
+initial_cutoff_rrna = 50
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -233,7 +234,7 @@ def generate_coding(df, colour_by, shape_by, show_names):
     )
 
 
-def generate_rrna_contam(df, colour_by, shape_by, show_names):
+def generate_rrna_contam(df, colour_by, shape_by, show_names, cutoff):
     return generate(
         "Ribosomal RNA (%)",
         df,
@@ -242,7 +243,8 @@ def generate_rrna_contam(df, colour_by, shape_by, show_names):
         "%",
         colour_by,
         shape_by,
-        show_names
+        show_names,
+        cutoff
     )
 
 
@@ -273,7 +275,7 @@ def generate_rin(df, colour_by, shape_by, show_names):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="cube", children=[
+layout =
     html.Div(className="body", children=[
         navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
@@ -348,20 +350,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 html.Br(),
 
-                # Cutoff Sliders
+                # Cutoffs
                 html.Label([
                     "Total Reads (Passed Filter) * 10^6:",
-                    core.Slider(
-                        id=ids["passed-filter-reads-slider"],
-                        min=0,
-                        max=0.5,
-                        step=0.025,
-                        marks={str(n): str(n)
-                               for n in sidebar_utils.frange(0, 0.51, 0.05)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_pf_reads
-                    )
+                    core.Input(id=ids["passed-filter-reads-cutoff"],
+                               type="number",
+                               value=initial_cutoff_pf_reads)
                 ]),
+                html.Label([
+                    "% rRNA Contamination:",
+                    html.Br(),
+                    core.Input(id=ids["rrna-contamination-cutoff"],
+                               type="number",
+                               value=initial_cutoff_rrna)
+                ])
             ]),
 
             # Graphs
@@ -407,7 +409,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      id=ids["rrna-contam"],
                      figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
                                                  initial_shape_col,
-                                                 initial_shownames_val)
+                                                 initial_shownames_val,
+                                                 initial_cutoff_rrna)
                  ),
                  core.Graph(
                      id=ids["dv200"],
@@ -434,6 +437,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
                      initial_cutoff_pf_reads, True),
+                    ('% rRNA Contamination',
+                     RNA_COL.rRNAContaminationreadsaligned,
+                     initial_cutoff_rrna, True)
                 ]
             )
         ])
@@ -471,7 +477,8 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
             State(ids['show-names'], 'value'),
-            State(ids['passed-filter-reads-slider'], 'value'),
+            State(ids['passed-filter-reads-cutoff'], 'value'),
+            State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
         ]
@@ -489,6 +496,7 @@ def init_callbacks(dash_app):
                        searchsample,
                        show_names,
                        total_reads_cutoff,
+                       rrna_cutoff,
                        start_date,
                        end_date):
         if not runs and not instruments and not projects and not kits and not library_designs:
@@ -515,9 +523,10 @@ def init_callbacks(dash_app):
         df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed "
-                                                "Filter)"],
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
              total_reads_cutoff, True),
+            ('% rRNA Contamination', RNA_COL.rRNAContaminationreadsaligned,
+             rrna_cutoff, True),
         ])
         return [
             generate_total_reads(
@@ -528,7 +537,7 @@ def init_callbacks(dash_app):
             generate_five_to_three(df, colour_by, shape_by, show_names),
             generate_correct_read_strand(df, colour_by, shape_by, show_names),
             generate_coding(df, colour_by, shape_by, show_names),
-            generate_rrna_contam(df, colour_by, shape_by, show_names),
+            generate_rrna_contam(df, colour_by, shape_by, show_names, rrna_cutoff),
             generate_dv200(df, colour_by, shape_by, show_names),
             generate_rin(df, colour_by, shape_by, show_names),
             failure_columns,
