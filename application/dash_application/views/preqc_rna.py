@@ -290,6 +290,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 util.run_range_input(ids["date-range"]),
 
+                sidebar_utils.hr(),
+
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
@@ -305,7 +307,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                     ids["all-library-designs"], ids["library-designs-list"],
                     ALL_LIBRARY_DESIGNS),
 
-                html.Br(),
+                sidebar_utils.hr(),
 
                 # Sort, colour, and shape
                 sidebar_utils.select_first_sort(ids["first-sort"],
@@ -348,7 +350,7 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 sidebar_utils.show_names_input(ids["show-names"],
                                                initial_shownames_val),
 
-                html.Br(),
+                sidebar_utils.hr(),
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(

@@ -297,17 +297,20 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 util.run_range_input(ids["date-range"]),
 
+                sidebar_utils.hr(),
+
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
+
+                sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
+                                          ALL_KITS),
 
                 sidebar_utils.select_instruments(ids["all-instruments"],
                                                  ids["instruments-list"],
                                                  ILLUMINA_INSTRUMENT_MODELS),
 
-                sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
-                                          ALL_KITS),
-                html.Br(),
+                sidebar_utils.hr(),
 
                 # Sort, colour, and shape
                 sidebar_utils.select_first_sort(ids['first-sort'],
@@ -349,7 +352,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 sidebar_utils.show_names_input(ids['show-names'],
                                                initial_shownames_val),
-                html.Br(),
+
+                sidebar_utils.hr(),
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
