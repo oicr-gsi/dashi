@@ -8,7 +8,7 @@ import pandas as pd
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
-    fill_in_size_col, generate, generate_total_reads, generate_reads_per_start_point
+    fill_in_size_col, generate, generate_total_reads
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -39,7 +39,6 @@ ids = init_ids([
     "shape-by",
     "search-sample",
     "show-names",
-    "reads-per-start-point-slider",
     "rrna-contamination-slider",
     "passed-filter-reads-slider",
     "date-range",
@@ -47,7 +46,6 @@ ids = init_ids([
     # Graphs
     "total-reads",
     "unique-reads",
-    "reads-per-start-point",
     "5-to-3-prime-bias",
     "correct-read-strand",
     "coding",
@@ -93,7 +91,6 @@ initial_shape_col = PINERY_COL.PrepKit
 initial_shownames_val = 'none'
 
 # Set initial points for graph cutoff lines
-initial_cutoff_rpsp = 5
 initial_cutoff_pf_reads = 0.01
 
 shape_or_colour_by = [
@@ -320,8 +317,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                          "value": RNA_COL.TotalReads},
                         {"label": "% Unique Reads",
                          "value": special_cols["Percent Uniq Reads"]},
-                        {"label": "Reads Per Start Point",
-                         "value": RNA_COL.ReadsPerStartPoint},
                         {"label": "5Prime to 3Prime Bias",
                          "value": RNA_COL.Median5Primeto3PrimeBias},
                         {"label": "% Correct Read Strand",
@@ -367,21 +362,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         value=initial_cutoff_pf_reads
                     )
                 ]),
-
-                html.Label([
-                    "Reads Per Start Point:",
-                    core.Slider(
-                        id=ids["reads-per-start-point-slider"],
-                        min=0,
-                        max=50,
-                        step=1,
-                        marks={str(n): str(n) for n in range(0, 51, 5)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_rpsp
-                    )
-                ]),
-
-                html.Br(),
             ]),
 
             # Graphs
@@ -402,17 +382,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      figure=generate_unique_reads(EMPTY_RNA, initial_colour_col,
                                                   initial_shape_col,
                                                   initial_shownames_val)
-                 ),
-                 core.Graph(
-                     id=ids["reads-per-start-point"],
-                     figure=generate_reads_per_start_point(
-                         EMPTY_RNA,
-                         PINERY_COL.SampleName,
-                         RNA_COL.ReadsPerStartPoint,
-                         initial_colour_col,
-                         initial_shape_col,
-                         initial_shownames_val,
-                         initial_cutoff_rpsp)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
@@ -462,8 +431,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 rnaseqqc_table_columns,
                 RNA_COL.TotalReads,
                 [
-                    ('Reads per Start Point Cutoff',
-                     RNA_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
                      initial_cutoff_pf_reads, True),
@@ -479,7 +446,6 @@ def init_callbacks(dash_app):
         [
             Output(ids["total-reads"], "figure"),
             Output(ids["unique-reads"], "figure"),
-            Output(ids["reads-per-start-point"], "figure"),
             Output(ids["5-to-3-prime-bias"], "figure"),
             Output(ids["correct-read-strand"], "figure"),
             Output(ids["coding"], "figure"),
@@ -505,7 +471,6 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
             State(ids['show-names'], 'value'),
-            State(ids['reads-per-start-point-slider'], 'value'),
             State(ids['passed-filter-reads-slider'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -523,7 +488,6 @@ def init_callbacks(dash_app):
                        shape_by,
                        searchsample,
                        show_names,
-                       rpsp_cutoff,
                        total_reads_cutoff,
                        start_date,
                        end_date):
@@ -551,8 +515,6 @@ def init_callbacks(dash_app):
         df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', RNA_COL.ReadsPerStartPoint,
-             rpsp_cutoff, False),
             ('Total Reads Cutoff', special_cols["Total Reads (Passed "
                                                 "Filter)"],
              total_reads_cutoff, True),
@@ -563,9 +525,6 @@ def init_callbacks(dash_app):
                 special_cols["Total Reads (Passed Filter)"], colour_by,
                 shape_by, show_names, total_reads_cutoff),
             generate_unique_reads(df, colour_by, shape_by, show_names),
-            generate_reads_per_start_point(
-                df, PINERY_COL.SampleName, RNA_COL.ReadsPerStartPoint,
-                colour_by, shape_by, show_names, rpsp_cutoff),
             generate_five_to_three(df, colour_by, shape_by, show_names),
             generate_correct_read_strand(df, colour_by, shape_by, show_names),
             generate_coding(df, colour_by, shape_by, show_names),

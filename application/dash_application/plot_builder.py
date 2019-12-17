@@ -226,19 +226,3 @@ def generate_total_reads(df: DataFrame, x_col: str, y_col: str, colour_by:
         show_names,
         cutoff_line
     )
-
-
-def generate_reads_per_start_point(df: DataFrame, x_col: str, y_col: str,
-        colour_by: str, shape_by: str, show_names: str, cutoff_line) -> \
-        go.Figure:
-    return generate(
-        "Reads per Start Point",
-        df,
-        lambda d: d[x_col],
-        lambda d: d[y_col],
-        None,
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff_line
-    )

@@ -10,7 +10,7 @@ import pinery
 from . import navbar
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
-    fill_in_size_col, generate, generate_total_reads, generate_reads_per_start_point
+    fill_in_size_col, generate, generate_total_reads
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -36,7 +36,6 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
-    "reads-per-start-point-slider",
     "insert-mean-slider",
     "passed-filter-reads-slider",
     "date-range",
@@ -45,7 +44,6 @@ ids = init_ids([
     # Graphs
     "total-reads",
     "mean-insert",
-    "reads-per-start-point",
     "duplication",
     "purity",
     "ploidy",
@@ -96,7 +94,6 @@ initial_shape_col = PINERY_COL.PrepKit
 initial_shownames_val = 'none'
 initial_cutoff_pf_reads = 0.01
 initial_cutoff_insert_mean = 150
-initial_cutoff_rpsp = 5
 
 shape_or_colour_by = [
     {"label": "Project", "value": PINERY_COL.StudyTitle},
@@ -356,19 +353,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 # Cutoff sliders
                 html.Label([
-                    "Reads Per Start Point:",
-                    core.Slider(
-                        id=ids["reads-per-start-point-slider"],
-                        min=0,
-                        max=50,
-                        step=1,
-                        marks={str(n): str(n) for n in range(0, 51, 10)},
-                        tooltip="always_visible",
-                        value=initial_cutoff_rpsp
-                    )
-                ]),
-                html.Br(),
-                html.Label([
                     "Insert Mean:",
                     core.Slider(
                         id=ids["insert-mean-slider"],
@@ -417,17 +401,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                         initial_shownames_val, initial_cutoff_insert_mean)
                 ),
                 core.Graph(
-                    id=ids["reads-per-start-point"],
-                    figure=generate_reads_per_start_point(
-                        EMPTY_WGS,
-                        PINERY_COL.SampleName,
-                        BAMQC_COL.ReadsPerStartPoint,
-                        initial_colour_col,
-                        initial_shape_col,
-                        initial_shownames_val,
-                        initial_cutoff_rpsp)
-                ),
-                core.Graph(
                     id=ids["duplication"],
                     figure=generate_duplication(
                         EMPTY_WGS, initial_colour_col, initial_shape_col,
@@ -474,8 +447,6 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
             wgs_table_columns,
             BAMQC_COL.TotalReads,
             [
-                ('Reads per Start Point Cutoff',
-                 BAMQC_COL.ReadsPerStartPoint, initial_cutoff_rpsp, False),
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
                  initial_cutoff_insert_mean, True),
                 ('Total Reads Cutoff',
@@ -491,7 +462,6 @@ def init_callbacks(dash_app):
         [
             Output(ids["total-reads"], "figure"),
             Output(ids["mean-insert"], "figure"),
-            Output(ids["reads-per-start-point"], "figure"),
             Output(ids["duplication"], "figure"),
             Output(ids["purity"], "figure"),
             Output(ids["ploidy"], "figure"),
@@ -516,7 +486,6 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
             State(ids['show-names'], 'value'),
-            State(ids["reads-per-start-point-slider"], 'value'),
             State(ids["insert-mean-slider"], 'value'),
             State(ids["passed-filter-reads-slider"], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -536,7 +505,6 @@ def init_callbacks(dash_app):
                        show_names,
                        total_reads_cutoff,
                        insert_mean_cutoff,
-                       rpsp_cutoff,
                        start_date,
                        end_date):
         if not runs and not instruments and not projects and not kits:
@@ -560,7 +528,6 @@ def init_callbacks(dash_app):
         df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
-            ('Reads per Start Point Cutoff', BAMQC_COL.ReadsPerStartPoint, rpsp_cutoff, False),
             ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff, True),
             ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff, True),
         ])
@@ -572,10 +539,6 @@ def init_callbacks(dash_app):
                 shape_by, show_names, total_reads_cutoff),
             generate_mean_insert_size(df, colour_by, shape_by, show_names,
                                       insert_mean_cutoff),
-            generate_reads_per_start_point(
-                df, PINERY_COL.SampleName,
-                BAMQC_COL.ReadsPerStartPoint, colour_by, shape_by, show_names,
-                rpsp_cutoff),
             generate_duplication(df, colour_by, shape_by, show_names),
             generate_purity(df, colour_by, shape_by, show_names),
             generate_ploidy(df, colour_by, shape_by, show_names),
