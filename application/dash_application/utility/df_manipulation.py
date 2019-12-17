@@ -184,14 +184,15 @@ def get_illumina_instruments(df: DataFrame) -> List[str]:
         "Illumina NovaSeq 6000",
         "Illumina HiSeq 2500",
         "Illumina MiSeq",
-        "NextSeq 550"
+        "NextSeq 550",
+        "Illumina HiSeq X",
     ]
     eviction_list = [
-        "Illumina Genome Analyzer II"
+        "Illumina Genome Analyzer II",
     ]
     instruments = df.loc[df[INSTRUMENTS_COL.Platform] == 'ILLUMINA'][
         INSTRUMENTS_COL.ModelName].sort_values().unique()
     pruned = [i for i in instruments if i not in eviction_list]
     sorted_instruments = sorted(pruned, key=lambda i:
-        correct_order.index(i) if i in correct_order else 10)
+        correct_order.index(i) if i in correct_order else -1)
     return sorted_instruments
