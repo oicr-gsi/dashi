@@ -352,21 +352,10 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Br(),
 
                 # Cutoffs
-                html.Label([
-                    "Insert Mean:",
-                    core.Input(id=ids["insert-mean-cutoff"],
-                               type="number",
-                               value=initial_cutoff_insert_mean)
-                ]),
-                html.Br(),
-
-                html.Label([
-                    "Passed Filter Reads:",
-                    core.Input(id=ids["passed-filter-reads-cutoff"],
-                               type="number",
-                               value=initial_cutoff_pf_reads)
-                ]),
-                html.Br(),
+                sidebar_utils.total_reads_cutoff_input(
+                    ids["passed-filter-reads-cutoff"], initial_cutoff_pf_reads),
+                sidebar_utils.insert_mean_cutoff(
+                    ids["insert-mean-cutoff"], initial_cutoff_insert_mean),
             ]),
 
             html.Div(className="seven columns", children=[

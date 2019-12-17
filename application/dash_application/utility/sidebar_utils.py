@@ -152,3 +152,23 @@ def show_names_input(show_names_id: str, selected_value: str) -> html.Label:
                       clearable=False
         )
     ])
+
+
+def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
+        html.Label:
+    return html.Label([
+        cutoff_label,
+        html.Br(),
+        core.Input(id=cutoff_id,
+                   type="number",
+                   value=cutoff_value)
+    ])
+
+
+def total_reads_cutoff_input(cutoff_id: str, cutoff_value) -> html.Label:
+    return cutoff_input("Total Reads (Passed Filter) * 10^6 cutoff",
+                        cutoff_id, cutoff_value)
+
+
+def insert_mean_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
+    return cutoff_input("Insert Size Mean cutoff", cutoff_id, cutoff_value)

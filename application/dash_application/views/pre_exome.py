@@ -270,19 +270,10 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                 html.Br(),
 
                 # Cutoffs
-                html.Label([
-                    "Total Reads (Passed Filter) * 10^6:",
-                    core.Input(id=ids['passed-filter-reads-cutoff'],
-                               type="number",
-                               value=initial_cutoff_pf_reads)
-                ]), html.Br(),
-
-                html.Label([
-                    "Insert Size Mean:",
-                    core.Input(id=ids['insert-size-mean-cutoff'],
-                               type="number",
-                               value=initial_cutoff_insert_size)
-                ]), html.Br(),
+                sidebar_utils.total_reads_cutoff_input(
+                    ids['passed-filter-reads-cutoff'], initial_cutoff_pf_reads),
+                sidebar_utils.insert_mean_cutoff(
+                    ids['insert-size-mean-cutoff'], initial_cutoff_insert_size),
             ]),
 
             # Graphs
