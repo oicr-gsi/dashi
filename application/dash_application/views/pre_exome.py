@@ -617,6 +617,10 @@ def init_callbacks(dash_app):
         [Input(ids['all-runs'], 'n_clicks')]
     )
     def all_runs_requested(click):
+        return all_runs_content()
+
+    @dash_app.server.cache.cached()
+    def all_runs_content():
         return [x for x in ALL_RUNS]
 
     @dash_app.callback(
