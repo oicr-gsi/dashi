@@ -168,10 +168,7 @@ WGS_DF = get_wgs_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = WGS_DF[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_KITS = WGS_DF[PINERY_COL.PrepKit].sort_values().unique()
-ILLUMINA_INSTRUMENT_MODELS = WGS_DF[WGS_DF[
-    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
-    INSTRUMENT_COLS.ModelName].sort_values().unique()
-
+ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
 ALL_TISSUE_MATERIALS = WGS_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = WGS_DF[
@@ -303,13 +300,13 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 util.run_range_input(ids["date-range"]),
 
-                sidebar_utils.select_instruments(ids["all-instruments"],
-                                                 ids["instruments-list"],
-                                                 ILLUMINA_INSTRUMENT_MODELS),
-
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
+
+                sidebar_utils.select_instruments(ids["all-instruments"],
+                                                 ids["instruments-list"],
+                                                 ILLUMINA_INSTRUMENT_MODELS),
 
                 sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                           ALL_KITS),

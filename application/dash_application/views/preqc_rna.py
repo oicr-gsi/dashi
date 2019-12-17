@@ -158,9 +158,7 @@ RNA_DF = get_rna_data()
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = RNA_DF[PINERY_COL.StudyTitle].sort_values().unique()
 ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
-ILLUMINA_INSTRUMENT_MODELS = RNA_DF.loc[RNA_DF[
-    INSTRUMENT_COLS.Platform] == 'ILLUMINA'][
-    INSTRUMENT_COLS.ModelName].sort_values().unique()
+ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(RNA_DF)
 ALL_TISSUE_MATERIALS = RNA_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = RNA_DF[
@@ -293,16 +291,16 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
 
                 util.run_range_input(ids["date-range"]),
 
-                sidebar_utils.select_instruments(ids["all-instruments"],
-                                                 ids["instruments-list"],
-                                                 ILLUMINA_INSTRUMENT_MODELS),
-
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
 
                 sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                           ALL_KITS),
+
+                sidebar_utils.select_instruments(ids["all-instruments"],
+                                                 ids["instruments-list"],
+                                                 ILLUMINA_INSTRUMENT_MODELS),
 
                 sidebar_utils.select_library_designs(
                     ids["all-library-designs"], ids["library-designs-list"],

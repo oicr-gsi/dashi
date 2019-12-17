@@ -171,3 +171,27 @@ def runs_in_range(start_date, end_date) -> pandas.Series:
                           start_date) & (
         _runs[pinery.column.RunsColumn.CompletionDate] <= end_date)]
     return allowed_runs[pinery.column.RunsColumn.Name]
+
+
+def get_illumina_instruments(df: DataFrame) -> List[str]:
+    """
+    Gets a list of Illumina instruments with a given order.
+
+    :param df: DataFrame (must contain Platform and Model Name columns)
+    :return: list of instruments, correctly ordered
+    """
+    correct_order = [
+        "Illumina NovaSeq 6000",
+        "Illumina HiSeq 2500",
+        "Illumina MiSeq",
+        "NextSeq 550"
+    ]
+    eviction_list = [
+        "Illumina Genome Analyzer II"
+    ]
+    instruments = df.loc[df[INSTRUMENTS_COL.Platform] == 'ILLUMINA'][
+        INSTRUMENTS_COL.ModelName].sort_values().unique()
+    pruned = [i for i in instruments if i not in eviction_list]
+    sorted_instruments = sorted(pruned, key=lambda i:
+        correct_order.index(i) if i in correct_order else 10)
+    return sorted_instruments
