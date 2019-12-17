@@ -351,19 +351,11 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                 html.Br(),
 
                 # Cutoffs
-                html.Label([
-                    "Total Reads (Passed Filter) * 10^6:",
-                    core.Input(id=ids["passed-filter-reads-cutoff"],
-                               type="number",
-                               value=initial_cutoff_pf_reads)
-                ]),
-                html.Label([
-                    "% rRNA Contamination:",
-                    html.Br(),
-                    core.Input(id=ids["rrna-contamination-cutoff"],
-                               type="number",
-                               value=initial_cutoff_rrna)
-                ])
+                sidebar_utils.total_reads_cutoff_input(
+                    ids["passed-filter-reads-cutoff"], initial_cutoff_pf_reads),
+                sidebar_utils.cutoff_input(
+                    "% rRNA Contamination cutoff",
+                    ids["rrna-contamination-cutoff"], initial_cutoff_rrna),
             ]),
 
             # Graphs
