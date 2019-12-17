@@ -159,6 +159,7 @@ def run_range(id: str) -> html.Label:
                                             start_date=start,
                                             max_date_allowed=end,
                                             end_date=end,
+                                            initial_visible_month=end,
                                             display_format="YYYY-MMM-DD"),
                        html.Br(),
                        ])
