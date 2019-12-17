@@ -152,7 +152,7 @@ def filter_by_library_design(df: DataFrame, library_designs: List[str]):
 def run_range_input(id: str) -> html.Label:
     start = _runs[pinery.column.RunsColumn.StartDate].min(skipna=True)
     end = datetime.datetime.now()
-    return html.Label(["Run Date:",
+    return html.Label(["Filter by Run Start Date:",
                        html.Br(),
                        core.DatePickerRange(id=id,
                                             day_size=50,
