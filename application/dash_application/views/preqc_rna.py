@@ -275,7 +275,7 @@ def generate_rin(df, colour_by, shape_by, show_names):
 
 
 # Layout elements
-layout =
+layout = core.Loading(fullscreen=True, type="cube", children=[
     html.Div(className="body", children=[
         navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
