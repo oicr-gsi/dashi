@@ -50,12 +50,12 @@ _pinery_samples = _pinery_samples.astype({
     "IUSTag": 'str'})
 # NaN sample attrs need to be changed to a str.
 # Use the expected default values
-_pinery_samples.fillna({
+_pinery_samples = _pinery_samples.fillna({
     PINERY_COL.PrepKit: "Unspecified",
     PINERY_COL.LibrarySourceTemplateType: "NN",
     PINERY_COL.TissueOrigin: "nn",
     PINERY_COL.TissueType: "n",
-    PINERY_COL.TissuePreparation: "Unknown",
+    PINERY_COL.TissuePreparation: "Unspecified",
     PINERY_COL.GroupID: "",
     PINERY_COL.GroupIDDescription: ""
 })
