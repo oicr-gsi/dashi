@@ -38,7 +38,9 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
         failures = {}
         has_failures = False
         for (name, column, cutoff, fail_below) in limits:
-            if numpy.isnan(row[column]):
+            if cutoff is None:
+                failures[name] = "Passed ({:.3f})".format(row[column])
+            elif numpy.isnan(row[column]):
                 failures[name] = "Missing"
                 has_failures = True
             elif (fail_below and row[column] < cutoff) or (
@@ -65,9 +67,18 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
                                  "id": pinery.column.SampleProvenanceColumn.LaneNumber},
                                 {"name": pinery.column.SampleProvenanceColumn.IUSTag,
                                  "id": pinery.column.SampleProvenanceColumn.IUSTag},
-                                *({"name": "{} ({:.3f})".format(name, cutoff),
+                                *({"name": "{} ({})".format(name,
+                                                            printable_cutoff(
+                                                                cutoff)),
                                    "id": name} for (name, _, cutoff, _
                                                     ) in limits)])
+
+
+def printable_cutoff(cutoff: float) -> str:
+    if cutoff:
+        return "{:.3f}".format(cutoff)
+    else:
+        return "No valid cutoff given"
 
 
 def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,

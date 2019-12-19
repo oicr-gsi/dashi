@@ -161,6 +161,7 @@ def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
         html.Br(),
         core.Input(id=cutoff_id,
                    type="number",
+                   min=0,
                    value=cutoff_value)
     ])
 
