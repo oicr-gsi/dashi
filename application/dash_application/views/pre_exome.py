@@ -4,7 +4,7 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from . import navbar
+from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
     fill_in_size_col, generate_total_reads
@@ -333,7 +333,9 @@ layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className
                      special_cols["Total Reads (Passed Filter)"],
                      initial_cutoff_pf_reads, True),
                 ]
-            )
+            ),
+        # Footer
+        footer()
     ])
 ])
 
