@@ -5,7 +5,7 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 import pandas as pd
 
-from . import navbar
+from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
     fill_in_size_col, generate, generate_total_reads
@@ -436,7 +436,8 @@ layout = core.Loading(fullscreen=True, type="cube", children=[
                      initial_cutoff_rrna, True)
                 ]
             )
-        ])
+        ]),
+        footer()
     ])
 ])
 
