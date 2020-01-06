@@ -107,11 +107,16 @@ def get_wgs_data():
     """
     Join together all the dataframes needed for graphing:
       * BamQC (where most of the graphed QC data comes from)
+      * ichorCNA (where the remainder of the graphed QC data comes from)
       * Pinery (sample information)
       * Instruments (to allow filtering by instrument model)
       * Runs (needed to join Pinery to Instruments)
     """
-    # Get the BamQC data
+    # Pull in sample metadata from Pinery.
+    pinery_samples = util.get_pinery_samples_from_active_projects()
+    # Filter the Pinery samples for only WG samples.
+    pinery_samples = util.filter_by_library_design(pinery_samples,
+                                                   ["WG"])
 
     ichorcna_df = util.get_ichorcna()
     ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
@@ -119,42 +124,46 @@ def get_wgs_data():
                                ICHOR_COL.Barcodes,
                                ICHOR_COL.Ploidy,
                                ICHOR_COL.TumorFraction]]
+
     bamqc_df = util.get_bamqc3()
-    wgs_df = bamqc_df.merge(
-        ichorcna_df, how="left", left_on=[
-            BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes], right_on=[
-            ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes])
+
     # Cast the primary key/join columns to explicit types
-    wgs_df = util.df_with_normalized_ius_columns(
-        wgs_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
+    bamqc_df = util.df_with_normalized_ius_columns(
+        bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
+    ichorcna_df = util.df_with_normalized_ius_columns(
+        ichorcna_df, ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes)
 
     # Calculate percent uniq reads column
-    wgs_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        wgs_df[BAMQC_COL.TotalReads] / 1e6, 3)
-    wgs_df[special_cols["Purity"]] = round(
-        wgs_df[ICHOR_COL.TumorFraction] * 100.0, 3)
-    wgs_df[special_cols["Unmapped Reads"]] = round(
-        wgs_df[BAMQC_COL.UnmappedReads] * 100.0 /
-        wgs_df[BAMQC_COL.TotalReads], 3)
-    wgs_df[special_cols["Non-Primary Reads"]] = round(
-        wgs_df[BAMQC_COL.NonPrimaryReads] * 100.0 /
-        wgs_df[BAMQC_COL.TotalReads], 3)
-    wgs_df[special_cols["On-target Reads"]] = round(
-        wgs_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
-        wgs_df[BAMQC_COL.TotalReads], 3)
-
-    # Pull in sample metadata from Pinery.
-    pinery_samples = util.get_pinery_samples_from_active_projects()
-    # Filter the Pinery samples for only WG samples.
-    pinery_samples = util.filter_by_library_design(pinery_samples,
-                                                   ["WG"])
+    bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc_df[special_cols["Unmapped Reads"]] = round(
+        bamqc_df[BAMQC_COL.UnmappedReads] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalReads], 3)
+    bamqc_df[special_cols["Non-Primary Reads"]] = round(
+        bamqc_df[BAMQC_COL.NonPrimaryReads] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalReads], 3)
+    bamqc_df[special_cols["On-target Reads"]] = round(
+        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalReads], 3)
+    ichorcna_df[special_cols["Purity"]] = round(
+        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
 
     # Join BamQC and Pinery data
-    wgs_df = util.df_with_pinery_samples(wgs_df, pinery_samples,
+    wgs_df = util.df_with_pinery_samples(bamqc_df, pinery_samples,
                                          util.bamqc_ius_columns)
 
-    # Join BamQc and instrument model
+    # Join ichorCNA and BamQC+Pinery data
+    wgs_df = wgs_df.merge(
+        ichorcna_df, how = "left",
+        left_on=util.pinery_ius_columns,
+        right_on=util.ichorcna_ius_columns)
+
+    # Join df and instrument model
     wgs_df = util.df_with_instrument_model(wgs_df, PINERY_COL.SequencerRunName)
+
+    # Filter the dataframe to only include Illumina data
+    illumina_models = util.get_illumina_instruments(wgs_df)
+    wgs_df = wgs_df[wgs_df[INSTRUMENT_COLS.ModelName].isin(illumina_models)]
 
     return wgs_df
 
@@ -170,7 +179,7 @@ ALL_TISSUE_MATERIALS = WGS_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = WGS_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
-ALL_RUNS = WGS_DF[BAMQC_COL.Run].sort_values().unique()[
+ALL_RUNS = WGS_DF[PINERY_COL.SequencerRunName].sort_values().unique()[
     ::-1]  # reverse the list
 ALL_SAMPLES = WGS_DF[PINERY_COL.SampleName].sort_values().unique()
 
@@ -494,14 +503,14 @@ def init_callbacks(dash_app):
             df = WGS_DF
 
         if runs:
-            df = df[df[BAMQC_COL.Run].isin(runs)]
+            df = df[df[PINERY_COL.SequencerRunName].isin(runs)]
         if instruments:
             df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
-        df = df[df[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
+        df = df[df[PINERY_COL.SequencerRunName].isin(util.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
