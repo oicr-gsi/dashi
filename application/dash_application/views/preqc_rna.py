@@ -521,7 +521,7 @@ def init_callbacks(dash_app):
             ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
              total_reads_cutoff, True),
             ('% rRNA Contamination', RNA_COL.rRNAContaminationreadsaligned,
-             rrna_cutoff, True),
+             rrna_cutoff, False),
         ])
         return [
             generate_total_reads(
