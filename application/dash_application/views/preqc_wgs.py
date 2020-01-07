@@ -500,23 +500,13 @@ def init_callbacks(dash_app):
                        insert_mean_cutoff,
                        start_date,
                        end_date):
-        logger.info("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}".format(
-            runs,
-            instruments,
-            projects,
-            kits,
-            first_sort, 
-            second_sort, 
-            colour_by,
-            shape_by,
-            searchsample,
-            show_names,
-            total_reads_cutoff,
-            insert_mean_cutoff,
-            start_date,
-            end_date
-        ))
-
+        log_message = ""
+        for s in locals().values():
+            if str(s)[0:2] == "__":
+                continue
+            log_message += "{} ".format(s)
+        logger.info(log_message)
+        
         if not runs and not instruments and not projects and not kits:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
