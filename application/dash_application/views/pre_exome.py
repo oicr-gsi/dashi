@@ -14,6 +14,7 @@ from ..utility import sidebar_utils
 from gsiqcetl.column import BamQcColumn
 import pinery
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -392,7 +393,7 @@ def init_callbacks(dash_app):
             end_date):
         params = locals()
         del params['click']
-        logger.info(params)
+        logger.info(json.dumps(params))
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:

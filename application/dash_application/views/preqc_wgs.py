@@ -15,6 +15,7 @@ from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -502,7 +503,7 @@ def init_callbacks(dash_app):
                        end_date):
         params = locals()
         del params['click']
-        logger.info(params)
+        logger.info(json.dumps(params))
 
         if not runs and not instruments and not projects and not kits:
             df = pd.DataFrame(columns=WGS_DF.columns)
