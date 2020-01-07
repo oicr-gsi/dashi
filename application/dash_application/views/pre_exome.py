@@ -390,12 +390,9 @@ def init_callbacks(dash_app):
             passedfilter,
             start_date,
             end_date):
-        log_message = ""
-        for s in locals().values():
-            if str(s)[0:2] == "__":
-                continue
-            log_message += "{} ".format(s)
-        logger.info(log_message)
+        params = locals()
+        del params['click']
+        logger.info(params)
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
