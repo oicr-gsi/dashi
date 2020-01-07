@@ -291,7 +291,7 @@ def generate_ploidy(df, colour_by, shape_by, shownames):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="cube", children=[
+layout = core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
         navbar("Pre-WGS"),
         html.Div(className="row flex-container", children=[

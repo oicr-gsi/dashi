@@ -198,7 +198,7 @@ def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
     )
 
 
-layout = core.Loading(fullscreen=True, type="cube", children=[html.Div(className='body',
+layout = core.Loading(fullscreen=True, type="dot", children=[html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
         html.Div(className='row flex-container',
