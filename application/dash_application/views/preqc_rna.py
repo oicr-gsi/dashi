@@ -14,6 +14,9 @@ from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
+import logging
+
+logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-rna"
@@ -494,6 +497,25 @@ def init_callbacks(dash_app):
                        rrna_cutoff,
                        start_date,
                        end_date):
+
+        logger.info("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13} {14}".format(
+            runs,
+            instruments,
+            projects,
+            kits,
+            library_designs,
+            first_sort, 
+            second_sort, 
+            colour_by,
+            shape_by,
+            searchsample,
+            show_names,
+            total_reads_cutoff,
+            rrna_cutoff,
+            start_date,
+            end_date
+        ))
+        
         if not runs and not instruments and not projects and not kits and not library_designs:
             df = EMPTY_RNA
         else:

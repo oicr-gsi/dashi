@@ -14,6 +14,9 @@ from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
+import logging
+
+logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-wgs"
@@ -497,6 +500,23 @@ def init_callbacks(dash_app):
                        insert_mean_cutoff,
                        start_date,
                        end_date):
+        logger.info("{0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12} {13}".format(
+            runs,
+            instruments,
+            projects,
+            kits,
+            first_sort, 
+            second_sort, 
+            colour_by,
+            shape_by,
+            searchsample,
+            show_names,
+            total_reads_cutoff,
+            insert_mean_cutoff,
+            start_date,
+            end_date
+        ))
+
         if not runs and not instruments and not projects and not kits:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
