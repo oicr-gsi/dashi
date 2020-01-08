@@ -13,6 +13,10 @@ from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from gsiqcetl.column import BamQcColumn
 import pinery
+import logging
+import json
+
+logger = logging.getLogger(__name__)
 
 page_name = 'preqc-exome'
 
@@ -387,6 +391,9 @@ def init_callbacks(dash_app):
             passedfilter,
             start_date,
             end_date):
+        params = locals()
+        del params['click']
+        logger.info(json.dumps(params))
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
