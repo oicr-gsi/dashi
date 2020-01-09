@@ -131,8 +131,12 @@ def get_rna_data():
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
+    # The expectation is to show how many reads the machine produced
+    # The RNA-SeqQC Total Reads column is the number of aligned reads,
+    # which includes supplemental reads
+    # Unique reads match the machine produced reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[RNA_COL.TotalReads] / 1e6, 3)
+        rna_df[RNA_COL.UniqReads] / 1e6, 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
         (rna_df[RNA_COL.CorrectStrandReads] / rna_df[RNA_COL.TotalReads]) *
         100, 1
