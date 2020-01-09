@@ -202,7 +202,10 @@ def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
     )
 
 
-layout = core.Loading(fullscreen=True, type="dot", children=[html.Div(className='body',
+def layout(query_string):
+    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+
+    return core.Loading(fullscreen=True, type="dot", children=[html.Div(className='body',
     children=[
         navbar("Pre-Exome"),
         html.Div(className='row flex-container',
@@ -217,7 +220,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[html.Div(className=
                 sidebar_utils.select_runs(ids["all-runs"],
                                           ids["run-id-list"], ALL_RUNS),
 
-                util.run_range_input(ids["date-range"]),
+                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
 
                 sidebar_utils.hr(),
 
@@ -412,7 +415,7 @@ def init_callbacks(dash_app):
         if library_designs:
             data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        data = data[data[BAMQC_COL.Run].isin(util.runs_in_range(start_date, end_date))]
+        data = data[data[BAMQC_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_or_colour_values)
         data = fill_in_colour_col(data, colourby, shape_or_colour_values,
                                   searchsample)

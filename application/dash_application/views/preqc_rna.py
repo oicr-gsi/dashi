@@ -283,7 +283,10 @@ def generate_rin(df, colour_by, shape_by, show_names):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="dot", children=[
+def layout(query_string):
+    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+
+    return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
         navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
@@ -296,7 +299,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                 sidebar_utils.select_runs(ids["all-runs"],
                                           ids["run-id-list"], ALL_RUNS),
 
-                util.run_range_input(ids["date-range"]),
+                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
 
                 sidebar_utils.hr(),
 
@@ -522,7 +525,7 @@ def init_callbacks(dash_app):
         if library_designs:
             df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        df = df[df[RNA_COL.Run].isin(util.runs_in_range(start_date, end_date))]
+        df = df[df[RNA_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

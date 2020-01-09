@@ -295,7 +295,10 @@ def generate_ploidy(df, colour_by, shape_by, shownames):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="dot", children=[
+def layout(query_string):
+    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+
+    return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
         navbar("Pre-WGS"),
         html.Div(className="row flex-container", children=[
@@ -308,7 +311,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                 sidebar_utils.select_runs(ids["all-runs"],
                                           ids["run-id-list"], ALL_RUNS),
 
-                util.run_range_input(ids["date-range"]),
+                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
 
                 sidebar_utils.hr(),
 
@@ -518,7 +521,7 @@ def init_callbacks(dash_app):
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
-        df = df[df[PINERY_COL.SequencerRunName].isin(util.runs_in_range(start_date, end_date))]
+        df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

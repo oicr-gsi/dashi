@@ -1,12 +1,19 @@
+import datetime
+import re
+import urllib.parse
 from typing import List, Dict
 
 import dash_core_components as core
 import dash_html_components as html
+from dash.exceptions import PreventUpdate
+from pandas import DataFrame, Series
 
 import pinery.column
+from . import df_manipulation as df_tools
+
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-
+ALL_RUNS = df_tools.get_runs()
 
 def frange(range_min, range_max, step):
     given_range = []
@@ -39,6 +46,30 @@ def select_runs(all_runs_id: str, runs_id: str, runs: List[str]) -> \
         core.Loading:
     return select_with_select_all("All Runs", all_runs_id, "Filter by Runs",
                                   runs_id, runs)
+
+
+def run_range_input(run_range_id: str, start_date: str = None, end_date: str = None) -> html.Label:
+    start = start_date if start_date else ALL_RUNS[pinery.column.RunsColumn.StartDate].min(skipna=True)
+    end = end_date if end_date else datetime.datetime.now()
+    return html.Label(["Filter by Run Start Date:",
+                       html.Br(),
+                       core.DatePickerRange(id=run_range_id,
+                                            day_size=50,
+                                            min_date_allowed=start,
+                                            start_date=start,
+                                            max_date_allowed=end,
+                                            end_date=end,
+                                            initial_visible_month=end,
+                                            display_format="YYYY-MMM-DD"),
+                       html.Br(),
+                       ])
+
+
+def runs_in_range(start_date: str, end_date: str) -> Series:
+    allowed_runs = ALL_RUNS[(ALL_RUNS[pinery.column.RunsColumn.StartDate] >=
+                          start_date) & (
+        ALL_RUNS[pinery.column.RunsColumn.CompletionDate] <= end_date)]
+    return allowed_runs[pinery.column.RunsColumn.Name]
 
 
 def select_instruments(all_instruments_id: str, instruments_id: str,
@@ -178,3 +209,26 @@ def insert_mean_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
 def hr() -> html.Hr:
     # Horizontal rule
     return html.Hr(style={"margin": "1rem"})
+
+
+def parse_query_string(query):
+    return urllib.parse.parse_qs(query)
+
+
+def get_requested_run_date_range(last_string) -> List[str]:
+    xdays = re.compile(r'(\d+)days').match(last_string)
+    if xdays and xdays.group(1):
+        days_ago = int(xdays.group(1))
+        end = datetime.datetime.now()
+        start = end - datetime.timedelta(days=days_ago)
+        return [start, end]
+    else:
+        return [None, None]
+
+
+def parse_run_date_range(query) -> List[str]:
+    query_dict = parse_query_string(query[1:]) # slice off the leading question mark
+    if "last" in query_dict:
+        return get_requested_run_date_range(query_dict["last"][0])
+    else:
+        return [None, None]
