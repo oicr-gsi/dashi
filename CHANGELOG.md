@@ -1,0 +1,22 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+and as of version 1.0.0, follows semantic versioning.
+
+## Unreleased
+### Added
+  * Added footer containing version number
+  * Log filter parameters for each search
+### Changed
+  * Loading animation no longer freezes during page load
+### Fixed
+  * Negative numbers are no longer valid for cutoff inputs
+  * pre-WGS: BamQC and ichorCNA data are now reported independently
+  * pre-RNA: rRNA contamination now fails above cutoff (not below)
+  * pre-RNA: Get total reads data from FastQC (unique reads)
+
+## [0.1] 2019-12-19
+Dashi alpha release. Many features were added, and many changes were made.
+See commit history for more details...
