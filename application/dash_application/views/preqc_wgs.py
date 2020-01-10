@@ -7,7 +7,6 @@ import pandas as pd
 
 import gsiqcetl.column
 import pinery
-from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
     fill_in_size_col, generate, generate_total_reads
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-wgs"
+title = "Pre-WGS"
 
 ids = init_ids([
     # Buttons
@@ -300,7 +300,6 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
-        navbar("Pre-WGS"),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
@@ -448,8 +447,7 @@ def layout(query_string):
                 ('Total Reads Cutoff',
                  special_cols["Total Reads (Passed Filter)"],
                  initial_cutoff_pf_reads, True),
-            ]),
-        footer()
+            ])
     ])
 ])
 

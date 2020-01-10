@@ -5,7 +5,6 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 import pandas as pd
 
-from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
     fill_in_size_col, generate, generate_total_reads
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-rna"
+title = "Pre-RNA"
 
 ids = init_ids([
     # Buttons
@@ -288,7 +288,6 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
-        navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
@@ -447,8 +446,7 @@ def layout(query_string):
                      initial_cutoff_rrna, True)
                 ]
             )
-        ]),
-        footer()
+        ])
     ])
 ])
 

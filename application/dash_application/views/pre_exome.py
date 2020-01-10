@@ -4,7 +4,6 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
     fill_in_size_col, generate_total_reads
@@ -19,6 +18,7 @@ import json
 logger = logging.getLogger(__name__)
 
 page_name = 'preqc-exome'
+title = "Pre-EX"
 
 ids = init_ids([
     # Buttons
@@ -207,7 +207,6 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[html.Div(className='body',
     children=[
-        navbar("Pre-Exome"),
         html.Div(className='row flex-container',
                  children=[
                      html.Div(className='sidebar four columns',
@@ -340,9 +339,7 @@ def layout(query_string):
                      special_cols["Total Reads (Passed Filter)"],
                      initial_cutoff_pf_reads, True),
                 ]
-            ),
-        # Footer
-        footer()
+            )
     ])
 ])
 
