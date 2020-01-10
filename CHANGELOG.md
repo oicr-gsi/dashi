@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## Unreleased
 ### Added
   * Added footer containing version number
+  * Added ability to search for data of runs from last X days using URL query `?last=Xdays`
   * Log filter parameters for each search
 ### Changed
   * Loading animation no longer freezes during page load
