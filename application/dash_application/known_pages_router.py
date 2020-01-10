@@ -32,11 +32,7 @@ def navbar(current):
         id="navbar",
         children=[
             dbc.DropdownMenu(
-                children=[
-                    menu_item("Pre-Exome", "preqc-exome"),
-                    menu_item("Pre-WGS", "preqc-wgs"),
-                    menu_item("Pre-RNA", "preqc-rna")
-                ],
+                children=[menu_item(v.title, k) for k, v in pages_info.items()],
                 nav=True,
                 in_navbar=True,
                 style={"fontSize": "12pt"},
