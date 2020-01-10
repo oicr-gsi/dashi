@@ -484,7 +484,8 @@ def init_callbacks(dash_app):
             State(ids["insert-mean-cutoff"], 'value'),
             State(ids["passed-filter-reads-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
-            State(ids["date-range"], 'end_date')
+            State(ids["date-range"], 'end_date'),
+            State('url', 'search'),
         ]
     )
     def update_pressed(click,
@@ -501,7 +502,8 @@ def init_callbacks(dash_app):
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        start_date,
-                       end_date):
+                       end_date,
+                       search_query):
         params = locals()
         del params['click']
         logger.info(json.dumps(params))
