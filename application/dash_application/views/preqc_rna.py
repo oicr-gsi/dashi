@@ -5,7 +5,6 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 import pandas as pd
 
-from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
     fill_in_size_col, generate, generate_total_reads
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-rna"
+title = "Pre-RNA"
 
 ids = init_ids([
     # Buttons
@@ -283,9 +283,11 @@ def generate_rin(df, colour_by, shape_by, show_names):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="dot", children=[
+def layout(query_string):
+    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+
+    return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
-        navbar("Pre-RNA"),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
@@ -296,7 +298,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                 sidebar_utils.select_runs(ids["all-runs"],
                                           ids["run-id-list"], ALL_RUNS),
 
-                util.run_range_input(ids["date-range"]),
+                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
 
                 sidebar_utils.hr(),
 
@@ -444,8 +446,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                      initial_cutoff_rrna, True)
                 ]
             )
-        ]),
-        footer()
+        ])
     ])
 ])
 
@@ -484,6 +485,7 @@ def init_callbacks(dash_app):
             State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
+            State('url', 'search'),
         ]
     )
     def update_pressed(click,
@@ -501,7 +503,8 @@ def init_callbacks(dash_app):
                        total_reads_cutoff,
                        rrna_cutoff,
                        start_date,
-                       end_date):
+                       end_date,
+                       search_query):
         params = locals()
         del params['click']
         logger.info(json.dumps(params))
@@ -522,7 +525,7 @@ def init_callbacks(dash_app):
         if library_designs:
             df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        df = df[df[RNA_COL.Run].isin(util.runs_in_range(start_date, end_date))]
+        df = df[df[RNA_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

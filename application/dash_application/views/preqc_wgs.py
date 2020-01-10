@@ -7,7 +7,6 @@ import pandas as pd
 
 import gsiqcetl.column
 import pinery
-from . import navbar, footer
 from ..dash_id import init_ids
 from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
     fill_in_size_col, generate, generate_total_reads
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "preqc-wgs"
+title = "Pre-WGS"
 
 ids = init_ids([
     # Buttons
@@ -295,9 +295,11 @@ def generate_ploidy(df, colour_by, shape_by, shownames):
 
 
 # Layout elements
-layout = core.Loading(fullscreen=True, type="dot", children=[
+def layout(query_string):
+    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+
+    return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
-        navbar("Pre-WGS"),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button']),
@@ -308,7 +310,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                 sidebar_utils.select_runs(ids["all-runs"],
                                           ids["run-id-list"], ALL_RUNS),
 
-                util.run_range_input(ids["date-range"]),
+                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
 
                 sidebar_utils.hr(),
 
@@ -445,8 +447,7 @@ layout = core.Loading(fullscreen=True, type="dot", children=[
                 ('Total Reads Cutoff',
                  special_cols["Total Reads (Passed Filter)"],
                  initial_cutoff_pf_reads, True),
-            ]),
-        footer()
+            ])
     ])
 ])
 
@@ -483,7 +484,8 @@ def init_callbacks(dash_app):
             State(ids["insert-mean-cutoff"], 'value'),
             State(ids["passed-filter-reads-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
-            State(ids["date-range"], 'end_date')
+            State(ids["date-range"], 'end_date'),
+            State('url', 'search'),
         ]
     )
     def update_pressed(click,
@@ -500,7 +502,8 @@ def init_callbacks(dash_app):
                        total_reads_cutoff,
                        insert_mean_cutoff,
                        start_date,
-                       end_date):
+                       end_date,
+                       search_query):
         params = locals()
         del params['click']
         logger.info(json.dumps(params))
@@ -518,7 +521,7 @@ def init_callbacks(dash_app):
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
-        df = df[df[PINERY_COL.SequencerRunName].isin(util.runs_in_range(start_date, end_date))]
+        df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)

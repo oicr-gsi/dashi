@@ -83,6 +83,10 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 )
 
 
+def get_runs():
+    return _runs_with_instruments.copy(deep=True)
+
+
 def get_rnaseqqc():
     return _rnaseqqc.copy(deep=True)
 
@@ -147,30 +151,6 @@ def df_with_normalized_ius_columns(df: DataFrame, run_col: str, lane_col: str,
 
 def filter_by_library_design(df: DataFrame, library_designs: List[str]):
     return df[df[PINERY_COL.LibrarySourceTemplateType].isin(library_designs)]
-
-
-def run_range_input(id: str) -> html.Label:
-    start = _runs[pinery.column.RunsColumn.StartDate].min(skipna=True)
-    end = datetime.datetime.now()
-    return html.Label(["Filter by Run Start Date:",
-                       html.Br(),
-                       core.DatePickerRange(id=id,
-                                            day_size=50,
-                                            min_date_allowed=start,
-                                            start_date=start,
-                                            max_date_allowed=end,
-                                            end_date=end,
-                                            initial_visible_month=end,
-                                            display_format="YYYY-MMM-DD"),
-                       html.Br(),
-                       ])
-
-
-def runs_in_range(start_date, end_date) -> pandas.Series:
-    allowed_runs = _runs[(_runs[pinery.column.RunsColumn.StartDate] >=
-                          start_date) & (
-        _runs[pinery.column.RunsColumn.CompletionDate] <= end_date)]
-    return allowed_runs[pinery.column.RunsColumn.Name]
 
 
 def get_illumina_instruments(df: DataFrame) -> List[str]:
