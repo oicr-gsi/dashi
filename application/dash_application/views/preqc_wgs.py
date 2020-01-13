@@ -499,8 +499,8 @@ def init_callbacks(dash_app):
                        shape_by,
                        searchsample,
                        show_names,
-                       total_reads_cutoff,
                        insert_mean_cutoff,
+                       total_reads_cutoff,
                        start_date,
                        end_date,
                        search_query):
