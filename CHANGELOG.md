@@ -10,6 +10,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Added footer containing version number
   * Added ability to search for data of runs from last X days using URL query `?last=Xdays`
   * Log filter parameters for each search
+  * Added AS, CH, CM, NN libraries to pre-WGS page
 ### Changed
   * Loading animation no longer freezes during page load
   * Changed 'Pre-X' page titles to 'Single-Lane X' and updated URLs to match

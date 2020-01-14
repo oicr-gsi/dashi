@@ -31,6 +31,8 @@ ids = init_ids([
     "run-id-list",
     "all-instruments",
     "instruments-list",
+    "all-library-designs",
+    "library-designs-list",
     "all-projects",
     "projects-list",
     "all-kits",
@@ -118,9 +120,9 @@ def get_wgs_data():
     """
     # Pull in sample metadata from Pinery.
     pinery_samples = util.get_pinery_samples_from_active_projects()
-    # Filter the Pinery samples for only WG samples.
+    # Filter the Pinery samples for WG samples and others which will have BAM files generated.
     pinery_samples = util.filter_by_library_design(pinery_samples,
-                                                   ["WG"])
+                                                   ["AS", "CH", "CM", "NN", "WG"])
 
     ichorcna_df = util.get_ichorcna()
     ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
@@ -325,6 +327,10 @@ def layout(query_string):
                                                  ids["instruments-list"],
                                                  ILLUMINA_INSTRUMENT_MODELS),
 
+                sidebar_utils.select_library_designs(
+                    ids["all-library-designs"], ids["library-designs-list"],
+                    ALL_LIBRARY_DESIGNS),
+
                 sidebar_utils.hr(),
 
                 # Sort, colour, and shape
@@ -475,6 +481,7 @@ def init_callbacks(dash_app):
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
             State(ids['kits-list'], 'value'),
+            State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
@@ -493,6 +500,7 @@ def init_callbacks(dash_app):
                        instruments,
                        projects,
                        kits,
+                       library_designs,
                        first_sort,
                        second_sort,
                        colour_by,
@@ -508,7 +516,7 @@ def init_callbacks(dash_app):
         del params['click']
         logger.info(json.dumps(params))
 
-        if not runs and not instruments and not projects and not kits:
+        if not runs and not instruments and not projects and not kits and not library_designs:
             df = pd.DataFrame(columns=WGS_DF.columns)
         else:
             df = WGS_DF
@@ -521,6 +529,9 @@ def init_callbacks(dash_app):
             df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         if kits:
             df = df[df[PINERY_COL.PrepKit].isin(kits)]
+        if library_designs:
+            df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
+                library_designs)]
         df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
