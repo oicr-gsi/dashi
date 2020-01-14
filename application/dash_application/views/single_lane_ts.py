@@ -17,8 +17,8 @@ import json
 
 logger = logging.getLogger(__name__)
 
-page_name = 'preqc-exome'
-title = "Pre-EX"
+page_name = 'single-lane-ts'
+title = "Single-Lane Targeted Sequencing"
 
 ids = init_ids([
     # Buttons

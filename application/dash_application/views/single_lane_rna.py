@@ -19,8 +19,8 @@ import json
 logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
-page_name = "preqc-rna"
-title = "Pre-RNA"
+page_name = "single-lane-rna"
+title = "Single-Lane RNA-seq"
 
 ids = init_ids([
     # Buttons
