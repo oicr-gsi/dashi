@@ -12,6 +12,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Log filter parameters for each search
 ### Changed
   * Loading animation no longer freezes during page load
+  * Changed 'Pre-X' page titles to 'Single-Lane X' and updated URLs to match
 ### Fixed
   * Negative numbers are no longer valid for cutoff inputs
   * pre-WGS: BamQC and ichorCNA data are now reported independently

@@ -19,8 +19,8 @@ import json
 logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
-page_name = "preqc-wgs"
-title = "Pre-WGS"
+page_name = "single-lane-wgs"
+title = "Single-Lane WGS"
 
 ids = init_ids([
     # Buttons
