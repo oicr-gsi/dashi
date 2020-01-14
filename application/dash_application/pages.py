@@ -7,7 +7,7 @@ prefix = "application.dash_application.views."
 pagenames = [
     # "bamqc_gbovertime",
     # "bamqc_overtime",
-    # "bcl2fastq",
+    "bcl2fastq",
     # "poolqc",
     "single_lane_ts",
     "single_lane_rna",

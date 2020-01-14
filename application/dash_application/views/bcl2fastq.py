@@ -1,16 +1,18 @@
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
-from ..dash_id import init_ids
 from flask import current_app as app
 
-import gsiqcetl.load
-from gsiqcetl.bcl2fastq.constants import SamplesSchema, UnknownIndexSchema
-import gsiqcetl.bcl2fastq.utility
+from ..utility import df_manipulation as util
+from ..dash_id import init_ids
+
+import gsiqcetl.bcl2fastq
+import gsiqcetl.column
 import urllib.parse
 
 
-page_name = "bcl2fastq/indexinfo"
+page_name = "bcl2fastq-index-qc"
+title = "Bcl2Fastq Index QC"
 
 ids = init_ids(
     [
@@ -24,11 +26,14 @@ ids = init_ids(
     ]
 )
 
-index = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
-index_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
+# There can be many unknown indices in each run. Only display top N
+MAX_UNKNOWN_DISPLAY = 30
 
-unknown = gsiqcetl.load.bcl2fastq_unknown_index(UnknownIndexSchema.v1)
-un_col = gsiqcetl.load.bcl2fastq_unknown_index_columns(UnknownIndexSchema.v1)
+index = util.get_bcl2fastq_known()
+index_col = gsiqcetl.column.Bcl2FastqKnownColumn
+
+unknown = util.get_bcl2fastq_unknown()
+un_col = gsiqcetl.column.Bcl2FastqUnknownColumn
 
 all_runs = index[index_col.Run].sort_values(ascending=False).unique()
 
@@ -44,90 +49,48 @@ COL_INDEX = "index"
  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
  """
 
-layout = html.Div(
-    children=[
-        # This element doesn't work correctly in a multi-app context. Left in code for further work
-        # ToDO
-        # https://jira.oicr.on.ca/browse/GR-776 and https://jira.oicr.on.ca/browse/GR-777
-        core.Location(id=ids["bcl2fastq_url"], refresh=False),
-        core.ConfirmDialog(
-            id=ids["error"],
-            message=(
-                'You have input an incorrect run. Click either "Ok" or '
-                '"Cancel" to return to the most recent run.'
+
+def layout(qs):
+    return html.Div(
+        children=[
+            core.Dropdown(
+                id=ids["run_select"],
+                #   Options is concantenated string versions of all_runs.
+                options=[{"label": r, "value": r} for r in all_runs],
+                value=all_runs[0],
+                clearable=False,
             ),
-        ),
-        core.Dropdown(
-            id=ids["run_select"],
-            #   Options is concantenated string versions of all_runs.
-            options=[{"label": r, "value": r} for r in all_runs],
-            value=all_runs[0],
-            clearable=False,
-        ),
-        core.Graph(id=ids["known_index_bar"]),
-        html.Div(
-            [
-                html.Div(
-                    [
-                        core.Graph(id=ids["known_unknown_pie"]),
-                        core.Textarea(
-                            id=ids["known_fraction"],
-                            style={"width": "100%"},
-                            readOnly=True,
-                            # This is the textbox at the bottom, hover over to see title
-                            title=(
-                                "Assumptions are made about which indexes are known "
-                                "or unknown. This is due to multiple bcl2fastq analyses "
-                                "being used on one run. This number should be 100%."
+            core.Graph(id=ids["known_index_bar"]),
+            html.Div(
+                [
+                    html.Div(
+                        [
+                            core.Graph(id=ids["known_unknown_pie"]),
+                            core.Textarea(
+                                id=ids["known_fraction"],
+                                style={"width": "100%"},
+                                readOnly=True,
+                                # This is the textbox at the bottom, hover over to see title
+                                title=(
+                                    "Assumptions are made about which indexes are known "
+                                    "or unknown. This is due to multiple bcl2fastq analyses "
+                                    "being used on one run. This number should be 100%."
+                                ),
                             ),
-                        ),
-                    ],
-                    style={"width": "25%", "display": "inline-block"},
-                ),
-                html.Div(
-                    [core.Graph(id=ids["unknown_index_bar"])],
-                    style={"width": "75%", "display": "inline-block", "float": "right"},
-                ),
-            ]
-        ),
-    ]
-)
+                        ],
+                        style={"width": "25%", "display": "inline-block"},
+                    ),
+                    html.Div(
+                        [core.Graph(id=ids["unknown_index_bar"])],
+                        style={"width": "75%", "display": "inline-block", "float": "right"},
+                    ),
+                ]
+            ),
+        ]
+    )
 
 
 def init_callbacks(dash_app):
-    dash_app.config.suppress_callback_exceptions = True
-
-    @dash_app.callback(
-        [
-            Output(ids["run_select"], "value"),
-            Output(ids["error"], "displayed")
-        ],
-        [
-            Input(ids["bcl2fastq_url"], "pathname")
-        ],
-    )
-    @dash_app.server.cache.memoize(timeout=60)
-    def change_url(pathname):
-        """ Allows user to enter Run name in URL which will update dropdown automatically, and the graphs.
-            If User enters any value that's not a valid run an error box will pop up and return user to most recent run
-
-            Parameters:
-                pathname: user-requested path.
-
-            Returns:
-                The string value (without '/') of the user input for the drop-down to use
-                Error pop-up displayed depending on user input.
-        """
-        #   In a pathname, it automatically adds '/' to the beginning of the input even if pathname blank
-        #   While page loads, pathname is set to 'None'. Once page is loaded pathname is set to user input.
-        if pathname == "/" or pathname is None:
-            return all_runs[0], False
-        elif pathname[1:-2] not in all_runs:
-            return all_runs[0], True
-        else:
-            return pathname[1:-2], False
-
-
     @dash_app.callback(
         [
             Output(ids["known_index_bar"], "figure"),
@@ -155,7 +118,7 @@ def init_callbacks(dash_app):
         run = index[index[index_col.Run] == run_alias]
         run = run[run[index_col.ReadNumber] == 1]
         run = run[~run[index_col.SampleID].isna()]
-        run = run.drop_duplicates([index_col.SampleID, index_col.LaneNumber])
+        run = run.drop_duplicates([index_col.SampleID, index_col.Lane])
         # TODO: Replace with join from Pinery (on Run, Lane, Index1, Index2)
         #  10X index (SI-GA-H11) will have to be converted to nucleotide
         run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
@@ -165,16 +128,15 @@ def init_callbacks(dash_app):
             run[index_col.Index2].fillna(""), sep=" "
         )
 
-        pruned = gsiqcetl.bcl2fastq.utility.prune_unknown_index_from_run(
+        pruned = gsiqcetl.bcl2fastq.prune_unknown_index_from_run(
             run_alias, index, unknown
         )
         pruned[COL_INDEX] = pruned[un_col.Index1].str.cat(
             pruned[un_col.Index2].fillna(""), sep=" "
         )
         pruned = pruned.sort_values(un_col.Count, ascending=False)
-        pruned = pruned.head(30)
 
-        total_clusters = gsiqcetl.bcl2fastq.utility.total_clusters_for_run(
+        total_clusters = gsiqcetl.bcl2fastq.total_clusters_for_run(
             run_alias, index
         )
 
@@ -312,8 +274,11 @@ def create_unknown_index_bar(pruned):
                 creates unknown_index_bar bar graph
               """
 
+    pruned = pruned.head(MAX_UNKNOWN_DISPLAY)
+
     data_unknown = []
-    for lane, d in pruned.groupby(un_col.LaneNumber):
+
+    for lane, d in pruned.groupby(un_col.Lane):
         data_unknown.append(
             {
                 "x": list(d[COL_INDEX]),
