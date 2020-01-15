@@ -50,7 +50,7 @@ def select_runs(all_runs_id: str, runs_id: str, runs: List[str]) -> \
 
 def run_range_input(run_range_id: str, start_date: str = None, end_date: str = None) -> html.Label:
     start = start_date if start_date else ALL_RUNS[pinery.column.RunsColumn.StartDate].min(skipna=True)
-    end = end_date if end_date else datetime.datetime.now()
+    end = end_date if end_date else datetime.date.today()
     return html.Label(["Filter by Run Start Date:",
                        html.Br(),
                        core.DatePickerRange(id=run_range_id,
@@ -219,7 +219,7 @@ def get_requested_run_date_range(last_string) -> List[str]:
     xdays = re.compile(r'(\d+)days').match(last_string)
     if xdays and xdays.group(1):
         days_ago = int(xdays.group(1))
-        end = datetime.datetime.now()
+        end = datetime.date.today()
         start = end - datetime.timedelta(days=days_ago)
         return [start, end]
     else:
