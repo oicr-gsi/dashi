@@ -15,17 +15,24 @@ utility to external parties. Please contact us for more information.
     (OICR internal)
 
 
+## Environment Variables
+Create a `.env` file in the root directory of this repository:
+| Variable name | Required? | Description | Example |
+|---------------|-----------|-------------|---------|
+| `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes** | Directory where the QC-ETL caches are located | `/qcetl` |
+| `MONGO_URL` | **Yes** | URL to location of MongoDB which holds Pinery data | `mongodb://user:password@mongo_web_url:27017/db_name` |
+| `PINERY_URL` | **Yes** | URL to location of Pinery web service root | `http://pinery-url:8080/pinery-ws-miso` |
+| `LOG_LOCATION` | No | File path where logs should be written | `~/logs/dashi.log` |
+| `DASHI_LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` |
+| `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` |
+
+
 ## Setup on bare metal
 
-1. Install python3, pip
-1. Setup new virtual environment
-1. `pip install -r requirements.txt`
-1. Set the required environment variables. For example URLS, see [.docker/start.sh](.docker/start.sh).
-    * `PINERY_URL` : location of Pinery (LIMS API) instance
-    * `MONGO_URL` : location of MongoDB with provenance data
-    * `GSI_QC_ETL_ROOT_DIRECTORY` : location of gsi-qc-etl cache files (not code)
-    * `DASHI_LOG_TO_CONSOLE`: Set to `True` if log should go to console in 
-    addition to default logger
+1. Install python3, pip.
+1. Setup new virtual environment.
+1. `pip install -r requirements.txt`.
+1. Ensure your `.env` file is populated as per `Environment Variables` above.
 1. `flask run` **OR** `gunicorn --bind 0.0.0.0:5000 wsgi:app`
 
 
@@ -43,14 +50,15 @@ need to pass in your SSH keys to permit download and installation.
 1. Ensure your ssh key has been added to OICR's Bitbucket and you can access and
    clone
    [gsi-qc-etl](https://bitbucket.oicr.on.ca/projects/GSI/repos/gsi-qc-etl/browse). 
-2. Download the gsi-qc-etl cache data to `$HOME/qcetl` (or modify
+1. Download the gsi-qc-etl cache data to `$HOME/qcetl` (or modify
    docker-compose.yml to point to the correct location). The current location for
    this on OICR's cluster is at
    `/scratch2/groups/gsi/<development or production>/qcetl`.
-3. Create a file at `.mongopass` with the password to the MongoDB database and
+1. Create a file at `.mongopass` with the password to the MongoDB database and
     make sure the location in docker-compose.yml is correct in `secrets`.
-4. Build the container with `docker-compose build`. 
-5. Launch with `docker-compose up`. Note that this completes installation of
+1. Ensure your `.env` file is populated as per `Environment Variables` above.
+1. Build the container with `docker-compose build`. 
+1. Launch with `docker-compose up`. Note that this completes installation of
     gsi-qc-etl before launching the app.
 `
 
