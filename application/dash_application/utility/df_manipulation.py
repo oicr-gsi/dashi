@@ -1,11 +1,9 @@
-import datetime
-
 import dash_core_components as core
 import dash_html_components as html
 import datetime
 import pandas
 from pandas import DataFrame
-from typing import List, Tuple
+from typing import List
 
 import pinery.column
 from gsiqcetl import QCETLCache
@@ -35,6 +33,8 @@ rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
 Open a single instance of each cache, and use copies for the reports.
 """
 cache = QCETLCache()
+_bcl2fastq_known = cache.bcl2fastq.known
+_bcl2fastq_unknown = cache.bcl2fastq.unknown
 _rnaseqqc = cache.rnaseqqc.rnaseqqc
 _bamqc = cache.bamqc.bamqc
 _bamqc3 = cache.bamqc3.bamqc3
@@ -85,6 +85,14 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 
 def get_runs():
     return _runs_with_instruments.copy(deep=True)
+
+
+def get_bcl2fastq_known():
+    return _bcl2fastq_known.copy(deep=True)
+
+
+def get_bcl2fastq_unknown():
+    return _bcl2fastq_unknown.copy(deep=True)
 
 
 def get_rnaseqqc():
