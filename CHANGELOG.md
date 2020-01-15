@@ -8,8 +8,8 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ### Added
   * Bcl2Fastq Index QC graph
-### Changed
-  * `nav_handler` and `content_handler` no longer throw exception on `None`
+### Fixed
+  * `nav_handler` and `content_handler` no longer throw exception on empty path
 
 ## [200114-1651] - 2020-01-14
 ### Added
