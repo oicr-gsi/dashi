@@ -24,6 +24,8 @@ utility to external parties. Please contact us for more information.
     * `PINERY_URL` : location of Pinery (LIMS API) instance
     * `MONGO_URL` : location of MongoDB with provenance data
     * `GSI_QC_ETL_ROOT_DIRECTORY` : location of gsi-qc-etl cache files (not code)
+    * `DASHI_LOG_TO_CONSOLE`: Set to `True` if log should go to console in 
+    addition to default logger
 1. `flask run` **OR** `gunicorn --bind 0.0.0.0:5000 wsgi:app`
 
 
