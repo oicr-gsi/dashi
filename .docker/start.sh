@@ -7,6 +7,12 @@ then
     /dashi/.docker/enter_passphrase $(cat /run/secrets/ssh_passphrase)
 fi
 
+echo "USE_BLEEDING_EDGE_ETL: $USE_BLEEDING_EDGE_ETL"
+# Optionally rewrite requirements.txt to use untested current ETL version (gsi-qc-etl@master)
+# instead of a tested release version (gsi-qc-etl@<release version>)
+if [ "$USE_BLEEDING_EDGE_ETL" -eq 1 ]; then
+		sed -irn 's/^\(.*\)\/gsi-qc-etl.git@v.*$/\1\/gsi-qc-etl.git@master/ip' requirements.txt
+fi
 
 # mount your private key for bitbucket into the container to allow this command to succeed
 pip install --trusted-host pypi.python.org -r requirements.txt

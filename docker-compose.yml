@@ -6,6 +6,8 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
+    environment:
+      USE_BLEEDING_EDGE_ETL: "${USE_BLEEDING_EDGE_ETL}"
     restart: always
     ports:
       - '5000:5000'
