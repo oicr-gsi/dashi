@@ -64,7 +64,7 @@ def init_callbacks(dash_app):
         [Input('url', 'pathname')]
     )
     def nav_handler(path):
-        if path == '/None':
+        if path == '/None' or path is None:
             return default_title
         requested = path[1:]  # drop the leading slash
         if requested in pages_info.keys():
@@ -79,7 +79,7 @@ def init_callbacks(dash_app):
             Input('url', 'search')
         ])
     def content_handler(path, qs):
-        if path == '/None':
+        if path == '/None' or path is None:
             return '404'
         requested = path[1:] # drop the leading slash
         if requested in pages_info.keys():
