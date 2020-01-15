@@ -8,7 +8,8 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ### Added
   * Bcl2Fastq Index QC graph
-  * DASHI_LOG_TO_CONSOLE=True can be added to .env to log to console
+  * Set `DASHI_LOG_TO_CONSOLE=True` in `.env` file to log to console
+  * Set `USE_BLEEDING_EDGE_ETL=1` in `.env` file to use gsi-qc-etl@master (development only)
 ### Fixed
   * `nav_handler` and `content_handler` no longer throw exception on empty path
 
