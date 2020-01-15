@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ### Added
   * Bcl2Fastq Index QC graph
+  * DASHI_LOG_TO_CONSOLE=True can be added to .env to log to console
 
 ## [200114-1651] - 2020-01-14
 ### Added
