@@ -14,6 +14,7 @@ from gsiqcetl.column import BamQcColumn
 import pinery
 import logging
 import json
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -399,6 +400,8 @@ def init_callbacks(dash_app):
             search_query):
         params = locals()
         del params['click']
+        if datetime.datetime.strptime(end_date, '%Y-%m-%d').date() == datetime.date.today():
+            del params['end_date']
         logger.info(json.dumps(params))
 
         # Apply get selected runs

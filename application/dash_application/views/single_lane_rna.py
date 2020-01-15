@@ -15,6 +15,7 @@ from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 import logging
 import json
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -510,6 +511,8 @@ def init_callbacks(dash_app):
                        search_query):
         params = locals()
         del params['click']
+        if datetime.datetime.strptime(end_date, '%Y-%m-%d').date() == datetime.date.today():
+            del params['end_date']
         logger.info(json.dumps(params))
         
         if not runs and not instruments and not projects and not kits and not library_designs:
