@@ -9,7 +9,7 @@ import gsiqcetl.column
 import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs, cutoff_table_data
+from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -110,10 +110,10 @@ def get_wgs_data():
       * Runs (needed to join Pinery to Instruments)
     """
     # Pull in sample metadata from Pinery.
-    pinery_samples = util.get_pinery_samples_from_active_projects()
+    pinery_samples = util.get_pinery_samples()
     # Filter the Pinery samples for WG samples and others which will have BAM files generated.
     pinery_samples = util.filter_by_library_design(pinery_samples,
-                                                   ["AS", "CH", "CM", "NN", "WG"])
+                                                   util.wgs_lib_designs)
 
     ichorcna_df = util.get_ichorcna()
     ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
@@ -123,12 +123,6 @@ def get_wgs_data():
                                ICHOR_COL.TumorFraction]]
 
     bamqc_df = util.get_bamqc3()
-
-    # Cast the primary key/join columns to explicit types
-    bamqc_df = util.df_with_normalized_ius_columns(
-        bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
-    ichorcna_df = util.df_with_normalized_ius_columns(
-        ichorcna_df, ICHOR_COL.Run, ICHOR_COL.Lane, ICHOR_COL.Barcodes)
 
     # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
@@ -153,7 +147,7 @@ def get_wgs_data():
     )
 
     # Join BamQC+ichorCNA and Pinery data
-    wgs_df = util.df_with_pinery_samples(wgs_df, pinery_samples,
+    wgs_df = util.df_with_pinery_samples_ius(wgs_df, pinery_samples,
                                          util.bamqc_ius_columns)
 
     # Join df and instrument model
@@ -170,13 +164,14 @@ def get_wgs_data():
 (WGS_DF, DATAVERSION) = get_wgs_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_list(WGS_DF,PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_list(WGS_DF, PINERY_COL.PrepKit)
+ALL_PROJECTS = util.unique_set(WGS_DF,PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_set(WGS_DF, PINERY_COL.PrepKit)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
-ALL_TISSUE_MATERIALS = util.unique_list(WGS_DF, PINERY_COL.TissuePreparation)
-ALL_LIBRARY_DESIGNS = util.unique_list(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_RUNS = util.unique_list(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
-ALL_SAMPLES = util.unique_list(WGS_DF, PINERY_COL.SampleName)
+ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_set(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
+ALL_SAMPLES = util.unique_set(WGS_DF, PINERY_COL.SampleName)
+ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -383,7 +378,7 @@ def layout(query_string):
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                       ALL_SAMPLES),
 
-                sidebar_utils.show_data_labels_input(ids["show-data-labels"],
+                sidebar_utils.show_data_labels_input_single_lane(ids["show-data-labels"],
                                                      initial["shownames_val"],
                                                      "ALL LABELS",
                                                      ids["show-all-data-labels"]),
@@ -442,7 +437,6 @@ def layout(query_string):
             ids["data-table"],
             df,
             wgs_table_columns,
-            BAMQC_COL.TotalReads,
             [
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
                  initial["cutoff_insert_mean"], True),
@@ -523,7 +517,7 @@ def init_callbacks(dash_app):
         }
 
         dd = defaultdict(list)
-        (failure_df, failure_columns) = cutoff_table_data(df, [
+        (failure_df, failure_columns) = cutoff_table_data_ius(df, [
             ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff, True),
             ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
              total_reads_cutoff, True),

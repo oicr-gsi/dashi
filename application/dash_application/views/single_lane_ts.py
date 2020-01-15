@@ -3,11 +3,10 @@ from collections import defaultdict
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
 import pandas as pd
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs, cutoff_table_data
+from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -77,17 +76,16 @@ initial["cutoff_insert_mean"] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc()
-    bamqc_df = util.df_with_normalized_ius_columns(bamqc_df, BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes)
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
 
-    pinery_samples = util.get_pinery_samples_from_active_projects()
+    pinery_samples = util.get_pinery_samples()
 
-    bamqc_df = util.df_with_pinery_samples(bamqc_df, pinery_samples, util.bamqc_ius_columns)
+    bamqc_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples, util.bamqc_ius_columns)
 
     bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
 
-    bamqc_df = util.filter_by_library_design(bamqc_df, ["EX", "TS"])
+    bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 
     return bamqc_df, util.cache.versions(["bamqc"])
 
@@ -96,13 +94,14 @@ def get_bamqc_data():
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_list(bamqc, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_list(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_list(bamqc, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_list(bamqc, PINERY_COL.TissuePreparation)
-ALL_LIBRARY_DESIGNS = util.unique_list(bamqc, PINERY_COL.LibrarySourceTemplateType)
+ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
+ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
+ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
+ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
-ALL_SAMPLES = util.unique_list(bamqc, PINERY_COL.SampleName)
+ALL_SAMPLES = util.unique_set(bamqc, PINERY_COL.SampleName)
+ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -211,134 +210,131 @@ def layout(query_string):
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
 
-    return core.Loading(fullscreen=True, type="dot", children=[html.Div(className='body',
-    children=[
-        html.Div(className='row flex-container',
-                 children=[
-                     html.Div(className='sidebar four columns',
-            children=[
-                html.Button('Update', id=ids['update-button']),
-                html.Br(),
-                html.Br(),
+    return core.Loading(fullscreen=True, type="dot", children=[
+        html.Div(className='body', children=[
+            html.Div(className='row flex-container', children=[
+                html.Div(className='sidebar four columns', children=[
+                    html.Button('Update', id=ids['update-button']),
+                    html.Br(),
+                    html.Br(),
 
-                # Filters
-                sidebar_utils.select_runs(ids["all-runs"],
-                                          ids["run-id-list"], ALL_RUNS,
-                                          query["req_runs"]),
+                    # Filters
+                    sidebar_utils.select_runs(ids["all-runs"],
+                                            ids["run-id-list"], ALL_RUNS,
+                                            query["req_runs"]),
 
-                sidebar_utils.run_range_input(ids["date-range"],
-                                              query["req_start"],
-                                              query["req_end"]),
+                    sidebar_utils.run_range_input(ids["date-range"],
+                                                query["req_start"],
+                                                query["req_end"]),
 
-                sidebar_utils.hr(),
+                    sidebar_utils.hr(),
 
-                sidebar_utils.select_projects(ids["all-projects"],
-                                              ids["projects-list"],
-                                              ALL_PROJECTS),
+                    sidebar_utils.select_projects(ids["all-projects"],
+                                                ids["projects-list"],
+                                                ALL_PROJECTS),
 
-                sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
-                                          ALL_KITS),
+                    sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
+                                            ALL_KITS),
 
-                sidebar_utils.select_instruments(ids["all-instruments"],
-                                                 ids["instruments-list"],
-                                                 ILLUMINA_INSTRUMENT_MODELS),
+                    sidebar_utils.select_instruments(ids["all-instruments"],
+                                                    ids["instruments-list"],
+                                                    ILLUMINA_INSTRUMENT_MODELS),
 
-                sidebar_utils.select_library_designs(
-                    ids["all-library-designs"], ids["library-designs-list"],
-                    ALL_LIBRARY_DESIGNS),
+                    sidebar_utils.select_library_designs(
+                        ids["all-library-designs"], ids["library-designs-list"],
+                        ALL_LIBRARY_DESIGNS),
 
-                sidebar_utils.hr(),
+                    sidebar_utils.hr(),
 
-                # Sort, colour, and shape
-                sidebar_utils.select_first_sort(ids['first-sort'],
-                                                initial["first_sort"]),
+                    # Sort, colour, and shape
+                    sidebar_utils.select_first_sort(ids['first-sort'],
+                                                    initial["first_sort"]),
 
-                sidebar_utils.select_second_sort(
-                    ids['second-sort'],
-                    initial["second_sort"],
-                    [
-                            {"label": "Total Reads",
-                             "value": BAMQC_COL.TotalReads},
-                            {"label": "Unmapped Reads",
-                             "value": BAMQC_COL.UnmappedReads},
-                            {"label": "Non-primary Reads",
-                             "value": BAMQC_COL.NonPrimaryReads},
-                            {"label": "On-target Reads",
-                             "value": BAMQC_COL.ReadsOnTarget},
-                            {"label": "Mean Insert Size",
-                             "value": BAMQC_COL.InsertMean}
-                    ]
-                ),
-
-                sidebar_utils.select_colour_by(ids['colour-by'],
-                                              shape_colour.dropdown(),
-                                              initial["colour_by"]),
-
-                sidebar_utils.select_shape_by(ids['shape-by'],
-                                             shape_colour.dropdown(),
-                                             initial["shape_by"]),
-
-                sidebar_utils.highlight_samples_input(ids['search-sample'],
-                                                      ALL_SAMPLES),
-                
-                sidebar_utils.show_data_labels_input(ids['show-data-labels'],
-                                                     initial["shownames_val"],
-                                                     'ALL LABELS',
-                                                     ids['show-all-data-labels']),
-
-                sidebar_utils.hr(),
-
-                # Cutoffs
-                sidebar_utils.total_reads_cutoff_input(
-                    ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
-                sidebar_utils.insert_mean_cutoff(
-                    ids['insert-size-mean-cutoff'], initial["cutoff_insert_mean"]),
-            ]),
-
-            # Graphs
-            html.Div(className='seven columns',
-                children=[
-                    core.Graph(id=ids['total-reads'],
-                        figure=generate_total_reads(
-                            df,
-                            PINERY_COL.SampleName,
-                            special_cols["Total Reads (Passed Filter)"],
-                            initial["colour_by"],
-                            initial["shape_by"],
-                            initial["shownames_val"],
-                            initial["cutoff_pf_reads"])
+                    sidebar_utils.select_second_sort(
+                        ids['second-sort'],
+                        initial["second_sort"],
+                        [
+                                {"label": "Total Reads",
+                                "value": BAMQC_COL.TotalReads},
+                                {"label": "Unmapped Reads",
+                                "value": BAMQC_COL.UnmappedReads},
+                                {"label": "Non-primary Reads",
+                                "value": BAMQC_COL.NonPrimaryReads},
+                                {"label": "On-target Reads",
+                                "value": BAMQC_COL.ReadsOnTarget},
+                                {"label": "Mean Insert Size",
+                                "value": BAMQC_COL.InsertMean}
+                        ]
                     ),
-                    core.Graph(id=ids['unmapped-reads'],
-                        figure=generate_unmapped_reads(df, initial)
-                    ),
-                    core.Graph(id=ids['non-primary-reads'],
-                        figure=generate_nonprimary_reads(df, initial)
-                    ),
-                    core.Graph(id=ids['on-target-reads'],
-                        figure=generate_on_target_reads(df,initial)
-                    ),
-                    core.Graph(id=ids['mean-insert-size'],
-                        figure=generate_mean_insert_size(df, initial)
-                    )
+
+                    sidebar_utils.select_colour_by(ids['colour-by'],
+                                                shape_colour.dropdown(),
+                                                initial["colour_by"]),
+
+                    sidebar_utils.select_shape_by(ids['shape-by'],
+                                                shape_colour.dropdown(),
+                                                initial["shape_by"]),
+
+                    sidebar_utils.highlight_samples_input(ids['search-sample'],
+                                                        ALL_SAMPLES),
+                    
+                    sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
+                                                        initial["shownames_val"],
+                                                        'ALL LABELS',
+                                                        ids['show-all-data-labels']),
+
+                    sidebar_utils.hr(),
+
+                    # Cutoffs
+                    sidebar_utils.total_reads_cutoff_input(
+                        ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
+                    sidebar_utils.insert_mean_cutoff(
+                        ids['insert-size-mean-cutoff'], initial["cutoff_insert_mean"]),
                 ]),
-            ]),
 
-            # Tables
-            table_tabs(
-                ids["failed-samples"],
-                ids["data-table"],
-                df,
-                ex_table_columns,
-                BAMQC_COL.TotalReads,
-                [
-                    ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                     initial["cutoff_insert_mean"], True),
-                    ('Total Reads Cutoff',
-                     special_cols["Total Reads (Passed Filter)"],
-                     initial["cutoff_pf_reads"], True),
-                ]
-            )
-    ]),
+                # Graphs
+                html.Div(className='seven columns',
+                    children=[
+                        core.Graph(id=ids['total-reads'],
+                            figure=generate_total_reads(
+                                df,
+                                PINERY_COL.SampleName,
+                                special_cols["Total Reads (Passed Filter)"],
+                                initial["colour_by"],
+                                initial["shape_by"],
+                                initial["shownames_val"],
+                                initial["cutoff_pf_reads"])
+                        ),
+                        core.Graph(id=ids['unmapped-reads'],
+                            figure=generate_unmapped_reads(df, initial)
+                        ),
+                        core.Graph(id=ids['non-primary-reads'],
+                            figure=generate_nonprimary_reads(df, initial)
+                        ),
+                        core.Graph(id=ids['on-target-reads'],
+                            figure=generate_on_target_reads(df,initial)
+                        ),
+                        core.Graph(id=ids['mean-insert-size'],
+                            figure=generate_mean_insert_size(df, initial)
+                        )
+                    ]),
+                ]),
+
+                # Tables
+                table_tabs(
+                    ids["failed-samples"],
+                    ids["data-table"],
+                    df,
+                    ex_table_columns,
+                    [
+                        ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+                        initial["cutoff_insert_mean"], True),
+                        ('Total Reads Cutoff',
+                        special_cols["Total Reads (Passed Filter)"],
+                        initial["cutoff_pf_reads"], True),
+                    ]
+                )
+        ]),
 ])
 
 
@@ -406,7 +402,7 @@ def init_callbacks(dash_app):
         }
 
         dd = defaultdict(list)
-        (failure_df, failure_columns ) =cutoff_table_data(df, [
+        (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff,
                  True),
                 ('Total Reads Cutoff', special_cols["Total Reads (Passed "

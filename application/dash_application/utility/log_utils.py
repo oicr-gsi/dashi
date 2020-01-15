@@ -24,6 +24,6 @@ def collapse_all_params(params, collapsing_functions):
 def log_filters(params, collapsing_functions, logger):
     collapse_all_params(params, collapsing_functions)
     del params['click']
-    if datetime.datetime.strptime(params['end_date'], '%Y-%m-%d').date() == datetime.date.today():
+    if 'end_date' in params and params['end_date'] and datetime.datetime.strptime(params['end_date'], '%Y-%m-%d').date() == datetime.date.today():
         del params['end_date']
     logger.info(json.dumps(params))
