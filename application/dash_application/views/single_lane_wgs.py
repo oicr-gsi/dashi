@@ -197,6 +197,16 @@ shape_or_colour_values = {
     PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS
 }
 
+# N.B. The keys in this object must match the argument names for
+# the `update_pressed` function below.
+collapsing_functions = {
+    "projects": lambda selected: sidebar_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "runs": lambda selected: sidebar_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
+    "kits": lambda selected: sidebar_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
+    "instruments": lambda selected: sidebar_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
+    "library_designs": lambda selected: sidebar_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+}
+
 # Add shape col to WG dataframe
 WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
 WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
@@ -516,6 +526,7 @@ def init_callbacks(dash_app):
                        end_date,
                        search_query):
         params = locals()
+        params = sidebar_utils.collapse_all_params(params, collapsing_functions)
         del params['click']
         if datetime.datetime.strptime(end_date, '%Y-%m-%d').date() == datetime.date.today():
             del params['end_date']

@@ -1,3 +1,4 @@
+from collections import Counter
 import datetime
 import re
 import urllib.parse
@@ -94,9 +95,9 @@ def select_kits(all_kits_id: str, kits_id: str, kits: List[str]) -> \
 def select_library_designs(all_library_designs_id: str, library_designs_id:
         str, library_designs: List[str]) -> core.Loading:
     return select_with_select_all("All Library Designs",
-                                  all_library_designs_id, "Filter by Library "
-                                  "Designs", library_designs_id,
-                                  library_designs)
+                                  all_library_designs_id,
+                                  "Filter by Library Designs",
+                                  library_designs_id, library_designs)
 
 
 default_first_sort = [
@@ -232,3 +233,20 @@ def parse_run_date_range(query) -> List[str]:
         return get_requested_run_date_range(query_dict["last"][0])
     else:
         return [None, None]
+
+
+compare = lambda s, t: Counter(s) == Counter(t)
+
+
+def collapse_if_all_selected(selected_items: List[str], all_items: List[str], all_title: str) -> List[str]:
+    if compare(selected_items, all_items):
+        return [all_title]
+    else:
+        return selected_items
+
+
+def collapse_all_params(params, collapsing_funcs):
+    """ Iterate over params values and simplify them if possible """
+    for key in collapsing_funcs.keys():
+        params[key] = collapsing_funcs[key](params[key])
+    return params
