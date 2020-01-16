@@ -13,6 +13,7 @@ from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
+from ..utility import log_utils
 import logging
 import json
 import datetime
@@ -515,12 +516,7 @@ def init_callbacks(dash_app):
                        start_date,
                        end_date,
                        search_query):
-        params = locals()
-        params = sidebar_utils.collapse_all_params(params, collapsing_functions)
-        del params['click']
-        if datetime.datetime.strptime(end_date, '%Y-%m-%d').date() == datetime.date.today():
-            del params['end_date']
-        logger.info(json.dumps(params))
+        log_utils.log_filters(locals(), logger)
 
         if not runs and not instruments and not projects and not kits and not library_designs:
             df = pd.DataFrame(columns=WGS_DF.columns)

@@ -10,6 +10,7 @@ from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
+from ..utility import log_utils
 from gsiqcetl.column import BamQcColumn
 import pinery
 import logging
@@ -398,11 +399,7 @@ def init_callbacks(dash_app):
             start_date,
             end_date,
             search_query):
-        params = locals()
-        del params['click']
-        if datetime.datetime.strptime(end_date, '%Y-%m-%d').date() == datetime.date.today():
-            del params['end_date']
-        logger.info(json.dumps(params))
+        log_utils.log_filters(locals(), logger)
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
