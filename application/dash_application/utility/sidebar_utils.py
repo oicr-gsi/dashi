@@ -1,4 +1,3 @@
-from collections import Counter
 import datetime
 import re
 import urllib.parse
@@ -234,19 +233,3 @@ def parse_run_date_range(query) -> List[str]:
     else:
         return [None, None]
 
-
-compare = lambda s, t: Counter(s) == Counter(t)
-
-
-def collapse_if_all_selected(selected_items: List[str], all_items: List[str], all_title: str) -> List[str]:
-    if compare(selected_items, all_items):
-        return [all_title]
-    else:
-        return selected_items
-
-
-def collapse_all_params(params, collapsing_funcs):
-    """ Iterate over params values and simplify them if possible """
-    for key in collapsing_funcs.keys():
-        params[key] = collapsing_funcs[key](params[key])
-    return params
