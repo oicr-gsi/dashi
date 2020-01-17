@@ -108,6 +108,15 @@ ALL_LIBRARY_DESIGNS = bamqc[
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
 ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
 
+# N.B. The keys in this object must match the argument names for
+# the `update_pressed` function in the views.
+collapsing_functions = {
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+}
 
 # Specify which columns to display in the DataTable
 first_col_set = [
@@ -399,7 +408,7 @@ def init_callbacks(dash_app):
             start_date,
             end_date,
             search_query):
-        log_utils.log_filters(locals(), logger)
+        log_utils.log_filters(locals(), collapsing_functions, logger)
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:

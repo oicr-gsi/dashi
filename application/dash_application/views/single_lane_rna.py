@@ -174,6 +174,16 @@ ALL_LIBRARY_DESIGNS = RNA_DF[
 ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()[::-1]  # reverse the list
 ALL_SAMPLES = RNA_DF[PINERY_COL.SampleName].sort_values().unique()
 
+# N.B. The keys in this object must match the argument names for
+# the `update_pressed` function in the views.
+collapsing_functions = {
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+}
+
 shape_or_colour_values = {
     PINERY_COL.StudyTitle: ALL_PROJECTS,
     PINERY_COL.SequencerRunName: ALL_RUNS,
@@ -510,7 +520,7 @@ def init_callbacks(dash_app):
                        start_date,
                        end_date,
                        search_query):
-        log_utils.log_filters(locals(), logger)
+        log_utils.log_filters(locals(), collapsing_functions, logger)
         
         if not runs and not instruments and not projects and not kits and not library_designs:
             df = EMPTY_RNA
