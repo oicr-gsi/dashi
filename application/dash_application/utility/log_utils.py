@@ -4,7 +4,6 @@ from typing import List
 import datetime
 import logging
 import json
-import pdb
 
 compare = lambda s, t: Counter(s) == Counter(t)
 
