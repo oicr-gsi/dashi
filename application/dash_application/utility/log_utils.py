@@ -9,7 +9,7 @@ compare = lambda s, t: Counter(s) == Counter(t)
 
 def collapse_if_all_selected(selected_items: List[str], all_items: List[str], all_title: str) -> List[str]:
     if compare(selected_items, all_items):
-        return [all_title] # Why array?
+        return [all_title] # Array for the sake of consistency 
     else:
         return selected_items
 
