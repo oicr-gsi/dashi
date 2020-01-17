@@ -99,7 +99,7 @@ def get_bamqc_data():
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
-ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
+ALL_RUNS = bamqc[PINERY_COL.SequencerRunName].sort_values().unique()[::-1] # reverse order
 ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
 ALL_TISSUE_MATERIALS = bamqc[
     PINERY_COL.TissuePreparation].sort_values().unique()
@@ -417,7 +417,7 @@ def init_callbacks(dash_app):
             data = bamqc
 
         if runs:
-            data = data[data[BAMQC_COL.Run].isin(runs)]
+            data = data[data[PINERY_COL.SequencerRunName].isin(runs)]
         if instruments:
             data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
@@ -427,7 +427,7 @@ def init_callbacks(dash_app):
         if library_designs:
             data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        data = data[data[BAMQC_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
+        data = data[data[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_or_colour_values)
         data = fill_in_colour_col(data, colourby, shape_or_colour_values,
                                   searchsample)

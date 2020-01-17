@@ -171,7 +171,7 @@ ALL_TISSUE_MATERIALS = RNA_DF[
     PINERY_COL.TissuePreparation].sort_values().unique()
 ALL_LIBRARY_DESIGNS = RNA_DF[
     PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
-ALL_RUNS = RNA_DF[RNA_COL.Run].sort_values().unique()[::-1]  # reverse the list
+ALL_RUNS = RNA_DF[PINERY_COL.SequencerRunName].sort_values().unique()[::-1]  # reverse the list
 ALL_SAMPLES = RNA_DF[PINERY_COL.SampleName].sort_values().unique()
 
 # N.B. The keys in this object must match the argument names for
@@ -528,7 +528,7 @@ def init_callbacks(dash_app):
             df = RNA_DF
 
         if runs:
-            df = df[df[RNA_COL.Run].isin(runs)]
+            df = df[df[PINERY_COL.SequencerRunName].isin(runs)]
         if instruments:
             df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
@@ -538,7 +538,7 @@ def init_callbacks(dash_app):
         if library_designs:
             df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        df = df[df[RNA_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
+        df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         sort_by = [first_sort, second_sort]
         df = df.sort_values(by=sort_by)
         df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
