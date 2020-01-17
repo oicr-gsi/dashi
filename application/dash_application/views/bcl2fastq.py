@@ -29,6 +29,7 @@ ids = init_ids(
 # There can be many unknown indices in each run. Only display top N
 MAX_UNKNOWN_DISPLAY = 30
 
+DATAVERSION = util.cache.versions(["bcl2fastq"])
 index = util.get_bcl2fastq_known()
 index_col = gsiqcetl.column.Bcl2FastqKnownColumn
 
@@ -49,6 +50,8 @@ COL_INDEX = "index"
  "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
  """
 
+def dataversion():
+    return DATAVERSION
 
 def layout(qs):
     return html.Div(

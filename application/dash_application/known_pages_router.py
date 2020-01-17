@@ -17,9 +17,9 @@ default_title = ""
 
 # Build dict of known pages info
 pages_info = {}
-PageInfo = namedtuple('PageInfo', 'layout title')
+PageInfo = namedtuple('PageInfo', 'layout title dataversion')
 for p in pages.pages:
-    pages_info[p.page_name] = PageInfo(p.layout, p.title)
+    pages_info[p.page_name] = PageInfo(p.layout, p.title, p.dataversion)
 
 def navbar(current):
     def menu_item(label, link):
@@ -52,7 +52,7 @@ layout = html.Div([
     core.Location(id='url', refresh=False),
     navbar(default_title),
     core.Loading(id='page-content'),
-    html.Footer(id='footer', children=[html.Hr(), "Dash version {0}".format(version)])
+    html.Footer(id='footer', children=[html.Hr(), "Dash version {0} | Data version ".format(version), html.Span(id='data-version')])
 ])
 
 
@@ -73,7 +73,10 @@ def init_callbacks(dash_app):
         return default_title
 
     @dash_app.callback(
-        Output('page-content', 'children'),
+        [
+            Output('page-content', 'children'),
+            Output('data-version', 'children'),
+        ],
         [
             Input('url', 'pathname'),
             Input('url', 'search')
@@ -84,5 +87,5 @@ def init_callbacks(dash_app):
         requested = path[1:] # drop the leading slash
         if requested in pages_info.keys():
             page = pages_info[requested]
-            return page.layout(qs)
+            return [page.layout(qs), page.dataversion()]
         return '404'

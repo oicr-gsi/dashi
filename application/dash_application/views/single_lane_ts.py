@@ -89,10 +89,10 @@ def get_bamqc_data():
 
     bamqc_df = util.filter_by_library_design(bamqc_df, ["EX", "TS"])
 
-    return bamqc_df
+    return bamqc_df, util.cache.versions(["bamqc"])
 
 
-bamqc = get_bamqc_data()
+(bamqc, DATAVERSION) = get_bamqc_data()
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
@@ -200,6 +200,10 @@ def generate_mean_insert_size(current_data, colourby, shapeby, shownames,
         shownames,
         cutoff_line
     )
+
+
+def dataversion():
+    return DATAVERSION
 
 
 def layout(query_string):
@@ -340,7 +344,7 @@ def layout(query_string):
                      initial_cutoff_pf_reads, True),
                 ]
             )
-    ])
+    ]),
 ])
 
 
