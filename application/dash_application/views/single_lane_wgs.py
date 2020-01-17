@@ -171,11 +171,11 @@ def get_wgs_data():
     illumina_models = util.get_illumina_instruments(wgs_df)
     wgs_df = wgs_df[wgs_df[INSTRUMENT_COLS.ModelName].isin(illumina_models)]
 
-    return wgs_df
+    return wgs_df, util.cache.versions(["bamqc", "ichorcna"])
 
 
 # Make the WGS dataframe
-WGS_DF = get_wgs_data()
+(WGS_DF, DATAVERSION) = get_wgs_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = WGS_DF[PINERY_COL.StudyTitle].sort_values().unique()
@@ -295,6 +295,8 @@ def generate_ploidy(df, colour_by, shape_by, shownames):
         shownames
     )
 
+def dataversion():
+    return DATAVERSION
 
 # Layout elements
 def layout(query_string):
@@ -454,7 +456,7 @@ def layout(query_string):
                  special_cols["Total Reads (Passed Filter)"],
                  initial_cutoff_pf_reads, True),
             ])
-    ])
+    ]),
 ])
 
 

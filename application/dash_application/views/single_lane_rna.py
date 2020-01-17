@@ -155,11 +155,11 @@ def get_rna_data():
     # Join RNAseqQc and instrument model
     rna_df = util.df_with_instrument_model(rna_df, PINERY_COL.SequencerRunName)
 
-    return rna_df
+    return rna_df, util.cache.versions(["rnaseqqc"])
 
 
 # Make the RNA dataframe
-RNA_DF = get_rna_data()
+(RNA_DF, DATAVERSION) = get_rna_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = RNA_DF[PINERY_COL.StudyTitle].sort_values().unique()
@@ -280,6 +280,9 @@ def generate_rin(df, colour_by, shape_by, show_names):
         shape_by,
         show_names
     )
+
+def dataversion():
+    return DATAVERSION
 
 
 # Layout elements
@@ -447,7 +450,7 @@ def layout(query_string):
                 ]
             )
         ])
-    ])
+    ]),
 ])
 
 
