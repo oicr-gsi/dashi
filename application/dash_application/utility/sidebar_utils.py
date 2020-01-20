@@ -50,7 +50,7 @@ def select_runs(all_runs_id: str, runs_id: str, runs: List[str]) -> \
 
 def run_range_input(run_range_id: str, start_date: str = None, end_date: str = None) -> html.Label:
     start = start_date if start_date else ALL_RUNS[pinery.column.RunsColumn.StartDate].min(skipna=True)
-    end = end_date if end_date else datetime.datetime.now()
+    end = end_date if end_date else datetime.date.today()
     return html.Label(["Filter by Run Start Date:",
                        html.Br(),
                        core.DatePickerRange(id=run_range_id,
@@ -94,9 +94,9 @@ def select_kits(all_kits_id: str, kits_id: str, kits: List[str]) -> \
 def select_library_designs(all_library_designs_id: str, library_designs_id:
         str, library_designs: List[str]) -> core.Loading:
     return select_with_select_all("All Library Designs",
-                                  all_library_designs_id, "Filter by Library "
-                                  "Designs", library_designs_id,
-                                  library_designs)
+                                  all_library_designs_id,
+                                  "Filter by Library Designs",
+                                  library_designs_id, library_designs)
 
 
 default_first_sort = [
@@ -219,7 +219,7 @@ def get_requested_run_date_range(last_string) -> List[str]:
     xdays = re.compile(r'(\d+)days').match(last_string)
     if xdays and xdays.group(1):
         days_ago = int(xdays.group(1))
-        end = datetime.datetime.now()
+        end = datetime.date.today()
         start = end - datetime.timedelta(days=days_ago)
         return [start, end]
     else:
@@ -232,3 +232,4 @@ def parse_run_date_range(query) -> List[str]:
         return get_requested_run_date_range(query_dict["last"][0])
     else:
         return [None, None]
+

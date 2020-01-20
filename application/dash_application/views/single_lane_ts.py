@@ -10,10 +10,12 @@ from ..plot_builder import generate, fill_in_shape_col, fill_in_colour_col, \
 from ..table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
+from ..utility import log_utils
 from gsiqcetl.column import BamQcColumn
 import pinery
 import logging
 import json
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,7 @@ def get_bamqc_data():
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = bamqc[PINERY_COL.StudyTitle].sort_values().unique()
-ALL_RUNS = bamqc[BAMQC_COL.Run].sort_values().unique()[::-1] # reverse order
+ALL_RUNS = bamqc[PINERY_COL.SequencerRunName].sort_values().unique()[::-1] # reverse order
 ALL_KITS = bamqc[PINERY_COL.PrepKit].sort_values().unique()
 ALL_TISSUE_MATERIALS = bamqc[
     PINERY_COL.TissuePreparation].sort_values().unique()
@@ -106,6 +108,15 @@ ALL_LIBRARY_DESIGNS = bamqc[
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
 ALL_SAMPLES = bamqc[PINERY_COL.SampleName].sort_values().unique()
 
+# N.B. The keys in this object must match the argument names for
+# the `update_pressed` function in the views.
+collapsing_functions = {
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+}
 
 # Specify which columns to display in the DataTable
 first_col_set = [
@@ -397,9 +408,7 @@ def init_callbacks(dash_app):
             start_date,
             end_date,
             search_query):
-        params = locals()
-        del params['click']
-        logger.info(json.dumps(params))
+        log_utils.log_filters(locals(), collapsing_functions, logger)
 
         # Apply get selected runs
         if not runs and not instruments and not projects and not kits and not library_designs:
@@ -408,7 +417,7 @@ def init_callbacks(dash_app):
             data = bamqc
 
         if runs:
-            data = data[data[BAMQC_COL.Run].isin(runs)]
+            data = data[data[PINERY_COL.SequencerRunName].isin(runs)]
         if instruments:
             data = data[data[INSTRUMENT_COLS.ModelName].isin(instruments)]
         if projects:
@@ -418,7 +427,7 @@ def init_callbacks(dash_app):
         if library_designs:
             data = data[data[PINERY_COL.LibrarySourceTemplateType].isin(
                 library_designs)]
-        data = data[data[BAMQC_COL.Run].isin(sidebar_utils.runs_in_range(start_date, end_date))]
+        data = data[data[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
         data = fill_in_shape_col(data, shapeby, shape_or_colour_values)
         data = fill_in_colour_col(data, colourby, shape_or_colour_values,
                                   searchsample)

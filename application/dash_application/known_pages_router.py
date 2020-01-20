@@ -51,7 +51,7 @@ def navbar(current):
 layout = html.Div([
     core.Location(id='url', refresh=False),
     navbar(default_title),
-    core.Loading(id='page-content'),
+    core.Loading(id='page-content', type='dot'),
     html.Footer(id='footer', children=[html.Hr(), "Dash version {0} | Data version ".format(version), html.Span(id='data-version')])
 ])
 
