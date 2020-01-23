@@ -19,6 +19,7 @@ and as of version 1.0.0, follows semantic versioning.
   * `nav_handler` and `content_handler` no longer throw exception on empty path
   * `Add All` button for Library Designs on WGS report now works
   * Remove blank Run from TS and RNA dropdowns
+  * `content_handler` returns two values, matching the callback promise
 
 ## [200114-1651] - 2020-01-14
 ### Added
