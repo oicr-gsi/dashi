@@ -156,15 +156,16 @@ def get_wgs_data():
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
 
-    # Join BamQC and Pinery data
-    wgs_df = util.df_with_pinery_samples(bamqc_df, pinery_samples,
-                                         util.bamqc_ius_columns)
+    # Join ichorCNA and BamQC data
+    wgs_df = bamqc_df.merge(
+        ichorcna_df, how="outer",
+        left_on=util.bamqc_ius_columns,
+        right_on=util.ichorcna_ius_columns
+    )
 
-    # Join ichorCNA and BamQC+Pinery data
-    wgs_df = wgs_df.merge(
-        ichorcna_df, how = "left",
-        left_on=util.pinery_ius_columns,
-        right_on=util.ichorcna_ius_columns)
+    # Join BamQC+ichorCNA and Pinery data
+    wgs_df = util.df_with_pinery_samples(wgs_df, pinery_samples,
+                                         util.bamqc_ius_columns)
 
     # Join df and instrument model
     wgs_df = util.df_with_instrument_model(wgs_df, PINERY_COL.SequencerRunName)

@@ -123,7 +123,7 @@ def get_pinery_samples_from_active_projects():
 def df_with_pinery_samples(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
     """Do an left merge between the DataFrame and modern Pinery samples
-    data. Only samples in DataFrame will be kept."""
+    data. Only samples in QC DataFrame will be kept."""
     df = df.merge(
         pinery_samples,
         how="left",
