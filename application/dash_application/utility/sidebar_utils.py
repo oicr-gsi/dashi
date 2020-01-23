@@ -174,13 +174,17 @@ def show_names_input(show_names_id: str, selected_value: str) -> html.Label:
         "Show Names:",
         core.Dropdown(id=show_names_id,
                       options=[
-                          {'label': 'Sample', 'value': PINERY_COL.SampleName},
                           {'label': 'Group ID', 'value': PINERY_COL.GroupID},
-                          {'label': 'None', 'value': 'none'}
+                          {'label': 'Kit', 'value': PINERY_COL.PrepKit},
+                          {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
+                          {'label': 'Sample', 'value': PINERY_COL.SampleName},
+                          {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
+                          {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
+                          {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
                       ],
                       value=selected_value,
                       searchable=False,
-                      clearable=False
+                      multi=True,
         )
     ])
 

@@ -94,7 +94,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = RNA_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-initial_shownames_val = 'none'
+initial_shownames_val = None
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01

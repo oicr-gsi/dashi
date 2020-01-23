@@ -136,22 +136,30 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     else:
         name_format = lambda n: "{0} {1}".format(n[0], n[1])
     for name, data in grouped_data:
-        if hovertext_type == 'none':
-            text_content = None
+
+        if hovertext_type is not None:
+            hovertext = data.apply(
+                lambda x: "<br>".join(x[hovertext_type].astype(str)),
+                axis=1
+            )
         else:
-            text_content = data[hovertext_type]
+            hovertext = None
+
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
             name=name_format(name),
-            hovertext=text_content,
+            hovertext=hovertext,
             showlegend=True,
             mode="markers",
             marker={
                 "symbol": data['shape'],
                 "color": data['colour'], # Please note the 'u'
                 "size": data['markersize']
-            }
+            },
+            # Hover labels are not cropped
+            # https://github.com/plotly/plotly.js/issues/460
+            hoverlabel={"namelength": -1},
         )
         traces.append(graph)
     if line_y is not None:
