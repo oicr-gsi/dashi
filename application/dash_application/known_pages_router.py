@@ -83,9 +83,9 @@ def init_callbacks(dash_app):
         ])
     def content_handler(path, qs):
         if path == '/None' or path is None:
-            return '404'
+            return None, '404'
         requested = path[1:] # drop the leading slash
         if requested in pages_info.keys():
             page = pages_info[requested]
             return [page.layout(qs), page.dataversion()]
-        return '404'
+        return None, '404'
