@@ -1,12 +1,11 @@
 import datetime
 import re
 import urllib.parse
-from typing import List, Dict
+from typing import List, Dict, Union
 
 import dash_core_components as core
 import dash_html_components as html
-from dash.exceptions import PreventUpdate
-from pandas import DataFrame, Series
+from pandas import Series
 
 import pinery.column
 from . import df_manipulation as df_tools
@@ -169,23 +168,30 @@ def highlight_samples_input(search_samples_id: str, all_samples: List[str]) -> \
     ])
 
 
-def show_names_input(show_names_id: str, selected_value: str) -> html.Label:
-    return html.Label([
-        "Show Names:",
-        core.Dropdown(id=show_names_id,
-                      options=[
-                          {'label': 'Group ID', 'value': PINERY_COL.GroupID},
-                          {'label': 'Kit', 'value': PINERY_COL.PrepKit},
-                          {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
-                          {'label': 'Sample', 'value': PINERY_COL.SampleName},
-                          {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
-                          {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
-                          {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
-                      ],
-                      value=selected_value,
-                      searchable=False,
-                      multi=True,
-        )
+def show_data_labels_input(
+        show_names_id: str, selected_value: Union[None, str],
+        select_all_text: str, select_all_id: str,
+) -> core.Loading:
+    return core.Loading(type="circle", children=[
+        html.Button(select_all_text, id=select_all_id, className="inline"),
+        html.Label([
+            "Show Data Labels",
+            core.Dropdown(
+                id=show_names_id,
+                options=[
+                    {'label': 'Group ID', 'value': PINERY_COL.GroupID},
+                    {'label': 'Kit', 'value': PINERY_COL.PrepKit},
+                    {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
+                    {'label': 'Sample', 'value': PINERY_COL.SampleName},
+                    {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
+                    {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
+                    {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
+                ],
+                value=selected_value,
+                searchable=False,
+                multi=True,
+            )
+        ])
     ])
 
 
