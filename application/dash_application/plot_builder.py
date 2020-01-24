@@ -134,7 +134,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     if colourby == shapeby:
         name_format = lambda n: "{0}".format(n[0])
     else:
-        name_format = lambda n: "{0} {1}".format(n[0], n[1])
+        name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
     for name, data in grouped_data:
 
         if hovertext_type is not None:

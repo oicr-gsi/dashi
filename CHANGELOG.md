@@ -16,6 +16,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Filter logs now report `["all_runs"]` when all runs have been selected; etc for other dropdowns
   * Pinery entries with no QC data are excluded from plots and data table
   * Show Names drop down menu can display info from multiple fields
+  * Put newline in `plot_builder.generate` to seperate color by and shape by
 ### Fixed
   * `nav_handler` and `content_handler` no longer throw exception on empty path
   * `Add All` button for Library Designs on WGS report now works
