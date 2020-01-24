@@ -8,9 +8,8 @@ import pandas as pd
 import gsiqcetl.column
 import pinery
 from ..dash_id import init_ids
-from ..plot_builder import fill_in_shape_col, fill_in_colour_col, \
-    fill_in_size_col, generate, generate_total_reads
-from ..table_builder import table_tabs, cutoff_table_data
+from ..utility.plot_builder import *
+from ..utility.table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -93,21 +92,12 @@ later_col_set = [
 ]
 wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *ICHOR_COL.values(), *later_col_set]
 
-# Set initial values for dropdown menus
-initial_first_sort = PINERY_COL.StudyTitle
-initial_second_sort = BAMQC_COL.TotalReads
-initial_colour_col = PINERY_COL.StudyTitle
-initial_shape_col = PINERY_COL.PrepKit
-initial_shownames_val = None
-initial_cutoff_pf_reads = 0.01
-initial_cutoff_insert_mean = 150
-
-shape_or_colour_by = [
-    {"label": "Project", "value": PINERY_COL.StudyTitle},
-    {"label": "Run", "value": PINERY_COL.SequencerRunName},
-    {"label": "Kit", "value": PINERY_COL.PrepKit},
-    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation}
-]
+initial = get_initial_single_lane_values()
+# Set additional initial values for dropdown menus
+initial["second_sort"] = BAMQC_COL.TotalReads
+# Set initial values for graph cutoff lines
+initial["cutoff_pf_reads"] = 0.01
+initial["cutoff_insert_mean"] = 150
 
 
 def get_wgs_data():
@@ -180,16 +170,13 @@ def get_wgs_data():
 (WGS_DF, DATAVERSION) = get_wgs_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = WGS_DF[PINERY_COL.StudyTitle].sort_values().unique()
-ALL_KITS = WGS_DF[PINERY_COL.PrepKit].sort_values().unique()
+ALL_PROJECTS = util.unique_list(WGS_DF,PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_list(WGS_DF, PINERY_COL.PrepKit)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
-ALL_TISSUE_MATERIALS = WGS_DF[
-    PINERY_COL.TissuePreparation].sort_values().unique()
-ALL_LIBRARY_DESIGNS = WGS_DF[
-    PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
-ALL_RUNS = WGS_DF[PINERY_COL.SequencerRunName].sort_values().unique()[
-    ::-1]  # reverse the list
-ALL_SAMPLES = WGS_DF[PINERY_COL.SampleName].sort_values().unique()
+ALL_TISSUE_MATERIALS = util.unique_list(WGS_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_list(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_list(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
+ALL_SAMPLES = util.unique_list(WGS_DF, PINERY_COL.SampleName)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -201,110 +188,102 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
 }
 
-shape_or_colour_values = {
-    PINERY_COL.StudyTitle: ALL_PROJECTS,
-    PINERY_COL.SequencerRunName: ALL_RUNS,
-    PINERY_COL.PrepKit: ALL_KITS,
-    PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS
-}
+shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
+                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
 
 # Add shape col to WG dataframe
-WGS_DF = fill_in_shape_col(WGS_DF, initial_shape_col, shape_or_colour_values)
-WGS_DF = fill_in_colour_col(WGS_DF, initial_colour_col, shape_or_colour_values)
-WGS_DF = fill_in_size_col(WGS_DF)
-
-EMPTY_WGS = pd.DataFrame(columns=WGS_DF.columns)
+WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 
-def generate_mean_insert_size(df, colour_by, shape_by, shownames, cutoff):
+def generate_mean_insert_size(df, graph_params):
     return generate(
         "Mean Insert Size",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
-        colour_by,
-        shape_by,
-        shownames,
-        cutoff
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        graph_params["cutoff_insert_mean"]
     )
 
 
-def generate_duplication(df, colour_by, shape_by, shownames):
+def generate_duplication(df, graph_params):
     return generate(
         "Duplication (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_unmapped_reads(df, colour_by, shape_by, shownames):
+def generate_unmapped_reads(df, graph_params):
     return generate(
         "Unmapped Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads"]],
         "%",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_non_primary(df, colour_by, shape_by, shownames):
+def generate_non_primary(df, graph_params):
     return generate(
         "Non-Primary Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads"]],
         "%",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_on_target_reads(df, colour_by, shape_by, shownames):
+def generate_on_target_reads(df, graph_params):
     return generate(
         "On Target Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On-target Reads"]],
         "%",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_purity(df, colour_by, shape_by, shownames):
+def generate_purity(df, graph_params):
     return generate(
         "Purity",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Purity"]],
         "%",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_ploidy(df, colour_by, shape_by, shownames):
+def generate_ploidy(df, graph_params):
     return generate(
         "Ploidy",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[ICHOR_COL.Ploidy],
         "",
-        colour_by,
-        shape_by,
-        shownames
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 def dataversion():
@@ -312,7 +291,23 @@ def dataversion():
 
 # Layout elements
 def layout(query_string):
-    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+    query = sidebar_utils.parse_query(query_string)
+    # intial runs: should be empty unless query requests otherwise:
+    #  * if query.req_run: use query.req_run
+    #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
+    if "req_runs" in query and query["req_runs"]:
+        initial["runs"] = query["req_runs"]
+    elif "req_start" in query and query["req_start"]:
+        initial["runs"] = ALL_RUNS
+        query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+
+    df = reshape_single_lane_df(WGS_DF, initial["runs"], initial["instruments"],
+                                initial["projects"], initial["kits"],
+                                initial["library_designs"], initial["start_date"],
+                                initial["end_date"], initial["first_sort"],
+                                initial["second_sort"], initial["colour_by"],
+                                initial["shape_by"], shape_colour.items_for_df(), [])
+
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
@@ -324,9 +319,12 @@ def layout(query_string):
 
                 # Filters
                 sidebar_utils.select_runs(ids["all-runs"],
-                                          ids["run-id-list"], ALL_RUNS),
+                                          ids["run-id-list"], ALL_RUNS,
+                                          query["req_runs"]),
 
-                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
+                sidebar_utils.run_range_input(ids["date-range"],
+                                              query["req_start"],
+                                              query["req_end"]),
 
                 sidebar_utils.hr(),
 
@@ -349,11 +347,11 @@ def layout(query_string):
 
                 # Sort, colour, and shape
                 sidebar_utils.select_first_sort(ids['first-sort'],
-                                                initial_first_sort),
+                                                initial["first_sort"]),
 
                 sidebar_utils.select_second_sort(
                     ids["second-sort"],
-                    initial_second_sort,
+                    initial["second_sort"],
                     [
                         {"label": "Total Reads",
                          "value": BAMQC_COL.TotalReads},
@@ -375,100 +373,82 @@ def layout(query_string):
                 ),
 
                 sidebar_utils.select_colour_by(ids['colour-by'],
-                                              shape_or_colour_by,
-                                              initial_colour_col),
+                                              shape_colour.dropdown(),
+                                              initial["colour_by"]),
 
                 sidebar_utils.select_shape_by(ids['shape-by'],
-                                             shape_or_colour_by,
-                                             initial_shape_col),
+                                             shape_colour.dropdown(),
+                                             initial["shape_by"]),
 
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                       ALL_SAMPLES),
 
-                sidebar_utils.show_data_labels_input(ids['show-data-labels'],
-                                                     initial_shownames_val,
+                sidebar_utils.show_data_labels_input(ids["show-data-labels"],
+                                                     initial["shownames_val"],
                                                      "ALL LABELS",
-                                                     ids['show-all-data-labels']),
+                                                     ids["show-all-data-labels"]),
 
                 sidebar_utils.hr(),
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
-                    ids["passed-filter-reads-cutoff"], initial_cutoff_pf_reads),
+                    ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
                 sidebar_utils.insert_mean_cutoff(
-                    ids["insert-mean-cutoff"], initial_cutoff_insert_mean),
+                    ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
             ]),
 
             html.Div(className="seven columns", children=[
                 core.Graph(
                     id=ids["total-reads"],
                     figure=generate_total_reads(
-                        EMPTY_WGS,
+                        df,
                         PINERY_COL.SampleName,
                         special_cols["Total Reads (Passed Filter)"],
-                        initial_colour_col,
-                        initial_shape_col,
-                        initial_shownames_val,
-                        initial_cutoff_pf_reads)
+                        initial["colour_by"], initial["shape_by"],
+                        initial["shownames_val"], initial["cutoff_pf_reads"])
                 ),
                 core.Graph(
                     id=ids["mean-insert"],
-                    figure=generate_mean_insert_size(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col,
-                        initial_shownames_val, initial_cutoff_insert_mean)
+                    figure=generate_mean_insert_size(df, initial)
                 ),
                 core.Graph(
                     id=ids["duplication"],
-                    figure=generate_duplication(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col,
-                        initial_shownames_val)
+                    figure=generate_duplication(df, initial)
                 ),
                 core.Graph(
                     id=ids["purity"],
-                    figure=generate_purity(EMPTY_WGS,
-                                           initial_colour_col,
-                                           initial_shape_col,
-                                           initial_shownames_val)
+                    figure=generate_purity(df, initial)
                 ),
                 core.Graph(
                     id=ids["ploidy"],
-                    figure=generate_ploidy(EMPTY_WGS,
-                                           initial_colour_col,
-                                           initial_shape_col,
-                                           initial_shownames_val)
+                    figure=generate_ploidy(df, initial)
                 ),
                 core.Graph(
                     id=ids["unmapped-reads"],
-                    figure=generate_unmapped_reads(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col,
-                        initial_shownames_val)
+                    figure=generate_unmapped_reads(df, initial)
                 ),
                 core.Graph(
                     id=ids["non-primary-reads"],
-                    figure=generate_non_primary(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col,
-                        initial_shownames_val)
+                    figure=generate_non_primary(df, initial)
                 ),
                 core.Graph(
                     id=ids["on-target-reads"],
-                    figure=generate_on_target_reads(
-                        EMPTY_WGS, initial_colour_col, initial_shape_col,
-                        initial_shownames_val)
+                    figure=generate_on_target_reads(df, initial)
                 ),
             ]),
         ]),
         table_tabs(
             ids["failed-samples"],
             ids["data-table"],
-            EMPTY_WGS,
+            df,
             wgs_table_columns,
             BAMQC_COL.TotalReads,
             [
                 ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                 initial_cutoff_insert_mean, True),
+                 initial["cutoff_insert_mean"], True),
                 ('Total Reads Cutoff',
                  special_cols["Total Reads (Passed Filter)"],
-                 initial_cutoff_pf_reads, True),
+                 initial["cutoff_pf_reads"], True),
             ])
     ]),
 ])
@@ -530,32 +510,23 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        if not runs and not instruments and not projects and not kits and not library_designs:
-            df = pd.DataFrame(columns=WGS_DF.columns)
-        else:
-            df = WGS_DF
+        df = reshape_single_lane_df(WGS_DF, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date, first_sort, second_sort, colour_by,
+                                    shape_by, shape_colour.items_for_df(), searchsample)
+        
+        graph_params = {
+            "colour_by": colour_by,
+            "shape_by": shape_by,
+            "shownames_val": show_names,
+            "cutoff_pf_reads": total_reads_cutoff,
+            "cutoff_insert_mean": insert_mean_cutoff
+        }
 
-        if runs:
-            df = df[df[PINERY_COL.SequencerRunName].isin(runs)]
-        if instruments:
-            df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
-        if projects:
-            df = df[df[PINERY_COL.StudyTitle].isin(projects)]
-        if kits:
-            df = df[df[PINERY_COL.PrepKit].isin(kits)]
-        if library_designs:
-            df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
-                library_designs)]
-        df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
-        sort_by = [first_sort, second_sort]
-        df = df.sort_values(by=sort_by)
-        df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-        df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-        df = fill_in_size_col(df, searchsample)
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
             ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff, True),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"], total_reads_cutoff, True),
+            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
+             total_reads_cutoff, True),
         ])
 
         return [
@@ -563,14 +534,13 @@ def init_callbacks(dash_app):
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
                 shape_by, show_names, total_reads_cutoff),
-            generate_mean_insert_size(df, colour_by, shape_by, show_names,
-                                      insert_mean_cutoff),
-            generate_duplication(df, colour_by, shape_by, show_names),
-            generate_purity(df, colour_by, shape_by, show_names),
-            generate_ploidy(df, colour_by, shape_by, show_names),
-            generate_unmapped_reads(df, colour_by, shape_by, show_names),
-            generate_non_primary(df, colour_by, shape_by, show_names),
-            generate_on_target_reads(df, colour_by, shape_by, show_names),
+            generate_mean_insert_size(df, graph_params),
+            generate_duplication(df, graph_params),
+            generate_purity(df, graph_params),
+            generate_ploidy(df, graph_params),
+            generate_unmapped_reads(df, graph_params),
+            generate_non_primary(df, graph_params),
+            generate_on_target_reads(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
@@ -581,6 +551,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-runs'], 'n_clicks')]
     )
     def all_runs_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_RUNS]
 
     @dash_app.callback(
@@ -588,6 +559,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-instruments'], 'n_clicks')]
     )
     def all_instruments_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ILLUMINA_INSTRUMENT_MODELS]
 
     @dash_app.callback(
@@ -595,6 +567,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-projects'], 'n_clicks')]
     )
     def all_projects_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
 
     @dash_app.callback(
@@ -602,6 +575,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-kits'], 'n_clicks')]
     )
     def all_kits_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_KITS]
 
     @dash_app.callback(
@@ -609,13 +583,5 @@ def init_callbacks(dash_app):
         [Input(ids['all-library-designs'], 'n_clicks')]
     )
     def all_library_designs_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_LIBRARY_DESIGNS]
-
-    @dash_app.callback(
-        Output(ids['show-data-labels'], 'value'),
-        [Input(ids['show-all-data-labels'], 'n_clicks')],
-        [State(ids['show-data-labels'], 'options')]
-    )
-    def all_data_labels_requested(click, avail_options):
-        if click is not None:
-            return [x['value'] for x in avail_options]

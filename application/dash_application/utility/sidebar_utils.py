@@ -1,14 +1,16 @@
 import datetime
 import re
 import urllib.parse
-from typing import List, Dict, Union
+from typing import List, Dict, Tuple, Union
 
 import dash_core_components as core
 import dash_html_components as html
-from pandas import Series
+from dash.exceptions import PreventUpdate
+from pandas import DataFrame, Series, Timestamp
 
 import pinery.column
 from . import df_manipulation as df_tools
+
 
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
@@ -28,28 +30,35 @@ def percentage_of(data, numerator_col, denominator_col):
 
 
 def select_with_select_all(select_all_text: str, select_all_id: str,
-        all_label_text: str, all_id: str, all_items: List[str]) -> core.Loading:
+        all_label_text: str, all_id: str, all_items: List[str],
+        preselected: List[str] = []) -> core.Loading:
     return core.Loading(type="circle", children=[
         html.Button(select_all_text, id=select_all_id, className="inline"),
         html.Label([
             all_label_text,
             core.Dropdown(
                 id=all_id,
-                options=[{"label": x, "value": x} for x in all_items],
+                options=[{"label":x, "value":x} for x in all_items],
+                value=preselected,
                 multi=True)
         ])
     ])
 
 
-def select_runs(all_runs_id: str, runs_id: str, runs: List[str]) -> \
-        core.Loading:
-    return select_with_select_all("All Runs", all_runs_id, "Filter by Runs",
-                                  runs_id, runs)
+def select_runs(all_runs_id: str, runs_id: str, runs: List[str], requested_runs: List[str]) -> core.Loading:
+    return select_with_select_all("All Runs", all_runs_id,
+                                  "Filter by Runs", runs_id,
+                                  runs, requested_runs)
 
 
-def run_range_input(run_range_id: str, start_date: str = None, end_date: str = None) -> html.Label:
+def start_and_end_dates(start_date: str = None, end_date: str = None):
     start = start_date if start_date else ALL_RUNS[pinery.column.RunsColumn.StartDate].min(skipna=True)
-    end = end_date if end_date else datetime.date.today()
+    end = end_date if end_date else Timestamp.today(tz="UTC")
+    return (start, end)
+
+
+def run_range_input(run_range_id: str, start_date: str, end_date: str) -> html.Label:
+    start, end = start_and_end_dates(start_date, end_date)
     return html.Label(["Filter by Run Start Date:",
                        html.Br(),
                        core.DatePickerRange(id=run_range_id,
@@ -65,9 +74,10 @@ def run_range_input(run_range_id: str, start_date: str = None, end_date: str = N
 
 
 def runs_in_range(start_date: str, end_date: str) -> Series:
+    start, end = start_and_end_dates(start_date, end_date)
     allowed_runs = ALL_RUNS[(ALL_RUNS[pinery.column.RunsColumn.StartDate] >=
-                          start_date) & (
-        ALL_RUNS[pinery.column.RunsColumn.CompletionDate] <= end_date)]
+                          start) & (
+        ALL_RUNS[pinery.column.RunsColumn.CompletionDate] <= end)]
     return allowed_runs[pinery.column.RunsColumn.Name]
 
 
@@ -111,7 +121,7 @@ def select_first_sort(first_sort_id: str, selected_value: str,
     return html.Label([
         "Sort:",
         core.Dropdown(id=first_sort_id,
-                      options = first_sort_options,
+                      options=first_sort_options,
                       value=selected_value,
                       searchable=False,
                       clearable=False
@@ -236,10 +246,22 @@ def get_requested_run_date_range(last_string) -> List[str]:
         return [None, None]
 
 
-def parse_run_date_range(query) -> List[str]:
-    query_dict = parse_query_string(query[1:]) # slice off the leading question mark
+def parse_query(query) -> List[str]:
+    query_dict = parse_query_string(query[1:])  # slice off the leading question mark
+    queries = {
+        "req_start": None,
+        "req_end": None,
+        "req_runs": []
+    }
     if "last" in query_dict:
-        return get_requested_run_date_range(query_dict["last"][0])
-    else:
-        return [None, None]
+        queries["req_start"], queries["req_end"] = get_requested_run_date_range(query_dict["last"][0])
+    if "run" in query_dict:
+        queries["req_runs"] = query_dict["run"]
+    return queries
 
+
+def update_only_if_clicked(click):
+    """ Callbacks fire on page load, which can be a problem if the callback is on a button
+    which hasn't actually been clicked. If the button hasn't been clicked, raise an error
+    to cancel further action in this callback. """
+    if click is None: raise PreventUpdate

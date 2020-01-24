@@ -64,6 +64,7 @@ def init_callbacks(dash_app):
         [Input('url', 'pathname')]
     )
     def nav_handler(path):
+        """Get the requested page"""
         if path == '/None' or path is None:
             return default_title
         requested = path[1:]  # drop the leading slash
@@ -82,6 +83,8 @@ def init_callbacks(dash_app):
             Input('url', 'search')
         ])
     def content_handler(path, qs):
+        """Get the requested page content and fill in the ETL
+        data version info at the bottom of the page"""
         if path == '/None' or path is None:
             return '404', None
         requested = path[1:] # drop the leading slash

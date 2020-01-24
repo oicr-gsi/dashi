@@ -6,17 +6,14 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 
 from ..dash_id import init_ids
-from ..plot_builder import fill_in_colour_col, fill_in_shape_col, \
-    fill_in_size_col, generate, generate_total_reads
-from ..table_builder import table_tabs, cutoff_table_data
+from ..utility.plot_builder import *
+from ..utility.table_builder import table_tabs, cutoff_table_data
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
 from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
 import pinery
 import logging
-import json
-import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -90,24 +87,13 @@ later_col_set = [
 ]
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
 
-# Set initial values for dropdown menus
-initial_first_sort = PINERY_COL.StudyTitle
-initial_second_sort = RNA_COL.TotalReads
-initial_colour_col = PINERY_COL.StudyTitle
-initial_shape_col = PINERY_COL.PrepKit
-initial_shownames_val = None
 
-# Set initial points for graph cutoff lines
-initial_cutoff_pf_reads = 0.01
-initial_cutoff_rrna = 50
-
-shape_or_colour_by = [
-    {"label": "Project", "value": PINERY_COL.StudyTitle},
-    {"label": "Run", "value": PINERY_COL.SequencerRunName},
-    {"label": "Kit", "value": PINERY_COL.PrepKit},
-    {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
-    {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
-]
+initial = get_initial_single_lane_values()
+# Set additional initial values for dropdown menus
+initial["second_sort"] = RNA_COL.TotalReads
+# Set initial values for graph cutoff lines
+initial["cutoff_pf_reads"] = 0.01
+initial["cutoff_rrna"] = 50
 
 
 def get_rna_data():
@@ -165,15 +151,13 @@ def get_rna_data():
 (RNA_DF, DATAVERSION) = get_rna_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = RNA_DF[PINERY_COL.StudyTitle].sort_values().unique()
-ALL_KITS = RNA_DF[PINERY_COL.PrepKit].sort_values().unique()
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(RNA_DF)
-ALL_TISSUE_MATERIALS = RNA_DF[
-    PINERY_COL.TissuePreparation].sort_values().unique()
-ALL_LIBRARY_DESIGNS = RNA_DF[
-    PINERY_COL.LibrarySourceTemplateType].sort_values().unique()
-ALL_RUNS = RNA_DF[PINERY_COL.SequencerRunName].sort_values().unique()[::-1]  # reverse the list
-ALL_SAMPLES = RNA_DF[PINERY_COL.SampleName].sort_values().unique()
+ALL_PROJECTS = util.unique_list(RNA_DF, PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_list(RNA_DF, PINERY_COL.PrepKit)
+ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
+ALL_TISSUE_MATERIALS = util.unique_list(RNA_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_list(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_list(RNA_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
+ALL_SAMPLES = util.unique_list(RNA_DF, PINERY_COL.SampleName)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -185,113 +169,102 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
 }
 
-shape_or_colour_values = {
-    PINERY_COL.StudyTitle: ALL_PROJECTS,
-    PINERY_COL.SequencerRunName: ALL_RUNS,
-    PINERY_COL.PrepKit: ALL_KITS,
-    PINERY_COL.TissuePreparation: ALL_TISSUE_MATERIALS,
-    PINERY_COL.LibrarySourceTemplateType: ALL_LIBRARY_DESIGNS
-}
+shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
+                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
+
+# Add shape, colour, and size cols to RNA dataframe
+RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
 
-# Add shape col to RNA dataframe
-RNA_DF = fill_in_shape_col(RNA_DF, initial_shape_col, shape_or_colour_values)
-RNA_DF = fill_in_colour_col(RNA_DF, initial_colour_col, shape_or_colour_values)
-RNA_DF = fill_in_size_col(RNA_DF)
-# Do initial sort before graphing
-RNA_DF = RNA_DF.sort_values(by=[initial_first_sort, initial_second_sort])
-EMPTY_RNA = pd.DataFrame(columns=RNA_DF.columns)
-
-
-def generate_unique_reads(df, colour_by, shape_by, show_names):
+def generate_unique_reads(df, graph_params):
     return generate(
         "Unique Passed Filter Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Uniq Reads"]],
         "%",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_five_to_three(df, colour_by, shape_by, show_names):
+def generate_five_to_three(df, graph_params):
     return generate(
         "5 to 3 Prime Bias",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
         "Ratio",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_correct_read_strand(df, colour_by, shape_by, show_names):
+def generate_correct_read_strand(df, graph_params):
     return generate(
         "Correct Strand Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Correct Strand Reads"]],
         "%",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_coding(df, colour_by, shape_by, show_names):
+def generate_coding(df, graph_params):
     return generate(
         "Coding (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.ProportionCodingBases],
         "%",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_rrna_contam(df, colour_by, shape_by, show_names, cutoff):
+def generate_rrna_contam(df, graph_params):
     return generate(
         "Ribosomal RNA (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
         "%",
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        graph_params["cutoff_rrna"]
     )
 
 
-def generate_dv200(df, colour_by, shape_by, show_names):
+def generate_dv200(df, graph_params):
     return generate(
         "DV200",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.DV200],
         "",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 
-def generate_rin(df, colour_by, shape_by, show_names):
+def generate_rin(df, graph_params):
     return generate(
         "RIN",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.RIN],
         "",
-        colour_by,
-        shape_by,
-        show_names
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
     )
 
 def dataversion():
@@ -300,7 +273,22 @@ def dataversion():
 
 # Layout elements
 def layout(query_string):
-    requested_start, requested_end = sidebar_utils.parse_run_date_range(query_string)
+    query = sidebar_utils.parse_query(query_string)
+    # intial runs: should be empty unless query requests otherwise:
+    #  * if query.req_run: use query.req_run
+    #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
+    if "req_runs" in query and query["req_runs"]:
+        initial["runs"] = query["req_runs"]
+    elif "req_start" in query and query["req_start"]:
+        initial["runs"] = ALL_RUNS
+        query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+
+    df = reshape_single_lane_df(RNA_DF, initial["runs"], initial["instruments"],
+                                initial["projects"], initial["kits"],
+                                initial["library_designs"], initial["start_date"],
+                                initial["end_date"], initial["first_sort"],
+                                initial["second_sort"], initial["colour_by"],
+                                initial["shape_by"], shape_colour.items_for_df(), [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
@@ -312,9 +300,12 @@ def layout(query_string):
 
                 # Filters
                 sidebar_utils.select_runs(ids["all-runs"],
-                                          ids["run-id-list"], ALL_RUNS),
+                                          ids["run-id-list"], ALL_RUNS,
+                                          query["req_runs"]),
 
-                sidebar_utils.run_range_input(ids["date-range"], requested_start, requested_end),
+                sidebar_utils.run_range_input(ids["date-range"],
+                                              query["req_start"],
+                                              query["req_end"]),
 
                 sidebar_utils.hr(),
 
@@ -337,11 +328,11 @@ def layout(query_string):
 
                 # Sort, colour, and shape
                 sidebar_utils.select_first_sort(ids["first-sort"],
-                                                initial_first_sort),
+                                                initial["first_sort"]),
 
                 sidebar_utils.select_second_sort(
                     ids["second-sort"],
-                    initial_second_sort,
+                    initial["second_sort"],
                     [
                         {"label": "Total Reads",
                          "value": RNA_COL.TotalReads},
@@ -363,18 +354,18 @@ def layout(query_string):
                 ),
 
                 sidebar_utils.select_colour_by(ids["colour-by"],
-                                               shape_or_colour_by,
-                                               initial_colour_col),
+                                               shape_colour.dropdown(),
+                                               initial["colour_by"]),
 
                 sidebar_utils.select_shape_by(ids["shape-by"],
-                                              shape_or_colour_by,
-                                              initial_shape_col),
+                                              shape_colour.dropdown(),
+                                              initial["shape_by"]),
 
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                       ALL_SAMPLES),
 
                 sidebar_utils.show_data_labels_input(ids["show-data-labels"],
-                                                     initial_shownames_val,
+                                                     initial["shownames_val"],
                                                      "ALL LABELS",
                                                      ids["show-all-data-labels"]),
 
@@ -382,10 +373,10 @@ def layout(query_string):
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
-                    ids["passed-filter-reads-cutoff"], initial_cutoff_pf_reads),
+                    ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
                 sidebar_utils.cutoff_input(
                     "% rRNA Contamination cutoff",
-                    ids["rrna-contamination-cutoff"], initial_cutoff_rrna),
+                    ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
             ]),
 
             # Graphs
@@ -393,58 +384,43 @@ def layout(query_string):
                  core.Graph(
                      id=ids["total-reads"],
                      figure=generate_total_reads(
-                         EMPTY_RNA,
+                         df,
                          PINERY_COL.SampleName,
                          special_cols["Total Reads (Passed Filter)"],
-                         initial_colour_col,
-                         initial_shape_col,
-                         initial_shownames_val,
-                         initial_cutoff_pf_reads)
+                         initial["colour_by"],
+                         initial["shape_by"],
+                         initial["shownames_val"],
+                         initial["cutoff_pf_reads"])
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
-                     figure=generate_unique_reads(EMPTY_RNA, initial_colour_col,
-                                                  initial_shape_col,
-                                                  initial_shownames_val)
+                     figure=generate_unique_reads(df, initial)
                  ),
                  core.Graph(
                      id=ids["5-to-3-prime-bias"],
-                     figure=generate_five_to_three(EMPTY_RNA,
-                                                   initial_colour_col,
-                                                   initial_shape_col,
-                                                   initial_shownames_val)
+                     figure=generate_five_to_three(df,
+                                                   initial)
                  ),
                  core.Graph(
                      id=ids["correct-read-strand"],
-                     figure=generate_correct_read_strand(EMPTY_RNA,
-                                                         initial_colour_col,
-                                                         initial_shape_col,
-                                                         initial_shownames_val)
+                     figure=generate_correct_read_strand(df,
+                                                         initial)
                  ),
                  core.Graph(
                      id=ids["coding"],
-                     figure=generate_coding(EMPTY_RNA, initial_colour_col,
-                                            initial_shape_col,
-                                            initial_shownames_val)
+                     figure=generate_coding(df, initial)
                  ),
                  core.Graph(
                      id=ids["rrna-contam"],
-                     figure=generate_rrna_contam(EMPTY_RNA, initial_colour_col,
-                                                 initial_shape_col,
-                                                 initial_shownames_val,
-                                                 initial_cutoff_rrna)
+                     figure=generate_rrna_contam(df, initial)
                  ),
                  core.Graph(
                      id=ids["dv200"],
-                     figure=generate_dv200(EMPTY_RNA, initial_colour_col,
-                                           initial_shape_col,
-                                           initial_shownames_val)
+                     figure=generate_dv200(df, initial)
                  ),
                  core.Graph(
                      id=ids["rin"],
-                     figure=generate_rin(EMPTY_RNA, initial_colour_col,
-                                         initial_shape_col,
-                                         initial_shownames_val)
+                     figure=generate_rin(df, initial)
                  ),
              ]),
 
@@ -452,16 +428,16 @@ def layout(query_string):
             table_tabs(
                 ids["failed-samples"],
                 ids["data-table"],
-                EMPTY_RNA,
+                df,
                 rnaseqqc_table_columns,
                 RNA_COL.TotalReads,
                 [
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
-                     initial_cutoff_pf_reads, True),
+                     initial["cutoff_pf_reads"], True),
                     ('% rRNA Contamination',
                      RNA_COL.rRNAContaminationreadsaligned,
-                     initial_cutoff_rrna, True)
+                     initial["cutoff_rrna"], True)
                 ]
             )
         ])
@@ -524,29 +500,19 @@ def init_callbacks(dash_app):
                        end_date,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
-        
-        if not runs and not instruments and not projects and not kits and not library_designs:
-            df = EMPTY_RNA
-        else:
-            df = RNA_DF
 
-        if runs:
-            df = df[df[PINERY_COL.SequencerRunName].isin(runs)]
-        if instruments:
-            df = df[df[INSTRUMENT_COLS.ModelName].isin(instruments)]
-        if projects:
-            df = df[df[PINERY_COL.StudyTitle].isin(projects)]
-        if kits:
-            df = df[df[PINERY_COL.PrepKit].isin(kits)]
-        if library_designs:
-            df = df[df[PINERY_COL.LibrarySourceTemplateType].isin(
-                library_designs)]
-        df = df[df[PINERY_COL.SequencerRunName].isin(sidebar_utils.runs_in_range(start_date, end_date))]
-        sort_by = [first_sort, second_sort]
-        df = df.sort_values(by=sort_by)
-        df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-        df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-        df = fill_in_size_col(df, searchsample)
+        df = reshape_single_lane_df(RNA_DF, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date, first_sort, second_sort, colour_by,
+                                    shape_by, shape_colour.items_for_df(), searchsample)
+        
+        graph_params = {
+            "colour_by": colour_by,
+            "shape_by": shape_by,
+            "shownames_val": show_names,
+            "cutoff_rrna": rrna_cutoff,
+            "cutoff_pf_reads": total_reads_cutoff 
+        }
+
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data(df, [
             ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
@@ -559,13 +525,13 @@ def init_callbacks(dash_app):
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
                 shape_by, show_names, total_reads_cutoff),
-            generate_unique_reads(df, colour_by, shape_by, show_names),
-            generate_five_to_three(df, colour_by, shape_by, show_names),
-            generate_correct_read_strand(df, colour_by, shape_by, show_names),
-            generate_coding(df, colour_by, shape_by, show_names),
-            generate_rrna_contam(df, colour_by, shape_by, show_names, rrna_cutoff),
-            generate_dv200(df, colour_by, shape_by, show_names),
-            generate_rin(df, colour_by, shape_by, show_names),
+            generate_unique_reads(df, graph_params),
+            generate_five_to_three(df, graph_params),
+            generate_correct_read_strand(df, graph_params),
+            generate_coding(df, graph_params),
+            generate_rrna_contam(df, graph_params),
+            generate_dv200(df, graph_params),
+            generate_rin(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
@@ -576,6 +542,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-runs'], 'n_clicks')]
     )
     def all_runs_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_RUNS]
 
     @dash_app.callback(
@@ -583,6 +550,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-instruments'], 'n_clicks')]
     )
     def all_instruments_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ILLUMINA_INSTRUMENT_MODELS]
 
     @dash_app.callback(
@@ -590,6 +558,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-projects'], 'n_clicks')]
     )
     def all_projects_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
 
     @dash_app.callback(
@@ -597,6 +566,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-kits'], 'n_clicks')]
     )
     def all_kits_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_KITS]
 
     @dash_app.callback(
@@ -604,6 +574,7 @@ def init_callbacks(dash_app):
         [Input(ids['all-library-designs'], 'n_clicks')]
     )
     def all_library_designs_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_LIBRARY_DESIGNS]
 
     @dash_app.callback(
@@ -612,5 +583,5 @@ def init_callbacks(dash_app):
         [State(ids['show-data-labels'], 'options')]
     )
     def all_data_labels_requested(click, avail_options):
-        if click is not None:
-            return [x['value'] for x in avail_options]
+        sidebar_utils.update_only_if_clicked(click)
+        return [x['value'] for x in avail_options]
