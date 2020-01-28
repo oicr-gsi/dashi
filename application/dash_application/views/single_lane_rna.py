@@ -44,7 +44,8 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
-    "show-names",
+    "show-data-labels",
+    "show-all-data-labels",
     "rrna-contamination-cutoff",
     "passed-filter-reads-cutoff",
     "date-range",
@@ -94,7 +95,7 @@ initial_first_sort = PINERY_COL.StudyTitle
 initial_second_sort = RNA_COL.TotalReads
 initial_colour_col = PINERY_COL.StudyTitle
 initial_shape_col = PINERY_COL.PrepKit
-initial_shownames_val = 'none'
+initial_shownames_val = None
 
 # Set initial points for graph cutoff lines
 initial_cutoff_pf_reads = 0.01
@@ -372,8 +373,10 @@ def layout(query_string):
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                       ALL_SAMPLES),
 
-                sidebar_utils.show_names_input(ids["show-names"],
-                                               initial_shownames_val),
+                sidebar_utils.show_data_labels_input(ids["show-data-labels"],
+                                                     initial_shownames_val,
+                                                     "ALL LABELS",
+                                                     ids["show-all-data-labels"]),
 
                 sidebar_utils.hr(),
 
@@ -495,7 +498,7 @@ def init_callbacks(dash_app):
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
-            State(ids['show-names'], 'value'),
+            State(ids['show-data-labels'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -602,3 +605,12 @@ def init_callbacks(dash_app):
     )
     def all_library_designs_requested(click):
         return [x for x in ALL_LIBRARY_DESIGNS]
+
+    @dash_app.callback(
+        Output(ids['show-data-labels'], 'value'),
+        [Input(ids['show-all-data-labels'], 'n_clicks')],
+        [State(ids['show-data-labels'], 'options')]
+    )
+    def all_data_labels_requested(click, avail_options):
+        if click is not None:
+            return [x['value'] for x in avail_options]

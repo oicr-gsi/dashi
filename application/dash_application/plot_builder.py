@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Union
 
 import pandas
 import plotly.graph_objects as go
@@ -61,6 +61,53 @@ PLOTLY_DEFAULT_COLOURS=[
 
 BIG_MARKER_SIZE = 20
 
+DATA_LABEL_ORDER = [
+    PINERY_COL.SampleName,
+    PINERY_COL.TissueOrigin,
+    PINERY_COL.TissueType,
+    PINERY_COL.GroupID,
+    PINERY_COL.TissuePreparation,
+    PINERY_COL.PrepKit,
+    PINERY_COL.SequencerRunName,
+]
+
+# If the Data Label is found here, the name is added. Eg: "Group ID: 12345"
+DATA_LABEL_NAME = {
+    PINERY_COL.GroupID: 'Group ID: ',
+    PINERY_COL.TissuePreparation: 'Tissue Preparation: ',
+    PINERY_COL.PrepKit: 'Kit: ',
+}
+
+
+def create_data_label(
+        df: pandas.DataFrame, cols: Union[None, List[str]]) -> List[str]:
+    """
+    Creates data labels that are in the correct order and have proper names
+    appended. If the columns don't exist in the order constant, their label
+    will be appended at the end in the order passed to this function.
+
+    Args:
+        df: The DataFrame that contains columns that match the labels
+        cols: Which columns to generate the labels from
+
+    Returns:
+
+    """
+    if cols is None:
+        return []
+
+    no_order = [x for x in cols if x not in DATA_LABEL_ORDER]
+    ordered = sorted(cols, key=lambda x: DATA_LABEL_ORDER.index(x))
+    ordered.extend(no_order)
+
+    def apply_label(row):
+        with_names = [
+            DATA_LABEL_NAME.get(x, '') + str(row[x]) for x in ordered
+        ]
+        return "<br>".join(with_names)
+
+    return df.apply(apply_label, axis=1)
+
 
 def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
@@ -101,7 +148,7 @@ def fill_in_size_col(df: DataFrame, highlight_samples=None):
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_type, line_y=None):
+             hovertext_cols, line_y=None):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -134,24 +181,25 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     if colourby == shapeby:
         name_format = lambda n: "{0}".format(n[0])
     else:
-        name_format = lambda n: "{0} {1}".format(n[0], n[1])
+        name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
     for name, data in grouped_data:
-        if hovertext_type == 'none':
-            text_content = None
-        else:
-            text_content = data[hovertext_type]
+        hovertext = create_data_label(data, hovertext_cols)
+
         graph = go.Scattergl(
             x=x_fn(data),
             y=y_fn(data),
             name=name_format(name),
-            hovertext=text_content,
+            hovertext=hovertext,
             showlegend=True,
             mode="markers",
             marker={
                 "symbol": data['shape'],
                 "color": data['colour'], # Please note the 'u'
                 "size": data['markersize']
-            }
+            },
+            # Hover labels are not cropped
+            # https://github.com/plotly/plotly.js/issues/460
+            hoverlabel={"namelength": -1},
         )
         traces.append(graph)
     if line_y is not None:
@@ -213,8 +261,10 @@ def get_colours_for_values(colourby: List[str]):
 
 
 # Generators for graphs used on multiple pages
-def generate_total_reads(df: DataFrame, x_col: str, y_col: str, colour_by:
-        str, shape_by: str, show_names: str, cutoff_line) -> go.Figure:
+def generate_total_reads(
+        df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
+        show_names: Union[None, str], cutoff_line
+) -> go.Figure:
     return generate(
         "Passed Filter Reads",
         df,
