@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 from pandas import DataFrame
 import pinery
 
+from .sidebar_utils import runs_in_range
+
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
@@ -109,13 +111,19 @@ def create_data_label(
     return df.apply(apply_label, axis=1)
 
 
-def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
+def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict) -> DataFrame:
+    df = _fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
+    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour)
+    df = _fill_in_size_col(df)
+    return df
+
+
+def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
     if df.empty:
         df['shape'] = pandas.Series
     else:
-        all_shapes = get_shapes_for_values(shape_or_colour_values[
-                                            shape_col].tolist())
+        all_shapes = _get_shapes_for_values(shape_or_colour_values[shape_col])
         # for each row, apply the shape according the shape col's value
         shape_col = df.apply(lambda row: all_shapes.get(row[shape_col]),
                              axis=1)
@@ -123,13 +131,13 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 
-def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
+def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict, highlight_samples=None):
     if df.empty:
         df['colour'] = pandas.Series
     else:
-        all_colours = get_colours_for_values(shape_or_colour_values[
-                                            colour_col].tolist())
+        all_colours = _get_colours_for_values(shape_or_colour_values[
+                                            colour_col])
         # for each row, apply the colour according the colour col's value
         colour_col = df.apply(lambda row: all_colours.get(row[colour_col]),
                              axis=1)
@@ -139,10 +147,42 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
     return df
 
 
-def fill_in_size_col(df: DataFrame, highlight_samples=None):
+def _fill_in_size_col(df: DataFrame, highlight_samples=None):
     df['markersize'] = 12
     if highlight_samples:
         df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
+    return df
+
+
+def reshape_single_lane_df(df, runs, instruments, projects, kits, library_designs,
+        start_date, end_date, first_sort, second_sort, colour_by, shape_by,
+        shape_or_colour_values, searchsample) -> DataFrame:
+    """
+    This performs dataframe manipulation based on the input filters, and gets the data into a
+    graph-friendly form.
+    """
+    if not runs and not instruments and not projects and not kits and not library_designs:
+        df = DataFrame(columns=df.columns)
+    else:
+        df = df
+
+    if runs:
+        df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
+    if instruments:
+        df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
+    if projects:
+        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+    if kits:
+        df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
+    if library_designs:
+        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
+            library_designs)]
+    df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
+    sort_by = [first_sort, second_sort]
+    df = df.sort_values(by=sort_by)
+    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = _fill_in_size_col(df, searchsample)
     return df
 
 
@@ -240,7 +280,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     )
 
 
-def get_dict_wrapped(key_list, value_list):
+def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0
     for item in key_list:
@@ -252,12 +292,12 @@ def get_dict_wrapped(key_list, value_list):
     return kv_dict
 
 
-def get_shapes_for_values(shapeby: List[str]):
-    return get_dict_wrapped(shapeby, ALL_SYMBOLS)
+def _get_shapes_for_values(shapeby: List[str]):
+    return _get_dict_wrapped(shapeby, ALL_SYMBOLS)
 
 
-def get_colours_for_values(colourby: List[str]):
-    return get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
+def _get_colours_for_values(colourby: List[str]):
+    return _get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
 
 
 # Generators for graphs used on multiple pages
@@ -276,3 +316,48 @@ def generate_total_reads(
         show_names,
         cutoff_line
     )
+
+
+def get_initial_single_lane_values():
+    return {
+        "runs": [],
+        "instruments": [],
+        "projects": [],
+        "kits": [],
+        "library_designs": [],
+        "start_date": None,
+        "end_date": None,
+        "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "second_sort": None,
+        "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shape_by": pinery.column.SampleProvenanceColumn.PrepKit,
+        "shownames_val": None
+    }
+
+
+class ColourShapeSingleLane:
+    def __init__(self, projects, runs, kits, tissue_preps, library_designs):
+        self.projects = projects
+        self.runs = runs
+        self.kits = kits
+        self.tissue_preps = tissue_preps
+        self.library_designs = library_designs
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Run", "value": PINERY_COL.SequencerRunName},
+            {"label": "Kit", "value": PINERY_COL.PrepKit},
+            {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType}
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.SequencerRunName: self.runs,
+            PINERY_COL.PrepKit: self.kits,
+            PINERY_COL.TissuePreparation: self.tissue_preps,
+            PINERY_COL.LibrarySourceTemplateType: self.library_designs
+        }

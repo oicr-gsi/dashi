@@ -10,6 +10,7 @@ from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
 
+
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC_COL = gsiqcetl.column.BamQcColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
@@ -184,3 +185,11 @@ def get_illumina_instruments(df: DataFrame) -> List[str]:
     sorted_instruments = sorted(pruned, key=lambda i:
         correct_order.index(i) if i in correct_order else -1)
     return sorted_instruments
+
+
+def unique_list(df: DataFrame, col: str, reverse: bool=False) -> List[str]:
+    unique = list(df[col].sort_values().unique())
+    if reverse:
+        return unique[::-1]
+    else:
+        return unique
