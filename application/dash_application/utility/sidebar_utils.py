@@ -57,17 +57,16 @@ def start_and_end_dates(start_date: str = None, end_date: str = None):
     return (start, end)
 
 
-def run_range_input(run_range_id: str, start_date: str, end_date: str) -> html.Label:
-    start, end = start_and_end_dates(start_date, end_date)
+def run_range_input(run_range_id: str, start_date: str=None, end_date: str=None) -> html.Label:
     return html.Label(["Filter by Run Start Date:",
                        html.Br(),
                        core.DatePickerRange(id=run_range_id,
                                             day_size=50,
-                                            min_date_allowed=start,
-                                            start_date=start,
-                                            max_date_allowed=end,
-                                            end_date=end,
-                                            initial_visible_month=end,
+                                            min_date_allowed=start_date,
+                                            start_date=start_date,
+                                            max_date_allowed=end_date,
+                                            end_date=end_date,
+                                            initial_visible_month=end_date,
                                             display_format="YYYY-MMM-DD"),
                        html.Br(),
                        ])
@@ -248,6 +247,7 @@ def get_requested_run_date_range(last_string) -> List[str]:
 
 def parse_query(query) -> List[str]:
     query_dict = parse_query_string(query[1:])  # slice off the leading question mark
+    print(query_dict)
     queries = {
         "req_start": None,
         "req_end": None,
