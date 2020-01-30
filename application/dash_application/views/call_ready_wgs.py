@@ -23,14 +23,14 @@ page_name = "call-ready-wgs"
 title = "Call-Ready WGS"
 
 ids = init_ids([
-		# Buttons
-		"update-button",
+        # Buttons
+        "update-button",
 
-		# Sidebar controls
-		"all-library-designs",
-		"library-designs-list",
-		"all-projects",
-		"projects-list",
+        # Sidebar controls
+        "all-library-designs",
+        "library-designs-list",
+        "all-projects",
+        "projects-list",
         "all-institutes",
         "institutes-list",
         "all-tissue-preps",
