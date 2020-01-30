@@ -28,6 +28,9 @@ services:
       - type: bind
         source: $HOME/.ssh/known_hosts
         target: /root/.ssh/known_hosts
+      - type: bind
+        source: $HOME/logs/dashi/dashi.log
+        target: /dashi/dashi.log
     secrets:
       - mongo_password
 #      - ssh_passphrase
