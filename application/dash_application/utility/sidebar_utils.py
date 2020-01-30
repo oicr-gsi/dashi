@@ -237,12 +237,12 @@ def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
 
 
 def total_reads_cutoff_input(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Passed Filter Reads (* 10^6) cutoff",
+    return cutoff_input("Passed Filter Reads (* 10^6) minimum",
                         cutoff_id, cutoff_value)
 
 
 def insert_mean_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Mean Insert Size cutoff", cutoff_id, cutoff_value)
+    return cutoff_input("Mean Insert Size minimum", cutoff_id, cutoff_value)
 
 
 def hr() -> html.Hr:

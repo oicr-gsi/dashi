@@ -177,7 +177,7 @@ collapsing_functions = {
 }
 
 shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_KITS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES)
-WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
+WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None, True)
 
 
 # N.B. The keys in this object must match the argument names for
@@ -333,19 +333,19 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input("PF Reads Tumour",
+                    sidebar_utils.cutoff_input("Passed Filter Reads (*10^6) Tumour minimum",
                         ids["cutoff-pf-tumour"], initial["cutoff_pf_reads_tumor"]),
-                    sidebar_utils.cutoff_input("PF Reads Normal",
+                    sidebar_utils.cutoff_input("Passed Filter Reads (*10^6) Normal minimum",
                         ids["cutoff-pf-normal"], initial["cutoff_pf_reads_normal"]),
-                    sidebar_utils.cutoff_input("Coverage Tumour",
+                    sidebar_utils.cutoff_input("Coverage Tumour minimum",
                         ids["cutoff-coverage-tumour"], initial["cutoff_coverage_tumour"]),
-                    sidebar_utils.cutoff_input("Coverage Normal",
+                    sidebar_utils.cutoff_input("Coverage Normal minimum",
                         ids["cutoff-coverage-normal"], initial["cutoff_coverage_normal"]),
-                    sidebar_utils.cutoff_input("Callability",
+                    sidebar_utils.cutoff_input("Callability minimum",
                         ids["cutoff-callability"], initial["cutoff_callability"]),
-                    sidebar_utils.cutoff_input("Mean Insert Size",
+                    sidebar_utils.cutoff_input("Mean Insert Size minimum",
                         ids["cutoff-mean-insert"], initial["cutoff_insert_mean"]),
-                    sidebar_utils.cutoff_input("Duplicate Rate",
+                    sidebar_utils.cutoff_input("Duplicate Rate maximum",
                         ids["cutoff-duplicate-rate"], initial["cutoff_duplicate_rate"]),
                 ]),
 
@@ -387,10 +387,10 @@ def layout(query_string):
                         id=ids["ploidy"],
                         figure=generate_ploidy(df, initial)
                     ),
-                    core.Graph(
-                        id=ids["unmapped-reads"],
-                        figure=generate_unmapped_reads(df, initial)
-                    ),
+                    # core.Graph(
+                    #     id=ids["unmapped-reads"],
+                    #     figure=generate_unmapped_reads(df, initial)
+                    # ),
                     
             ])
         ]),
@@ -440,6 +440,7 @@ def init_callbacks(dash_app):
             State(ids["colour-by"], "value"),
             State(ids["shape-by"], "value"),
             State(ids["show-data-labels"], "value"),
+            State(ids["search-sample"], "value"),
             State(ids["cutoff-pf-tumour"], "value"),
             State(ids["cutoff-pf-normal"], "value"),
             State(ids["cutoff-coverage-tumour"], "value"),
@@ -458,6 +459,7 @@ def init_callbacks(dash_app):
                        colour_by,
                        shape_by,
                        show_names,
+                       search_sample,
                        cutoff_pf_reads_tumour,
                        cutoff_pf_reads_normal,
                        cutoff_coverage_tumour,
@@ -469,7 +471,7 @@ def init_callbacks(dash_app):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
         df = reshape_call_ready_df(WGS_DF, projects, library_designs, first_sort,
-                second_sort, colour_by, shape_by, shape_colour.items_for_df(), [])
+                second_sort, colour_by, shape_by, shape_colour.items_for_df(), search_sample)
 
         graph_params = {
             "colour_by": colour_by,

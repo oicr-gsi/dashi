@@ -373,7 +373,7 @@ def layout(query_string):
                 sidebar_utils.total_reads_cutoff_input(
                     ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
                 sidebar_utils.cutoff_input(
-                    "% rRNA Contamination cutoff",
+                    "% rRNA Contamination maximum",
                     ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
             ]),
 

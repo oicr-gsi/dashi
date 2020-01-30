@@ -113,10 +113,12 @@ def create_data_label(
     return df.apply(apply_label, axis=1)
 
 
-def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict) -> DataFrame:
+def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict,
+        highlight_samples: List[str]=None, call_ready: bool=False) -> DataFrame:
     df = _fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
-    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour)
-    df = _fill_in_size_col(df)
+    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
+                             highlight_samples, call_ready)
+    df = _fill_in_size_col(df, highlight_samples, call_ready)
     return df
 
 
@@ -134,7 +136,7 @@ def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
 
 
 def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict, highlight_samples=None):
+        dict, highlight_samples: List[str]=None, call_ready: bool=False):
     if df.empty:
         df['colour'] = pandas.Series
     else:
@@ -145,14 +147,17 @@ def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
                              axis=1)
         df = df.assign(colour=colour_col.values)
         if highlight_samples:
-            df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'colour'] = '#F00'
+            sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+            df.loc[df[sample_name_col].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
 
-def _fill_in_size_col(df: DataFrame, highlight_samples=None):
+def _fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
+        call_ready: bool=False):
     df['markersize'] = 12
     if highlight_samples:
-        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
+        sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+        df.loc[df[sample_name_col].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
 
 
@@ -210,8 +215,8 @@ def reshape_call_ready_df(df, projects, library_designs,
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
     df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-    df = _fill_in_size_col(df, searchsample)
+    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
+    df = _fill_in_size_col(df, searchsample, True)
     return df
 
 
