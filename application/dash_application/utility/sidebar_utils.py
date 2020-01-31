@@ -177,9 +177,8 @@ def highlight_samples_input(search_samples_id: str, all_samples: List[str]) -> \
     ])
 
 
-def show_data_labels_input(
-        show_names_id: str, selected_value: Union[None, str],
-        select_all_text: str, select_all_id: str,
+def _show_data_labels_input(show_names_id: str, selected_value: Union[None, str],
+        select_all_text: str, select_all_id: str, options: List[dict]
 ) -> core.Loading:
     return core.Loading(type="circle", children=[
         html.Button(select_all_text, id=select_all_id, className="inline"),
@@ -187,21 +186,42 @@ def show_data_labels_input(
             "Show Data Labels",
             core.Dropdown(
                 id=show_names_id,
-                options=[
-                    {'label': 'Group ID', 'value': PINERY_COL.GroupID},
-                    {'label': 'Kit', 'value': PINERY_COL.PrepKit},
-                    {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
-                    {'label': 'Sample', 'value': PINERY_COL.SampleName},
-                    {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
-                    {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
-                    {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
-                ],
+                options=options,
                 value=selected_value,
                 searchable=False,
                 multi=True,
             )
         ])
     ])
+
+
+def show_data_labels_input_single_lane(
+        show_names_id: str, selected_value: Union[None, str],
+        select_all_text: str, select_all_id: str) -> core.Loading:
+    return _show_data_labels_input(show_names_id, selected_value,
+        select_all_text, select_all_id, [
+            {'label': 'Group ID', 'value': PINERY_COL.GroupID},
+            {'label': 'Kit', 'value': PINERY_COL.PrepKit},
+            {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
+            {'label': 'Sample', 'value': PINERY_COL.SampleName},
+            {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
+            {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
+            {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
+        ])
+
+
+def show_data_labels_input_call_ready(show_names_id: str,
+        selected_value: Union[None, str], select_all_text: str,
+        select_all_id: str) -> core.Loading:
+    return _show_data_labels_input(show_names_id, selected_value,
+        select_all_text, select_all_id, [
+            {'label': 'Group ID', 'value': PINERY_COL.GroupID},
+            {'label': 'Sample', 'value': PINERY_COL.RootSampleName},
+            {'label': 'Library Design', 'value': PINERY_COL.LibrarySourceTemplateType},
+            {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
+            {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
+            {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
+        ])
 
 
 def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
@@ -217,12 +237,12 @@ def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
 
 
 def total_reads_cutoff_input(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Passed Filter Reads (* 10^6) cutoff",
+    return cutoff_input("Passed Filter Reads (* 10^6) minimum",
                         cutoff_id, cutoff_value)
 
 
 def insert_mean_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Mean Insert Size cutoff", cutoff_id, cutoff_value)
+    return cutoff_input("Mean Insert Size minimum", cutoff_id, cutoff_value)
 
 
 def hr() -> html.Hr:

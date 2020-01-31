@@ -8,16 +8,13 @@ from pandas import DataFrame
 import pinery
 
 
-def build_table(table_id: str, columns: List[str], df: DataFrame, filter_on:
-                str):
-    # Filter out records with NA values in the given column (should indicate
-    # we have no QC data for these records
-    df = df[~df[filter_on].isna()]
+def build_table(table_id: str, columns: List[str], df: DataFrame):
     return tabl.DataTable(
         id=table_id,
         columns=[{"name": col, "id": col} for col in columns],
         data=df.to_dict('records'),
         export_format="csv",
+        include_headers_on_copy_paste=True,
         style_data_conditional=[
             {
                 "if": {"row_index": "odd"},
@@ -31,8 +28,28 @@ def build_table(table_id: str, columns: List[str], df: DataFrame, filter_on:
     )
 
 
-def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
+def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, bool
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+    ius_cols = [
+        pinery.column.SampleProvenanceColumn.SampleName,
+        pinery.column.SampleProvenanceColumn.SequencerRunName,
+        pinery.column.SampleProvenanceColumn.LaneNumber,
+        pinery.column.SampleProvenanceColumn.IUSTag]
+    return _calculate_cutoff_table_data(data, limits, ius_cols)
+
+
+def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, float, bool
+]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+    merged_cols = [
+        pinery.column.SampleProvenanceColumn.RootSampleName,
+        pinery.column.SampleProvenanceColumn.GroupID,
+        pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType,
+        pinery.column.SampleProvenanceColumn.TissueOrigin,
+        pinery.column.SampleProvenanceColumn.TissueType]
+    return _calculate_cutoff_table_data(data, limits, merged_cols)
+
+def _calculate_cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
+]], cols_to_add: List[str]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     output = []
     for _, row in data.iterrows():
         failures = {}
@@ -50,24 +67,13 @@ def cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
             else:
                 failures[name] = "Passed ({:.3f})".format(row[column])
         if has_failures:
-            failures[pinery.column.SampleProvenanceColumn.SampleName] = row[
-                pinery.column.SampleProvenanceColumn.SampleName]
-            failures[pinery.column.SampleProvenanceColumn.SequencerRunName] = row[
-                pinery.column.SampleProvenanceColumn.SequencerRunName]
-            failures[pinery.column.SampleProvenanceColumn.LaneNumber] = row[
-                pinery.column.SampleProvenanceColumn.LaneNumber]
-            failures[pinery.column.SampleProvenanceColumn.IUSTag] = row[pinery.column.SampleProvenanceColumn.IUSTag]
+            for col in cols_to_add:
+                failures[col] = row[col]
             output.append(failures)
 
-    return (DataFrame(output), [{"name": pinery.column.SampleProvenanceColumn.SampleName,
-                                 "id": pinery.column.SampleProvenanceColumn.SampleName},
-                                {"name": pinery.column.SampleProvenanceColumn.SequencerRunName,
-                                 "id": pinery.column.SampleProvenanceColumn.SequencerRunName},
-                                {"name": pinery.column.SampleProvenanceColumn.LaneNumber,
-                                 "id": pinery.column.SampleProvenanceColumn.LaneNumber},
-                                {"name": pinery.column.SampleProvenanceColumn.IUSTag,
-                                 "id": pinery.column.SampleProvenanceColumn.IUSTag},
-                                *({"name": "{} ({})".format(name,
+    return (DataFrame(output), [{"name": col, "id": col} for col in cols_to_add]
+                                +
+                                [*({"name": "{} ({})".format(name,
                                                             printable_cutoff(
                                                                 cutoff)),
                                    "id": name} for (name, _, cutoff, _
@@ -84,12 +90,13 @@ def printable_cutoff(cutoff: float) -> str:
 def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
                                                                     float,
                                                                     bool]]):
-    (failure_df, columns) = cutoff_table_data(data, limits)
+    (failure_df, columns) = cutoff_table_data_ius(data, limits)
     return tabl.DataTable(
         id=table_id,
         columns=columns,
         data=failure_df.to_dict('records'),
         export_format="csv",
+        include_headers_on_copy_paste=True,
         style_data_conditional=[
             {
                 "if": {"row_index": "odd"},
@@ -113,7 +120,7 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
     )
 
 
-def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str], filter_on: str,
+def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str],
                limits: List[Tuple[str, str, float, bool]]):
     return core.Tabs(
         [
@@ -137,6 +144,5 @@ def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_column
                             build_table(
                                 data_id,
                                 table_columns,
-                                empty_data,
-                                filter_on)]),
+                                empty_data)]),
                 ])])

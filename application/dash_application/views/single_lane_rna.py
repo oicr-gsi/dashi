@@ -7,7 +7,7 @@ import pandas as pd
 
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs, cutoff_table_data
+from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -113,9 +113,6 @@ def get_rna_data():
     #  "rnaseqqc" within the rnaseqqc cache (as some caches like bcl2fastq
     #  contain multiple DataFrame/caches)
     rna_df = util.get_rnaseqqc()
-    # Cast the primary key/join columns to explicit types
-    rna_df = util.df_with_normalized_ius_columns(rna_df, RNA_COL.Run,
-                                                 RNA_COL.Lane, RNA_COL.Barcodes)
 
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
@@ -132,13 +129,13 @@ def get_rna_data():
     )
 
     # Pull in sample metadata from Pinery
-    pinery_samples = util.get_pinery_samples_from_active_projects()
+    pinery_samples = util.get_pinery_samples()
     # Filter the Pinery samples for only RNA samples.
     pinery_samples = util.filter_by_library_design(pinery_samples,
-                                                   ["MR", "SM", "TR", "WT"])
+                                                   util.rna_lib_designs)
 
     # Join RNAseqQc and Pinery data
-    rna_df = util.df_with_pinery_samples(rna_df, pinery_samples,
+    rna_df = util.df_with_pinery_samples_ius(rna_df, pinery_samples,
                                          util.rnaseqqc_ius_columns)
 
     # Join RNAseqQc and instrument model
@@ -151,13 +148,14 @@ def get_rna_data():
 (RNA_DF, DATAVERSION) = get_rna_data()
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_list(RNA_DF, PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_list(RNA_DF, PINERY_COL.PrepKit)
+ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_set(RNA_DF, PINERY_COL.PrepKit)
 ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
-ALL_TISSUE_MATERIALS = util.unique_list(RNA_DF, PINERY_COL.TissuePreparation)
-ALL_LIBRARY_DESIGNS = util.unique_list(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_RUNS = util.unique_list(RNA_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
-ALL_SAMPLES = util.unique_list(RNA_DF, PINERY_COL.SampleName)
+ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_set(RNA_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
+ALL_SAMPLES = util.unique_set(RNA_DF, PINERY_COL.SampleName)
+ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -364,7 +362,7 @@ def layout(query_string):
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                       ALL_SAMPLES),
 
-                sidebar_utils.show_data_labels_input(ids["show-data-labels"],
+                sidebar_utils.show_data_labels_input_single_lane(ids["show-data-labels"],
                                                      initial["shownames_val"],
                                                      "ALL LABELS",
                                                      ids["show-all-data-labels"]),
@@ -375,7 +373,7 @@ def layout(query_string):
                 sidebar_utils.total_reads_cutoff_input(
                     ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
                 sidebar_utils.cutoff_input(
-                    "% rRNA Contamination cutoff",
+                    "% rRNA Contamination maximum",
                     ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
             ]),
 
@@ -430,7 +428,6 @@ def layout(query_string):
                 ids["data-table"],
                 df,
                 rnaseqqc_table_columns,
-                RNA_COL.TotalReads,
                 [
                     ('Total Reads Cutoff',
                      special_cols["Total Reads (Passed Filter)"],
@@ -514,7 +511,7 @@ def init_callbacks(dash_app):
         }
 
         dd = defaultdict(list)
-        (failure_df, failure_columns) = cutoff_table_data(df, [
+        (failure_df, failure_columns) = cutoff_table_data_ius(df, [
             ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
              total_reads_cutoff, True),
             ('% rRNA Contamination', RNA_COL.rRNAContaminationreadsaligned,

@@ -1,10 +1,10 @@
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import pandas
 import plotly.graph_objects as go
 from pandas import DataFrame
 import pinery
-
+from .df_manipulation import sample_type_col
 from .sidebar_utils import runs_in_range
 
 
@@ -65,12 +65,14 @@ BIG_MARKER_SIZE = 20
 
 DATA_LABEL_ORDER = [
     PINERY_COL.SampleName,
+    PINERY_COL.RootSampleName,
     PINERY_COL.TissueOrigin,
     PINERY_COL.TissueType,
     PINERY_COL.GroupID,
     PINERY_COL.TissuePreparation,
     PINERY_COL.PrepKit,
     PINERY_COL.SequencerRunName,
+    PINERY_COL.LibrarySourceTemplateType
 ]
 
 # If the Data Label is found here, the name is added. Eg: "Group ID: 12345"
@@ -111,10 +113,12 @@ def create_data_label(
     return df.apply(apply_label, axis=1)
 
 
-def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict) -> DataFrame:
+def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict,
+        highlight_samples: List[str]=None, call_ready: bool=False) -> DataFrame:
     df = _fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
-    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour)
-    df = _fill_in_size_col(df)
+    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
+                             highlight_samples, call_ready)
+    df = _fill_in_size_col(df, highlight_samples, call_ready)
     return df
 
 
@@ -132,7 +136,7 @@ def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
 
 
 def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict, highlight_samples=None):
+        dict, highlight_samples: List[str]=None, call_ready: bool=False):
     if df.empty:
         df['colour'] = pandas.Series
     else:
@@ -143,14 +147,17 @@ def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
                              axis=1)
         df = df.assign(colour=colour_col.values)
         if highlight_samples:
-            df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'colour'] = '#F00'
+            sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+            df.loc[df[sample_name_col].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
 
-def _fill_in_size_col(df: DataFrame, highlight_samples=None):
+def _fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
+        call_ready: bool=False):
     df['markersize'] = 12
     if highlight_samples:
-        df.loc[df[PINERY_COL.SampleName].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
+        sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+        df.loc[df[sample_name_col].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
 
 
@@ -163,8 +170,6 @@ def reshape_single_lane_df(df, runs, instruments, projects, kits, library_design
     """
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
-    else:
-        df = df
 
     if runs:
         df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
@@ -186,9 +191,38 @@ def reshape_single_lane_df(df, runs, instruments, projects, kits, library_design
     return df
 
 
+def reshape_call_ready_df(df, projects, library_designs,
+        first_sort, second_sort, colour_by, shape_by, shape_or_colour_values, searchsample):
+    """
+    This performs dataframe manipulation based on the input filters, and gets the data into a
+    graph-friendly form.
+    """
+    if not projects  and not library_designs:
+        df = DataFrame(columns=df.columns)
+
+    if projects:
+        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+    # if kits:
+    #     df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
+    if library_designs:
+        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
+            library_designs)]
+    # if institutes:
+    #     df = df[df[pinery.column.SampleProvenanceColumn.Institute].isin(institutes)]
+    # if sample_types:
+    #     df = df[df[sample_type_col].isin(sample_types)]
+
+    sort_by = [first_sort, second_sort]
+    df = df.sort_values(by=sort_by)
+    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
+    df = _fill_in_size_col(df, searchsample, True)
+    return df
+
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, line_y=None):
+             hovertext_cols, line_y=None, name_col=PINERY_COL.SampleName):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -244,7 +278,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         traces.append(graph)
     if line_y is not None:
         traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data[PINERY_COL.SampleName], 
+            x=sorted_data[name_col], 
             y=[line_y] * len(sorted_data),
             mode="lines",
             line={"width": 1, "color": "black", "dash": "dash"},
@@ -314,7 +348,8 @@ def generate_total_reads(
         colour_by,
         shape_by,
         show_names,
-        cutoff_line
+        cutoff_line,
+        x_col
     )
 
 
@@ -331,6 +366,23 @@ def get_initial_single_lane_values():
         "second_sort": None,
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
         "shape_by": pinery.column.SampleProvenanceColumn.PrepKit,
+        "shownames_val": None
+    }
+
+
+def get_initial_call_ready_values():
+    return {
+        "projects": [],
+        "kits": [],
+        "library_designs": [],
+        "institutes": [],
+        "sample_types": [],
+        "start_date": None,
+        "end_date": None,
+        "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "second_sort": None,
+        "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shape_by": pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType,
         "shownames_val": None
     }
 
@@ -360,4 +412,32 @@ class ColourShapeSingleLane:
             PINERY_COL.PrepKit: self.kits,
             PINERY_COL.TissuePreparation: self.tissue_preps,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs
+        }
+
+
+class ColourShapeCallReady:
+    def __init__(self, projects, kits, library_designs, institutes, sample_types):
+        self.projects = projects
+        self.kits = kits
+        self.library_designs = library_designs
+        self.institutes = institutes
+        self.sample_types = sample_types
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Kit", "value": PINERY_COL.PrepKit},
+            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+            {"label": "Institute", "value": PINERY_COL.Institute},
+            {"label": "Sample Type", "value": sample_type_col},
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.PrepKit: self.kits,
+            PINERY_COL.LibrarySourceTemplateType: self.library_designs,
+            PINERY_COL.Institute: self.institutes,
+            sample_type_col: self.sample_types,
         }

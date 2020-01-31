@@ -8,6 +8,7 @@ pagenames = [
     # "bamqc_gbovertime",
     # "bamqc_overtime",
     "bcl2fastq",
+    "call_ready_wgs",
     # "poolqc",
     "single_lane_ts",
     "single_lane_rna",
