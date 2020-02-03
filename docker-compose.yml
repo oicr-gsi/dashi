@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile
     environment:
       USE_BLEEDING_EDGE_ETL: "${USE_BLEEDING_EDGE_ETL}"
+
     restart: always
     ports:
       - '5000:5000'
@@ -29,7 +30,7 @@ services:
         source: $HOME/.ssh/known_hosts
         target: /root/.ssh/known_hosts
       - type: bind
-        source: $HOME/logs/dashi/dashi.log
+        source: ${LOG_FILE_LOCATION}
         target: /dashi/dashi.log
         volume:
           nocopy: true
