@@ -31,6 +31,8 @@ services:
       - type: bind
         source: $HOME/logs/dashi/dashi.log
         target: /dashi/dashi.log
+        volume:
+          nocopy: true
     secrets:
       - mongo_password
 #      - ssh_passphrase
