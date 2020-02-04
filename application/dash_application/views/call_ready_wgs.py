@@ -109,14 +109,20 @@ def get_merged_wgs_data():
     ichorcna_df = util.filter_by_library_design(ichorcna_df, util.wgs_lib_designs, ICHOR_COL.LibraryDesign)
     callability_df = util.get_mutect_callability()
     callability_df = util.filter_by_library_design(callability_df, util.wgs_lib_designs, CALL_COL.LibraryDesign)
-    #bamqc3_df = util.get_bamqc3_merged()
+    bamqc3_df = util.get_bamqc3_merged()
 
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction]* 100.0, 3)
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability]* 100.0, 3)
-    callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
+    callability_df.rename(columns = {CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
+        inplace = True)
+    bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (bamqc3_df[BAMQC_COL.NonPrimaryReads] /
+        bamqc3_df[BAMQC_COL.TotalReads])) * 100
+    bamqc3_df.rename(columns = {BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]}, inplace=True)
 
     # Join IchorCNA and Callability data
     wgs_df = ichorcna_df.merge(
@@ -130,12 +136,12 @@ def get_merged_wgs_data():
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples, util.ichorcna_merged_columns)
       
     # Join BamQC3 and IchorCNA+Pinery data
-    # wgs_df = wgs_df.merge(
-		# 	bamqc3_df,
-		# 	how="left",
-		# 	left_on=util.pinery_merged_columns,
-		# 	right_on=util.bamqc3_merged_columns
-		# )
+    wgs_df = wgs_df.merge(
+			bamqc3_df,
+			how="left",
+			left_on=util.pinery_merged_columns,
+			right_on=util.bamqc3_merged_columns
+		)
 
     # bamqc3 unique_reads: % unique = 1 - NonPrimaryReads/TotalReads
 

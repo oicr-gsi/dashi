@@ -141,12 +141,12 @@ _pinery_samples = _pinery_samples.drop(axis=1, columns=[PINERY_COL.NanodropConce
 # Takes a list of values and converts it to a comma-separated string.
 unique_list = lambda vals: ", ".join(str(val) for val in sorted(set(vals)) if (val and val != "nan"))
 
-# Keep only these columns after merging on @merged_library columns.
-# Process the columns using the functions provided.
+""" Keep only these columns after merging on @merged_library columns.
+Process the columns using the functions provided.
+@merged_library columns (RootSampleName, GroupID, TissueOrigin,
+TissueType, LibrarySourceTemplateType) are already included in
+the dataframe's index so they will also be retained."""
 retain_columns_after_merge = {
-    # @merged_library columns (RootSampleName, GroupID, TissueOrigin,
-    # TissueType, LibrarySourceTemplateType) are already included in
-    # the dataframe's index so they will also be retained.
     # sample attributes:
     PINERY_COL.DV200: unique_list,
     PINERY_COL.ExternalName: unique_list,
@@ -163,15 +163,17 @@ retain_columns_after_merge = {
     PINERY_COL.UMIs: unique_list,
 }
     
-# Converts the _pinery_samples data, where each row represents a single sequenced sample,
-# to a dataframe where each row represents a "merged library" (rows are joined on the following
-# PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
-# LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
-# data to Pinery data.
-# 1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
-# 2. Group the data by "merged library" columns
-# 3. Aggregate and transform the columns we want to keep for Dashi
-# 4. Reset the index to flatten the row
+"""
+Converts the _pinery_samples data, where each row represents a single sequenced sample,
+to a dataframe where each row represents a "merged library" (rows are joined on the following
+PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
+LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
+data to Pinery data.
+1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
+2. Group the data by "merged library" columns
+3. Aggregate and transform the columns we want to keep for Dashi
+4. Reset the index to flatten the row
+"""
 _pinery_merged_samples = _pinery_samples.fillna('').groupby(by=pinery_merged_columns).agg(retain_columns_after_merge).reset_index()
 
 _runs = _pinery_client.get_runs(False).runs
