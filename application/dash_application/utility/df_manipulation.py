@@ -58,6 +58,7 @@ hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.Gro
 TUMOUR = "Tumour"
 BLOOD = "Blood"
 REFERENCE = "Reference"
+CELL = "Cell"
 UNKNOWN = "Unknown"
 
 def label_sample_type(row: Series) -> str:
@@ -70,6 +71,8 @@ def label_sample_type(row: Series) -> str:
             return REFERENCE
     elif row[PINERY_COL.TissueType] in ["P", "M", "O", "X", "T"]:
         return TUMOUR
+    elif row[PINERY_COL.TissueType] == "C":
+        return CELL
     else:
         return UNKNOWN
 
