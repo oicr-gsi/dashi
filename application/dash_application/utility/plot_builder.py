@@ -191,26 +191,26 @@ def reshape_single_lane_df(df, runs, instruments, projects, kits, library_design
     return df
 
 
-def reshape_call_ready_df(df, projects, library_designs,
+def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
         first_sort, second_sort, colour_by, shape_by, shape_or_colour_values, searchsample):
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-    if not projects  and not library_designs:
+    if not projects and not tissue_preps and not sample_types:
         df = DataFrame(columns=df.columns)
 
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
     # if kits:
     #     df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
-    if library_designs:
-        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
-            library_designs)]
+    if tissue_preps:
+        df = df[df[pinery.column.SampleProvenanceColumn.TissuePreparation].isin(
+            tissue_preps)]
     # if institutes:
     #     df = df[df[pinery.column.SampleProvenanceColumn.Institute].isin(institutes)]
-    # if sample_types:
-    #     df = df[df[sample_type_col].isin(sample_types)]
+    if sample_types:
+        df = df[df[sample_type_col].isin(sample_types)]
 
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
@@ -376,6 +376,7 @@ def get_initial_call_ready_values():
         "kits": [],
         "library_designs": [],
         "institutes": [],
+        "tissue_preps": [],
         "sample_types": [],
         "start_date": None,
         "end_date": None,
