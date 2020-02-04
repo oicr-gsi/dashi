@@ -30,8 +30,8 @@ services:
         source: $HOME/.ssh/known_hosts
         target: /root/.ssh/known_hosts
       - type: bind
-        source: ${LOG_FILE_LOCATION}
-        target: /dashi/dashi.log
+        source: ${LOG_FILE_LOCATION}/..
+        target: /dashi
         volume:
           nocopy: true
     secrets:
