@@ -206,13 +206,9 @@ def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
 
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
-    # if kits:
-    #     df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
     if tissue_preps:
         df = df[df[pinery.column.SampleProvenanceColumn.TissuePreparation].isin(
             tissue_preps)]
-    # if institutes:
-    #     df = df[df[pinery.column.SampleProvenanceColumn.Institute].isin(institutes)]
     if sample_types:
         df = df[df[sample_type_col].isin(sample_types)]
 
@@ -421,30 +417,28 @@ class ColourShapeSingleLane:
 
 
 class ColourShapeCallReady:
-    def __init__(self, projects, kits, library_designs, institutes, sample_types):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_preps):
         self.projects = projects
-        self.kits = kits
         self.library_designs = library_designs
         self.institutes = institutes
         self.sample_types = sample_types
+        self.tissue_preps = tissue_preps
 
     @staticmethod
     def dropdown():
         return [
             {"label": "Project", "value": PINERY_COL.StudyTitle},
-            {"label": "Kit", "value": PINERY_COL.PrepKit},
             {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
-            # TODO: add TissuePrep here
+            {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
         ]
 
     def items_for_df(self):
         return {
             PINERY_COL.StudyTitle: self.projects,
-            PINERY_COL.PrepKit: self.kits,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs,
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
-            # TODO: Add TissuePrep here
+            PINERY_COL.TissuePreparation: self.tissue_preps,
         }

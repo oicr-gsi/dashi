@@ -82,6 +82,7 @@ special_cols = {
     "Total Reads (Passed Filter)": "total reads passed filter",
     "Unique Reads (Passed Filter)": "percent unique reads",
     "Unmapped Reads": "percent unmapped reads",
+    "Mean Coverage": "mean coverage",
     "Purity": "percent purity",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
@@ -122,6 +123,9 @@ def get_merged_wgs_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (bamqc3_df[BAMQC_COL.NonPrimaryReads] /
         bamqc3_df[BAMQC_COL.TotalReads])) * 100
+    # TODO: uncomment once we've got bamqc3merged built with v0.19.0
+    # bamqc3_df[special_cols["Mean Coverage"]] = (BAMQC_COL.TotalBasesOnTarget / BAMQC_COL.TotalTargetSize) *
+    #     BAMQC_COL.TotalReads / BAMQC_COL.SampleLevel
     bamqc3_df.rename(columns = {BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]}, inplace=True)
 
     # Join IchorCNA and Callability data
@@ -142,8 +146,6 @@ def get_merged_wgs_data():
 			left_on=util.pinery_merged_columns,
 			right_on=util.bamqc3_merged_columns
 		)
-
-    # bamqc3 unique_reads: % unique = 1 - NonPrimaryReads/TotalReads
 
     return wgs_df, util.cache.versions(["ichorcnamerged", "mutectcallability"])
 
@@ -190,29 +192,12 @@ ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
 # the `update_pressed` function in the views.
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
-    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+    "tissue_preps": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_TISSUE_PREPS, "all_tissue_preps"),
+    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types")
 }
 
-shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_KITS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES)
+shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_PREPS)
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None, True)
-
-
-# N.B. The keys in this object must match the argument names for
-# the `update_pressed` function.
-collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS,
-        "all_projects"),
-  #  "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-  #  "institutes": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_INSTITUTES,
-  #      "all_institutes"),
-  #  "tissue_prep": lambda selected: log_utils.collapse_if_all_selected(selected,
-  #      ALL_TISSUE_PREPS, "all_tissue_preps"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected,
-        ALL_LIBRARY_DESIGNS, "all_library_designs"),
-  #  "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected,
-  #      ALL_SAMPLE_TYPES, "all_sample_types"),
-}
 
 def generate_unique_reads(df, graph_params):
     return generate(
@@ -225,8 +210,15 @@ def generate_unique_reads(df, graph_params):
 
 
 def generate_mean_coverage(df, graph_params):
-    # TODO: should display two cutoffs: cutoff_coverage_tumour, cutoff_coverage_normal 
-    return "https://jira.oicr.on.ca/browse/GR-848?focusedCommentId=160788&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-160788"
+    return generate(
+        "Mean Coverage", df,
+        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[special_cols["Mean Coverage"],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
+         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
+        PINERY_COL.RootSampleName)
 
 
 def generate_callability(df, graph_params):
@@ -257,7 +249,8 @@ def generate_duplicate_rate(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], graph_params["cutoff_duplicate_rate"],
+        graph_params["shownames_val"],
+        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
         PINERY_COL.RootSampleName)
 
 
@@ -293,10 +286,10 @@ def generate_unmapped_reads(df, graph_params):
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
-    # nothing applies here...yet
+    # no queries apply here...yet
 
-    df = reshape_call_ready_df(WGS_DF, initial["projects"], #initial["kits"],
-        initial["library_designs"], #initial["institutes"], initial["sample_types"],
+    df = reshape_call_ready_df(WGS_DF, initial["projects"],
+        initial["tissue_preps"], initial["sample_types"],
         initial["first_sort"], initial["second_sort"], initial["colour_by"],
         initial["shape_by"], shape_colour.items_for_df(), [])
 
@@ -315,6 +308,12 @@ def layout(query_string):
                     sidebar_utils.select_library_designs(
                         ids["all-library-designs"], ids["library-designs-list"],
                         ALL_LIBRARY_DESIGNS),
+                    sidebar_utils.select_tissue_preps(
+                        ids["all-tissue-preps"], ids["tissue-preps-list"],
+                        ALL_TISSUE_PREPS),
+                    sidebar_utils.select_sample_types(
+                        ids["all-sample-types"], ids["sample-types-list"],
+                        ALL_SAMPLE_TYPES),
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
@@ -326,8 +325,8 @@ def layout(query_string):
                         [
                             {"label": "Total Reads",
                             "value": BAMQC_COL.TotalReads},
-                            #{"label": "Unique Reads",
-                            #"value": special_cols["Unique Reads (Passed Filter)"]}
+                            {"label": "Unique Reads",
+                            "value": special_cols["Unique Reads (Passed Filter)"]},
                             {"label": "Callability",
                             "value": CALL_COL.Callability},
                             {"label": "Purity",
@@ -381,10 +380,10 @@ def layout(query_string):
                              (cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal])]
                         )
                     ),
-                    # core.Graph(
-                    #     id=ids["unique-reads"],
-                    #     figure=generate_unique_reads(df, initial)
-                    # ),
+                    core.Graph(
+                        id=ids["unique-reads"],
+                        figure=generate_unique_reads(df, initial)
+                    ),
                     # core.Graph(
                     #     id=ids["mean-coverage"],
                     #     figure=generate_mean_coverage(df, initial)
@@ -409,10 +408,10 @@ def layout(query_string):
                         id=ids["ploidy"],
                         figure=generate_ploidy(df, initial)
                     ),
-                    # core.Graph(
-                    #     id=ids["unmapped-reads"],
-                    #     figure=generate_unmapped_reads(df, initial)
-                    # ),
+                    core.Graph(
+                        id=ids["unmapped-reads"],
+                        figure=generate_unmapped_reads(df, initial)
+                    ),
                     
             ])
         ]),
@@ -434,9 +433,8 @@ def layout(query_string):
                  (lambda row, col, cutoff: row[col] > cutoff)),
                 (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
                  (lambda row, col, cutoff: row[col] > cutoff)),
-                # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                #  initial[cutoff_duplicate_rate],
-                #  (lambda row, col, cutoff: row[col] < cutoff)),
+                (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                 initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] < cutoff)),
 
             ]
         )
@@ -448,14 +446,14 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            # Output(ids["unique-reads"], "figure"),
+            Output(ids["unique-reads"], "figure"),
             # Output(ids["mean-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
-            # Output(ids["duplicate-rate"], "figure"),
+            Output(ids["duplicate-rate"], "figure"),
             Output(ids["purity"], "figure"),
             Output(ids["ploidy"], "figure"),
-            # Output(ids["unmapped-reads"], "figure"),
+            Output(ids["unmapped-reads"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -463,7 +461,8 @@ def init_callbacks(dash_app):
         [Input(ids["update-button"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
-            State(ids["library-designs-list"], "value"),
+            State(ids["tissue-preps-list"], "value"),
+            State(ids["sample-types-list"], "value"),
             State(ids["first-sort"], "value"),
             State(ids["second-sort"], "value"),
             State(ids["colour-by"], "value"),
@@ -482,7 +481,8 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        projects,
-                       library_designs,
+                       tissue_preps,
+                       sample_types,
                        first_sort,
                        second_sort,
                        colour_by,
@@ -499,7 +499,7 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_call_ready_df(WGS_DF, projects, library_designs, first_sort,
+        df = reshape_call_ready_df(WGS_DF, projects, tissue_preps, sample_types, first_sort,
                 second_sort, colour_by, shape_by, shape_colour.items_for_df(), search_sample)
 
         graph_params = {
@@ -528,9 +528,8 @@ def init_callbacks(dash_app):
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-            # duplicate_rate_cutoff, False),
-
+            (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+             duplicate_rate_cutoff, (lambda row, col, cutoff: row[col] > cutoff)),
         ])
 
         return [
@@ -541,16 +540,14 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),
-            # generate_unique_reads(df, graph_params),
-            # generate_mean_coverage(df, graph_params
-            #     # TODO: add initial_cutoff_coverage_tumour
-            # ),
+            generate_unique_reads(df, graph_params),
+            # generate_mean_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
-            # generate_duplicate_rate(df, graph_params),
+            generate_duplicate_rate(df, graph_params),
             generate_purity(df, graph_params),
             generate_ploidy(df, graph_params),
-            # generate_unmapped_reads(df, graph_params),
+            generate_unmapped_reads(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
@@ -567,12 +564,21 @@ def init_callbacks(dash_app):
 
 
     @dash_app.callback(
-        Output(ids['library-designs-list'], 'value'),
-        [Input(ids['all-library-designs'], 'n_clicks')]
+        Output(ids['tissue-preps-list'], 'value'),
+        [Input(ids['all-tissue-preps'], 'n_clicks')]
     )
-    def all_library_designs_requested(click):
+    def all_tissue_preps_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_LIBRARY_DESIGNS]
+        return [x for x in ALL_TISSUE_PREPS]
+
+
+    @dash_app.callback(
+        Output(ids['sample-types-list'], 'value'),
+        [Input(ids['all-sample-types'], 'n_clicks')]
+    )
+    def all_sample_types_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x for x in ALL_SAMPLE_TYPES]
 
 
     @dash_app.callback(
