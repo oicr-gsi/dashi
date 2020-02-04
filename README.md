@@ -58,6 +58,7 @@ need to pass in your SSH keys to permit download and installation.
 1. Create a file at `.mongopass` with the password to the MongoDB database and
     make sure the location in docker-compose.yml is correct in `secrets`.
 1. Ensure your `.env` file is populated as per `Environment Variables` above.
+1. Ensure the file 'dashi.log' exists in the place specified by `LOG_FILE_LOCATION`. Create a blank file if necessary.
 1. Build the container with `docker-compose build`. 
 1. Launch with `docker-compose up`. Note that this completes installation of
     gsi-qc-etl before launching the app.
