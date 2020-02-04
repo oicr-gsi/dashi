@@ -434,11 +434,11 @@ def layout(query_string):
                 rnaseqqc_table_columns,
                 [
                     (cutoff_pf_reads_label,
-                     special_cols["Total Reads (Passed Filter)"],
-                     initial["cutoff_pf_reads"], True),
+                     special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                     (lambda row, col, cutoff: row[col] < cutoff)),
                     (cutoff_rrna_label,
-                     RNA_COL.rRNAContaminationreadsaligned,
-                     initial["cutoff_rrna"], True)
+                     RNA_COL.rRNAContaminationreadsaligned, initial[cutoff_rrna],
+                     (lambda row, col, cutoff: row[col] > cutoff))
                 ]
             )
         ])
@@ -516,10 +516,10 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"],
-             total_reads_cutoff, True),
-            (cutoff_rrna_label, RNA_COL.rRNAContaminationreadsaligned,
-             rrna_cutoff, False),
+            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_rrna_label, RNA_COL.rRNAContaminationreadsaligned, rrna_cutoff,
+             (lambda row, col, cutoff: row[col] > cutoff)),
         ])
         return [
             generate_total_reads(

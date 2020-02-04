@@ -55,19 +55,35 @@ hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.Gro
                             HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
                             HSMETRICS_MERGED_COL.TissueType]
 
+TUMOUR = "Tumour"
+BLOOD = "Blood"
+REFERENCE = "Reference"
+UNKNOWN = "Unknown"
 
 def label_sample_type(row: Series) -> str:
     if row[PINERY_COL.TissueType] == "S":
-        return "Blood"
+        return BLOOD
     elif row[PINERY_COL.TissueType] == "R":
         if row[PINERY_COL.TissueOrigin] == "Ly" or row[PINERY_COL.TissueOrigin] == "Pl":
-            return "Blood"
+            return BLOOD
         else:
-            return "Reference"
+            return REFERENCE
     elif row[PINERY_COL.TissueType] in ["P", "M", "O", "X", "T"]:
-        return "Tumor"
+        return TUMOUR
     else:
-        return "Unknown"
+        return UNKNOWN
+
+
+def is_tumour(row: Series) -> bool:
+    if row[sample_type_col] == TUMOUR:
+        return True
+    return False
+
+
+def is_normal(row: Series) -> bool:
+    if row[sample_type_col] in [BLOOD, REFERENCE]:
+        return True
+    return False
 
 
 def normalized_ius(df: DataFrame, ius_cols: List[str]):

@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import dash_core_components as core
 import dash_html_components as html
@@ -38,7 +38,7 @@ def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, b
     return _calculate_cutoff_table_data(data, limits, ius_cols)
 
 
-def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, float, bool
+def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, Callable
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     merged_cols = [
         pinery.column.SampleProvenanceColumn.RootSampleName,
@@ -48,24 +48,27 @@ def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, float
         pinery.column.SampleProvenanceColumn.TissueType]
     return _calculate_cutoff_table_data(data, limits, merged_cols)
 
-def _calculate_cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, float, bool
+def _calculate_cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, Callable
 ]], cols_to_add: List[str]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     output = []
     for _, row in data.iterrows():
         failures = {}
         has_failures = False
-        for (name, column, cutoff, fail_below) in limits:
-            if cutoff is None:
+        for (name, column, cutoff, fail_fn) in limits:
+            if fail_fn is None:
                 failures[name] = "Passed ({:.3f})".format(row[column])
             elif numpy.isnan(row[column]):
                 failures[name] = "Missing"
                 has_failures = True
-            elif (fail_below and row[column] < cutoff) or (
-                    not fail_below and row[column] > cutoff):
-                failures[name] = "Failed ({:.3f})".format(row[column])
-                has_failures = True
             else:
-                failures[name] = "Passed ({:.3f})".format(row[column])
+                maybe_failed = fail_fn(row, column, cutoff)
+                if maybe_failed is None:
+                    failures[name] = "N/A"  # should happen when e.g. cutoff is for tumour but sample is normal
+                elif maybe_failed:
+                    failures[name] = "Failed ({:.3f})".format(row[column])
+                    has_failures = True
+                else:
+                    failures[name] = "Passed ({:.3f})".format(row[column])
         if has_failures:
             for col in cols_to_add:
                 failures[col] = row[col]

@@ -153,9 +153,7 @@ def get_merged_wgs_data():
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-# TODO: revert back to total reads
-#initial["second_sort"] = BAMQC_COL.TotalReads
-initial["second_sort"] = CALL_COL.Callability
+initial["second_sort"] = BAMQC_COL.TotalReads
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_tumour_label = "Total PF Reads (Tumour) minimum"
 cutoff_pf_reads_tumour = "cutoff_pf_reads_tumour"
@@ -326,10 +324,10 @@ def layout(query_string):
                     sidebar_utils.select_second_sort(ids["second-sort"],
                         initial["second_sort"],
                         [
-                            #{"label": "Total Reads",
-                            #"value": BAMQC_COL.TotalReads},
+                            {"label": "Total Reads",
+                            "value": BAMQC_COL.TotalReads},
                             #{"label": "Unique Reads",
-                            #"value": special_cols["unique_reads"]}
+                            #"value": special_cols["Unique Reads (Passed Filter)"]}
                             {"label": "Callability",
                             "value": CALL_COL.Callability},
                             {"label": "Purity",
@@ -372,15 +370,17 @@ def layout(query_string):
                 ]),
 
                 html.Div(className="seven columns", children=[
-                    # core.Graph(
-                    #     id=ids["total-reads"],
-                    #     figure=generate_total_reads(
-                    #         df, PINERY_COL.RootSampleName,
-                    #         special_cols["Total Reads (Passed Filter)"],
-                    #         initial
-                    #         # TODO: add initial_cutoff_pf_reads_tumour
-                    #     )
-                    # ),
+                    core.Graph(
+                        id=ids["total-reads"],
+                        figure=generate_total_reads(
+                            df, PINERY_COL.RootSampleName,
+                            special_cols["Total Reads (Passed Filter)"],
+                            initial["colour_by"], initial["shape_by"],
+                            initial["shownames_val"],
+                            [(cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour]),
+                             (cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal])]
+                        )
+                    ),
                     # core.Graph(
                     #     id=ids["unique-reads"],
                     #     figure=generate_unique_reads(df, initial)
@@ -393,14 +393,14 @@ def layout(query_string):
                         id=ids["callability"],
                         figure=generate_callability(df, initial)
                     ),
-                    # core.Graph(
-                    #     id=ids["mean-insert"],
-                    #     figure=generate_mean_insert_size(df, initial)
-                    # ),
-                    # core.Graph(
-                    #     id=ids["duplicate-rate"],
-                    #     figure=generate_duplicate_rate(df, initial)
-                    # ),
+                    core.Graph(
+                        id=ids["mean-insert"],
+                        figure=generate_mean_insert_size(df, initial)
+                    ),
+                    core.Graph(
+                        id=ids["duplicate-rate"],
+                        figure=generate_duplicate_rate(df, initial)
+                    ),
                     core.Graph(
                         id=ids["purity"],
                         figure=generate_purity(df, initial)
@@ -422,14 +422,21 @@ def layout(query_string):
             df,
             wgs_table_columns,
             [
-                # TODO: add the tumour/normal cutoff differences for total PF reads
+                (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                 initial[cutoff_pf_reads_tumour],
+                 (lambda row, col, cutoff: row[col] > cutoff and util.is_tumour(row))),
+                (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                 initial[cutoff_pf_reads_normal],
+                 (lambda row, col, cutoff: row[col] > cutoff and util.is_normal(row))),
                 # TODO: add the tumour/normal cutoff differences for coverage
                 (cutoff_callability_label, special_cols["Percent Callability"],
-                initial["cutoff_callability"], True),
-                # (cutoff_insert_mean_label, BAMQC_COL.InsertMean,
-                # initial["cutoff_insert_mean"], True),
+                 initial[cutoff_callability],
+                 (lambda row, col, cutoff: row[col] > cutoff)),
+                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                 (lambda row, col, cutoff: row[col] > cutoff)),
                 # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                # initial["cutoff_duplicate_rate"], False),
+                #  initial[cutoff_duplicate_rate],
+                #  (lambda row, col, cutoff: row[col] < cutoff)),
 
             ]
         )
@@ -440,11 +447,11 @@ def layout(query_string):
 def init_callbacks(dash_app):
     @dash_app.callback(
         [
-            # Output(ids["total-reads"], "figure"),
+            Output(ids["total-reads"], "figure"),
             # Output(ids["unique-reads"], "figure"),
             # Output(ids["mean-coverage"], "figure"),
             Output(ids["callability"], "figure"),
-            # Output(ids["mean-insert"], "figure"),
+            Output(ids["mean-insert"], "figure"),
             # Output(ids["duplicate-rate"], "figure"),
             Output(ids["purity"], "figure"),
             Output(ids["ploidy"], "figure"),
@@ -482,13 +489,13 @@ def init_callbacks(dash_app):
                        shape_by,
                        show_names,
                        search_sample,
-                       cutoff_pf_reads_tumour,
-                       cutoff_pf_reads_normal,
-                       cutoff_coverage_tumour,
-                       cutoff_coverage_normal,
-                       cutoff_callability,
-                       cutoff_mean_insert,
-                       cutoff_duplicate_rate,
+                       pf_reads_tumour_cutoff,
+                       pf_reads_normal_cutoff,
+                       coverage_tumour_cutoff,
+                       coverage_normal_cutoff,
+                       callability_cutoff,
+                       insert_mean_cutoff,
+                       duplicate_rate_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
@@ -499,42 +506,47 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads_tumour: cutoff_pf_reads_tumour,
-            cutoff_pf_reads_normal: cutoff_pf_reads_normal,
-            cutoff_coverage_tumour: cutoff_coverage_tumour,
-            cutoff_coverage_normal: cutoff_coverage_normal,
-            cutoff_callability: cutoff_callability,
-            cutoff_mean_insert: cutoff_mean_insert,
-            cutoff_duplicate_rate: cutoff_duplicate_rate
+            cutoff_pf_reads_tumour: pf_reads_tumour_cutoff,
+            cutoff_pf_reads_normal: pf_reads_normal_cutoff,
+            cutoff_coverage_tumour: coverage_tumour_cutoff,
+            cutoff_coverage_normal: coverage_normal_cutoff,
+            cutoff_callability: callability_cutoff,
+            cutoff_insert_mean: insert_mean_cutoff,
+            cutoff_duplicate_rate: duplicate_rate_cutoff,
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            # TODO: add the tumour/normal cutoff differences for total PF reads
+            (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                pf_reads_tumour_cutoff,
+                (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
+            (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                pf_reads_normal_cutoff,
+                (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             # TODO: add the tumour/normal cutoff differences for coverage
-            (cutoff_callability_label, special_cols["Percent Callability"],
-            cutoff_callability, True),
-            # (cutoff_insert_mean_label, BAMQC_COL.InsertMean,
-            # initial_cutoff_insert_mean, True),
+            (cutoff_callability_label, special_cols["Percent Callability"], callability_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
             # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-            # initial_cutoff_duplicate_rate, False),
+            # duplicate_rate_cutoff, False),
 
         ])
 
         return [
-            # generate_total_reads(
-            #     df, PINERY_COL.RootSampleName,
-            #     special_cols["Total Reads (Passed Filter)"],
-            #     colour_by, shape_by, show_names,
-            #     cutoff_pf_reads_normal
-            #     # TODO: add initial_cutoff_pf_reads_tumour
-            # ),
+            generate_total_reads(
+                df, PINERY_COL.RootSampleName,
+                special_cols["Total Reads (Passed Filter)"],
+                colour_by, shape_by, show_names,
+                [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
+                 (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
+            ),
             # generate_unique_reads(df, graph_params),
             # generate_mean_coverage(df, graph_params
             #     # TODO: add initial_cutoff_coverage_tumour
             # ),
             generate_callability(df, graph_params),
-            # generate_mean_insert_size(df, graph_params),
+            generate_mean_insert_size(df, graph_params),
             # generate_duplicate_rate(df, graph_params),
             generate_purity(df, graph_params),
             generate_ploidy(df, graph_params),

@@ -331,11 +331,11 @@ def layout(query_string):
                     df,
                     ex_table_columns,
                     [
-                        (cutoff_insert_mean_label, BAMQC_COL.InsertMean,
-                        initial[cutoff_insert_mean], True),
+                        (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                         (lambda row, col, cutoff: row[col] < cutoff)),
                         (cutoff_pf_reads_label,
-                        special_cols["Total Reads (Passed Filter)"],
-                        initial[cutoff_pf_reads], True),
+                        special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                        (lambda row, col, cutoff: row[col] < cutoff)),
                     ]
                 )
         ]),
@@ -408,10 +408,10 @@ def init_callbacks(dash_app):
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
                 (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
-                 True),
+                 (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
                                                     "Filter)"], total_reads_cutoff,
-                 True),
+                 (lambda row, col, cutoff: row[col] < cutoff)),
             ])
         return [
             generate_total_reads(

@@ -341,7 +341,7 @@ def _get_colours_for_values(colourby: List[str]):
 # Generators for graphs used on multiple pages
 def generate_total_reads(
         df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
-        show_names: Union[None, str], cutoff_line: List[Tuple[str, float]]=[]
+        show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
 ) -> go.Figure:
     return generate(
         "Passed Filter Reads",
@@ -352,7 +352,7 @@ def generate_total_reads(
         colour_by,
         shape_by,
         show_names,
-        cutoff_line,
+        cutoff_lines,
         x_col
     )
 
