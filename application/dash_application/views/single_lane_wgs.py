@@ -584,3 +584,12 @@ def init_callbacks(dash_app):
     def all_library_designs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_LIBRARY_DESIGNS]
+
+    @dash_app.callback(
+        Output(ids['show-data-labels'], 'value'),
+        [Input(ids['show-all-data-labels'], 'n_clicks')],
+        [State(ids['show-data-labels'], 'options')]
+    )
+    def all_data_labels_requested(click, avail_options):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x['value'] for x in avail_options]
