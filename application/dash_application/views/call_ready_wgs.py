@@ -89,7 +89,6 @@ special_cols = {
     "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID BamQC3": "File SWID BamQC3",
 }
-wgs_table_columns = [*BAMQC_COL.values(), *ICHOR_COL.values(), *CALL_COL.values(), *special_cols.values()]
 
 def get_merged_wgs_data():
     """
@@ -131,9 +130,10 @@ def get_merged_wgs_data():
     # Join IchorCNA and Callability data
     wgs_df = ichorcna_df.merge(
         callability_df,
-        how = "outer",
-        left_on = util.ichorcna_merged_columns,
-        right_on=util.callability_merged_columns
+        how="outer",
+        left_on=util.ichorcna_merged_columns,
+        right_on=util.callability_merged_columns,
+        suffixes=('', '_x')
     )
 
     # Join QC data and Pinery data
@@ -144,13 +144,18 @@ def get_merged_wgs_data():
 			bamqc3_df,
 			how="left",
 			left_on=util.pinery_merged_columns,
-			right_on=util.bamqc3_merged_columns
+			right_on = util.bamqc3_merged_columns,
+            suffixes=('', '_y')
 		)
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # IchorCNA duplicate columns
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_y')  # BamQC3 duplicate columns
 
-    return wgs_df, util.cache.versions(["ichorcnamerged", "mutectcallability"])
+    return wgs_df, util.cache.versions(["ichorcnamerged", "mutectcallability", "bamqc3merged"])
 
 # Make the WGS dataframe
 (WGS_DF, DATAVERSION) = get_merged_wgs_data()
+wgs_table_columns = WGS_DF.columns
 
 initial = get_initial_call_ready_values()
 

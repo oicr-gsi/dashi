@@ -286,7 +286,8 @@ def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_col
         pinery_samples,
         how="left",
         left_on=ius_cols,
-        right_on=pinery_ius_columns
+        right_on=pinery_ius_columns,
+        suffixes=('', '_q')
     )
     # Drop metrics with no corresponding Pinery data. This should only happen
     # if data is very old or stale
@@ -302,7 +303,8 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
         pinery_samples,
         how="left",
         left_on=merged_cols,
-        right_on=pinery_merged_columns
+        right_on=pinery_merged_columns,
+        suffixes=('', '_q')
     )
     return df
 
@@ -355,3 +357,14 @@ def unique_set(df: DataFrame, col: str, reverse: bool=False) -> List[str]:
         return unique[::-1]
     else:
         return unique
+
+
+def remove_suffixed_columns(df: DataFrame, suffix: str) -> DataFrame:
+    """
+    Join columns will often have the same column name, so DataFrames will append
+    a suffix to distinguish them. Use this if we want to keep only one copy of the
+    column around (usually because we've been using these as join columns so they
+    should be the same)
+    """
+    to_drop = [col_name for col_name in df if col_name.endswith(suffix)]
+    return df.drop(to_drop, axis=1)
