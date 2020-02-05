@@ -23,7 +23,7 @@ Create a `.env` file in the root directory of this repository:
 | `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes** | Directory where the QC-ETL caches are located | `/qcetl` | |
 | `MONGO_URL` | **Yes** | URL to location of MongoDB which holds Pinery data | `mongodb://user:password@mongo_web_url:27017/db_name` | |
 | `PINERY_URL` | **Yes** | URL to location of Pinery web service root | `http://pinery-url:8080/pinery-ws-miso` | 
-| `LOG_FILE_LOCATION` | No | File path where logs should be written | `~/logs/dashi.log` | `dashi.log` created in directory that Dashi was launched from |
+| `LOG_FILE_LOCATION` | **Yes** | File path where logs should be written | `~/logs/dashi.log` | `./dashi.log` |
 | `LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` | do not log |
 | `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` | use release version |
 
@@ -58,6 +58,7 @@ need to pass in your SSH keys to permit download and installation.
 1. Create a file at `.mongopass` with the password to the MongoDB database and
     make sure the location in docker-compose.yml is correct in `secrets`.
 1. Ensure your `.env` file is populated as per `Environment Variables` above.
+1. Ensure the file 'dashi.log' exists in the place specified by `LOG_FILE_LOCATION`. Create a blank file if necessary.
 1. Build the container with `docker-compose build`. 
 1. Launch with `docker-compose up`. Note that this completes installation of
     gsi-qc-etl before launching the app.
