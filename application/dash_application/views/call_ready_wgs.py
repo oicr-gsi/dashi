@@ -136,17 +136,18 @@ def get_merged_wgs_data():
         suffixes=('', '_x')
     )
 
-    # Join QC data and Pinery data
-    wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples, util.ichorcna_merged_columns)
-      
     # Join BamQC3 and IchorCNA+Pinery data
     wgs_df = wgs_df.merge(
 			bamqc3_df,
 			how="left",
-			left_on=util.pinery_merged_columns,
+			left_on=util.ichorcna_merged_columns,
 			right_on = util.bamqc3_merged_columns,
             suffixes=('', '_y')
 		)
+
+    # Join QC data and Pinery data
+    wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples, util.ichorcna_merged_columns)
+
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # IchorCNA duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_y')  # BamQC3 duplicate columns
