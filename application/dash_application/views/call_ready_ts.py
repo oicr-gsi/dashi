@@ -80,7 +80,9 @@ special_cols = {
     "Callability (14x/8x)": "callability",
     "Purity": "Purity",
     "File SWID ichorCNA": "File SWID ichorCNA",
-    "File SWID MutectCallability": "File SWID MutectCallability"
+    "File SWID MutectCallability": "File SWID MutectCallability",
+    "File SWID BamQC3": "File SWID BamQC3",
+    "File SWID HsMetrics": "File SWID HsMetrics"
 }
 
 ts_table_columns = [*BAMQC_COL.values(), *HSMETRICS_COL.values(), *ICHOR_COL.values(), *CALL_COL.values(),
@@ -89,7 +91,12 @@ ts_table_columns = [*BAMQC_COL.values(), *HSMETRICS_COL.values(), *ICHOR_COL.val
 
 def get_merged_ts_data():
     """"
-    Come back and fill in docstring
+    Join together all the dataframes needed for graphing:
+      * BamQC (where most of the graphed QC data comes from)
+      * ichorCNA (where the QC data comes from for Purity)
+      * MutectCallability (where the QC data comes from for Callability graph)
+      * HSMetrics (where the remainder of the QC data comes from)
+      * Pinery (sample information)
     """
 
     # Sample metadata from Pinery
@@ -117,6 +124,8 @@ def get_merged_ts_data():
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
+    bamqc3_df.rename(columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]}, inplace=True)
+    hsmetrics_df.rename(columns={HSMETRICS_COL.FileSWID: special_cols["File SWID HsMetrics"]}, inplace=True)
 
     # Join IchorCNA and HSMetrics Data
     ts_df = ichorcna_df.merge(
@@ -129,18 +138,18 @@ def get_merged_ts_data():
     ts_df = ts_df.merge(
         callability_df,
         how="outer",
-        left_on=util.ichorcna_merged_columns,
+        left_on=util.hsmetrics_merged_columns,
         right_on=util.callability_merged_columns)
 
-    # Join QC data and Pinery data
-    ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.ichorcna_merged_columns)
-
-    # Join BamQC3 and QC+Pinery data
+    # Join BamQC3 and QC data
     ts_df = ts_df.merge(
         bamqc3_df,
-        how="left",
-        left_on=util.pinery_merged_columns,
+        how="outer",
+        left_on=util.callability_merged_columns,
         right_on=util.bamqc3_merged_columns)
+
+    # Join QC data and Pinery data
+    ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.bamqc3_merged_columns)
 
     return ts_df, util.cache.versions(["ichorcnamerged", "mutectcallability", "hsmetrics"])
 
@@ -150,7 +159,6 @@ def get_merged_ts_data():
 # Set additional initial values for dropdown menus
 initial = get_initial_call_ready_values()
 initial["second_sort"] = BAMQC_COL.TotalReads
-# initial["second_sort"] = CALL_COL.Callability
 initial["tumour_coverage_cutoff"] = 80
 initial["normal_coverage_cutoff"] = 30
 initial["duplicate_rate_max"] = 50
@@ -436,10 +444,10 @@ def layout(query_string):
                     # TODO: add the tumour/normal cutoff differences for coverage
                     ('Callability Cutoff', special_cols["Callability (14x/8x)"],
                      initial["callability_cutoff"], True),
-                    # ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                    # initial["insert_size_cutoff"], True),
-                    #('Duplicate Cutoff', BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                    # initial["duplicate_rate_max"], False),
+                    ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+                     initial["insert_size_cutoff"], True),
+                    ('Duplicate Cutoff', BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                     initial["duplicate_rate_max"], False),
                 ]
             )
         ])
@@ -526,6 +534,10 @@ def init_callbacks(dash_app):
             # Todo: add the rest of the cutoff differences
             ('Callability Cutoff', special_cols["Callability (14x/8x)"],
              callability_cutoff, True),
+            ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
+             insert_size_cutoff, True),
+            ('Duplicate Cutoff', BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+             duplicate_rate_max, True)
         ])
 
         return [
