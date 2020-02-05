@@ -213,7 +213,7 @@ def generate_mean_coverage(df, graph_params):
     return generate(
         "Mean Coverage", df,
         lambda d: d[PINERY_COL.RootSampleName],
-        lambda d: d[special_cols["Mean Coverage"],
+        lambda d: d[special_cols["Mean Coverage"]],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
