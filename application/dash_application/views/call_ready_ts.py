@@ -151,7 +151,7 @@ def get_merged_ts_data():
     # Join QC data and Pinery data
     ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.bamqc3_merged_columns)
 
-    return ts_df, util.cache.versions(["ichorcnamerged", "mutectcallability", "hsmetrics"])
+    return ts_df, util.cache.versions(["bamqc3merged", "ichorcnamerged", "mutectcallability", "hsmetrics"])
 
 
 (TS_DF, DATAVERSION) = get_merged_ts_data()
