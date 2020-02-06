@@ -61,6 +61,10 @@ PLOTLY_DEFAULT_COLOURS=[
     '#17becf'   # blue-teal
 ]
 
+CUTOFF_LINE_COLOURS = [
+    'darkolivegreen', 'darkblue', 'darkorchid'
+]
+
 BIG_MARKER_SIZE = 20
 
 DATA_LABEL_ORDER = [
@@ -202,13 +206,9 @@ def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
 
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
-    # if kits:
-    #     df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
     if tissue_preps:
         df = df[df[pinery.column.SampleProvenanceColumn.TissuePreparation].isin(
             tissue_preps)]
-    # if institutes:
-    #     df = df[df[pinery.column.SampleProvenanceColumn.Institute].isin(institutes)]
     if sample_types:
         df = df[df[sample_type_col].isin(sample_types)]
 
@@ -222,7 +222,7 @@ def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, line_y=None, name_col=PINERY_COL.SampleName):
+             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -276,13 +276,13 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             hoverlabel={"namelength": -1},
         )
         traces.append(graph)
-    if line_y is not None:
+    for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(go.Scattergl( # Cutoff line
             x=sorted_data[name_col], 
-            y=[line_y] * len(sorted_data),
+            y=[cutoff_value] * len(sorted_data),
             mode="lines",
-            line={"width": 1, "color": "black", "dash": "dash"},
-            name="Cutoff"
+            line={"width": 1, "color": CUTOFF_LINE_COLOURS[index], "dash": "dash"},
+            name=cutoff_label
         ))
     if not highlight_df.empty:
         traces.append(go.Scattergl( # Draw highlighted items on top
@@ -337,7 +337,7 @@ def _get_colours_for_values(colourby: List[str]):
 # Generators for graphs used on multiple pages
 def generate_total_reads(
         df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
-        show_names: Union[None, str], cutoff_line
+        show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
 ) -> go.Figure:
     return generate(
         "Passed Filter Reads",
@@ -348,7 +348,7 @@ def generate_total_reads(
         colour_by,
         shape_by,
         show_names,
-        cutoff_line,
+        cutoff_lines,
         x_col
     )
 
@@ -383,7 +383,7 @@ def get_initial_call_ready_values():
         "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
         "second_sort": None,
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
-        "shape_by": pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType,
+        "shape_by": sample_type_col,
         "shownames_val": None
     }
 
@@ -417,28 +417,28 @@ class ColourShapeSingleLane:
 
 
 class ColourShapeCallReady:
-    def __init__(self, projects, kits, library_designs, institutes, sample_types):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_preps):
         self.projects = projects
-        self.kits = kits
         self.library_designs = library_designs
         self.institutes = institutes
         self.sample_types = sample_types
+        self.tissue_preps = tissue_preps
 
     @staticmethod
     def dropdown():
         return [
             {"label": "Project", "value": PINERY_COL.StudyTitle},
-            {"label": "Kit", "value": PINERY_COL.PrepKit},
             {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
+            {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
         ]
 
     def items_for_df(self):
         return {
             PINERY_COL.StudyTitle: self.projects,
-            PINERY_COL.PrepKit: self.kits,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs,
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
+            PINERY_COL.TissuePreparation: self.tissue_preps,
         }
