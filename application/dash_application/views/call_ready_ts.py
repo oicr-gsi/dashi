@@ -343,7 +343,7 @@ def layout(query_string):
                                                           "value": ICHOR_COL.TumorFraction},
                                                          {"label": "HS Library Size",
                                                           "value": HSMETRICS_COL.HsLibrarySize},
-                                                         {"label": "PctExcDupe??",
+                                                         {"label": "Percent Exact Duplicates",
                                                           "value": HSMETRICS_COL.PctExcDupe},
                                                          {"label": "Fraction Excluded due to Overlap",
                                                           "value": HSMETRICS_COL.PctExcOverlap},
