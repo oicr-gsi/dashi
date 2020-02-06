@@ -100,7 +100,7 @@ def get_merged_wgs_data():
       * Runs (needed to join Pinery to Instruments)
     """
     # Pull in sample metadata from Pinery.
-    pinery_samples = util.get_pinery_merged_samples(False) # TODO: remove the "False" when we have real data
+    pinery_samples = util.get_pinery_merged_samples()
     # Filter the Pinery samples for WG samples and others which will have BAM files generated.
     pinery_samples = util.filter_by_library_design(pinery_samples,
                                                    util.wgs_lib_designs)
@@ -113,11 +113,8 @@ def get_merged_wgs_data():
 
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction]* 100.0, 3)
-    ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability]* 100.0, 3)
-    callability_df.rename(columns = {CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
-        inplace = True)
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (bamqc3_df[BAMQC_COL.NonPrimaryReads] /
@@ -125,6 +122,9 @@ def get_merged_wgs_data():
     # TODO: uncomment once we've got bamqc3merged built with v0.19.0
     # bamqc3_df[special_cols["Mean Coverage"]] = (BAMQC_COL.TotalBasesOnTarget / BAMQC_COL.TotalTargetSize) *
     #     BAMQC_COL.TotalReads / BAMQC_COL.SampleLevel
+    ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
+    callability_df.rename(columns = {CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
+        inplace = True)
     bamqc3_df.rename(columns = {BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]}, inplace=True)
 
     # Join IchorCNA and Callability data
@@ -149,7 +149,7 @@ def get_merged_wgs_data():
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples, util.ichorcna_merged_columns)
 
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
-    wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # IchorCNA duplicate columns
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_y')  # BamQC3 duplicate columns
 
     return wgs_df, util.cache.versions(["ichorcnamerged", "mutectcallability", "bamqc3merged"])
@@ -314,10 +314,10 @@ def layout(query_string):
                     sidebar_utils.select_library_designs(
                         ids["all-library-designs"], ids["library-designs-list"],
                         ALL_LIBRARY_DESIGNS),
-                    sidebar_utils.select_tissue_preps(
+                    sidebar_utils.select_tissue_prep(
                         ids["all-tissue-preps"], ids["tissue-preps-list"],
                         ALL_TISSUE_PREPS),
-                    sidebar_utils.select_sample_types(
+                    sidebar_utils.select_sample_type(
                         ids["all-sample-types"], ids["sample-types-list"],
                         ALL_SAMPLE_TYPES),
                     sidebar_utils.hr(),
@@ -524,11 +524,11 @@ def init_callbacks(dash_app):
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
             (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                pf_reads_tumour_cutoff,
-                (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
+             pf_reads_tumour_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
             (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                pf_reads_normal_cutoff,
-                (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
+             pf_reads_normal_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             # TODO: add the tumour/normal cutoff differences for coverage
             (cutoff_callability_label, special_cols["Percent Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),

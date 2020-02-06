@@ -6,6 +6,7 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
 import gsiqcetl.column
+import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
@@ -85,9 +86,6 @@ special_cols = {
     "File SWID HsMetrics": "File SWID HsMetrics"
 }
 
-ts_table_columns = [*BAMQC_COL.values(), *HSMETRICS_COL.values(), *ICHOR_COL.values(), *CALL_COL.values(),
-                    *special_cols.values()]
-
 
 def get_merged_ts_data():
     """"
@@ -100,7 +98,7 @@ def get_merged_ts_data():
     """
 
     # Sample metadata from Pinery
-    pinery_samples = util.get_pinery_merged_samples(False)  # todo: come back
+    pinery_samples = util.get_pinery_merged_samples()
     pinery_samples = util.filter_by_library_design(pinery_samples, util.ex_lib_designs)
 
     ichorcna_df = util.get_ichorcna_merged()
@@ -132,40 +130,65 @@ def get_merged_ts_data():
         hsmetrics_df,
         how="outer",
         left_on=util.ichorcna_merged_columns,
-        right_on=util.hsmetrics_merged_columns)
+        right_on=util.hsmetrics_merged_columns,
+        suffixes=('', '_x'))
 
     # Join IchorCNA+HsMetrics and Callability data
     ts_df = ts_df.merge(
         callability_df,
         how="outer",
-        left_on=util.hsmetrics_merged_columns,
-        right_on=util.callability_merged_columns)
+        left_on=util.ichorcna_merged_columns,
+        right_on=util.callability_merged_columns,
+        suffixes=('', '_y'))
 
     # Join BamQC3 and QC data
     ts_df = ts_df.merge(
         bamqc3_df,
         how="outer",
-        left_on=util.callability_merged_columns,
-        right_on=util.bamqc3_merged_columns)
+        left_on=util.ichorcna_merged_columns,
+        right_on=util.bamqc3_merged_columns,
+        suffixes=('', '_z'))
 
     # Join QC data and Pinery data
     ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.bamqc3_merged_columns)
+
+    ts_df = util.remove_suffixed_columns(ts_df, '_q')  # Pinery duplicate columns
+    ts_df = util.remove_suffixed_columns(ts_df, '_x')  # IchorCNA duplicate columns
+    ts_df = util.remove_suffixed_columns(ts_df, '_y')  # Callability duplicate columns
+    ts_df = util.remove_suffixed_columns(ts_df, '_z')  # BamQC3 duplicate columns
 
     return ts_df, util.cache.versions(["bamqc3merged", "ichorcnamerged", "mutectcallability", "hsmetrics"])
 
 
 (TS_DF, DATAVERSION) = get_merged_ts_data()
+ts_table_columns = TS_DF.columns
+
+initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial = get_initial_call_ready_values()
 initial["second_sort"] = BAMQC_COL.TotalReads
-initial["tumour_coverage_cutoff"] = 80
-initial["normal_coverage_cutoff"] = 30
-initial["duplicate_rate_max"] = 50
-initial["callability_cutoff"] = 50
-initial["insert_size_cutoff"] = 150
-initial["pf_tumour_cutoff"] = 148
-initial["pf_normal_cutoff"] = 44
+# Set initial values for graph cutoff lines
+cutoff_pf_reads_tumour_label = "Total PF Reads (Tumour) minimum"
+cutoff_pf_reads_tumour = "cutoff_pf_reads_tumour"
+initial[cutoff_pf_reads_tumour] = 148
+cutoff_pf_reads_normal_label = "Total PF Reads (Normal) minimum"
+cutoff_pf_reads_normal = "cutoff_pf_reads_normal"
+initial[cutoff_pf_reads_normal] = 44
+cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
+cutoff_coverage_tumour = "cutoff_coverage_tumour"
+initial[cutoff_coverage_tumour] = 80
+cutoff_coverage_normal_label = "Coverage (Normal) minimum"
+cutoff_coverage_normal = "cutoff_coverage_normal"
+initial[cutoff_coverage_normal] = 30
+cutoff_duplicate_rate_label = "Duplicate Rate maximum"
+cutoff_duplicate_rate = "cutoff_duplicate_rate"
+initial[cutoff_duplicate_rate] = 50
+cutoff_callability_label = "Callability minimum"
+cutoff_callability = "cutoff_callability"
+initial[cutoff_callability] = 50
+cutoff_insert_mean_label = "Insert Mean minimum"
+cutoff_insert_mean = "cutoff_insert_mean"
+initial[cutoff_insert_mean] = 150
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(TS_DF, PINERY_COL.StudyTitle)
@@ -182,18 +205,8 @@ collapsing_functions = {
     "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types")
 }
 
-shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_KITS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES)
+shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_PREPS)
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
-
-
-def generate_total_reads(df, graph_params):
-    return generate(
-        "Total Reads (Passed Filter)", df,
-        lambda d: d[PINERY_COL.RootSampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
-        PINERY_COL.RootSampleName)
 
 
 # def generate_unique_reads(df, graph_params):
@@ -202,7 +215,7 @@ def generate_total_reads(df, graph_params):
 #        lambda d: d[PINERY_COL.RootSampleName],
 #        lambda d: d[special_cols["Percent Unique Reads (PF)"]],
 #        "%", graph_params["colour_by"], graph_params["shape_by"],
-#        graph_params["shownames_val"], None,
+#        graph_params["shownames_val"], [],
 #        PINERY_COL.RootSampleName)
 
 
@@ -212,7 +225,7 @@ def generate_mean_target_coverage(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[HSMETRICS_COL.MeanTargetCoverage],
         "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -222,7 +235,8 @@ def generate_callability(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[special_cols["Callability (14x/8x)"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], graph_params["callability_cutoff"],
+        graph_params["shownames_val"],
+        [(cutoff_callability_label, graph_params[cutoff_callability])],
         PINERY_COL.RootSampleName)
 
 
@@ -232,7 +246,8 @@ def generate_mean_insert_size(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[BAMQC_COL.InsertMean],
         "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], graph_params["insert_size_cutoff"],
+        graph_params["shownames_val"],
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
         PINERY_COL.RootSampleName)
 
 
@@ -242,7 +257,7 @@ def generate_hs_library_size(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
         "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -252,7 +267,8 @@ def generate_duplicate_rate(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], graph_params["duplicate_rate_max"],
+        graph_params["shownames_val"],
+        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
         PINERY_COL.RootSampleName)
 
 
@@ -262,7 +278,7 @@ def generate_purity(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -272,7 +288,7 @@ def generate_fraction_excluded(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[HSMETRICS_COL.PctExcOverlap],
         "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -282,7 +298,7 @@ def generate_at_dropout(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[HSMETRICS_COL.AtDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -292,7 +308,7 @@ def generate_gc_dropout(df, graph_params):
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[HSMETRICS_COL.GCDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], None,
+        graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
 
@@ -371,26 +387,30 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input("Tumour Coverage minimum",
-                                               ids["tumour-coverage-cutoff"], initial["tumour_coverage_cutoff"]),
-                    sidebar_utils.cutoff_input("Normal Coverage minimum",
-                                               ids["normal-coverage-cutoff"], initial["normal_coverage_cutoff"]),
-                    sidebar_utils.cutoff_input("Duplicate Rate maximum",
-                                               ids["duplicate-rate-max"], initial["duplicate_rate_max"]),
-                    sidebar_utils.cutoff_input("Callability minimum",
-                                               ids["callability-cutoff"], initial["callability_cutoff"]),
-                    sidebar_utils.cutoff_input("Mean Insert Size minimum",
-                                               ids["insert-size-cutoff"], initial["insert_size_cutoff"]),
-                    sidebar_utils.cutoff_input("Passed Filter Reads (Tumour) minimum",
-                                               ids["pf-tumour-cutoff"], initial["pf_tumour_cutoff"]),
-                    sidebar_utils.cutoff_input("Passed Filter Reads (Normal) minimum",
-                                               ids["pf-normal-cutoff"], initial["pf_normal_cutoff"]),
+                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_tumour_label),
+                                               ids["pf-tumour-cutoff"], initial[cutoff_pf_reads_tumour]),
+                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_normal_label),
+                                               ids["pf-normal-cutoff"], initial[cutoff_pf_reads_normal]),
+                    sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
+                                               ids["tumour-coverage-cutoff"], initial[cutoff_coverage_tumour]),
+                    sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
+                                               ids["normal-coverage-cutoff"], initial[cutoff_coverage_normal]),
+                    sidebar_utils.cutoff_input(cutoff_callability_label,
+                                               ids["callability-cutoff"], initial[cutoff_callability]),
+                    sidebar_utils.cutoff_input(cutoff_insert_mean_label,
+                                               ids["insert-size-cutoff"], initial[cutoff_insert_mean]),
+                    sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
+                                               ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
                 ]),
 
                 html.Div(className="seven columns", children=[
                     core.Graph(
                         id=ids["total-reads"],
-                        figure=generate_total_reads(df, initial)),
+                        figure=generate_total_reads(df, PINERY_COL.RootSampleName,
+                            special_cols["Total Reads (Passed Filter)"],
+                            initial["colour_by"], initial["shape_by"], initial["shownames_val"],
+                            [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
+                             (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
 
                     # core.Graph(
                     #    id=ids["unique-reads"],
@@ -440,14 +460,20 @@ def layout(query_string):
                 df,
                 ts_table_columns,
                 [
-                    # TODO: add the tumour/normal cutoff differences for total PF reads
+                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                     initial[cutoff_pf_reads_tumour],
+                     (lambda row, col, cutoff: row[col] > cutoff and util.is_tumour(row))),
+                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                     initial[cutoff_pf_reads_normal],
+                     (lambda row, col, cutoff: row[col] > cutoff and util.is_normal(row))),
                     # TODO: add the tumour/normal cutoff differences for coverage
-                    ('Callability Cutoff', special_cols["Callability (14x/8x)"],
-                     initial["callability_cutoff"], True),
-                    ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                     initial["insert_size_cutoff"], True),
-                    ('Duplicate Cutoff', BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                     initial["duplicate_rate_max"], False),
+                    (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                     initial[cutoff_callability],
+                     (lambda row, col, cutoff: row[col] > cutoff)),
+                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                     (lambda row, col, cutoff: row[col] > cutoff)),
+                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] < cutoff)),
                 ]
             )
         ])
@@ -515,33 +541,45 @@ def init_callbacks(dash_app):
 
         df = reshape_call_ready_df(TS_DF, projects, tissue_preps, sample_types, first_sort, second_sort, colour_by,
                                    shape_by, shape_colour.items_for_df(), search_sample)
-
         graph_params = {
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "tumour_coverage_cutoff": tumour_coverage_cutoff,
-            "normal_coverage_cutoff": normal_coverage_cutoff,
-            "duplicate_rate_max": duplicate_rate_max,
-            "callability_cutoff": callability_cutoff,
-            "insert_size_cutoff": insert_size_cutoff,
-            "pf_tumour_cutoff": pf_tumour_cutoff,
-            "pf_normal_cutoff": pf_normal_cutoff
+            cutoff_coverage_tumour: tumour_coverage_cutoff,
+            cutoff_coverage_normal: normal_coverage_cutoff,
+            cutoff_duplicate_rate: duplicate_rate_max,
+            cutoff_callability: callability_cutoff,
+            cutoff_insert_mean: insert_size_cutoff,
+            cutoff_pf_reads_tumour: pf_tumour_cutoff,
+            cutoff_pf_reads_normal: pf_normal_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            # Todo: add the rest of the cutoff differences
-            ('Callability Cutoff', special_cols["Callability (14x/8x)"],
-             callability_cutoff, True),
-            ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-             insert_size_cutoff, True),
-            ('Duplicate Cutoff', BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-             duplicate_rate_max, True)
+            (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+             pf_tumour_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
+            (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+             pf_normal_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
+            (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage, tumour_coverage_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
+            (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage, normal_coverage_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
+            (cutoff_callability_label, special_cols["Callability (14x/8x)"], callability_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_size_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+             duplicate_rate_max, (lambda row, col, cutoff: row[col] > cutoff)),
         ])
-
         return [
-            generate_total_reads(df, graph_params),
+            generate_total_reads(df, PINERY_COL.RootSampleName,
+                special_cols["Total Reads (Passed Filter)"],
+                colour_by, shape_by, show_names,
+                [(cutoff_pf_reads_normal_label, pf_normal_cutoff),
+                 (cutoff_pf_reads_tumour_label, pf_tumour_cutoff)]
+            ),
             # generate_unique_reads(df, graph_params),
             generate_mean_target_coverage(df, graph_params),
             generate_callability(df, graph_params),

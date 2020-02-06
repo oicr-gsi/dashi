@@ -383,7 +383,7 @@ def get_initial_call_ready_values():
         "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
         "second_sort": None,
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
-        "shape_by": pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType,
+        "shape_by": sample_type_col,
         "shownames_val": None
     }
 
