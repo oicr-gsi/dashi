@@ -80,6 +80,22 @@ def runs_in_range(start_date: str, end_date: str) -> Series:
     return allowed_runs[pinery.column.RunsColumn.Name]
 
 
+def approve_run_button(approve_run_id: str) -> html.A:
+    return html.A("Approve this run in MISO",
+                  id=approve_run_id,
+                  className="button approve-run",
+                  target="_blank",
+                  style={"display": "none"})
+
+
+def approve_run_url(runs: List[str]):
+    if len(runs) == 1:
+        return ["https://miso.oicr.on.ca/miso/run/alias/" + runs[0], {"display": "inline-block"}]
+
+    else:
+        return ["", {"display": "none"}]
+
+
 def select_instruments(all_instruments_id: str, instruments_id: str,
                        instruments: List[str]) -> core.Loading:
     return select_with_select_all("All Instruments", all_instruments_id,
@@ -301,3 +317,4 @@ def update_only_if_clicked(click):
     which hasn't actually been clicked. If the button hasn't been clicked, raise an error
     to cancel further action in this callback. """
     if click is None: raise PreventUpdate
+

@@ -23,6 +23,7 @@ title = "Single-Lane RNA-seq"
 ids = init_ids([
     # Buttons
     "update-button",
+    "approve-run-button",
 
     # Sidebar controls
     "all-runs",
@@ -294,7 +295,8 @@ def layout(query_string):
     html.Div(className="body", children=[
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
-                html.Button("Update", id=ids['update-button']),
+                html.Button("Update", id=ids['update-button'], className="update-button"),
+                sidebar_utils.approve_run_button(ids['approve-run-button']),
                 html.Br(),
                 html.Br(),
 
@@ -447,6 +449,8 @@ def layout(query_string):
 def init_callbacks(dash_app):
     @dash_app.callback(
         [
+            Output(ids["approve-run-button"], "href"),
+            Output(ids["approve-run-button"], "style"),
             Output(ids["total-reads"], "figure"),
             Output(ids["unique-reads"], "figure"),
             Output(ids["5-to-3-prime-bias"], "figure"),
@@ -504,7 +508,9 @@ def init_callbacks(dash_app):
         df = reshape_single_lane_df(RNA_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
-        
+
+        (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
+
         graph_params = {
             "colour_by": colour_by,
             "shape_by": shape_by,
@@ -524,6 +530,8 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
         return [
+            approve_run_href,
+            approve_run_style,
             generate_total_reads(
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
