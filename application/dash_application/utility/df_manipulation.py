@@ -23,6 +23,7 @@ RNASEQQC_COL = gsiqcetl.column.RnaSeqQcColumn
 BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
 ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
+HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
@@ -50,6 +51,9 @@ ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Donor,
 callability_merged_columns = [MUTECT_CALL_COL.Donor, MUTECT_CALL_COL.GroupID,
     MUTECT_CALL_COL.LibraryDesign, MUTECT_CALL_COL.TissueOrigin,
     MUTECT_CALL_COL.TissueType]
+hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
+                            HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
+                            HSMETRICS_MERGED_COL.TissueType]
 
 
 def label_sample_type(row: Series) -> str:
@@ -94,10 +98,11 @@ _bcl2fastq_unknown = cache.bcl2fastq.unknown
 _rnaseqqc = normalized_ius(cache.rnaseqqc.rnaseqqc, rnaseqqc_ius_columns)
 _bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
-#_bamqc3_merged = df_with_normalized_merged_columns(cache.bamqc3.bamqc3merged, bamqc3_merged_columns)
+_bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
 _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
 _mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
+_hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
@@ -214,8 +219,8 @@ def get_rnaseqqc():
     return _rnaseqqc.copy(deep=True)
 
 
-# def get_bamqc3_merged():
-#    return _bamqc3_merged.copy(deep=True)
+def get_bamqc3_merged():
+    return _bamqc3_merged.copy(deep=True)
 
 
 def get_ichorcna_merged():
@@ -224,6 +229,10 @@ def get_ichorcna_merged():
 
 def get_mutect_callability():
     return _mutect_callability.copy(deep=True)
+
+
+def get_hsmetrics_merged():
+    return _hsmetrics_merged.copy(deep=True)
 
 
 def get_pinery_samples(active_projects_only=True):
