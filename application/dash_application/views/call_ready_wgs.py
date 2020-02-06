@@ -278,10 +278,10 @@ def generate_ploidy(df, graph_params):
 
 def generate_unmapped_reads(df, graph_params):
     return generate(
-        "Unmapped Reads (%)", df,
+        "Unmapped Reads", df,
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[BAMQC_COL.UnmappedReads],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "Read Counts", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
