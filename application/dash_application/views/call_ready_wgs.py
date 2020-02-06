@@ -82,7 +82,6 @@ special_cols = {
     "Total Reads (Passed Filter)": "total reads passed filter",
     "Unique Reads (Passed Filter)": "percent unique reads",
     "Unmapped Reads": "percent unmapped reads",
-    "Mean Coverage": "mean coverage",
     "Purity": "percent purity",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
@@ -119,9 +118,6 @@ def get_merged_wgs_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (bamqc3_df[BAMQC_COL.NonPrimaryReads] /
         bamqc3_df[BAMQC_COL.TotalReads])) * 100
-    # TODO: uncomment once we've got bamqc3merged built with v0.19.0
-    # bamqc3_df[special_cols["Mean Coverage"]] = (BAMQC_COL.TotalBasesOnTarget / BAMQC_COL.TotalTargetSize) *
-    #     BAMQC_COL.TotalReads / BAMQC_COL.SampleLevel
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns = {CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
         inplace = True)
@@ -215,11 +211,11 @@ def generate_unique_reads(df, graph_params):
         PINERY_COL.RootSampleName)
 
 
-def generate_mean_coverage(df, graph_params):
+def generate_deduplicated_coverage(df, graph_params):
     return generate(
-        "Mean Coverage", df,
+        "Deduplicated Coverage", df,
         lambda d: d[PINERY_COL.RootSampleName],
-        lambda d: d[special_cols["Mean Coverage"]],
+        lambda d: d[BAMQC_COL.CoverageDeduplicated],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
@@ -386,14 +382,15 @@ def layout(query_string):
                              (cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal])]
                         )
                     ),
-                    core.Graph(
-                        id=ids["unique-reads"],
-                        figure=generate_unique_reads(df, initial)
-                    ),
+                    # TODO: GR-1047
                     # core.Graph(
-                    #     id=ids["mean-coverage"],
-                    #     figure=generate_mean_coverage(df, initial)
+                    #     id=ids["unique-reads"],
+                    #     figure=generate_unique_reads(df, initial)
                     # ),
+                    core.Graph(
+                        id=ids["mean-coverage"],
+                        figure=generate_deduplicated_coverage(df, initial)
+                    ),
                     core.Graph(
                         id=ids["callability"],
                         figure=generate_callability(df, initial)
@@ -429,18 +426,23 @@ def layout(query_string):
             [
                 (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
                  initial[cutoff_pf_reads_tumour],
-                 (lambda row, col, cutoff: row[col] > cutoff and util.is_tumour(row))),
+                 (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
                 (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
                  initial[cutoff_pf_reads_normal],
-                 (lambda row, col, cutoff: row[col] > cutoff and util.is_normal(row))),
-                # TODO: add the tumour/normal cutoff differences for coverage
+                 (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
+                 initial[cutoff_coverage_tumour],
+                 (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                (cutoff_coverage_normal_label, BAMQC_COL.CoverageDeduplicated,
+                 initial[cutoff_coverage_normal],
+                 (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                 (cutoff_callability_label, special_cols["Percent Callability"],
                  initial[cutoff_callability],
-                 (lambda row, col, cutoff: row[col] > cutoff)),
+                 (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                 (lambda row, col, cutoff: row[col] > cutoff)),
+                 (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                 initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] < cutoff)),
+                 initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
 
             ]
         )
@@ -452,8 +454,8 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            Output(ids["unique-reads"], "figure"),
-            # Output(ids["mean-coverage"], "figure"),
+            # Output(ids["unique-reads"], "figure"),  # TODO: GR-1047
+            Output(ids["mean-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
@@ -529,7 +531,12 @@ def init_callbacks(dash_app):
             (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
              pf_reads_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            # TODO: add the tumour/normal cutoff differences for coverage
+            (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
+             coverage_tumour_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+            (cutoff_coverage_normal_label, BAMQC_COL.CoverageDeduplicated,
+             coverage_normal_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
             (cutoff_callability_label, special_cols["Percent Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
@@ -546,8 +553,8 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),
-            generate_unique_reads(df, graph_params),
-            # generate_mean_coverage(df, graph_params),
+            # generate_unique_reads(df, graph_params),  # TODO: GR-1047
+            generate_deduplicated_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),

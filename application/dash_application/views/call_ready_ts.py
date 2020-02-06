@@ -208,7 +208,7 @@ collapsing_functions = {
 shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_PREPS)
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
-
+# TODO: GR-1047
 # def generate_unique_reads(df, graph_params):
 #    return generate(
 #        "Percent Unique Reads (PF)", df,
@@ -245,7 +245,7 @@ def generate_mean_insert_size(df, graph_params):
         "Mean Insert Size", df,
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[BAMQC_COL.InsertMean],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
         PINERY_COL.RootSampleName)
@@ -412,6 +412,7 @@ def layout(query_string):
                             [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
                              (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
 
+                    # TODO: GR-1047
                     # core.Graph(
                     #    id=ids["unique-reads"],
                     #    figure=generate_unique_reads(df, initial)),
@@ -462,18 +463,23 @@ def layout(query_string):
                 [
                     (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
                      initial[cutoff_pf_reads_tumour],
-                     (lambda row, col, cutoff: row[col] > cutoff and util.is_tumour(row))),
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
                     (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
                      initial[cutoff_pf_reads_normal],
-                     (lambda row, col, cutoff: row[col] > cutoff and util.is_normal(row))),
-                    # TODO: add the tumour/normal cutoff differences for coverage
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                     initial[cutoff_coverage_tumour],
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                    (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                     initial[cutoff_coverage_normal],
+                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                     (cutoff_callability_label, special_cols["Callability (14x/8x)"],
                      initial[cutoff_callability],
-                     (lambda row, col, cutoff: row[col] > cutoff)),
+                     (lambda row, col, cutoff: row[col] < cutoff)),
                     (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                     (lambda row, col, cutoff: row[col] > cutoff)),
+                     (lambda row, col, cutoff: row[col] < cutoff)),
                     (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] < cutoff)),
+                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
                 ]
             )
         ])
@@ -484,7 +490,7 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            # Output(ids["unique-reads"], "figure"),
+            # Output(ids["unique-reads"], "figure"),  # TODO: GR-1047
             Output(ids["mean-target-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert-size"], "figure"),
@@ -580,7 +586,7 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_tumour_cutoff)]
             ),
-            # generate_unique_reads(df, graph_params),
+            # generate_unique_reads(df, graph_params),  # TODO: GR-1047
             generate_mean_target_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
