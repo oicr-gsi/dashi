@@ -3,7 +3,6 @@ from collections import defaultdict
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
-import pandas as pd
 
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -154,7 +153,6 @@ ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
 ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(RNA_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
-ALL_SAMPLES = util.unique_set(RNA_DF, PINERY_COL.SampleName)
 ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
@@ -360,7 +358,7 @@ def layout(query_string):
                                               initial["shape_by"]),
 
                 sidebar_utils.highlight_samples_input(ids['search-sample'],
-                                                      ALL_SAMPLES),
+                                                      []),
 
                 sidebar_utils.show_data_labels_input_single_lane(ids["show-data-labels"],
                                                      initial["shownames_val"],
@@ -456,6 +454,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
+            Output(ids["search-sample"], "options"),
         ],
         [
             Input(ids["update-button"], "n_clicks")
@@ -517,6 +516,9 @@ def init_callbacks(dash_app):
             ('% rRNA Contamination', RNA_COL.rRNAContaminationreadsaligned,
              rrna_cutoff, False),
         ])
+
+        new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
+
         return [
             generate_total_reads(
                 df, PINERY_COL.SampleName,
@@ -532,6 +534,7 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
+            [{'label': x, 'value': x} for x in new_search_sample],
         ]
         
     @dash_app.callback(
