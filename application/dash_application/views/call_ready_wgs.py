@@ -228,7 +228,7 @@ def generate_callability(df, graph_params):
         "Callability (14x/18x)", df,
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[special_cols["Percent Callability"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_callability_label, graph_params[cutoff_callability])],
         PINERY_COL.RootSampleName)
@@ -327,8 +327,8 @@ def layout(query_string):
                         [
                             {"label": "Total Reads",
                             "value": BAMQC_COL.TotalReads},
-                            {"label": "Unique Reads",
-                            "value": special_cols["Unique Reads (Passed Filter)"]},
+                            #{"label": "Unique Reads",  # TODO: GR-1047
+                            #"value": special_cols["Unique Reads (Passed Filter)"]},
                             {"label": "Callability",
                             "value": CALL_COL.Callability},
                             {"label": "Purity",
