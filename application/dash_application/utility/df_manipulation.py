@@ -39,19 +39,21 @@ ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 
-pinery_merged_columns = [PINERY_COL.RootSampleName, PINERY_COL.GroupID,
-    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.TissueOrigin,
-    PINERY_COL.TissueType]
-bamqc3_merged_columns = [BAMQC3_MERGED_COL.Donor, BAMQC3_MERGED_COL.GroupID,
-    BAMQC3_MERGED_COL.LibraryDesign, BAMQC3_MERGED_COL.TissueOrigin,
-    BAMQC3_MERGED_COL.TissueType]
-ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Donor,
-    ICHORCNA_MERGED_COL.GroupID, ICHORCNA_MERGED_COL.LibraryDesign,
-    ICHORCNA_MERGED_COL.TissueOrigin, ICHORCNA_MERGED_COL.TissueType]
-callability_merged_columns = [MUTECT_CALL_COL.Donor, MUTECT_CALL_COL.GroupID,
-    MUTECT_CALL_COL.LibraryDesign, MUTECT_CALL_COL.TissueOrigin,
-    MUTECT_CALL_COL.TissueType]
-hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
+pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
+    PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.TissueOrigin, PINERY_COL.TissueType]
+bamqc3_merged_columns = [BAMQC3_MERGED_COL.Project, BAMQC3_MERGED_COL.Donor,
+    BAMQC3_MERGED_COL.GroupID, BAMQC3_MERGED_COL.LibraryDesign,
+    BAMQC3_MERGED_COL.TissueOrigin, BAMQC3_MERGED_COL.TissueType]
+ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Project,
+    ICHORCNA_MERGED_COL.Donor, ICHORCNA_MERGED_COL.GroupID,
+    ICHORCNA_MERGED_COL.LibraryDesign, ICHORCNA_MERGED_COL.TissueOrigin,
+    ICHORCNA_MERGED_COL.TissueType]
+callability_merged_columns = [MUTECT_CALL_COL.Project, MUTECT_CALL_COL.Donor,
+    MUTECT_CALL_COL.GroupID, MUTECT_CALL_COL.LibraryDesign,
+    MUTECT_CALL_COL.TissueOrigin, MUTECT_CALL_COL.TissueType]
+hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Project,
+                            HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
                             HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
                             HSMETRICS_MERGED_COL.TissueType]
 
@@ -98,8 +100,9 @@ def normalized_ius(df: DataFrame, ius_cols: List[str]):
     })
 
 def normalized_merged(df: DataFrame, merged_cols: List[str]):
-    donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
+    project_col, donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
     return df.astype({
+        project_col: 'str',
         donor_col: 'str',
         group_id_col: 'str',
         ld_col: 'str',
@@ -162,7 +165,7 @@ unique_list = lambda vals: ", ".join(str(val) for val in sorted(set(vals)) if (v
 
 """ Keep only these columns after merging on @merged_library columns.
 Process the columns using the functions provided.
-@merged_library columns (RootSampleName, GroupID, TissueOrigin,
+@merged_library columns (StudyTitle, RootSampleName, GroupID, TissueOrigin,
 TissueType, LibrarySourceTemplateType) are already included in
 the dataframe's index so they will also be retained."""
 retain_columns_after_merge = {
@@ -173,7 +176,6 @@ retain_columns_after_merge = {
     PINERY_COL.Organism: unique_list,
     PINERY_COL.RIN: unique_list,
     PINERY_COL.SubProject: unique_list,
-    PINERY_COL.StudyTitle: unique_list,
     PINERY_COL.TissuePreparation: unique_list,
     sample_type_col: unique_list,
     # library attributes:

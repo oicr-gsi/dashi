@@ -41,6 +41,7 @@ def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, b
 def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, Callable
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     merged_cols = [
+        pinery.column.SampleProvenanceColumn.StudyTitle,
         pinery.column.SampleProvenanceColumn.RootSampleName,
         pinery.column.SampleProvenanceColumn.GroupID,
         pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType,
