@@ -91,8 +91,12 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNA_COL.TotalReads
 # Set initial values for graph cutoff lines
-initial["cutoff_pf_reads"] = 0.01
-initial["cutoff_rrna"] = 50
+cutoff_pf_reads_label = "Total PF Reads minimum"
+cutoff_pf_reads = "cutoff_pf_reads"
+initial[cutoff_pf_reads] = 0.01
+cutoff_rrna_label = "% rRNA contamination maximum"
+cutoff_rrna = "cutoff_rrna"
+initial[cutoff_rrna] = 50
 
 
 def get_rna_data():
@@ -234,7 +238,7 @@ def generate_rrna_contam(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        graph_params["cutoff_rrna"]
+        [(cutoff_rrna_label, graph_params[cutoff_rrna])]
     )
 
 
@@ -369,10 +373,10 @@ def layout(query_string):
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
-                    ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
+                    ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
                 sidebar_utils.cutoff_input(
-                    "% rRNA Contamination maximum",
-                    ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
+                    cutoff_rrna_label,
+                    ids["rrna-contamination-cutoff"], initial[cutoff_rrna]),
             ]),
 
             # Graphs
@@ -386,7 +390,7 @@ def layout(query_string):
                          initial["colour_by"],
                          initial["shape_by"],
                          initial["shownames_val"],
-                         initial["cutoff_pf_reads"])
+                         [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
                  ),
                  core.Graph(
                      id=ids["unique-reads"],
@@ -427,12 +431,12 @@ def layout(query_string):
                 df,
                 rnaseqqc_table_columns,
                 [
-                    ('Total Reads Cutoff',
-                     special_cols["Total Reads (Passed Filter)"],
-                     initial["cutoff_pf_reads"], True),
-                    ('% rRNA Contamination',
-                     RNA_COL.rRNAContaminationreadsaligned,
-                     initial["cutoff_rrna"], True)
+                    (cutoff_pf_reads_label,
+                     special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                     (lambda row, col, cutoff: row[col] < cutoff)),
+                    (cutoff_rrna_label,
+                     RNA_COL.rRNAContaminationreadsaligned, initial[cutoff_rrna],
+                     (lambda row, col, cutoff: row[col] > cutoff))
                 ]
             )
         ])
@@ -505,16 +509,16 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "cutoff_rrna": rrna_cutoff,
-            "cutoff_pf_reads": total_reads_cutoff 
+            cutoff_rrna: rrna_cutoff,
+            cutoff_pf_reads: total_reads_cutoff 
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
-             total_reads_cutoff, True),
-            ('% rRNA Contamination', RNA_COL.rRNAContaminationreadsaligned,
-             rrna_cutoff, False),
+            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_rrna_label, RNA_COL.rRNAContaminationreadsaligned, rrna_cutoff,
+             (lambda row, col, cutoff: row[col] > cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
@@ -523,7 +527,7 @@ def init_callbacks(dash_app):
             generate_total_reads(
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, total_reads_cutoff),
+                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_unique_reads(df, graph_params),
             generate_five_to_three(df, graph_params),
             generate_correct_read_strand(df, graph_params),

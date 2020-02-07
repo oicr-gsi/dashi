@@ -39,35 +39,56 @@ ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 
-pinery_merged_columns = [PINERY_COL.RootSampleName, PINERY_COL.GroupID,
-    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.TissueOrigin,
-    PINERY_COL.TissueType]
-bamqc3_merged_columns = [BAMQC3_MERGED_COL.Donor, BAMQC3_MERGED_COL.GroupID,
-    BAMQC3_MERGED_COL.LibraryDesign, BAMQC3_MERGED_COL.TissueOrigin,
-    BAMQC3_MERGED_COL.TissueType]
-ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Donor,
-    ICHORCNA_MERGED_COL.GroupID, ICHORCNA_MERGED_COL.LibraryDesign,
-    ICHORCNA_MERGED_COL.TissueOrigin, ICHORCNA_MERGED_COL.TissueType]
-callability_merged_columns = [MUTECT_CALL_COL.Donor, MUTECT_CALL_COL.GroupID,
-    MUTECT_CALL_COL.LibraryDesign, MUTECT_CALL_COL.TissueOrigin,
-    MUTECT_CALL_COL.TissueType]
-hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
+pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
+    PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.TissueOrigin, PINERY_COL.TissueType]
+bamqc3_merged_columns = [BAMQC3_MERGED_COL.Project, BAMQC3_MERGED_COL.Donor,
+    BAMQC3_MERGED_COL.GroupID, BAMQC3_MERGED_COL.LibraryDesign,
+    BAMQC3_MERGED_COL.TissueOrigin, BAMQC3_MERGED_COL.TissueType]
+ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Project,
+    ICHORCNA_MERGED_COL.Donor, ICHORCNA_MERGED_COL.GroupID,
+    ICHORCNA_MERGED_COL.LibraryDesign, ICHORCNA_MERGED_COL.TissueOrigin,
+    ICHORCNA_MERGED_COL.TissueType]
+callability_merged_columns = [MUTECT_CALL_COL.Project, MUTECT_CALL_COL.Donor,
+    MUTECT_CALL_COL.GroupID, MUTECT_CALL_COL.LibraryDesign,
+    MUTECT_CALL_COL.TissueOrigin, MUTECT_CALL_COL.TissueType]
+hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Project,
+                            HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
                             HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
                             HSMETRICS_MERGED_COL.TissueType]
 
+TUMOUR = "Tumour"
+BLOOD = "Blood"
+REFERENCE = "Reference"
+CELL = "Cell"
+UNKNOWN = "Unknown"
 
 def label_sample_type(row: Series) -> str:
     if row[PINERY_COL.TissueType] == "S":
-        return "Blood"
+        return BLOOD
     elif row[PINERY_COL.TissueType] == "R":
         if row[PINERY_COL.TissueOrigin] == "Ly" or row[PINERY_COL.TissueOrigin] == "Pl":
-            return "Blood"
+            return BLOOD
         else:
-            return "Reference"
+            return REFERENCE
     elif row[PINERY_COL.TissueType] in ["P", "M", "O", "X", "T"]:
-        return "Tumor"
+        return TUMOUR
+    elif row[PINERY_COL.TissueType] == "C":
+        return CELL
     else:
-        return "Unknown"
+        return UNKNOWN
+
+
+def is_tumour(row: Series) -> bool:
+    if row[sample_type_col] == TUMOUR:
+        return True
+    return False
+
+
+def is_normal(row: Series) -> bool:
+    if row[sample_type_col] in [BLOOD, REFERENCE]:
+        return True
+    return False
 
 
 def normalized_ius(df: DataFrame, ius_cols: List[str]):
@@ -79,8 +100,9 @@ def normalized_ius(df: DataFrame, ius_cols: List[str]):
     })
 
 def normalized_merged(df: DataFrame, merged_cols: List[str]):
-    donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
+    project_col, donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
     return df.astype({
+        project_col: 'str',
         donor_col: 'str',
         group_id_col: 'str',
         ld_col: 'str',
@@ -141,12 +163,12 @@ _pinery_samples = _pinery_samples.drop(axis=1, columns=[PINERY_COL.NanodropConce
 # Takes a list of values and converts it to a comma-separated string.
 unique_list = lambda vals: ", ".join(str(val) for val in sorted(set(vals)) if (val and val != "nan"))
 
-# Keep only these columns after merging on @merged_library columns.
-# Process the columns using the functions provided.
+""" Keep only these columns after merging on @merged_library columns.
+Process the columns using the functions provided.
+@merged_library columns (StudyTitle, RootSampleName, GroupID, TissueOrigin,
+TissueType, LibrarySourceTemplateType) are already included in
+the dataframe's index so they will also be retained."""
 retain_columns_after_merge = {
-    # @merged_library columns (RootSampleName, GroupID, TissueOrigin,
-    # TissueType, LibrarySourceTemplateType) are already included in
-    # the dataframe's index so they will also be retained.
     # sample attributes:
     PINERY_COL.DV200: unique_list,
     PINERY_COL.ExternalName: unique_list,
@@ -154,7 +176,6 @@ retain_columns_after_merge = {
     PINERY_COL.Organism: unique_list,
     PINERY_COL.RIN: unique_list,
     PINERY_COL.SubProject: unique_list,
-    PINERY_COL.StudyTitle: unique_list,
     PINERY_COL.TissuePreparation: unique_list,
     sample_type_col: unique_list,
     # library attributes:
@@ -163,15 +184,17 @@ retain_columns_after_merge = {
     PINERY_COL.UMIs: unique_list,
 }
     
-# Converts the _pinery_samples data, where each row represents a single sequenced sample,
-# to a dataframe where each row represents a "merged library" (rows are joined on the following
-# PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
-# LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
-# data to Pinery data.
-# 1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
-# 2. Group the data by "merged library" columns
-# 3. Aggregate and transform the columns we want to keep for Dashi
-# 4. Reset the index to flatten the row
+"""
+Converts the _pinery_samples data, where each row represents a single sequenced sample,
+to a dataframe where each row represents a "merged library" (rows are joined on the following
+PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
+LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
+data to Pinery data.
+1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
+2. Group the data by "merged library" columns
+3. Aggregate and transform the columns we want to keep for Dashi
+4. Reset the index to flatten the row
+"""
 _pinery_merged_samples = _pinery_samples.fillna('').groupby(by=pinery_merged_columns).agg(retain_columns_after_merge).reset_index()
 
 _runs = _pinery_client.get_runs(False).runs
@@ -265,7 +288,8 @@ def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_col
         pinery_samples,
         how="left",
         left_on=ius_cols,
-        right_on=pinery_ius_columns
+        right_on=pinery_ius_columns,
+        suffixes=('', '_q')
     )
     # Drop metrics with no corresponding Pinery data. This should only happen
     # if data is very old or stale
@@ -281,7 +305,8 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
         pinery_samples,
         how="left",
         left_on=merged_cols,
-        right_on=pinery_merged_columns
+        right_on=pinery_merged_columns,
+        suffixes=('', '_q')
     )
     return df
 
@@ -334,3 +359,14 @@ def unique_set(df: DataFrame, col: str, reverse: bool=False) -> List[str]:
         return unique[::-1]
     else:
         return unique
+
+
+def remove_suffixed_columns(df: DataFrame, suffix: str) -> DataFrame:
+    """
+    Join columns will often have the same column name, so DataFrames will append
+    a suffix to distinguish them. Use this if we want to keep only one copy of the
+    column around (usually because we've been using these as join columns so they
+    should be the same)
+    """
+    to_drop = [col_name for col_name in df if col_name.endswith(suffix)]
+    return df.drop(to_drop, axis=1)

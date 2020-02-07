@@ -96,8 +96,12 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = BAMQC_COL.TotalReads
 # Set initial values for graph cutoff lines
-initial["cutoff_pf_reads"] = 0.01
-initial["cutoff_insert_mean"] = 150
+cutoff_pf_reads_label = "Total PF Reads minimum"
+cutoff_pf_reads = "cutoff_pf_reads"
+initial[cutoff_pf_reads] = 0.01
+cutoff_insert_mean_label = "Insert Mean minimum"
+cutoff_insert_mean = "cutoff_insert_mean"
+initial[cutoff_insert_mean] = 150
 
 
 def get_wgs_data():
@@ -199,7 +203,7 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        graph_params["cutoff_insert_mean"]
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 
@@ -385,9 +389,9 @@ def layout(query_string):
 
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
-                    ids["passed-filter-reads-cutoff"], initial["cutoff_pf_reads"]),
+                    ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
                 sidebar_utils.insert_mean_cutoff(
-                    ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
+                    ids["insert-mean-cutoff"], initial[cutoff_insert_mean]),
             ]),
 
             html.Div(className="seven columns", children=[
@@ -398,7 +402,8 @@ def layout(query_string):
                         PINERY_COL.SampleName,
                         special_cols["Total Reads (Passed Filter)"],
                         initial["colour_by"], initial["shape_by"],
-                        initial["shownames_val"], initial["cutoff_pf_reads"])
+                        initial["shownames_val"],
+                        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
                 ),
                 core.Graph(
                     id=ids["mean-insert"],
@@ -436,11 +441,11 @@ def layout(query_string):
             df,
             wgs_table_columns,
             [
-                ('Insert Mean Cutoff', BAMQC_COL.InsertMean,
-                 initial["cutoff_insert_mean"], True),
-                ('Total Reads Cutoff',
-                 special_cols["Total Reads (Passed Filter)"],
-                 initial["cutoff_pf_reads"], True),
+                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                 (lambda row, col, cutoff: row[col] < cutoff)),
+                (cutoff_pf_reads_label,
+                 special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                 (lambda row, col, cutoff: row[col] < cutoff)),
             ])
     ]),
 ])
@@ -511,15 +516,16 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "cutoff_pf_reads": total_reads_cutoff,
-            "cutoff_insert_mean": insert_mean_cutoff
+            cutoff_pf_reads: total_reads_cutoff,
+            cutoff_insert_mean: insert_mean_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            ('Insert Mean Cutoff', BAMQC_COL.InsertMean, insert_mean_cutoff, True),
-            ('Total Reads Cutoff', special_cols["Total Reads (Passed Filter)"],
-             total_reads_cutoff, True),
+            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
@@ -528,7 +534,7 @@ def init_callbacks(dash_app):
             generate_total_reads(
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, total_reads_cutoff),
+                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_mean_insert_size(df, graph_params),
             generate_duplication(df, graph_params),
             generate_purity(df, graph_params),
@@ -581,3 +587,12 @@ def init_callbacks(dash_app):
     def all_library_designs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_LIBRARY_DESIGNS]
+
+    @dash_app.callback(
+        Output(ids['show-data-labels'], 'value'),
+        [Input(ids['show-all-data-labels'], 'n_clicks')],
+        [State(ids['show-data-labels'], 'options')]
+    )
+    def all_data_labels_requested(click, avail_options):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x['value'] for x in avail_options]
