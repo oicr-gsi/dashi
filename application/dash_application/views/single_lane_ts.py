@@ -3,7 +3,6 @@ from collections import defaultdict
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
-import pandas as pd
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs, cutoff_table_data_ius
@@ -104,7 +103,6 @@ ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
-ALL_SAMPLES = util.unique_set(bamqc, PINERY_COL.SampleName)
 ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
@@ -280,7 +278,7 @@ def layout(query_string):
                                                 initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
-                                                        ALL_SAMPLES),
+                                                          []),
                     
                     sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
                                                         initial["shownames_val"],
@@ -352,7 +350,8 @@ def init_callbacks(dash_app):
             Output(ids['mean-insert-size'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
-            Output(ids['data-table'], 'data')
+            Output(ids['data-table'], 'data'),
+            Output(ids["search-sample"], "options"),
         ],
         [Input(ids['update-button'], 'n_clicks')],
         [
@@ -413,6 +412,9 @@ def init_callbacks(dash_app):
                                                     "Filter)"], total_reads_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
+
+        new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
+
         return [
             generate_total_reads(
                 df, PINERY_COL.SampleName,
@@ -424,7 +426,8 @@ def init_callbacks(dash_app):
             generate_mean_insert_size(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
-            df.to_dict('records', into=dd)
+            df.to_dict('records', into=dd),
+            [{'label': x, 'value': x} for x in new_search_sample],
         ]
 
     @dash_app.callback(

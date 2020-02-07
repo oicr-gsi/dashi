@@ -6,7 +6,6 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
 import gsiqcetl.column
-import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
@@ -197,7 +196,6 @@ ALL_INSTITUTES = util.unique_set(TS_DF, PINERY_COL.Institute)
 ALL_TISSUE_PREPS = util.unique_set(TS_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(TS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(TS_DF, util.sample_type_col)
-ALL_SAMPLES = util.unique_set(TS_DF, PINERY_COL.RootSampleName)
 
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
@@ -378,7 +376,7 @@ def layout(query_string):
                                                   initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
-                                                          ALL_SAMPLES),
+                                                          []),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
                                                                     initial["shownames_val"],
@@ -503,6 +501,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
+            Output(ids["search-sample"], "options"),
         ],
         [Input(ids["update-button"], "n_clicks")],
         [
@@ -579,6 +578,9 @@ def init_callbacks(dash_app):
             (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
              duplicate_rate_max, (lambda row, col, cutoff: row[col] > cutoff)),
         ])
+
+        new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
+
         return [
             generate_total_reads(df, PINERY_COL.RootSampleName,
                 special_cols["Total Reads (Passed Filter)"],
@@ -599,6 +601,7 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
+            [{'label': x, 'value': x} for x in new_search_sample],
         ]
 
     @dash_app.callback(
