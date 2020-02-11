@@ -1,6 +1,25 @@
 import dash_bootstrap_components
 from dash import Dash
 
+index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>Dashi</title>
+        {%favicon%}
+        {%css%}
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 # Adds Dash to provided Flask server
 def add_dash(server, debug):
@@ -8,6 +27,7 @@ def add_dash(server, debug):
     dash_app = Dash(__name__, server=server, external_stylesheets=[
                     dash_bootstrap_components.themes.BOOTSTRAP])
     dash_app.enable_dev_tools(debug=debug)
+    dash_app.index_string = index_string
 
     # Set initial Dash page's layout
     from . import known_pages_router
