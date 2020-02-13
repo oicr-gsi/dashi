@@ -1,13 +1,13 @@
 Flask_Caching>=1.7.2
 dash_html_components>=1.0.1
 dash_bootstrap_components>=0.7.2
-pandas>=0.25.2
+pandas>=1.0.1
 Flask>=1.1.1
 dash_core_components>=1.3.1
 dash>=1.4.1
 prometheus_flask_exporter>=0.11.0
 plotly>=4.2.1
-git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v0.19.0
+git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v0.20.0
 sd-material-ui>=3.1.2
 scipy>=1.2.0
 python-dotenv>=0.10.3

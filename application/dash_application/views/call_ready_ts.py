@@ -73,7 +73,6 @@ def dataversion():
     return DATAVERSION
 
 
-# todo: come back and include whatever else should be a special column
 special_cols = {
     "Total Reads (Passed Filter)": "Total reads passed filter",
     "Percent Unique Reads (PF)": "Percent unique reads",
