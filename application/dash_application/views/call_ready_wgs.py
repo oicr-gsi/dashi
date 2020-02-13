@@ -199,7 +199,7 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None, 
 
 def generate_unique_reads(df, graph_params):
     return generate(
-        "Unique Reads (Passed Filter)", df,
+        "🚧  Unique Reads (Passed Filter) -- DATA MAY BE SUSPECT 🚧", df,
         lambda d: d[PINERY_COL.RootSampleName],
         lambda d: d[special_cols["Unique Reads (Passed Filter)"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -323,8 +323,8 @@ def layout(query_string):
                         [
                             {"label": "Total Reads",
                             "value": BAMQC_COL.TotalReads},
-                            #{"label": "Unique Reads",  # TODO: GR-1047
-                            #"value": special_cols["Unique Reads (Passed Filter)"]},
+                            {"label": "Unique Reads",
+                            "value": special_cols["Unique Reads (Passed Filter)"]},
                             {"label": "Callability",
                             "value": CALL_COL.Callability},
                             {"label": "Purity",
@@ -367,6 +367,14 @@ def layout(query_string):
                 ]),
 
                 html.Div(className="seven columns", children=[
+                    # TODO: move this below total-reads once we've figured out
+                    # what to do about WebGL contexts.
+                    # Right now the data is suspect so it's ok if it doesn't
+                    # display happily.
+                    core.Graph(
+                        id=ids["unique-reads"],
+                        figure=generate_unique_reads(df, initial)
+                    ),
                     core.Graph(
                         id=ids["total-reads"],
                         figure=generate_total_reads(
@@ -378,11 +386,6 @@ def layout(query_string):
                              (cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal])]
                         )
                     ),
-                    # TODO: GR-1047
-                    # core.Graph(
-                    #     id=ids["unique-reads"],
-                    #     figure=generate_unique_reads(df, initial)
-                    # ),
                     core.Graph(
                         id=ids["mean-coverage"],
                         figure=generate_deduplicated_coverage(df, initial)
@@ -450,7 +453,7 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            # Output(ids["unique-reads"], "figure"),  # TODO: GR-1047
+            Output(ids["unique-reads"], "figure"),
             Output(ids["mean-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
@@ -552,7 +555,7 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),
-            # generate_unique_reads(df, graph_params),  # TODO: GR-1047
+            generate_unique_reads(df, graph_params),
             generate_deduplicated_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
