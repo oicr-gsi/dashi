@@ -24,7 +24,7 @@ BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
 ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
-RNASEQQC_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
+RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
@@ -57,10 +57,10 @@ hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Project,
                             HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
                             HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
                             HSMETRICS_MERGED_COL.TissueType]
-rnaseqqc_merged_columns = [RNASEQQC_MERGED_COL.Project,
-    RNASEQQC_MERGED_COL.Donor, RNASEQQC_MERGED_COL.GroupID,
-    RNASEQQC_MERGED_COL.LibraryDesign, RNASEQQC_MERGED_COL.TissueOrigin,
-    RNASEQQC_MERGED_COL.TissueType]
+rnaseqqc2_merged_columns = [RNASEQQC2_MERGED_COL.Project,
+    RNASEQQC2_MERGED_COL.Donor, RNASEQQC2_MERGED_COL.GroupID,
+    RNASEQQC2_MERGED_COL.LibraryDesign, RNASEQQC2_MERGED_COL.TissueOrigin,
+    RNASEQQC2_MERGED_COL.TissueType]
 
 TUMOUR = "Tumour"
 BLOOD = "Blood"
@@ -130,7 +130,8 @@ _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
 _mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
 _hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
-_rnaseqqc_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged, rnaseqqc_merged_columns)
+_rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
+                                     rnaseqqc2_merged_columns)
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
@@ -264,8 +265,8 @@ def get_hsmetrics_merged():
     return _hsmetrics_merged.copy(deep=True)
 
 
-def get_rnaseqqc_merged():
-    return _rnaseqqc_merged.copy(deep=True)
+def get_rnaseqqc2_merged():
+    return _rnaseqqc2_merged.copy(deep=True)
 
 
 def get_pinery_samples(active_projects_only=True):

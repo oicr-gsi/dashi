@@ -53,7 +53,7 @@ ids = init_ids([
     'data-table'
 ])
 
-RNASEQQC_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
+RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
 
@@ -76,20 +76,23 @@ def get_merged_rna_data():
     pinery_samples = util.get_pinery_merged_samples()
     pinery_samples = util.filter_by_library_design(pinery_samples, util.rna_lib_designs)
 
-    rnaseqqc_df = util.get_rnaseqqc_merged()
-    rnaseqqc_df = util.filter_by_library_design(rnaseqqc_df, util.rna_lib_designs, RNASEQQC_COL.LibraryDesign)
+    rna_df = util.get_rnaseqqc2_merged()
+    rna_df = util.filter_by_library_design(rna_df, util.rna_lib_designs,
+                                           RNASEQQC2_COL.LibraryDesign)
 
-    rnaseqqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rnaseqqc_df[RNASEQQC_COL.TotalReads] / 1e6, 3)
-    rnaseqqc_df[special_cols["Unique Reads (PF)"]] = round(
-        rnaseqqc_df[RNASEQQC_COL.UniqueReads] / 1e6, 3)
-    rnaseqqc_df[special_cols["% rRNA Contamination"]] = round(
-        (rnaseqqc_df[RNASEQQC_COL.RRnaContaminationInTotal] / rnaseqqc_df[
-            RNASEQQC_COL.TotalReads]) * 100, 2)
-    rnaseqqc_df.rename(columns={RNASEQQC_COL.FileSWID: special_cols["File SWID RNAseqQC"]}, inplace=True)
+    rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        rna_df[RNASEQQC2_COL.TotalReads] / 1e6, 3)
+    rna_df[special_cols["Unique Reads (PF)"]] = round(
+        rna_df[RNASEQQC2_COL.UniqueReads] / 1e6, 3)
+    rna_df[special_cols["% rRNA Contamination"]] = round(
+        (rna_df[RNASEQQC2_COL.RRnaContaminationInTotal] / rna_df[
+            RNASEQQC2_COL.TotalReads]) * 100, 2)
+    rna_df.rename(columns={RNASEQQC2_COL.FileSWID: special_cols["File "
+                                                                     "SWID RNAseqQC"]}, inplace=True)
 
     # Join RNAseqQC and Pinery data
-    rna_df = util.df_with_pinery_samples_merged(rnaseqqc_df, pinery_samples, util.rnaseqqc_merged_columns)
+    rna_df = util.df_with_pinery_samples_merged(rna_df, pinery_samples,
+                                                util.rnaseqqc2_merged_columns)
 
     rna_df = util.remove_suffixed_columns(rna_df, '_q')  # Pinery duplicate columns
 
@@ -102,7 +105,7 @@ rna_table_columns = RNA_DF.columns
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = RNASEQQC_COL.TotalReads
+initial["second_sort"] = RNASEQQC2_COL.TotalReads
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_label = "Total PF Reads minimum"
 cutoff_pf_reads = "cutoff_pf_reads"
@@ -145,7 +148,7 @@ def generate_five_to_three(df, graph_params):
     return generate(
        "5 to 3 Prime Bias", df,
        lambda d: d[PINERY_COL.RootSampleName],
-       lambda d: d[RNASEQQC_COL.MetricsMedian5PrimeTo3PrimeBias],
+       lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
        "", graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
        PINERY_COL.RootSampleName)
@@ -155,7 +158,7 @@ def generate_five_to_three(df, graph_params):
 #     return generate(
 #         "% Correct Read Strand", df,
 #         lambda d: d[PINERY_COL.RootSampleName],
-#         lambda d: d[RNASEQQC_COL.MetricsPercentCorrectStrandReads],
+#         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
 #         "%",graph_params["colour_by"], graph_params["shape_by"],
 #         graph_params["shownames_val"], [],
 #         PINERY_COL.RootSampleName)
@@ -165,7 +168,7 @@ def generate_coding(df, graph_params):
     return generate(
         "% Coding", df,
         lambda d: d[PINERY_COL.RootSampleName],
-        lambda d: d[RNASEQQC_COL.MetricsPercentCodingBases],
+        lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
@@ -219,17 +222,21 @@ def layout(query_string):
                                                      initial["second_sort"],
                                                      [
                                                         {"label":"Total Reads",
-                                                         "value": RNASEQQC_COL.TotalReads},
+                                                         "value":
+                                                             RNASEQQC2_COL.TotalReads},
                                                         # TODO: GR-1047
                                                         # {"label": "Unique Reads",
                                                         #  "value": special_cols["Unique Reads (PF)"]},
                                                         {"label": "5 to 3 Prime Bias",
-                                                         "value": RNASEQQC_COL.MetricsMedian5PrimeTo3PrimeBias},
+                                                         "value":
+                                                             RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias},
                                                         # TODO: GR-1062
                                                         # {"label": "% Correct Read Strand",
-                                                        #  "value": RNASEQQC_COL.MetricsPercentCorrectStrandReads},
+                                                        #  "value":
+                                                         #  RNASEQQC2_COL.MetricsPercentCorrectStrandReads},
                                                         {"label": "% Coding",
-                                                         "value": RNASEQQC_COL.MetricsPercentCodingBases},
+                                                         "value":
+                                                             RNASEQQC2_COL.MetricsPercentCodingBases},
                                                         # TODO: GR-1063
                                                         # {"label": "% rRNA Contamination",
                                                         #  "value": special_cols["% rRNA Contamination"]}
