@@ -22,6 +22,8 @@ title = "Single-Lane RNA-seq"
 
 ids = init_ids([
     # Buttons
+    "jira-issue-with-runs-button",
+    "general-jira-issue-button",
     "update-button",
     "approve-run-button",
 
@@ -293,6 +295,14 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
+        html.Div(className="row jira-buttons", children=[
+            sidebar_utils.jira_button("File a ticket",
+                                      ids['general-jira-issue-button'],
+                                      {"display": "inline-block"},
+                                      sidebar_utils.construct_jira_link([])),
+            sidebar_utils.jira_button("File a ticket about these runs",
+                                      ids['jira-issue-with-runs-button'],
+                                      {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
                 html.Button("Update", id=ids['update-button'], className="update-button"),
@@ -463,6 +473,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
+            Output(ids["jira-issue-with-runs-button"], "href"),
+            Output(ids["jira-issue-with-runs-button"], "style"),
         ],
         [
             Input(ids["update-button"], "n_clicks")
@@ -529,6 +541,8 @@ def init_callbacks(dash_app):
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
+        (jira_href, jira_style) = [sidebar_utils.construct_jira_link(runs), {"display": "inline-block"}]
+
         return [
             approve_run_href,
             approve_run_style,
@@ -547,6 +561,8 @@ def init_callbacks(dash_app):
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
+            jira_href,
+            jira_style
         ]
         
     @dash_app.callback(
