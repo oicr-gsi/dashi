@@ -83,7 +83,7 @@ def get_merged_rna_data():
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNASEQQC2_COL.TotalReads] / 1e6, 3)
     rna_df[special_cols["Unique Reads (PF)"]] = round(
-        rna_df[RNASEQQC2_COL.UniqueReads] / 1e6, 3)
+        rna_df[RNASEQQC2_COL.UniqueReads] / rna_df[RNASEQQC2_COL.TotalReads], 3)
     rna_df[special_cols["% rRNA Contamination"]] = round(
         (rna_df[RNASEQQC2_COL.RRnaContaminationInTotal] / rna_df[
             RNASEQQC2_COL.TotalReads]) * 100, 2)
@@ -133,15 +133,14 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTI
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, True)
 
 
-# TODO: GR-1047
-# def generate_unique_reads(df, graph_params):
-#    return generate(
-#        "Unique Reads (PF)", df,
-#        lambda d: d[PINERY_COL.RootSampleName],
-#        lambda d: d[special_cols["Unique Reads (PF)"]],
-#        "%", graph_params["colour_by"], graph_params["shape_by"],
-#        graph_params["shownames_val"], [],
-#        PINERY_COL.RootSampleName)
+def generate_unique_reads(df, graph_params):
+   return generate(
+       "🚧 Unique Reads (PF) -- DATA MAY BE SUSPECT 🚧", df,
+       lambda d: d[PINERY_COL.RootSampleName],
+       lambda d: d[special_cols["Unique Reads (PF)"]],
+       "%", graph_params["colour_by"], graph_params["shape_by"],
+       graph_params["shownames_val"], [],
+       PINERY_COL.RootSampleName)
 
 
 def generate_five_to_three(df, graph_params):
@@ -153,15 +152,15 @@ def generate_five_to_three(df, graph_params):
        graph_params["shownames_val"], [],
        PINERY_COL.RootSampleName)
 
-# TODO: GR-1062
-# def generate_correct_read_strand(df, graph_params):
-#     return generate(
-#         "% Correct Read Strand", df,
-#         lambda d: d[PINERY_COL.RootSampleName],
-#         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
-#         "%",graph_params["colour_by"], graph_params["shape_by"],
-#         graph_params["shownames_val"], [],
-#         PINERY_COL.RootSampleName)
+
+def generate_correct_read_strand(df, graph_params):
+    return generate(
+        "🚧 % Correct Read Strand -- DATA MAY BE SUSPECT 🚧", df,
+        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
+        "%",graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"], [],
+        PINERY_COL.RootSampleName)
 
 
 def generate_coding(df, graph_params):
@@ -173,16 +172,16 @@ def generate_coding(df, graph_params):
         graph_params["shownames_val"], [],
         PINERY_COL.RootSampleName)
 
-# TODO: GR-1063
-# def generate_rrna_contam(df, graph_params):
-#     return generate(
-#         "% rRNA Contamination", df,
-#         lambda d: d[PINERY_COL.RootSampleName],
-#         lambda d: d[special_cols["% rRNA Contamination"]],
-#         "%", graph_params["colour_by"], graph_params["shape_by"],
-#         graph_params["shownames_val"],
-#         [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
-#         PINERY_COL.RootSampleName)
+
+def generate_rrna_contam(df, graph_params):
+    return generate(
+        "🚧 % rRNA Contamination -- DATA MAY BE SUSPECT 🚧", df,
+        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[special_cols["% rRNA Contamination"]],
+        "%", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
+        PINERY_COL.RootSampleName)
 
 
 def layout(query_string):
@@ -224,22 +223,19 @@ def layout(query_string):
                                                         {"label":"Total Reads",
                                                          "value":
                                                              RNASEQQC2_COL.TotalReads},
-                                                        # TODO: GR-1047
-                                                        # {"label": "Unique Reads",
-                                                        #  "value": special_cols["Unique Reads (PF)"]},
+                                                        {"label": "Unique Reads",
+                                                         "value": special_cols["Unique Reads (PF)"]},
                                                         {"label": "5 to 3 Prime Bias",
                                                          "value":
                                                              RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias},
-                                                        # TODO: GR-1062
-                                                        # {"label": "% Correct Read Strand",
-                                                        #  "value":
-                                                         #  RNASEQQC2_COL.MetricsPercentCorrectStrandReads},
+                                                        {"label": "% Correct Read Strand",
+                                                         "value":
+                                                          RNASEQQC2_COL.MetricsPercentCorrectStrandReads},
                                                         {"label": "% Coding",
                                                          "value":
                                                              RNASEQQC2_COL.MetricsPercentCodingBases},
-                                                        # TODO: GR-1063
-                                                        # {"label": "% rRNA Contamination",
-                                                        #  "value": special_cols["% rRNA Contamination"]}
+                                                        {"label": "% rRNA Contamination",
+                                                         "value": special_cols["% rRNA Contamination"]}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
@@ -262,9 +258,8 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_label),
                                                ids["pf-cutoff"], initial[cutoff_pf_reads]),
-                    # TODO: GR-1063
-                    # sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
-                    #                            initial[cutoff_rrna_contam]),
+                    sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
+                                               initial[cutoff_rrna_contam]),
                 ]),
 
                 html.Div(className="seven columns", children=[
@@ -275,28 +270,25 @@ def layout(query_string):
                             initial["colour_by"], initial["shape_by"], initial["shownames_val"],
                             [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
 
-                    # TODO: GR-1047
-                    # core.Graph(
-                    #    id=ids["unique-reads"],
-                    #    figure=generate_unique_reads(df, initial)),
+                    core.Graph(
+                       id=ids["unique-reads"],
+                       figure=generate_unique_reads(df, initial)),
 
                     core.Graph(
                         id=ids["five-to-three-bias"],
                         figure=generate_five_to_three(df, initial)),
 
-                    # TODO: GR-1062
-                    # core.Graph(
-                    #     id=ids["correct-read-strand"],
-                    #     figure=generate_correct_read_strand(df, initial)),
+                    core.Graph(
+                        id=ids["correct-read-strand"],
+                        figure=generate_correct_read_strand(df, initial)),
 
                     core.Graph(
                         id=ids["coding"],
                         figure=generate_coding(df, initial)),
 
-                    # TODO: GR-1063
-                    # core.Graph(
-                    #     id=ids["rrna-contam"],
-                    #     figure=generate_rrna_contam(df, initial)),
+                    core.Graph(
+                        id=ids["rrna-contam"],
+                        figure=generate_rrna_contam(df, initial)),
 
                 ])
             ]),
@@ -309,10 +301,9 @@ def layout(query_string):
                     (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"],
                      initial[cutoff_pf_reads],
                      (lambda row, col, cutoff: row[col] < cutoff)),
-                    # TODO: GR-1063
-                    # (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
-                    #  initial[cutoff_rrna_contam],
-                    #  (lambda row, col, cutoff: row[col] > cutoff)),
+                    (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
+                     initial[cutoff_rrna_contam],
+                     (lambda row, col, cutoff: row[col] > cutoff)),
                 ]
             )
         ])
@@ -323,11 +314,11 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            # Output(ids["unique-reads"], "figure"),  ## TODO: GR-1047
+            Output(ids["unique-reads"], "figure"),
             Output(ids["five-to-three-bias"], "figure"),
-            # Output(ids["correct-read-strand"], "figure"),  # TODO: GR-1062
+            Output(ids["correct-read-strand"], "figure"),
             Output(ids["coding"], "figure"),
-            # Output(ids["rrna-contam"], "figure"),  # TODO: GR-1063
+            Output(ids["rrna-contam"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -345,7 +336,7 @@ def init_callbacks(dash_app):
             State(ids["show-data-labels"], "value"),
             State(ids["search-sample"], "value"),
             State(ids["pf-cutoff"], "value"),
-            # State(ids["rrna-contam-cutoff"], "value"),  # TODO: GR-1063
+            State(ids["rrna-contam-cutoff"], "value"),
             State('url', 'search'),
         ]
     )
@@ -360,7 +351,7 @@ def init_callbacks(dash_app):
                        show_names,
                        search_sample,
                        total_reads_cutoff,
-                       # rrna_contam_cutoff,  # TODO: GR-1063
+                       rrna_contam_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
@@ -372,15 +363,14 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             cutoff_pf_reads: total_reads_cutoff,
-            # cutoff_rrna_contam: rrna_contam_cutoff  # TODO: GR-1063
+            cutoff_rrna_contam: rrna_contam_cutoff
         }
 
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
             (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            # TODO: GR-1063
-            # (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
-            #  (lambda row, col, cutoff: row[col] > cutoff)),
+            (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
+             (lambda row, col, cutoff: row[col] > cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
@@ -390,11 +380,11 @@ def init_callbacks(dash_app):
                 special_cols["Total Reads (Passed Filter)"],
                 colour_by, shape_by, show_names,
                 [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            # generate_unique_reads(df, graph_params)  # TODO: GR-1047
+            generate_unique_reads(df, graph_params),
             generate_five_to_three(df, graph_params),
-            # generate_correct_read_strand(df, graph_params),  # TODO: GR-1062
+            generate_correct_read_strand(df, graph_params),
             generate_coding(df, graph_params),
-            # generate_rrna_contam(df, graph_params),  # TODO: GR-1063
+            generate_rrna_contam(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=defaultdict(list)),
