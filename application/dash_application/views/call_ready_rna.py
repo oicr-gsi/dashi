@@ -85,7 +85,7 @@ def get_merged_rna_data():
     rna_df[special_cols["Unique Reads (PF)"]] = round(
         rna_df[RNASEQQC2_COL.UniqueReads] / rna_df[RNASEQQC2_COL.TotalReads], 3)
     rna_df[special_cols["% rRNA Contamination"]] = round(
-        (rna_df[RNASEQQC2_COL.RRnaContaminationInTotal] / rna_df[
+        (rna_df[RNASEQQC2_COL.RRnaContaminationMapped] / rna_df[
             RNASEQQC2_COL.TotalReads]) * 100, 2)
     rna_df.rename(columns={RNASEQQC2_COL.FileSWID: special_cols["File "
                                                                      "SWID RNAseqQC"]}, inplace=True)
