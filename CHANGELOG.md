@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200214-1500] - 2020-02-14
+### Changed
+  * Update how % rRNA contamination is calculated for call-ready RNA
+  * Use merged library fields as x-axis on call-ready graphs
+  * On call-ready pages, pin "Colour By" value to "First Sort" value
+
+## [200213-1220] - 2020-02-13
 ### Added
   * Bcl2Fastq Index QC graph
   * Set `DASHI_LOG_TO_CONSOLE=True` in `.env` file to log to console
