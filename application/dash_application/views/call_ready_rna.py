@@ -240,7 +240,7 @@ def layout(query_string):
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
-                                                   initial["colour_by"]),
+                                                   initial["colour_by"], True),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   shape_colour.dropdown(),
@@ -423,3 +423,13 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x["value"] for x in avail_options]
+
+    @dash_app.callback(
+        [
+            Output(ids["colour-by"], "value"),
+            Output(ids["colour-by"], "disabled"),
+        ],
+        [Input(ids["first-sort"], "value")]
+    )
+    def pin_colour_to_first_sort(first_sort):
+        return [first_sort, True]
