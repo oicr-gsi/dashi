@@ -156,16 +156,20 @@ def select_second_sort(second_sort_id: str, selected_value: str,
     ])
 
 
+# GR-1065 is why this is disabled in call-ready graphs
 def select_colour_by(colour_by_id: str, colour_by_options: List[Dict],
-                     selected_value: str) -> html.Label:
-    return html.Label([
-        "Colour by:",
-        core.Dropdown(id=colour_by_id,
+                     selected_value: str, disabled: bool=False) -> html.Label:
+    return core.Loading(type="circle", children=[
+        html.Label([
+            "Colour by:",
+            core.Dropdown(id=colour_by_id,
                       options=colour_by_options,
                       value=selected_value,
                       searchable=False,
-                      clearable=False
+                      clearable=False,
+                      disabled=disabled
                       )
+        ])
     ])
 
 
