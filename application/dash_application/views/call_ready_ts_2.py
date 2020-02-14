@@ -167,7 +167,7 @@ ts_table_columns = TS_DF.columns
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_tumour_label = "Total PF Reads (Tumour) minimum"
 cutoff_pf_reads_tumour = "cutoff_pf_reads_tumour"
