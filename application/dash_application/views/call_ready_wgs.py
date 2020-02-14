@@ -200,86 +200,86 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None, 
 def generate_unique_reads(df, graph_params):
     return generate(
         "🚧  Unique Reads (Passed Filter) -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Unique Reads (Passed Filter)"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
         "Deduplicated Coverage", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
          (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_callability(df, graph_params):
     return generate(
         "Callability (14x/18x)", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Percent Callability"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_callability_label, graph_params[cutoff_callability])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_mean_insert_size(df, graph_params):
     return generate(
         "Mean Insert Size", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
         "Duplicate Rate", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_purity(df, graph_params):
     return generate(
         "Purity", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_ploidy(df, graph_params):
     return generate(
         "Ploidy", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[ICHOR_COL.Ploidy],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_unmapped_reads(df, graph_params):
     return generate(
         "Unmapped Reads", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.UnmappedReads],
         "Read Counts", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def layout(query_string):
@@ -378,7 +378,7 @@ def layout(query_string):
                     core.Graph(
                         id=ids["total-reads"],
                         figure=generate_total_reads(
-                            df, PINERY_COL.RootSampleName,
+                            df, util.ml_col,
                             special_cols["Total Reads (Passed Filter)"],
                             initial["colour_by"], initial["shape_by"],
                             initial["shownames_val"],
@@ -549,7 +549,7 @@ def init_callbacks(dash_app):
 
         return [
             generate_total_reads(
-                df, PINERY_COL.RootSampleName,
+                df, util.ml_col,
                 special_cols["Total Reads (Passed Filter)"],
                 colour_by, shape_by, show_names,
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),

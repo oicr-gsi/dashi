@@ -136,52 +136,52 @@ RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, 
 def generate_unique_reads(df, graph_params):
    return generate(
        "🚧 Unique Reads (PF) -- DATA MAY BE SUSPECT 🚧", df,
-       lambda d: d[PINERY_COL.RootSampleName],
+       lambda d: d[util.ml_col],
        lambda d: d[special_cols["Unique Reads (PF)"]],
        "%", graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
-       PINERY_COL.RootSampleName)
+       util.ml_col)
 
 
 def generate_five_to_three(df, graph_params):
     return generate(
        "5 to 3 Prime Bias", df,
-       lambda d: d[PINERY_COL.RootSampleName],
+       lambda d: d[util.ml_col],
        lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
        "", graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
-       PINERY_COL.RootSampleName)
+       util.ml_col)
 
 
 def generate_correct_read_strand(df, graph_params):
     return generate(
         "🚧 % Correct Read Strand -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
         "%",graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_coding(df, graph_params):
     return generate(
         "% Coding", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_rrna_contam(df, graph_params):
     return generate(
         "🚧 % rRNA Contamination -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["% rRNA Contamination"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def layout(query_string):
@@ -265,7 +265,7 @@ def layout(query_string):
                 html.Div(className="seven columns", children=[
                     core.Graph(
                         id=ids["total-reads"],
-                        figure=generate_total_reads(df, PINERY_COL.RootSampleName,
+                        figure=generate_total_reads(df, util.ml_col,
                             special_cols["Total Reads (Passed Filter)"],
                             initial["colour_by"], initial["shape_by"], initial["shownames_val"],
                             [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
@@ -376,7 +376,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            generate_total_reads(df, PINERY_COL.RootSampleName,
+            generate_total_reads(df, util.ml_col,
                 special_cols["Total Reads (Passed Filter)"],
                 colour_by, shape_by, show_names,
                 [(cutoff_pf_reads_label, total_reads_cutoff)]),

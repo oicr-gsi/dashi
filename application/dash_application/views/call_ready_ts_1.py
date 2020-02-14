@@ -212,104 +212,104 @@ TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, Tr
 def generate_unique_reads(df, graph_params):
     return generate(
        "🚧 Percent Unique Reads (PF) -- DATA MAY BE SUSPECT 🚧", df,
-       lambda d: d[PINERY_COL.RootSampleName],
+       lambda d: d[util.ml_col],
        lambda d: d[special_cols["Percent Unique Reads (PF)"]],
        "%", graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
-       PINERY_COL.RootSampleName)
+       util.ml_col)
 
 
 def generate_mean_target_coverage(df, graph_params):
     return generate(
         "Mean Target Coverage", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.MeanTargetCoverage],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_callability(df, graph_params):
     return generate(
         "Callability (14x/8x)", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Callability (14x/8x)"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_callability_label, graph_params[cutoff_callability])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_mean_insert_size(df, graph_params):
     return generate(
         "Mean Insert Size", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_hs_library_size(df, graph_params):
     return generate(
         "HS Library Size", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
         "Duplicate Rate", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_purity(df, graph_params):
     return generate(
         "Purity", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_fraction_excluded(df, graph_params):
     return generate(
         "Fraction Excluded due to Overlap", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.PctExcOverlap],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_at_dropout(df, graph_params):
     return generate(
         "AT Dropout %", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.AtDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def generate_gc_dropout(df, graph_params):
     return generate(
         "GC Dropout %", df,
-        lambda d: d[PINERY_COL.RootSampleName],
+        lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.GCDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        PINERY_COL.RootSampleName)
+        util.ml_col)
 
 
 def layout(query_string):
@@ -409,7 +409,7 @@ def layout(query_string):
                 html.Div(className="seven columns", children=[
                     core.Graph(
                         id=ids["total-reads"],
-                        figure=generate_total_reads(df, PINERY_COL.RootSampleName,
+                        figure=generate_total_reads(df, util.ml_col,
                             special_cols["Total Reads (Passed Filter)"],
                             initial["colour_by"], initial["shape_by"], initial["shownames_val"],
                             [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
@@ -586,7 +586,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            generate_total_reads(df, PINERY_COL.RootSampleName,
+            generate_total_reads(df, util.ml_col,
                 special_cols["Total Reads (Passed Filter)"],
                 colour_by, shape_by, show_names,
                 [(cutoff_pf_reads_normal_label, pf_normal_cutoff),

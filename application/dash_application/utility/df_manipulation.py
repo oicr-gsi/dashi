@@ -29,6 +29,7 @@ INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
 sample_type_col = "Sample Type"
+ml_col = "Merged Library"
 
 pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
                       PINERY_COL.IUSTag]
@@ -68,6 +69,7 @@ REFERENCE = "Reference"
 CELL = "Cell"
 UNKNOWN = "Unknown"
 
+
 def label_sample_type(row: Series) -> str:
     if row[PINERY_COL.TissueType] == "S":
         return BLOOD
@@ -82,6 +84,10 @@ def label_sample_type(row: Series) -> str:
         return CELL
     else:
         return UNKNOWN
+
+
+def label_merged_library(row: Series) -> str:
+    return "_".join([row[col] for col in pinery_merged_columns])
 
 
 def is_tumour(row: Series) -> bool:
@@ -203,6 +209,9 @@ data to Pinery data.
 4. Reset the index to flatten the row
 """
 _pinery_merged_samples = _pinery_samples.fillna('').groupby(by=pinery_merged_columns).agg(retain_columns_after_merge).reset_index()
+# Fill in the "Merged Library" column (used as the x-axis for merged graphs)
+_pinery_merged_samples[ml_col] = _pinery_merged_samples.apply(
+    label_merged_library, axis=1)
 
 _runs = _pinery_client.get_runs(False).runs
 _runs[pinery.column.RunsColumn.StartDate] = pandas.to_datetime(
