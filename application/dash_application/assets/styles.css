@@ -41,6 +41,23 @@ footer {
     visibility: hidden;
 }
 
+.sidebar .approve-run {
+    float: right;
+    width: 60%;
+    overflow: hidden;
+    padding-left: 8%;
+    padding-right: 8%;
+}
+
+.sidebar .update-button {
+    display: inline-block;
+    width: 30%;
+    float: left;
+    overflow: hidden;
+    padding-left: 8%;
+    padding-right: 8%;
+}
+
 .data-table .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner table {
     font-family: "Open Sans", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
