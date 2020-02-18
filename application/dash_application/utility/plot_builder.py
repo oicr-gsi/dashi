@@ -220,10 +220,67 @@ def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
     return df
 
 
+def generate_traces(
+        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines=[],
+        name_col=PINERY_COL.SampleName, showlegend=True
+):
+    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
+    traces = []
+    grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
+    if colourby == shapeby:
+        name_format = lambda n: "{0}".format(n[0])
+    else:
+        name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
+    for name, data in grouped_data:
+        hovertext = create_data_label(data, hovertext_cols)
+
+        graph = go.Scattergl(
+            x=x_fn(data),
+            y=y_fn(data),
+            name=name_format(name),
+            hovertext=hovertext,
+            showlegend=showlegend,
+            legendgroup=name_format(name),
+            mode="markers",
+            marker={
+                "symbol": data['shape'],
+                "color": data['colour'], # Please note the 'u'
+                "size": data['markersize']
+            },
+            # Hover labels are not cropped
+            # https://github.com/plotly/plotly.js/issues/460
+            hoverlabel={"namelength": -1},
+        )
+        traces.append(graph)
+    for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
+        traces.append(go.Scattergl( # Cutoff line
+            x=sorted_data[name_col],
+            y=[cutoff_value] * len(sorted_data),
+            mode="lines",
+            line={"width": 1, "color": CUTOFF_LINE_COLOURS[index], "dash": "dash"},
+            name=cutoff_label
+        ))
+    if not highlight_df.empty:
+        traces.append(go.Scattergl( # Draw highlighted items on top
+            x=x_fn(highlight_df),
+            y=y_fn(highlight_df),
+            name="Highlighted Samples",
+            mode='markers',
+            legendgroup="gsi_reserved_highlighted_samples",
+            showlegend=showlegend,
+            marker={
+                "symbol": highlight_df['shape'],
+                "color": highlight_df['colour'],
+                "size": highlight_df['markersize'],
+                "opacity": 1
+            }
+        ))
+
+    return traces
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
-    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -250,53 +307,12 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 }
             )
         )
-    traces = []
-    grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
-    if colourby == shapeby:
-        name_format = lambda n: "{0}".format(n[0])
-    else:
-        name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
-    for name, data in grouped_data:
-        hovertext = create_data_label(data, hovertext_cols)
 
-        graph = go.Scattergl(
-            x=x_fn(data),
-            y=y_fn(data),
-            name=name_format(name),
-            hovertext=hovertext,
-            showlegend=True,
-            mode="markers",
-            marker={
-                "symbol": data['shape'],
-                "color": data['colour'], # Please note the 'u'
-                "size": data['markersize']
-            },
-            # Hover labels are not cropped
-            # https://github.com/plotly/plotly.js/issues/460
-            hoverlabel={"namelength": -1},
-        )
-        traces.append(graph)
-    for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
-        traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data[name_col], 
-            y=[cutoff_value] * len(sorted_data),
-            mode="lines",
-            line={"width": 1, "color": CUTOFF_LINE_COLOURS[index], "dash": "dash"},
-            name=cutoff_label
-        ))
-    if not highlight_df.empty:
-        traces.append(go.Scattergl( # Draw highlighted items on top
-            x=x_fn(highlight_df),
-            y=y_fn(highlight_df),
-            name="Highlighted Samples",
-            mode='markers',
-            marker={
-                "symbol": highlight_df['shape'],
-                "color": highlight_df['colour'],
-                "size": highlight_df['markersize'],
-                "opacity": 1
-            }
-        ))
+    traces = generate_traces(
+        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines,
+        name_col
+    )
+
     return go.Figure(
         data = traces,
         layout = go.Layout(
