@@ -229,40 +229,11 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
     return df
 
 
-# writing a factory may be peak Java poisoning but it might help with all these parameters
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
+def generate_traces(
+        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines=[],
+        name_col=PINERY_COL.SampleName, showlegend=True
+):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
-    margin = go.layout.Margin(
-                l=50,
-                r=50,
-                b=50,
-                t=50,
-                pad=4
-            )
-    y_axis = {
-        'title': {
-            'text': axis_text
-        }
-    }
-    if axis_text == '%':
-        y_axis['range'] = [0, 100]
-
-    if sorted_data.empty:
-        return go.Figure(
-            data=[go.Scattergl(
-                x=None,
-                y=None
-            )],
-            layout=go.Layout(
-                title=title_text,
-                margin=margin,
-                xaxis={'visible': False,
-                    'rangemode': 'normal',
-                    'autorange': True},
-                yaxis=y_axis
-            )
-        )
     traces = []
     grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
     if colourby == shapeby:
@@ -277,7 +248,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             y=y_fn(data),
             name=name_format(name),
             hovertext=hovertext,
-            showlegend=True,
+            showlegend=showlegend,
+            legendgroup=name_format(name),
             mode="markers",
             marker={
                 "symbol": data['shape'],
@@ -291,7 +263,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         traces.append(graph)
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(go.Scattergl( # Cutoff line
-            x=sorted_data[name_col], 
+            x=sorted_data[name_col],
             y=[cutoff_value] * len(sorted_data),
             mode="lines",
             line={"width": 1, "color": CUTOFF_LINE_COLOURS[index], "dash": "dash"},
@@ -303,6 +275,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             y=y_fn(highlight_df),
             name="Highlighted Samples",
             mode='markers',
+            legendgroup="gsi_reserved_highlighted_samples",
+            showlegend=showlegend,
             marker={
                 "symbol": highlight_df['shape'],
                 "color": highlight_df['colour'],
@@ -310,6 +284,43 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 "opacity": 1
             }
         ))
+
+    return traces
+
+# writing a factory may be peak Java poisoning but it might help with all these parameters
+def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
+             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
+    margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
+    if sorted_data.empty:
+        return go.Figure(
+            data=[go.Scattergl(
+                x=None,
+                y=None
+            )],
+            layout=go.Layout(
+                title=title_text,
+                margin=margin,
+                xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
+                yaxis={
+                    'title': {
+                        'text': axis_text
+                    }
+                }
+            )
+        )
+
+    traces = generate_traces(
+        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines,
+        name_col
+    )
 
     return go.Figure(
         data = traces,
@@ -319,9 +330,14 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},
-            yaxis=y_axis
+            yaxis={
+                'title': {
+                    'text': axis_text
+                }
+            },
         )
     )
+
 
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}

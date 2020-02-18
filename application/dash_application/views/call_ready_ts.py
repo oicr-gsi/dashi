@@ -5,6 +5,9 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+
 import gsiqcetl.column
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -15,8 +18,8 @@ from ..utility import log_utils
 
 logger = logging.getLogger(__name__)
 
-page_name = 'call-ready-ts-1'
-title = "Call-Ready TS 1"
+page_name = 'call-ready-ts'
+title = "Call-Ready TS"
 
 ids = init_ids([
     # Buttons
@@ -55,10 +58,7 @@ ids = init_ids([
     'mean-insert-size',
     'hs-library-size',
     'duplicate-rate',
-    'purity',
-    'fraction-excluded',
-    'at-dropout',
-    'gc-dropout',
+    'subplot',
 
     # Tables
     'failed-samples',
@@ -271,44 +271,91 @@ def generate_duplicate_rate(df, graph_params):
         util.ml_col)
 
 
-def generate_purity(df, graph_params):
-    return generate(
-        "Purity (%)", df,
+def generate_purity_traces(df, graph_params):
+    return generate_traces(
+        df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Purity"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         util.ml_col)
 
 
-def generate_fraction_excluded(df, graph_params):
-    return generate(
-        "Excluded due to Overlap (%)", df,
+def generate_fraction_excluded_traces(df, graph_params):
+    return generate_traces(
+        df,
         lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        lambda d: d[HSMETRICS_COL.PctExcOverlap],
+        graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+        util.ml_col,
+        showlegend=False
+    )
 
 
-def generate_at_dropout(df, graph_params):
-    return generate(
-        "AT Dropout (%)", df,
+def generate_at_dropout_trace(df, graph_params):
+    return generate_traces(
+        df,
         lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.AtDropout],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+        util.ml_col,
+        showlegend=False
+    )
 
 
-def generate_gc_dropout(df, graph_params):
-    return generate(
-        "GC Dropout (%)", df,
+def generate_gc_dropout_trace(df, graph_params):
+    return generate_traces(
+        df,
         lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.GCDropout],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+        util.ml_col,
+        showlegend=False
+    )
+
+
+def generate_subplot(df, graph_params):
+    """
+    Subplots are necessary because of the WebGL contexts limit (GR-932).
+
+    This subplot includes:
+    * Purity
+    * Fraction Excluded
+    * GC Dropout
+    * AT Dropout
+    """
+    fig = make_subplots(
+        rows=4, cols=1, vertical_spacing=0.04, shared_xaxes=True,
+        subplot_titles=["Purity %", "Fraction Excluded due to Overlap", "AT Dropout %", "GC Dropout %"]
+    )
+    for t in generate_purity_traces(df, graph_params):
+        fig.add_trace(t, row=1, col=1)
+    for t in generate_fraction_excluded_traces(df, graph_params):
+        fig.add_trace(t, row=2, col=1)
+    for t in generate_at_dropout_trace(df, graph_params):
+        fig.add_trace(t, row=3, col=1)
+    for t in generate_gc_dropout_trace(df, graph_params):
+        fig.add_trace(t, row=4, col=1)
+
+    fig.update_xaxes(
+        visible=False,
+        rangemode="normal",
+        autorange=True
+    )
+
+    fig.update_yaxes(title_text="%", row=1, col=1)
+    fig.update_yaxes(title_text="%", row=3, col=1)
+    fig.update_yaxes(title_text="%", row=4, col=1)
+
+    fig.update_layout(
+        height=1600,
+        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4)
+    )
+
+    return fig
 
 
 def layout(query_string):
@@ -328,10 +375,7 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
-                html.A("Go to Call-Ready Targeted Sequencing Page 2",
-                       href="/call-ready-ts-2"),
-                    html.Br(),
-                    html.Button("Update", id=ids["update-button-top"], className="update-button"),
+                    html.Button("Update", id=ids["update-button"]),
                     html.Br(),
                     html.Br(),
 
@@ -369,14 +413,14 @@ def layout(query_string):
                                                           "value": ICHOR_COL.TumorFraction},
                                                          {"label": "HS Library Size",
                                                           "value": HSMETRICS_COL.HsLibrarySize},
-                                                         # {"label": "Duplication (%)",
-                                                         #  "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
-                                                         # {"label": "Fraction Excluded due to Overlap",
-                                                         #  "value": HSMETRICS_COL.PctExcOverlap},
-                                                         # {"label": "AT Dropout",
-                                                         #  "value": HSMETRICS_COL.AtDropout},
-                                                         # {"label": "GC Dropout",
-                                                         #  "value": HSMETRICS_COL.GCDropout}
+                                                         {"label": "Percent Exact Duplicates",
+                                                          "value": HSMETRICS_COL.PctExcDupe},
+                                                         {"label": "Fraction Excluded due to Overlap",
+                                                          "value": HSMETRICS_COL.PctExcOverlap},
+                                                         {"label": "AT Dropout",
+                                                          "value": HSMETRICS_COL.AtDropout},
+                                                         {"label": "GC Dropout",
+                                                          "value": HSMETRICS_COL.GCDropout}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
@@ -409,11 +453,8 @@ def layout(query_string):
                                                ids["callability-cutoff"], initial[cutoff_callability]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
                                                ids["insert-size-cutoff"], initial[cutoff_insert_mean]),
-                    # sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
-                    #                            ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
-
-                    html.Br(),
-                    html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
+                    sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
+                                               ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
                 ]),
 
                 # Graphs + Tables tabs
@@ -447,62 +488,48 @@ def layout(query_string):
                                 id=ids["hs-library-size"],
                                 figure=generate_hs_library_size(df, initial)),
 
-                            # core.Graph(
-                            #     id=ids["duplicate-rate"],
-                            #     figure=generate_duplicate_rate(df, initial)),
-                            #
-                            # core.Graph(
-                            #     id=ids["purity"],
-                            #     figure=generate_purity(df, initial)),
-                            #
-                            # core.Graph(
-                            #     id=ids["fraction-excluded"],
-                            #     figure=generate_fraction_excluded(df, initial)),
-                            #
-                            # core.Graph(
-                            #     id=ids["at-dropout"],
-                            #     figure=generate_at_dropout(df, initial)),
-                            #
-                            # core.Graph(
-                            #     id=ids["gc-dropout"],
-                            #     figure=generate_gc_dropout(df, initial)),
-                        ]),
-                        # Tables tab
-                        core.Tab(label="Tables",
-                        children=[
-                            table_tabs(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                df,
-                                ts_table_columns,
-                                [
-                                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial[cutoff_pf_reads_tumour],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial[cutoff_pf_reads_normal],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
-                                    initial[cutoff_coverage_tumour],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
-                                    initial[cutoff_coverage_normal],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_callability_label, special_cols["Callability (14x/8x)"],
-                                    initial[cutoff_callability],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                    #  initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
-                                ]
-                            )
-                        ])
-                    ]) # End Tabs
-                ]) # End Div
-            ]) # End Div
-        ]) # End Div
-    ]) # End Loading
+                    core.Graph(
+                        id=ids["duplicate-rate"],
+                        figure=generate_duplicate_rate(df, initial)),
+
+                    core.Graph(
+                        id=ids["subplot"],
+                        figure=generate_subplot(df, initial),
+                    )
+                ])
+            ]),
+            table_tabs(
+                ids["failed-samples"],
+                ids["data-table"],
+                df,
+                ts_table_columns,
+                [
+                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                     initial[cutoff_pf_reads_tumour],
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                     initial[cutoff_pf_reads_normal],
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                     initial[cutoff_coverage_tumour],
+                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                    (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                     initial[cutoff_coverage_normal],
+                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                    (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                     initial[cutoff_callability],
+                     (lambda row, col, cutoff: row[col] < cutoff)),
+                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                     (lambda row, col, cutoff: row[col] < cutoff)),
+                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
+                ]
+            )
+        ])
+            ])
+        ])
+    ])
+
 
 def init_callbacks(dash_app):
     @dash_app.callback(
@@ -512,11 +539,8 @@ def init_callbacks(dash_app):
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert-size"], "figure"),
             Output(ids["hs-library-size"], "figure"),
-            # Output(ids["duplicate-rate"], "figure"),
-            # Output(ids["purity"], "figure"),
-            # Output(ids["fraction-excluded"], "figure"),
-            # Output(ids["at-dropout"], "figure"),
-            # Output(ids["gc-dropout"], "figure"),
+            Output(ids["duplicate-rate"], "figure"),
+            Output(ids["subplot"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -537,7 +561,7 @@ def init_callbacks(dash_app):
             State(ids["search-sample"], "value"),
             State(ids["tumour-coverage-cutoff"], "value"),
             State(ids["normal-coverage-cutoff"], "value"),
-            # State(ids["duplicate-rate-max"], "value"),
+            State(ids["duplicate-rate-max"], "value"),
             State(ids["callability-cutoff"], "value"),
             State(ids["insert-size-cutoff"], "value"),
             State(ids["pf-tumour-cutoff"], "value"),
@@ -559,7 +583,7 @@ def init_callbacks(dash_app):
                        search_sample,
                        tumour_coverage_cutoff,
                        normal_coverage_cutoff,
-                       # duplicate_rate_max,
+                       duplicate_rate_max,
                        callability_cutoff,
                        insert_size_cutoff,
                        pf_tumour_cutoff,
@@ -577,7 +601,7 @@ def init_callbacks(dash_app):
             "shownames_val": show_names,
             cutoff_coverage_tumour: tumour_coverage_cutoff,
             cutoff_coverage_normal: normal_coverage_cutoff,
-            # cutoff_duplicate_rate: duplicate_rate_max,
+            cutoff_duplicate_rate: duplicate_rate_max,
             cutoff_callability: callability_cutoff,
             cutoff_insert_mean: insert_size_cutoff,
             cutoff_pf_reads_tumour: pf_tumour_cutoff,
@@ -600,8 +624,8 @@ def init_callbacks(dash_app):
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_size_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            # (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-            #  duplicate_rate_max, (lambda row, col, cutoff: row[col] > cutoff)),
+            (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+             duplicate_rate_max, (lambda row, col, cutoff: row[col] > cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
@@ -617,11 +641,8 @@ def init_callbacks(dash_app):
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
             generate_hs_library_size(df, graph_params),
-            # generate_duplicate_rate(df, graph_params),
-            # generate_purity(df, graph_params),
-            # generate_fraction_excluded(df, graph_params),
-            # generate_at_dropout(df, graph_params),
-            # generate_gc_dropout(df, graph_params),
+            generate_duplicate_rate(df, graph_params),
+            generate_subplot(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
