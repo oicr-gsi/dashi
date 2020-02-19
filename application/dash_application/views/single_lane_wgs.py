@@ -397,61 +397,74 @@ def layout(query_string):
                     ids["insert-mean-cutoff"], initial[cutoff_insert_mean]),
             ]),
 
-            html.Div(className="seven columns", children=[
-                core.Graph(
-                    id=ids["total-reads"],
-                    figure=generate_total_reads(
-                        df,
-                        PINERY_COL.SampleName,
-                        special_cols["Total Reads (Passed Filter)"],
-                        initial["colour_by"], initial["shape_by"],
-                        initial["shownames_val"],
-                        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
-                ),
-                core.Graph(
-                    id=ids["mean-insert"],
-                    figure=generate_mean_insert_size(df, initial)
-                ),
-                core.Graph(
-                    id=ids["duplication"],
-                    figure=generate_duplication(df, initial)
-                ),
-                core.Graph(
-                    id=ids["purity"],
-                    figure=generate_purity(df, initial)
-                ),
-                core.Graph(
-                    id=ids["ploidy"],
-                    figure=generate_ploidy(df, initial)
-                ),
-                core.Graph(
-                    id=ids["unmapped-reads"],
-                    figure=generate_unmapped_reads(df, initial)
-                ),
-                core.Graph(
-                    id=ids["non-primary-reads"],
-                    figure=generate_non_primary(df, initial)
-                ),
-                core.Graph(
-                    id=ids["on-target-reads"],
-                    figure=generate_on_target_reads(df, initial)
-                ),
-            ]),
-        ]),
-        table_tabs(
-            ids["failed-samples"],
-            ids["data-table"],
-            df,
-            wgs_table_columns,
-            [
-                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                 (lambda row, col, cutoff: row[col] < cutoff)),
-                (cutoff_pf_reads_label,
-                 special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
-                 (lambda row, col, cutoff: row[col] < cutoff)),
-            ])
-    ]),
-])
+            	# Graphs + Tables tabs
+                html.Div(className="seven columns", 
+                children=[
+                    core.Tabs([
+                        # Graphs tab
+                        core.Tab(label="Graphs",
+                        children=[
+                            core.Graph(
+                                id=ids["total-reads"],
+                                figure=generate_total_reads(
+                                    df,
+                                    PINERY_COL.SampleName,
+                                    special_cols["Total Reads (Passed Filter)"],
+                                    initial["colour_by"], initial["shape_by"],
+                                    initial["shownames_val"],
+                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
+                            ),
+                            core.Graph(
+                                id=ids["mean-insert"],
+                                figure=generate_mean_insert_size(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["duplication"],
+                                figure=generate_duplication(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["purity"],
+                                figure=generate_purity(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["ploidy"],
+                                figure=generate_ploidy(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["unmapped-reads"],
+                                figure=generate_unmapped_reads(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["non-primary-reads"],
+                                figure=generate_non_primary(df, initial)
+                            ),
+                            core.Graph(
+                                id=ids["on-target-reads"],
+                                figure=generate_on_target_reads(df, initial)
+                            )
+                        ]),
+                        # Tables tab
+                        core.Tab(label="Tables",
+                        children=[
+                            table_tabs(
+                                ids["failed-samples"],
+                                ids["data-table"],
+                                df,
+                                wgs_table_columns,
+                                [
+                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_pf_reads_label,
+                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
+                                ]
+                            )                    
+                        ])
+                    ]) # End Tabs
+                ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 
 def init_callbacks(dash_app):
