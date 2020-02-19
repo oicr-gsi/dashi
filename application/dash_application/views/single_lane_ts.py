@@ -297,9 +297,9 @@ def layout(query_string):
                 ]),
 
                 # Graphs
-                core.Tabs(className='seven columns', children=[
+                html.Div(className="seven columns", children=[core.Tabs( children=[
                     core.Tab(label="test tab 1",
-                    children=[html.Div(className='seven columns',
+                    children=[html.Div(
                     children=[
                         core.Graph(id=ids['total-reads'],
                             figure=generate_total_reads(
@@ -339,7 +339,7 @@ def layout(query_string):
                         (lambda row, col, cutoff: row[col] < cutoff)),
                     ]
                 )])
-                ])       
+                ]) ])      
         ])
 ])])
 
