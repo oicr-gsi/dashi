@@ -354,7 +354,8 @@ def generate_subplot(df, graph_params):
 
     fig.update_layout(
         height=1600,
-        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4)
+        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
+        legend=dict(tracegroupgap=0),
     )
 
     return fig
