@@ -325,15 +325,28 @@ def jira_button(button_text: str, button_id: str, style: Dict, href: str) -> htm
                   href=href)
 
 
-def construct_jira_link(runs) -> str:
+def construct_jira_link(runs, page_name) -> str:
     base_url = "https://jira.oicr.on.ca/secure/CreateIssueDetails!init.jspa?issuetype=9&pid=11684&priority=10000" \
                "&labels=dashi"
+    summary = {"summary": page_name + ": "}
+    base_url = base_url + "&" + urllib.parse.urlencode(summary)
+
     if runs:
         run_string = "Runs: " + ", ".join(str(run) for run in runs)
         description = {"description": run_string}
         return base_url + "&" + urllib.parse.urlencode(description)
     else:
         return base_url
+
+
+def jira_display_button(runs: List[str], page_title: str):
+    """ Don't display "File a ticket about these runs" button if more than 100 runs are selected.
+     This prevents an HTTP 400 "Request Header Too Large" error """
+    if len(runs) <= 100:
+        return [construct_jira_link(runs, page_title),
+                {"display": "inline-block"}]
+    else:
+        return ["", {"display": "none"}]
 
 
 def update_only_if_clicked(click):

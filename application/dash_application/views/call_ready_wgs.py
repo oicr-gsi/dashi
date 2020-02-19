@@ -298,7 +298,7 @@ def layout(query_string):
                 sidebar_utils.jira_button("File a ticket",
                                           ids['jira-issue-button'],
                                           {"display": "inline-block"},
-                                          sidebar_utils.construct_jira_link([]))]),
+                                          sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
                     html.Button("Update", id=ids["update-button"]),

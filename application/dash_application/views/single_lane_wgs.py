@@ -316,7 +316,7 @@ def layout(query_string):
             sidebar_utils.jira_button("File a ticket",
                                       ids['general-jira-issue-button'],
                                       {"display": "inline-block"},
-                                      sidebar_utils.construct_jira_link([])),
+                                      sidebar_utils.construct_jira_link([], title)),
             sidebar_utils.jira_button("File a ticket about these runs",
                                       ids['jira-issue-with-runs-button'],
                                       {"display": "none"}, "")]),
@@ -549,7 +549,7 @@ def init_callbacks(dash_app):
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
-        (jira_href, jira_style) = [sidebar_utils.construct_jira_link(runs), {"display": "inline-block"}]
+        (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
         return [
             approve_run_href,
