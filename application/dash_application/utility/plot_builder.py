@@ -1,7 +1,9 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Callable
 
 import pandas
 import plotly.graph_objects as go
+from plotly.basedatatypes import BaseTraceType
+from plotly.subplots import make_subplots
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
@@ -325,6 +327,45 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             }
         )
     )
+
+
+def generate_subplot(
+        df: pandas.DataFrame,
+        graph_params: dict,
+        trace_funcs: List[Callable[[pandas.DataFrame, dict], List[BaseTraceType]]],
+        graph_titles: List[str],
+        yaxis_titles: List[str],
+):
+    """
+    Generates a subplot using functions that take a DataFrame and graph paramaters,
+    returning a list of traces.
+
+    """
+    fig = make_subplots(
+        rows=len(trace_funcs), cols=1, vertical_spacing=0.04, shared_xaxes=True,
+        subplot_titles=graph_titles
+    )
+
+    for i, trace in enumerate(trace_funcs):
+        for t in trace(df, graph_params):
+            fig.add_trace(t, row=i+1, col=1)
+
+    fig.update_xaxes(
+        visible=False,
+        rangemode="normal",
+        autorange=True
+    )
+
+    for i, yaxis in enumerate(yaxis_titles):
+        fig.update_yaxes(title_text=yaxis, row=i+1, col=1)
+
+    fig.update_layout(
+        height=1600,
+        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
+        legend=dict(tracegroupgap=0),
+    )
+
+    return fig
 
 
 def _get_dict_wrapped(key_list, value_list):
