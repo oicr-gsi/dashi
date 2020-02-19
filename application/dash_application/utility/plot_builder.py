@@ -320,6 +320,9 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                     'text': axis_text
                 }
             },
+            legend={
+                'tracegroupgap': 0
+            }
         )
     )
 
