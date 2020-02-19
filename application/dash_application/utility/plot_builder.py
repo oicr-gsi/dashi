@@ -224,6 +224,9 @@ def generate_traces(
         sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines=[],
         name_col=PINERY_COL.SampleName, showlegend=True
 ):
+    if sorted_data.empty:
+        return [go.Scattergl(x=None, y=None)]
+
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     traces = []
     grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
@@ -278,6 +281,7 @@ def generate_traces(
 
     return traces
 
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
@@ -288,25 +292,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 t=50,
                 pad=4
             )
-    if sorted_data.empty:
-        return go.Figure(
-            data=[go.Scattergl(
-                x=None,
-                y=None
-            )],
-            layout=go.Layout(
-                title=title_text,
-                margin=margin,
-                xaxis={'visible': False,
-                    'rangemode': 'normal',
-                    'autorange': True},
-                yaxis={
-                    'title': {
-                        'text': axis_text
-                    }
-                }
-            )
-        )
 
     traces = generate_traces(
         sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines,
