@@ -26,8 +26,8 @@ ids = init_ids([
     # Sidebar controls
     'all-projects',
     'projects-list',
-    'all-tissue-preps',
-    'tissue-preps-list',
+    'all-tissue-materials',
+    'tissue-materials-list',
     'all-sample-types',
     'sample-types-list',
     'first-sort',
@@ -196,17 +196,20 @@ initial[cutoff_insert_mean] = 150
 ALL_PROJECTS = util.unique_set(TS_DF, PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(TS_DF, PINERY_COL.PrepKit)
 ALL_INSTITUTES = util.unique_set(TS_DF, PINERY_COL.Institute)
-ALL_TISSUE_PREPS = util.unique_set(TS_DF, PINERY_COL.TissuePreparation)
+ALL_TISSUE_MATERIALS = util.unique_set(TS_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(TS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(TS_DF, util.sample_type_col)
 
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
-    "tissue_preps": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_TISSUE_PREPS, "all_tissue_preps"),
-    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types")
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected,
+        ALL_PROJECTS, "all_projects"),
+    "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
+        selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
+    "sample_types": lambda selected: log_utils.collapse_if_all_selected(
+        selected, ALL_SAMPLE_TYPES, "all_sample_types")
 }
 
-shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_PREPS)
+shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_MATERIALS)
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
 
@@ -316,9 +319,12 @@ def generate_gc_dropout(df, graph_params):
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
 
-    df = reshape_call_ready_df(TS_DF, initial["projects"], initial["tissue_preps"], initial["sample_types"],
+    df = reshape_call_ready_df(TS_DF, initial["projects"],
+                               initial["tissue_materials"],
+                               initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
+                               initial["colour_by"], initial["shape_by"],
+                               shape_colour.items_for_df(), [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -340,12 +346,13 @@ def layout(query_string):
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
                                                   ALL_PROJECTS),
-                    sidebar_utils.select_tissue_prep(ids["all-tissue-preps"],
-                                                     ids["tissue-preps-list"],
-                                                     ALL_TISSUE_PREPS),
-                    sidebar_utils.select_sample_type(ids["all-sample-types"],
-                                                     ids["sample-types-list"],
-                                                     ALL_SAMPLE_TYPES),
+                    sidebar_utils.select_tissue_materials(
+                                                     ids["all-tissue-materials"],
+                                                     ids["tissue-materials-list"],
+                                                     ALL_TISSUE_MATERIALS),
+                    sidebar_utils.select_sample_types(ids["all-sample-types"],
+                                                      ids["sample-types-list"],
+                                                      ALL_SAMPLE_TYPES),
                     sidebar_utils.hr(),
 
                     # Sort, colour and shape
@@ -526,7 +533,7 @@ def init_callbacks(dash_app):
         [Input(ids["update-button"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
-            State(ids["tissue-preps-list"], "value"),
+            State(ids["tissue-materials-list"], "value"),
             State(ids["sample-types-list"], "value"),
             State(ids["first-sort"], "value"),
             State(ids["second-sort"], "value"),
@@ -546,7 +553,7 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        projects,
-                       tissue_preps,
+                       tissue_materials,
                        sample_types,
                        first_sort,
                        second_sort,
@@ -564,8 +571,10 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_call_ready_df(TS_DF, projects, tissue_preps, sample_types, first_sort, second_sort, colour_by,
-                                   shape_by, shape_colour.items_for_df(), search_sample)
+        df = reshape_call_ready_df(TS_DF, projects, tissue_materials,
+                                   sample_types, first_sort, second_sort,
+                                   colour_by, shape_by,
+                                   shape_colour.items_for_df(), search_sample)
         graph_params = {
             "colour_by": colour_by,
             "shape_by": shape_by,
@@ -633,12 +642,12 @@ def init_callbacks(dash_app):
         return [x for x in ALL_PROJECTS]
 
     @dash_app.callback(
-        Output(ids["tissue-preps-list"], "value"),
-        [Input(ids["all-tissue-preps"], "n_clicks")]
+        Output(ids["tissue-materials-list"], "value"),
+        [Input(ids["all-tissue-materials"], "n_clicks")]
     )
-    def all_tissue_preps_selected(click):
+    def all_tissue_materials_selected(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_TISSUE_PREPS]
+        return [x for x in ALL_TISSUE_MATERIALS]
 
     @dash_app.callback(
         Output(ids["sample-types-list"], "value"),

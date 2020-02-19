@@ -377,7 +377,7 @@ def get_initial_call_ready_values():
         "kits": [],
         "library_designs": [],
         "institutes": [],
-        "tissue_preps": [],
+        "tissue_materials": [],
         "sample_types": [],
         "start_date": None,
         "end_date": None,
@@ -390,11 +390,11 @@ def get_initial_call_ready_values():
 
 
 class ColourShapeSingleLane:
-    def __init__(self, projects, runs, kits, tissue_preps, library_designs):
+    def __init__(self, projects, runs, kits, tissue_materials, library_designs):
         self.projects = projects
         self.runs = runs
         self.kits = kits
-        self.tissue_preps = tissue_preps
+        self.tissue_materials = tissue_materials
         self.library_designs = library_designs
 
     @staticmethod
@@ -403,7 +403,7 @@ class ColourShapeSingleLane:
             {"label": "Project", "value": PINERY_COL.StudyTitle},
             {"label": "Run", "value": PINERY_COL.SequencerRunName},
             {"label": "Kit", "value": PINERY_COL.PrepKit},
-            {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
             {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType}
         ]
 
@@ -412,18 +412,18 @@ class ColourShapeSingleLane:
             PINERY_COL.StudyTitle: self.projects,
             PINERY_COL.SequencerRunName: self.runs,
             PINERY_COL.PrepKit: self.kits,
-            PINERY_COL.TissuePreparation: self.tissue_preps,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs
         }
 
 
 class ColourShapeCallReady:
-    def __init__(self, projects, library_designs, institutes, sample_types, tissue_preps):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials):
         self.projects = projects
         self.library_designs = library_designs
         self.institutes = institutes
         self.sample_types = sample_types
-        self.tissue_preps = tissue_preps
+        self.tissue_materials = tissue_materials
 
     @staticmethod
     def dropdown():
@@ -432,7 +432,7 @@ class ColourShapeCallReady:
             {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
-            {"label": "Tissue Prep", "value": PINERY_COL.TissuePreparation},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
         ]
 
     def items_for_df(self):
@@ -441,5 +441,5 @@ class ColourShapeCallReady:
             PINERY_COL.LibrarySourceTemplateType: self.library_designs,
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
-            PINERY_COL.TissuePreparation: self.tissue_preps,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
         }

@@ -123,20 +123,20 @@ def select_library_designs(all_library_designs_id: str, library_designs_id:
                                   library_designs_id, library_designs)
 
 
-def select_sample_type(all_sample_types_id: str, sample_types_id: str,
-                       sample_types: List[str]) -> core.Loading:
+def select_sample_types(all_sample_types_id: str, sample_types_id: str,
+                        sample_types: List[str]) -> core.Loading:
     return select_with_select_all("All Sample Types",
                                   all_sample_types_id,
                                   "Filter by Sample Type",
                                   sample_types_id, sample_types)
 
 
-def select_tissue_prep(all_tissue_preps_id: str, tissue_preps_id: str,
-                       tissue_preps: List[str]) -> core.Loading:
+def select_tissue_materials(all_tissue_materials_id: str, tissue_preps_id: str,
+                            tissue_materials: List[str]) -> core.Loading:
     return select_with_select_all("All Tissue Materials",
-                                  all_tissue_preps_id,
+                                  all_tissue_materials_id,
                                   "Filter by Tissue Material",
-                                  tissue_preps_id, tissue_preps)
+                                  tissue_preps_id, tissue_materials)
 
 
 default_first_sort = [
