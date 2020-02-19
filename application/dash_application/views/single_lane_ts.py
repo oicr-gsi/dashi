@@ -298,7 +298,7 @@ def layout(query_string):
 
                 # Graphs
                 html.Div(className="seven columns", children=[core.Tabs( children=[
-                    core.Tab(label="test tab 1",
+                    core.Tab(label="Graphs",
                     children=[html.Div(
                     children=[
                         core.Graph(id=ids['total-reads'],
@@ -325,7 +325,7 @@ def layout(query_string):
                         )
                     ]),
                 ]),
-                    core.Tab(label="test tab 2",
+                    core.Tab(label="Tables",
                     children=[table_tabs(
                     ids["failed-samples"],
                     ids["data-table"],
