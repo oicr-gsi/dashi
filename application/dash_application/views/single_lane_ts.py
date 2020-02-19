@@ -311,7 +311,8 @@ def layout(query_string):
                                     initial["colour_by"],
                                     initial["shape_by"],
                                     initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
+                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])]
+                                )
                             ),
                             core.Graph(id=ids['unmapped-reads'],
                                 figure=generate_unmapped_reads(df, initial)
