@@ -5,9 +5,6 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-
 import gsiqcetl.column
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -318,7 +315,7 @@ def generate_gc_dropout_trace(df, graph_params):
     )
 
 
-def generate_subplot(df, graph_params):
+def generate_view_subplot(df, graph_params):
     """
     Subplots are necessary because of the WebGL contexts limit (GR-932).
 
@@ -328,36 +325,18 @@ def generate_subplot(df, graph_params):
     * GC Dropout
     * AT Dropout
     """
-    fig = make_subplots(
-        rows=4, cols=1, vertical_spacing=0.04, shared_xaxes=True,
-        subplot_titles=["Purity %", "Fraction Excluded due to Overlap", "AT Dropout %", "GC Dropout %"]
+    return generate_subplot(
+        df,
+        graph_params,
+        [
+            generate_purity_traces,
+            generate_fraction_excluded_traces,
+            generate_at_dropout_trace,
+            generate_gc_dropout_trace,
+        ],
+        ["Purity %", "Fraction Excluded due to Overlap", "AT Dropout %", "GC Dropout %"],
+        ['%', '', '%', '%']
     )
-    for t in generate_purity_traces(df, graph_params):
-        fig.add_trace(t, row=1, col=1)
-    for t in generate_fraction_excluded_traces(df, graph_params):
-        fig.add_trace(t, row=2, col=1)
-    for t in generate_at_dropout_trace(df, graph_params):
-        fig.add_trace(t, row=3, col=1)
-    for t in generate_gc_dropout_trace(df, graph_params):
-        fig.add_trace(t, row=4, col=1)
-
-    fig.update_xaxes(
-        visible=False,
-        rangemode="normal",
-        autorange=True
-    )
-
-    fig.update_yaxes(title_text="%", row=1, col=1)
-    fig.update_yaxes(title_text="%", row=3, col=1)
-    fig.update_yaxes(title_text="%", row=4, col=1)
-
-    fig.update_layout(
-        height=1600,
-        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
-        legend=dict(tracegroupgap=0),
-    )
-
-    return fig
 
 
 def layout(query_string):
@@ -486,7 +465,7 @@ def layout(query_string):
 
                     core.Graph(
                         id=ids["subplot"],
-                        figure=generate_subplot(df, initial),
+                        figure=generate_view_subplot(df, initial),
                     )
                 ])
             ]),
@@ -628,7 +607,7 @@ def init_callbacks(dash_app):
             generate_mean_insert_size(df, graph_params),
             generate_hs_library_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
-            generate_subplot(df, graph_params),
+            generate_view_subplot(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
