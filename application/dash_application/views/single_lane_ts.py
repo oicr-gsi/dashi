@@ -347,11 +347,11 @@ def layout(query_string):
                                 ]
                             )
                         ])
-                    ])
-                ])      
-            ])
-        ])
-    ])
+                    ]) # End Tabs
+                ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 
 def init_callbacks(dash_app):
