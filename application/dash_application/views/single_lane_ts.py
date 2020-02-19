@@ -297,7 +297,9 @@ def layout(query_string):
                 ]),
 
                 # Graphs
-                html.Div(className='seven columns',
+                core.Tabs(className='seven columns', children=[
+                    core.Tab(label="test tab 1",
+                    children=[html.Div(className='seven columns',
                     children=[
                         core.Graph(id=ids['total-reads'],
                             figure=generate_total_reads(
@@ -323,9 +325,8 @@ def layout(query_string):
                         )
                     ]),
                 ]),
-
-                # Tables
-                table_tabs(
+                    core.Tab(label="test tab 2",
+                    children=[table_tabs(
                     ids["failed-samples"],
                     ids["data-table"],
                     df,
@@ -337,9 +338,10 @@ def layout(query_string):
                         special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
                         (lambda row, col, cutoff: row[col] < cutoff)),
                     ]
-                )
-        ]),
-])
+                )])
+                ])       
+        ])
+])])
 
 
 def init_callbacks(dash_app):
