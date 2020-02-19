@@ -303,32 +303,28 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            html.Div(
-                                children=[
-                                    core.Graph(id=ids['total-reads'],
-                                        figure=generate_total_reads(
-                                            df,
-                                            PINERY_COL.SampleName,
-                                            special_cols["Total Reads (Passed Filter)"],
-                                            initial["colour_by"],
-                                            initial["shape_by"],
-                                            initial["shownames_val"],
-                                            [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
-                                    ),
-                                    core.Graph(id=ids['unmapped-reads'],
-                                        figure=generate_unmapped_reads(df, initial)
-                                    ),
-                                    core.Graph(id=ids['non-primary-reads'],
-                                        figure=generate_nonprimary_reads(df, initial)
-                                    ),
-                                    core.Graph(id=ids['on-target-reads'],
-                                        figure=generate_on_target_reads(df,initial)
-                                    ),
-                                    core.Graph(id=ids['mean-insert-size'],
-                                        figure=generate_mean_insert_size(df, initial)
-                                    )
-                                ]
+                            core.Graph(id=ids['total-reads'],
+                                figure=generate_total_reads(
+                                    df,
+                                    PINERY_COL.SampleName,
+                                    special_cols["Total Reads (Passed Filter)"],
+                                    initial["colour_by"],
+                                    initial["shape_by"],
+                                    initial["shownames_val"],
+                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
                             ),
+                            core.Graph(id=ids['unmapped-reads'],
+                                figure=generate_unmapped_reads(df, initial)
+                            ),
+                            core.Graph(id=ids['non-primary-reads'],
+                                figure=generate_nonprimary_reads(df, initial)
+                            ),
+                            core.Graph(id=ids['on-target-reads'],
+                                figure=generate_on_target_reads(df,initial)
+                            ),
+                            core.Graph(id=ids['mean-insert-size'],
+                                figure=generate_mean_insert_size(df, initial)
+                            )
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
