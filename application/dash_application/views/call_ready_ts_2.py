@@ -263,7 +263,7 @@ def generate_hs_library_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
-        "Duplicate (%)", df,
+        "Duplication (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
