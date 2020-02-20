@@ -168,7 +168,7 @@ initial[cutoff_callability] = 50
 cutoff_insert_mean_label = "Insert Mean minimum"
 cutoff_insert_mean = "cutoff_insert_mean"
 initial[cutoff_insert_mean] = 150
-cutoff_duplicate_rate_label = "Duplicate Rate maximum"
+cutoff_duplicate_rate_label = "Duplication (%) maximum"
 cutoff_duplicate_rate = "cutoff_duplicate_rate"
 initial[cutoff_duplicate_rate] = 50
 cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
@@ -243,7 +243,7 @@ def generate_mean_insert_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
-        "Duplicate Rate", df,
+        "Duplication (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],

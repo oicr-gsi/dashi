@@ -181,7 +181,7 @@ initial[cutoff_coverage_tumour] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 cutoff_coverage_normal = "cutoff_coverage_normal"
 initial[cutoff_coverage_normal] = 30
-cutoff_duplicate_rate_label = "Duplicate Rate maximum"
+cutoff_duplicate_rate_label = "Duplication (%) maximum"
 cutoff_duplicate_rate = "cutoff_duplicate_rate"
 initial[cutoff_duplicate_rate] = 50
 cutoff_callability_label = "Callability minimum"
@@ -263,7 +263,7 @@ def generate_hs_library_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
-        "Duplicate Rate", df,
+        "Duplication (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -362,8 +362,8 @@ def layout(query_string):
                                                          #  "value": ICHOR_COL.TumorFraction},
                                                          # {"label": "HS Library Size",
                                                          #  "value": HSMETRICS_COL.HsLibrarySize},
-                                                         {"label": "Percent Exact Duplicates",
-                                                          "value": HSMETRICS_COL.PctExcDupe},
+                                                         {"label": "Duplication (%)",
+                                                          "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
                                                          {"label": "Fraction Excluded due to Overlap",
                                                           "value": HSMETRICS_COL.PctExcOverlap},
                                                          {"label": "AT Dropout",
