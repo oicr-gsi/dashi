@@ -406,87 +406,97 @@ def layout(query_string):
                                                ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
                 ]),
 
-                html.Div(className="seven columns", children=[
-                    # core.Graph(
-                    #     id=ids["total-reads"],
-                    #     figure=generate_total_reads(df, util.ml_col,
-                    #         special_cols["Total Reads (Passed Filter)"],
-                    #         initial["colour_by"], initial["shape_by"], initial["shownames_val"],
-                    #         [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
-                    #          (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
-                    #
-                    # core.Graph(
-                    #    id=ids["unique-reads"],
-                    #    figure=generate_unique_reads(df, initial)),
-                    #
-                    # core.Graph(
-                    #     id=ids["mean-target-coverage"],
-                    #     figure=generate_mean_target_coverage(df, initial)),
-                    #
-                    # core.Graph(
-                    #     id=ids["callability"],
-                    #     figure=generate_callability(df, initial)),
-                    #
-                    # core.Graph(
-                    #     id=ids["mean-insert-size"],
-                    #     figure=generate_mean_insert_size(df, initial)),
-                    #
-                    # core.Graph(
-                    #     id=ids["hs-library-size"],
-                    #     figure=generate_hs_library_size(df, initial)),
+		        # Graphs + Tables tabs
+                html.Div(className="seven columns", 
+                children=[
+                    core.Tabs([
+                        # Graphs tab
+                        core.Tab(label="Graphs",
+                        children=[
+                            # core.Graph(
+                            #     id=ids["total-reads"],
+                            #     figure=generate_total_reads(df, util.ml_col,
+                            #         special_cols["Total Reads (Passed Filter)"],
+                            #         initial["colour_by"], initial["shape_by"], initial["shownames_val"],
+                            #         [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
+                            #          (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
+                            #
+                            # core.Graph(
+                            #    id=ids["unique-reads"],
+                            #    figure=generate_unique_reads(df, initial)),
+                            #
+                            # core.Graph(
+                            #     id=ids["mean-target-coverage"],
+                            #     figure=generate_mean_target_coverage(df, initial)),
+                            #
+                            # core.Graph(
+                            #     id=ids["callability"],
+                            #     figure=generate_callability(df, initial)),
+                            #
+                            # core.Graph(
+                            #     id=ids["mean-insert-size"],
+                            #     figure=generate_mean_insert_size(df, initial)),
+                            #
+                            # core.Graph(
+                            #     id=ids["hs-library-size"],
+                            #     figure=generate_hs_library_size(df, initial)),
 
-                    core.Graph(
-                        id=ids["duplicate-rate"],
-                        figure=generate_duplicate_rate(df, initial)),
+                            core.Graph(
+                                id=ids["duplicate-rate"],
+                                figure=generate_duplicate_rate(df, initial)),
 
-                    core.Graph(
-                        id=ids["purity"],
-                        figure=generate_purity(df, initial)),
+                            core.Graph(
+                                id=ids["purity"],
+                                figure=generate_purity(df, initial)),
 
-                    core.Graph(
-                        id=ids["fraction-excluded"],
-                        figure=generate_fraction_excluded(df, initial)),
+                            core.Graph(
+                                id=ids["fraction-excluded"],
+                                figure=generate_fraction_excluded(df, initial)),
 
-                    core.Graph(
-                        id=ids["at-dropout"],
-                        figure=generate_at_dropout(df, initial)),
+                            core.Graph(
+                                id=ids["at-dropout"],
+                                figure=generate_at_dropout(df, initial)),
 
-                    core.Graph(
-                        id=ids["gc-dropout"],
-                        figure=generate_gc_dropout(df, initial)),
-
-                ])
-            ]),
-            table_tabs(
-                ids["failed-samples"],
-                ids["data-table"],
-                df,
-                ts_table_columns,
-                [
-                    # (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                    #  initial[cutoff_pf_reads_tumour],
-                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                    # (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                    #  initial[cutoff_pf_reads_normal],
-                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                    # (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
-                    #  initial[cutoff_coverage_tumour],
-                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                    # (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
-                    #  initial[cutoff_coverage_normal],
-                    # (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                    # (cutoff_callability_label, special_cols["Callability (14x/8x)"],
-                    #  initial[cutoff_callability],
-                    #  (lambda row, col, cutoff: row[col] < cutoff)),
-                    # (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                    #  (lambda row, col, cutoff: row[col] < cutoff)),
-                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
-                ]
-            )
-        ])
-    ])
-
+                            core.Graph(
+                                id=ids["gc-dropout"],
+                                figure=generate_gc_dropout(df, initial)),
+                        ]),
+                        # Tables tab
+                        core.Tab(label="Tables",
+                        children=[
+                            table_tabs(
+                                ids["failed-samples"],
+                                ids["data-table"],
+                                df,
+                                ts_table_columns,
+                                [
+                                    # (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                                    #  initial[cutoff_pf_reads_tumour],
+                                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                    # (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                                    #  initial[cutoff_pf_reads_normal],
+                                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                    # (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                                    #  initial[cutoff_coverage_tumour],
+                                    #  (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                    # (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                                    #  initial[cutoff_coverage_normal],
+                                    # (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                    # (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                                    #  initial[cutoff_callability],
+                                    #  (lambda row, col, cutoff: row[col] < cutoff)),
+                                    # (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                    #  (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                    initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
+                                ]
+                            )
+                        ])
+                    ]) # End Tabs
+                ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 def init_callbacks(dash_app):
     @dash_app.callback(

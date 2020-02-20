@@ -262,52 +262,63 @@ def layout(query_string):
                                                initial[cutoff_rrna_contam]),
                 ]),
 
-                html.Div(className="seven columns", children=[
-                    core.Graph(
-                        id=ids["total-reads"],
-                        figure=generate_total_reads(df, util.ml_col,
-                            special_cols["Total Reads (Passed Filter)"],
-                            initial["colour_by"], initial["shape_by"], initial["shownames_val"],
-                            [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
+                # Graphs + Tables tabs
+                html.Div(className="seven columns", 
+                children=[
+                    core.Tabs([
+                        # Graphs tab
+                        core.Tab(label="Graphs",
+                        children=[
+                            core.Graph(
+                                id=ids["total-reads"],
+                                figure=generate_total_reads(df, util.ml_col,
+                                    special_cols["Total Reads (Passed Filter)"],
+                                    initial["colour_by"], initial["shape_by"], initial["shownames_val"],
+                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
 
-                    core.Graph(
-                       id=ids["unique-reads"],
-                       figure=generate_unique_reads(df, initial)),
+                            core.Graph(
+                            id=ids["unique-reads"],
+                            figure=generate_unique_reads(df, initial)),
 
-                    core.Graph(
-                        id=ids["five-to-three-bias"],
-                        figure=generate_five_to_three(df, initial)),
+                            core.Graph(
+                                id=ids["five-to-three-bias"],
+                                figure=generate_five_to_three(df, initial)),
 
-                    core.Graph(
-                        id=ids["correct-read-strand"],
-                        figure=generate_correct_read_strand(df, initial)),
+                            core.Graph(
+                                id=ids["correct-read-strand"],
+                                figure=generate_correct_read_strand(df, initial)),
 
-                    core.Graph(
-                        id=ids["coding"],
-                        figure=generate_coding(df, initial)),
+                            core.Graph(
+                                id=ids["coding"],
+                                figure=generate_coding(df, initial)),
 
-                    core.Graph(
-                        id=ids["rrna-contam"],
-                        figure=generate_rrna_contam(df, initial)),
-
-                ])
-            ]),
-            table_tabs(
-                ids["failed-samples"],
-                ids["data-table"],
-                df,
-                rna_table_columns,
-                [
-                    (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"],
-                     initial[cutoff_pf_reads],
-                     (lambda row, col, cutoff: row[col] < cutoff)),
-                    (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
-                     initial[cutoff_rrna_contam],
-                     (lambda row, col, cutoff: row[col] > cutoff)),
-                ]
-            )
-        ])
-    ])
+                            core.Graph(
+                                id=ids["rrna-contam"],
+                                figure=generate_rrna_contam(df, initial))
+                        ]),
+                        # Tables tab
+                        core.Tab(label="Tables",
+                        children=[
+                            table_tabs(
+                                ids["failed-samples"],
+                                ids["data-table"],
+                                df,
+                                rna_table_columns,
+                                [
+                                    (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"],
+                                    initial[cutoff_pf_reads],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
+                                    initial[cutoff_rrna_contam],
+                                    (lambda row, col, cutoff: row[col] > cutoff)),
+                                ]
+                            )
+                        ])
+                    ]) # End Tabs
+                ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 
 def init_callbacks(dash_app):
