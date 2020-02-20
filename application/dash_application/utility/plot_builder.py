@@ -360,7 +360,7 @@ def generate_subplot(
         fig.update_yaxes(title_text=yaxis, row=i+1, col=1)
 
     fig.update_layout(
-        height=1600,
+        height=500 * len(trace_funcs),
         margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
         legend=dict(tracegroupgap=0),
     )
