@@ -51,14 +51,7 @@ ids = init_ids([
     "show-all-data-labels",
 
     # Graphs
-    "total-reads",
-    "mean-insert",
-    "duplication",
-    "purity",
-    "ploidy",
-    "unmapped-reads",
-    "non-primary-reads",
-    "on-target-reads",
+    "graphs",
 
     "failed-samples",
     "data-table",
@@ -196,96 +189,74 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 
-def generate_mean_insert_size(df, graph_params):
-    return generate(
-        "Mean Insert Size",
-        df,
+def generate_total_reads_subplot(df, graph_params):
+    return generate_traces(df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        graph_params,
+        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
+
+
+def generate_mean_insert_size_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
-        "Base Pairs",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
-    )
+        graph_params,
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
-def generate_duplication(df, graph_params):
-    return generate(
-        "Duplication (%)",
-        df,
+def generate_duplication_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_unmapped_reads(df, graph_params):
-    return generate(
-        "Unmapped Reads (%)",
-        df,
+def generate_unmapped_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_non_primary(df, graph_params):
-    return generate(
-        "Non-Primary Reads (%)",
-        df,
+def generate_non_primary_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_on_target_reads(df, graph_params):
-    return generate(
-        "On Target Reads (%)",
-        df,
+def generate_on_target_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On-target Reads"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_purity(df, graph_params):
-    return generate(
-        "Purity",
-        df,
+def generate_purity_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Purity"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_ploidy(df, graph_params):
-    return generate(
-        "Ploidy",
-        df,
+def generate_ploidy_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[ICHOR_COL.Ploidy],
-        "",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
+
+
+graphs = [
+    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
+    (generate_mean_insert_size_subplot, "Mean Insert Size (bp)", "Base Pairs"),
+    (generate_duplication_subplot, "Duplication (%)", "%"),
+    (generate_unmapped_reads_subplot, "Unmapped Reads (%)", "%"),
+    (generate_non_primary_subplot, "Non-Primary Reads (%)", "%"),
+    (generate_on_target_reads_subplot, "On Target Reads (%)", "%"),
+    (generate_purity_subplot, "Purity", "%"),
+    (generate_ploidy_subplot, "Ploidy", "")
+]
 
 def dataversion():
     return DATAVERSION
@@ -415,43 +386,9 @@ def layout(query_string):
                         core.Tab(label="Graphs",
                         children=[
                             core.Graph(
-                                id=ids["total-reads"],
-                                figure=generate_total_reads(
-                                    df,
-                                    PINERY_COL.SampleName,
-                                    special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"], initial["shape_by"],
-                                    initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
+                                id=ids["graphs"],
+                                figure=generate_graphs(df, initial, graphs)
                             ),
-                            core.Graph(
-                                id=ids["mean-insert"],
-                                figure=generate_mean_insert_size(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["duplication"],
-                                figure=generate_duplication(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["purity"],
-                                figure=generate_purity(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["ploidy"],
-                                figure=generate_ploidy(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["unmapped-reads"],
-                                figure=generate_unmapped_reads(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["non-primary-reads"],
-                                figure=generate_non_primary(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["on-target-reads"],
-                                figure=generate_on_target_reads(df, initial)
-                            )
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -482,14 +419,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids["total-reads"], "figure"),
-            Output(ids["mean-insert"], "figure"),
-            Output(ids["duplication"], "figure"),
-            Output(ids["purity"], "figure"),
-            Output(ids["ploidy"], "figure"),
-            Output(ids["unmapped-reads"], "figure"),
-            Output(ids["non-primary-reads"], "figure"),
-            Output(ids["on-target-reads"], "figure"),
+            Output(ids["graphs"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -567,17 +497,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_total_reads(
-                df, PINERY_COL.SampleName,
-                special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_mean_insert_size(df, graph_params),
-            generate_duplication(df, graph_params),
-            generate_purity(df, graph_params),
-            generate_ploidy(df, graph_params),
-            generate_unmapped_reads(df, graph_params),
-            generate_non_primary(df, graph_params),
-            generate_on_target_reads(df, graph_params),
+            generate_graphs(df, graph_params, graphs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

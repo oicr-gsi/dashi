@@ -48,11 +48,7 @@ ids = init_ids([
     "date-range",
 
     #Graphs
-    'total-reads',
-    'unmapped-reads',
-    'non-primary-reads',
-    'on-target-reads',
-    'mean-insert-size',
+    'graphs',
 
     #Data table
     'failed-samples',
@@ -140,57 +136,50 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
 
-def generate_unmapped_reads(current_data, graph_params):
-    return generate(
-        "Unmapped Reads (%)",
-        current_data,
+def generate_total_reads_subplot(df, graph_params):
+    return generate_traces(df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        graph_params,
+        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
+
+
+def generate_unmapped_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_nonprimary_reads(current_data, graph_params):
-    return generate(
-        "Non-Primary Reads (%)",
-        current_data,
+def generate_nonprimary_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_on_target_reads(current_data, graph_params):
-    return generate(
-        "On Target Reads (%)",
-        current_data,
+def generate_on_target_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_mean_insert_size(current_data, graph_params):
-    return generate(
-        "Mean Insert Size",
-        current_data,
+def generate_mean_insert_size_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
-        "Base Pairs",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
-    )
+        graph_params,
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
+
+
+graphs = [
+    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
+    (generate_unmapped_reads_subplot, "Unmapped Reads (%)", "%"),
+    (generate_nonprimary_reads_subplot, "Non-Primary Reads (%)", "%"),
+    (generate_on_target_reads_subplot, "On Target Reads (%)", "%"),
+    (generate_mean_insert_size_subplot, "Mean Insert Size (bp)", "Base Pairs")
+]
 
 
 def dataversion():
@@ -313,29 +302,9 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(id=ids['total-reads'],
-                                figure=generate_total_reads(
-                                    df,
-                                    PINERY_COL.SampleName,
-                                    special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"],
-                                    initial["shape_by"],
-                                    initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])]
-                                )
+                            core.Graph(id=ids['graphs'],
+                                figure=generate_graphs(df, initial, graphs)
                             ),
-                            core.Graph(id=ids['unmapped-reads'],
-                                figure=generate_unmapped_reads(df, initial)
-                            ),
-                            core.Graph(id=ids['non-primary-reads'],
-                                figure=generate_nonprimary_reads(df, initial)
-                            ),
-                            core.Graph(id=ids['on-target-reads'],
-                                figure=generate_on_target_reads(df,initial)
-                            ),
-                            core.Graph(id=ids['mean-insert-size'],
-                                figure=generate_mean_insert_size(df, initial)
-                            )
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -366,11 +335,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['total-reads'], 'figure'),
-            Output(ids['unmapped-reads'], 'figure'),
-            Output(ids['non-primary-reads'], 'figure'),
-            Output(ids['on-target-reads'], 'figure'),
-            Output(ids['mean-insert-size'], 'figure'),
+            Output(ids['graphs'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -447,14 +412,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_total_reads(
-                df, PINERY_COL.SampleName,
-                special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_unmapped_reads(df, graph_params),
-            generate_nonprimary_reads(df, graph_params),
-            generate_on_target_reads(df, graph_params),
-            generate_mean_insert_size(df, graph_params),
+            generate_graphs(df, graph_params, graphs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

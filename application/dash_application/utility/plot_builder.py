@@ -223,21 +223,25 @@ def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
 
 
 def generate_traces(
-        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines=[],
-        name_col=PINERY_COL.SampleName, showlegend=True
-):
+        sorted_data, x_fn, y_fn, graph_params, cutoff_lines=[],
+        name_col=PINERY_COL.SampleName, showlegend=False):
+    colourby = "colour_by"
+    shapeby = "shape_by"
+    shownames = "shownames_val"
     if sorted_data.empty:
         return [go.Scattergl(x=None, y=None)]
 
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     traces = []
-    grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
-    if colourby == shapeby:
+    grouped_data = sorted_data.groupby([graph_params[colourby],
+                                        graph_params[shapeby]])
+    #Unfortunately necessary
+    if graph_params[colourby] == graph_params[shapeby]:
         name_format = lambda n: "{0}".format(n[0])
     else:
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
     for name, data in grouped_data:
-        hovertext = create_data_label(data, hovertext_cols)
+        hovertext = create_data_label(data, graph_params[shownames])
 
         graph = go.Scattergl(
             x=x_fn(data),
@@ -285,8 +289,9 @@ def generate_traces(
 
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
+def generate(title_text, sorted_data, x_fn, y_fn, axis_text, graph_params,
+             cutoff_lines:
+List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
     margin = go.layout.Margin(
                 l=50,
                 r=50,
@@ -296,13 +301,13 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             )
 
     traces = generate_traces(
-        sorted_data, x_fn, y_fn, colourby, shapeby, hovertext_cols, cutoff_lines,
+        sorted_data, x_fn, y_fn, graph_params, cutoff_lines,
         name_col
     )
 
     return go.Figure(
-        data = traces,
-        layout = go.Layout(
+        data=traces,
+        layout=go.Layout(
             title=title_text,
             margin=margin,
             xaxis={'visible': False,
@@ -359,6 +364,18 @@ def generate_subplot(
     return fig
 
 
+def generate_graphs(df, graph_params, graphs):
+    """
+    Subplots are necessary because of WebGL contexts limit (GR-932).
+    """
+    return generate_subplot(
+        df, graph_params,
+        [graph[0] for graph in graphs],
+        [graph[1] for graph in graphs],
+        [graph[2] for graph in graphs]
+    )
+
+
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0
@@ -377,25 +394,6 @@ def _get_shapes_for_values(shapeby: List[str]):
 
 def _get_colours_for_values(colourby: List[str]):
     return _get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
-
-
-# Generators for graphs used on multiple pages
-def generate_total_reads(
-        df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
-        show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
-) -> go.Figure:
-    return generate(
-        "Passed Filter Reads",
-        df,
-        lambda d: d[x_col],
-        lambda d: d[y_col],
-        "# PF Reads X 10^6",
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff_lines,
-        x_col
-    )
 
 
 def get_initial_single_lane_values():
