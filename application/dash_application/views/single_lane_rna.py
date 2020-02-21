@@ -395,7 +395,7 @@ def layout(query_string):
             ]),
 
 		        # Graphs + Tables tabs
-                html.Div(className="seven columns", 
+                html.Div(className="nine columns", 
                 children=[
                     core.Tabs([
                         # Graphs tab
