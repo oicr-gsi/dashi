@@ -316,6 +316,39 @@ def parse_query(query) -> List[str]:
     return queries
 
 
+def jira_button(button_text: str, button_id: str, style: Dict, href: str) -> html.A:
+    return html.A(button_text,
+                  id=button_id,
+                  className="button",
+                  target="_blank",
+                  style=style,
+                  href=href)
+
+
+def construct_jira_link(runs, page_name) -> str:
+    base_url = "https://jira.oicr.on.ca/secure/CreateIssueDetails!init.jspa?issuetype=9&pid=11684&priority=10000" \
+               "&labels=dashi"
+    summary = {"summary": page_name + ": "}
+    base_url = base_url + "&" + urllib.parse.urlencode(summary)
+
+    if runs:
+        run_string = "Runs: " + ", ".join(str(run) for run in runs)
+        description = {"description": run_string}
+        return base_url + "&" + urllib.parse.urlencode(description)
+    else:
+        return base_url
+
+
+def jira_display_button(runs: List[str], page_title: str):
+    """ Don't display "File a ticket about these runs" button if more than 100 runs are selected.
+     This prevents an HTTP 400 "Request Header Too Large" error """
+    if 0 < len(runs) <= 100:
+        return [construct_jira_link(runs, page_title),
+                {"display": "inline-block"}]
+    else:
+        return ["", {"display": "none"}]
+
+
 def update_only_if_clicked(click):
     """ Callbacks fire on page load, which can be a problem if the callback is on a button
     which hasn't actually been clicked. If the button hasn't been clicked, raise an error
