@@ -203,7 +203,7 @@ def layout(query_string):
                                           {"display": "inline-block"},
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
-                html.Div(className="sidebar four columns", children=[
+                html.Div(className="sidebar three columns", children=[
                     html.Button("Update", id=ids["update-button"]),
                     html.Br(),
                     html.Br(),
@@ -271,7 +271,7 @@ def layout(query_string):
                 ]),
 
                 # Graphs + Tables tabs
-                html.Div(className="seven columns", 
+                html.Div(className="nine columns", 
                 children=[
                     core.Tabs([
                         # Graphs tab

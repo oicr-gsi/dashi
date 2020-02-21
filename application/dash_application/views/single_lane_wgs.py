@@ -292,7 +292,7 @@ def layout(query_string):
                                       ids['jira-issue-with-runs-button'],
                                       {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
-            html.Div(className="sidebar four columns", children=[
+            html.Div(className="sidebar three columns", children=[
                 html.Button("Update", id=ids['update-button'], className="update-button"),
                 sidebar_utils.approve_run_button(ids["approve-run-button"]),
 
@@ -379,7 +379,7 @@ def layout(query_string):
             ]),
 
             	# Graphs + Tables tabs
-                html.Div(className="seven columns", 
+                html.Div(className="nine columns", 
                 children=[
                     core.Tabs([
                         # Graphs tab
