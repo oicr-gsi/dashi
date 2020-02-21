@@ -347,7 +347,7 @@ def generate_subplot(
 
     """
     fig = make_subplots(
-        rows=len(trace_funcs), cols=1, vertical_spacing=0.04, shared_xaxes=True,
+        rows=len(trace_funcs), cols=1, vertical_spacing=0.02, shared_xaxes=True,
         subplot_titles=graph_titles
     )
 
@@ -365,7 +365,7 @@ def generate_subplot(
         fig.update_yaxes(title_text=yaxis, row=i+1, col=1)
 
     fig.update_layout(
-        height=500 * len(trace_funcs),
+        height=350 * len(trace_funcs),
         margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
         legend=dict(tracegroupgap=0),
     )
