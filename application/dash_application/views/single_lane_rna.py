@@ -53,14 +53,7 @@ ids = init_ids([
     "date-range",
 
     # Graphs
-    "total-reads",
-    "unique-reads",
-    "5-to-3-prime-bias",
-    "correct-read-strand",
-    "coding",
-    "rrna-contam",
-    "dv200",
-    "rin",
+    "graphs",
 
     "failed-samples",
     "data-table",
@@ -202,98 +195,75 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
 
-def generate_unique_reads(df, graph_params):
-    return generate(
-        "Unique Reads (%)",
-        df,
+def generate_total_reads_subplot(df, graph_params):
+    return generate_traces(df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        graph_params,
+        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
+
+
+def generate_unique_reads_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Uniq Reads"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_five_to_three(df, graph_params):
-    fig = generate(
-        "5 to 3 Prime Bias",
-        df,
+def generate_five_to_three_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
-        "Log Ratio",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
-    fig.update_layout(yaxis_type="log")
-    return fig
+        graph_params)
 
 
-def generate_correct_read_strand(df, graph_params):
-    return generate(
-        "Correct Strand Reads (%)",
-        df,
+def generate_correct_read_strand_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Correct Strand Reads"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_coding(df, graph_params):
-    return generate(
-        "Coding (%)",
-        df,
+def generate_coding_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Coding"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        lambda d: d[RNA_COL.ProportionCodingBases],
+        graph_params)
 
 
-def generate_rrna_contam(df, graph_params):
-    return generate(
-        "rRNA Contamination (%)",
-        df,
+def generate_rrna_contam_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
-        [(cutoff_rrna_label, graph_params[cutoff_rrna])]
-    )
+        graph_params,
+        [(cutoff_rrna_label, graph_params[cutoff_rrna])])
 
 
-def generate_dv200(df, graph_params):
-    return generate(
-        "DV200 (%)",
-        df,
+def generate_dv200_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.DV200],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
 
 
-def generate_rin(df, graph_params):
-    return generate(
-        "RIN",
-        df,
+def generate_rin_subplot(df, graph_params):
+    return generate_traces(df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.RIN],
-        "",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
+        graph_params)
+
+
+graphs = [
+    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
+    (generate_unique_reads_subplot, "Unique Reads(Passed Filter) (%)", "%"),
+    (generate_five_to_three_subplot, "5 to 3 Prime Bias", "Ratio"),
+    (generate_correct_read_strand_subplot, "Correct Strand Reads (%)", "%"),
+    (generate_coding_subplot, "Coding (%)", "%"),
+    (generate_rrna_contam_subplot, "Ribosomal RNA Contamination (%)", "%"),
+    (generate_dv200_subplot, "DV200", "%"),
+    (generate_rin_subplot, "RIN", "")
+]
+
 
 def dataversion():
     return DATAVERSION
@@ -432,45 +402,8 @@ def layout(query_string):
                         core.Tab(label="Graphs",
                         children=[
                             core.Graph(
-                                id=ids["total-reads"],
-                                figure=generate_total_reads(
-                                    df,
-                                    PINERY_COL.SampleName,
-                                    special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"],
-                                    initial["shape_by"],
-                                    initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
-                            ),
-                            core.Graph(
-                                id=ids["unique-reads"],
-                                figure=generate_unique_reads(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["5-to-3-prime-bias"],
-                                figure=generate_five_to_three(df,
-                                                            initial)
-                            ),
-                            core.Graph(
-                                id=ids["correct-read-strand"],
-                                figure=generate_correct_read_strand(df,
-                                                                    initial)
-                            ),
-                            core.Graph(
-                                id=ids["coding"],
-                                figure=generate_coding(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["rrna-contam"],
-                                figure=generate_rrna_contam(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["dv200"],
-                                figure=generate_dv200(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["rin"],
-                                figure=generate_rin(df, initial)
+                                id=ids["graphs"],
+                                figure=generate_graphs(df, initial, graphs)
                             ),
                         ]),
                         # Tables tab
@@ -503,14 +436,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids["total-reads"], "figure"),
-            Output(ids["unique-reads"], "figure"),
-            Output(ids["5-to-3-prime-bias"], "figure"),
-            Output(ids["correct-read-strand"], "figure"),
-            Output(ids["coding"], "figure"),
-            Output(ids["rrna-contam"], "figure"),
-            Output(ids["dv200"], "figure"),
-            Output(ids["rin"], "figure"),
+            Output(ids["graphs"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -592,17 +518,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_total_reads(
-                df, PINERY_COL.SampleName,
-                special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_unique_reads(df, graph_params),
-            generate_five_to_three(df, graph_params),
-            generate_correct_read_strand(df, graph_params),
-            generate_coding(df, graph_params),
-            generate_rrna_contam(df, graph_params),
-            generate_dv200(df, graph_params),
-            generate_rin(df, graph_params),
+            generate_graphs(df, graph_params, graphs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
