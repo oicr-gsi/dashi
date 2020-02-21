@@ -342,7 +342,7 @@ def construct_jira_link(runs, page_name) -> str:
 def jira_display_button(runs: List[str], page_title: str):
     """ Don't display "File a ticket about these runs" button if more than 100 runs are selected.
      This prevents an HTTP 400 "Request Header Too Large" error """
-    if len(runs) <= 100:
+    if 0 < len(runs) <= 100:
         return [construct_jira_link(runs, page_title),
                 {"display": "inline-block"}]
     else:
