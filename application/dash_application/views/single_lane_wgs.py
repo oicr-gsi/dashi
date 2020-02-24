@@ -385,10 +385,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(
-                                id=ids["graphs"],
-                                figure=generate_graphs(df, initial, graphs)
-                            ),
+                            generate_graphs(ids["graphs"], df, initial, graphs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -407,11 +404,11 @@ def layout(query_string):
                                 ]
                             )                    
                         ])
-                    ]) # End Tabs
-                ]) # End Div
-            ]) # End Div
-        ]) # End Div
-    ]) # End Loading
+                    ])  # End Tabs
+                ])  # End Div
+            ])  # End Div
+        ])  # End Div
+    ])  # End Loading
 
 
 def init_callbacks(dash_app):
@@ -497,7 +494,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graphs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
