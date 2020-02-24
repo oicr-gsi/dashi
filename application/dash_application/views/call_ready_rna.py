@@ -9,6 +9,7 @@ import gsiqcetl.column
 import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -129,61 +130,57 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTI
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, True)
 
 
-def generate_total_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
-        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])],
-        util.ml_col, showlegend=True)
+def total_reads_subplot(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
+        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
 
 
-def generate_unique_reads_subplot(df, graph_params):
-   return generate_traces(df,
-       lambda d: d[util.ml_col],
-       lambda d: d[special_cols["Unique Reads (PF)"]],
-       graph_params, [], util.ml_col)
+def unique_reads_subplot(df, graph_params):
+    graph_title = gt.UNIQUE_READS
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+       special_cols["Unique Reads (PF)"], graph_params)
 
 
-def generate_five_to_three_subplot(df, graph_params):
-    return generate_traces(df,
-       lambda d: d[util.ml_col],
-       lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
-       graph_params, [], util.ml_col)
+def five_to_three_subplot(df, graph_params):
+    graph_title = gt.FIVE_TO_THREE
+    y_label = gt.RATIO
+    return CallReadySubplot(graph_title, y_label, df,
+       RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias, graph_params)
 
 
-def generate_correct_read_strand_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
-        graph_params, [], util.ml_col)
+def correct_read_strand_subplot(df, graph_params):
+    graph_title = gt.CORRECT_READ_STRAND
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        RNASEQQC2_COL.MetricsPercentCorrectStrandReads, graph_params)
 
 
-def generate_coding_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
-        graph_params, [], util.ml_col)
+def coding_subplot(df, graph_params):
+    graph_title = gt.CODING
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        RNASEQQC2_COL.MetricsPercentCodingBases, graph_params)
 
 
-def generate_rrna_contam_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["% rRNA Contamination"]],
-        graph_params,
-        [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
-        util.ml_col)
+def rrna_contam_subplot(df, graph_params):
+    graph_title = gt.RRNA_CONTAM
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["% rRNA Contamination"], graph_params,
+        [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])])
 
 
-graphs = [
-    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_unique_reads_subplot, "🚧 Unique Reads (PF) -- DATA MAY BE "
-                                    "SUSPECT 🚧", "%"),
-    (generate_five_to_three_subplot, "5 to 3 Prime Bias", "Ratio"),
-    (generate_correct_read_strand_subplot, "🚧 Correct Read Strand (%) -- "
-                                           "DATA MAY BE SUSPECT 🚧", "%"),
-    (generate_coding_subplot, "Coding Bases (%)", "%"),
-    (generate_rrna_contam_subplot, "rRNA Contamination (%)", "%"),
+graph_funcs = [
+    total_reads_subplot,
+    unique_reads_subplot,
+    five_to_three_subplot,
+    correct_read_strand_subplot,
+    coding_subplot,
+    rrna_contam_subplot,
 ]
 
 
@@ -277,7 +274,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -365,7 +363,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=defaultdict(list)),

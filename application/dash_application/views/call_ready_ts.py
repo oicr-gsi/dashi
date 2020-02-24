@@ -8,6 +8,7 @@ from dash.dependencies import Input, Output, State
 import gsiqcetl.column
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -69,6 +70,7 @@ special_cols = {
     "Percent Unique Reads (PF)": "Percent unique reads",
     "Callability (14x/8x)": "callability",
     "Purity": "Purity",
+    "Percent Excluded": "Excluded due to Overlap",
     "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
@@ -111,6 +113,8 @@ def get_merged_ts_data():
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability (14x/8x)"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
+    hsmetrics_df[special_cols["Percent Excluded"]] = round(
+        hsmetrics_df[HSMETRICS_COL.PctExcOverlap] *100, 3)
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
@@ -200,105 +204,101 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTI
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
 
-def generate_total_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
+def total_reads_subplot(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return CallReadySubplot(graph_title, y_label,  df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
         [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
          (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])],
-        util.ml_col, showlegend=True)
+        showlegend=True)
 
 
-def generate_unique_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Percent Unique Reads (PF)"]],
-        graph_params, [], util.ml_col)
+def unique_reads_subplot(df, graph_params):
+    graph_title = gt.UNIQUE_READS
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Percent Unique Reads (PF)"], graph_params)
 
 
-def generate_mean_target_coverage_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.MeanTargetCoverage],
-        graph_params, [], util.ml_col)
+def mean_target_coverage_subplot(df, graph_params):
+    graph_title = gt.MEAN_TARGET_COVERAGE
+    y_label = gt.NONE
+    return CallReadySubplot(graph_title, y_label, df,
+        HSMETRICS_COL.MeanTargetCoverage, graph_params)
 
 
-def generate_callability_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Callability (14x/8x)"]],
+def callability_subplot(df, graph_params):
+    graph_title = gt.CALLABILITY_14_8
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Callability (14x/8x)"], graph_params,
+        [(cutoff_callability_label, graph_params[cutoff_callability])])
+
+
+def mean_insert_size_subplot(df, graph_params):
+    graph_title = gt.MEAN_INSERT_SIZE
+    y_label = gt.BASE_PAIRS
+    return CallReadySubplot(graph_title, y_label, df, BAMQC_COL.InsertMean,
         graph_params,
-        [(cutoff_callability_label, graph_params[cutoff_callability])],
-        util.ml_col)
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
-def generate_mean_insert_size_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.InsertMean],
-        graph_params,
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        util.ml_col)
+def hs_library_size_subplot(df, graph_params):
+    graph_title = gt.HS_LIBRARY_SIZE
+    y_label = gt.NONE
+    return CallReadySubplot(graph_title, y_label, df,
+        HSMETRICS_COL.HsLibrarySize, graph_params)
 
 
-def generate_hs_library_size_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.HsLibrarySize],
-        graph_params, [], util.ml_col)
+def duplicate_rate_subplot(df, graph_params):
+    graph_title = gt.DUPLICATION
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, graph_params,
+        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])])
 
 
-def generate_duplicate_rate_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        graph_params,
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
-        util.ml_col)
+def purity_subplot(df, graph_params):
+    graph_title = gt.PURITY
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df, special_cols["Purity"],
+        graph_params)
 
 
-def generate_purity_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Purity"]],
-        graph_params, [], util.ml_col)
+def fraction_excluded_subplot(df, graph_params):
+    graph_title = gt.EXCLUDED_DUE_TO_OVERLAP
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Percent Excluded"], graph_params)
 
 
-def generate_fraction_excluded_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
-        graph_params, [], util.ml_col)
+def at_dropout_subplot(df, graph_params):
+    graph_title = gt.AT_DROPOUT
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        HSMETRICS_COL.AtDropout, graph_params)
 
 
-def generate_at_dropout_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.AtDropout],
-        graph_params, [], util.ml_col)
+def gc_dropout_subplot(df, graph_params):
+    graph_title = gt.GC_DROPOUT
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        HSMETRICS_COL.GCDropout, graph_params)
 
 
-def generate_gc_dropout_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.GCDropout],
-        graph_params, [], util.ml_col)
-
-
-graphs = [
-    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_unique_reads_subplot, "🚧 Percent Unique Reads (PF) -- DATA "
-                                    "MAY BE SUSPECT 🚧", "%"),
-    (generate_mean_target_coverage_subplot, "Mean Target Coverage", ""),
-    (generate_callability_subplot, "Callability (14x/8x) (%)", "%"),
-    (generate_mean_insert_size_subplot, "Mean Insert Size (bp)", "Base Pairs"),
-    (generate_hs_library_size_subplot, "HS Library Size", ""),
-    (generate_duplicate_rate_subplot, "Duplication (%)", "%"),
-    (generate_purity_subplot, "Purity (%)", "%"),
-    (generate_fraction_excluded_subplot, "Excluded due to Overlap (%)", "%"),
-    (generate_at_dropout_subplot, "AT Dropout (%)", "%"),
-    (generate_gc_dropout_subplot, "GC Dropout (%)", "%")
+graph_funcs = [
+    total_reads_subplot,
+    unique_reads_subplot,
+    mean_target_coverage_subplot,
+    callability_subplot,
+    mean_insert_size_subplot,
+    hs_library_size_subplot,
+    duplicate_rate_subplot,
+    purity_subplot,
+    fraction_excluded_subplot,
+    at_dropout_subplot,
+    gc_dropout_subplot,
 ]
 
 
@@ -405,7 +405,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -534,7 +535,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
