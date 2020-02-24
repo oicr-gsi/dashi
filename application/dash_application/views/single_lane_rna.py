@@ -325,7 +325,7 @@ def layout(query_string):
                         {"label": "5Prime to 3Prime Bias",
                          "value": RNA_COL.Median5Primeto3PrimeBias},
                         {"label": "% Correct Read Strand",
-                         "value": RNA_COL.CorrectStrandReads},
+                         "value": special_cols["Percent Correct Strand Reads"]},
                         {"label": "% Coding",
                          "value": RNA_COL.ProportionCodingBases},
                         {"label": "% rRNA Contamination",
