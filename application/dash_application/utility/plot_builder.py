@@ -1,5 +1,6 @@
 from typing import List, Tuple, Union, Callable
 
+import dash_core_components as core
 import pandas
 import plotly.graph_objects as go
 from plotly.basedatatypes import BaseTraceType
@@ -373,10 +374,28 @@ def generate_subplot(
     return fig
 
 
-def generate_graphs(df, graph_params, graphs):
+def generate_graphs(graph_id, df, graph_params, graphs):
     """
     Subplots are necessary because of WebGL contexts limit (GR-932).
     """
+    return core.Graph(
+        id=graph_id,
+        figure=generate_subplot(
+            df, graph_params,
+            [graph[0] for graph in graphs],
+            [graph[1] for graph in graphs],
+            [graph[2] for graph in graphs]
+        ),
+        config={
+            "toImageButtonOptions": {
+                "width": None,
+                "height": None
+            }
+        }  # This makes the downloaded png behave properly: https://community.plot.ly/t/save-plot-as-png-sizing-and-positioning/10166/6
+    )
+
+
+def update_graphs(df, graph_params, graphs):
     return generate_subplot(
         df, graph_params,
         [graph[0] for graph in graphs],
