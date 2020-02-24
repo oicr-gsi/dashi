@@ -409,38 +409,39 @@ def layout(query_string):
                                 id=ids["graphs"],
                                 figure=generate_graphs(df, initial, graphs)
                             ),
-                        ])
-                    ]),
-                    # Tables tab
-                    core.Tab(label="Tables",
-                        children=[
-                            table_tabs(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                df,
-                                ts_table_columns,
-                                [
-                                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                                     initial[cutoff_pf_reads_tumour],
-                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                                     initial[cutoff_pf_reads_normal],
-                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
-                                     initial[cutoff_coverage_tumour],
-                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
-                                     initial[cutoff_coverage_normal],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_callability_label, special_cols["Callability (14x/8x)"],
-                                     initial[cutoff_callability],
-                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                     initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
-                                ]
-                            )
+                        ]),
+                        # Tables tab
+                        core.Tab(label="Tables",
+                            children=[
+                                table_tabs(
+                                    ids["failed-samples"],
+                                    ids["data-table"],
+                                    df,
+                                    ts_table_columns,
+                                    [
+                                        (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                                         initial[cutoff_pf_reads_tumour],
+                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                        (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                                         initial[cutoff_pf_reads_normal],
+                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                        (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                                         initial[cutoff_coverage_tumour],
+                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                        (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                                         initial[cutoff_coverage_normal],
+                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                        (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                                         initial[cutoff_callability],
+                                         (lambda row, col, cutoff: row[col] < cutoff)),
+                                        (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                         (lambda row, col, cutoff: row[col] < cutoff)),
+                                        (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                         initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
+                                    ]
+                                )
+                             ])
+
                         ])
                     ])
                 ])
