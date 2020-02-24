@@ -9,6 +9,7 @@ import gsiqcetl.column
 from ..dash_id import init_ids
 
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils, log_utils
@@ -209,103 +210,88 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
                             True)
 
 
-def generate_total_reads(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
+def total_reads(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
         [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
          (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])],
-        util.ml_col, showlegend=True)
+        showlegend=True)
 
 
-def generate_unique_reads(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Unique Reads (Passed Filter)"]],
-        graph_params, [], util.ml_col)
+def unique_reads(df, graph_params):
+    graph_title = gt.UNIQUE_READS
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Unique Reads (Passed Filter)"], graph_params)
 
 
-def generate_deduplicated_coverage(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.CoverageDeduplicated],
-        graph_params,
+def deduplicated_coverage(df, graph_params):
+    graph_title = gt.DEDUPLICATED_COVERAGE
+    y_label = gt.X
+    return CallReadySubplot(graph_title, y_label, df,
+        BAMQC_COL.CoverageDeduplicated, graph_params,
         [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
-         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
-        util.ml_col)
+         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])])
 
 
-def generate_deduplicated_coverage_per_gb(df, graph_params):
-    return generate(
-        "Coverage per Gb (Deduplicated)", df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Coverage per Gb"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [], util.ml_col)
+def callability(df, graph_params):
+    graph_title = gt.CALLABILITY_14_8
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Percent Callability"], graph_params,
+        [(cutoff_callability_label, graph_params[cutoff_callability])])
 
 
-def generate_callability(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Percent Callability"]],
-        graph_params,
-        [(cutoff_callability_label, graph_params[cutoff_callability])],
-        util.ml_col)
+def mean_insert_size(df, graph_params):
+    graph_title = gt.MEAN_INSERT_SIZE
+    y_label = gt.BASE_PAIRS
+    return CallReadySubplot(graph_title, y_label, df,
+        BAMQC_COL.InsertMean, graph_params,
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
-def generate_mean_insert_size(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.InsertMean],
-        graph_params,
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        util.ml_col)
+def duplicate_rate(df, graph_params):
+    graph_title = gt.DUPLICATION
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, graph_params,
+        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])])
 
 
-def generate_duplicate_rate(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        graph_params,
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
-        util.ml_col)
+def purity(df, graph_params):
+    graph_title = gt.PURITY
+    y_label = gt.PCT
+    return CallReadySubplot(graph_title, y_label, df,
+        special_cols["Purity"], graph_params)
 
 
-def generate_purity(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Purity"]],
-        graph_params, [], util.ml_col)
+def ploidy(df, graph_params):
+    graph_title = gt.PLOIDY
+    y_label = gt.NONE
+    return CallReadySubplot(graph_title, y_label, df, ICHOR_COL.Ploidy,
+        graph_params)
 
 
-def generate_ploidy(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[ICHOR_COL.Ploidy],
-        graph_params, [], util.ml_col)
+def unmapped_reads(df, graph_params):
+    graph_title = gt.UNMAPPED_READS_COUNTS
+    y_label = gt.READ_COUNTS
+    return CallReadySubplot(graph_title, y_label, df, BAMQC_COL.UnmappedReads,
+        graph_params)
 
 
-def generate_unmapped_reads(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.UnmappedReads],
-        graph_params, [], util.ml_col)
-
-
-graphs = [
-    (generate_total_reads, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_unique_reads,
-     "🚧  Unique Reads (Passed Filter) -- DATA MAY BE "
-     "SUSPECT 🚧", "%"),
-    (generate_deduplicated_coverage, "Deduplicated Coverage (x)", "x"),
-    (generate_callability, "Callability (14x/8x)", "%"),
-    (generate_mean_insert_size, "Mean Insert Size (bp)", "Base Pairs"),
-    (generate_duplicate_rate, "Duplication (%)", "%"),
-    (generate_purity, "Purity (%)", "%"),
-    (generate_ploidy, "Ploidy", ""),
-    (generate_unmapped_reads, "Unmapped Reads", "Read Counts")
-    ]
+graph_funcs = [
+    total_reads,
+    unique_reads,
+    deduplicated_coverage,
+    callability,
+    mean_insert_size,
+    duplicate_rate,
+    purity,
+    ploidy,
+    unmapped_reads,
+]
 
 
 def layout(query_string):
@@ -447,7 +433,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -593,7 +580,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),

@@ -1,14 +1,13 @@
-from typing import List, Tuple, Union, Callable
+from typing import List, Tuple, Union
 
 import dash_core_components as core
 import pandas
 import plotly.graph_objects as go
-from plotly.basedatatypes import BaseTraceType
 from plotly.subplots import make_subplots
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
-from .df_manipulation import sample_type_col
+from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
 
 
@@ -335,10 +334,7 @@ List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
     )
 
 
-def generate_subplot(
-        df: pandas.DataFrame,
-        graph_params: dict,
-        trace_funcs: List[Callable[[pandas.DataFrame, dict], List[BaseTraceType]]],
+def generate_subplot(traces,
         graph_titles: List[str],
         yaxis_titles: List[str],
 ):
@@ -348,12 +344,12 @@ def generate_subplot(
 
     """
     fig = make_subplots(
-        rows=len(trace_funcs), cols=1, vertical_spacing=0.02, shared_xaxes=True,
+        rows=len(traces), cols=1, vertical_spacing=0.02, shared_xaxes=True,
         subplot_titles=graph_titles
     )
 
-    for i, trace in enumerate(trace_funcs):
-        for t in trace(df, graph_params):
+    for i, trace in enumerate(traces):
+        for t in trace:
             fig.add_trace(t, row=i+1, col=1)
 
     fig.update_xaxes(
@@ -366,7 +362,7 @@ def generate_subplot(
         fig.update_yaxes(title_text=yaxis, row=i+1, col=1)
 
     fig.update_layout(
-        height=350 * len(trace_funcs),
+        height=350 * len(traces),
         margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
         legend=dict(tracegroupgap=0),
     )
@@ -374,17 +370,17 @@ def generate_subplot(
     return fig
 
 
-def generate_graphs(graph_id, df, graph_params, graphs):
+def generate_graphs(graph_id, df, graph_params, graph_funcs):
     """
     Subplots are necessary because of WebGL contexts limit (GR-932).
     """
+    subplots = [func(df, graph_params) for func in graph_funcs]
     return core.Graph(
         id=graph_id,
         figure=generate_subplot(
-            df, graph_params,
-            [graph[0] for graph in graphs],
-            [graph[1] for graph in graphs],
-            [graph[2] for graph in graphs]
+            [plot.traces() for plot in subplots],
+            [plot.title for plot in subplots],
+            [plot.y_label for plot in subplots]
         ),
         config={
             "toImageButtonOptions": {
@@ -395,12 +391,12 @@ def generate_graphs(graph_id, df, graph_params, graphs):
     )
 
 
-def update_graphs(df, graph_params, graphs):
+def update_graphs(df, graph_params, graph_funcs):
+    subplots = [func(df, graph_params) for func in graph_funcs]
     return generate_subplot(
-        df, graph_params,
-        [graph[0] for graph in graphs],
-        [graph[1] for graph in graphs],
-        [graph[2] for graph in graphs]
+        [plot.traces() for plot in subplots],
+        [plot.title for plot in subplots],
+        [plot.y_label for plot in subplots]
     )
 
 
@@ -521,3 +517,70 @@ class ColourShapeCallReady:
             PINERY_COL.TissuePreparation: self.tissue_materials,
             COMMON_COL.Reference: self.reference,
         }
+
+
+class Subplot:
+    def __init__(self, title, y_label, df, x_col, y_col, graph_params, cutoffs,
+                 showlegend=False):
+        self.title = title
+        self.y_label = y_label
+        self.df = df
+        self.x_col = x_col
+        self.y_col = y_col
+        self.graph_params = graph_params
+        self.cutoffs = cutoffs
+        self.showlegend = showlegend
+
+    def traces(self):
+        return generate_traces(self.df,
+                               lambda d: d[self.x_col],
+                               lambda d: d[self.y_col],
+                               self.graph_params, self.cutoffs,
+                               self.x_col, self.showlegend)
+
+
+class SingleLaneSubplot(Subplot):
+    def __init__(self, title, y_label, df, y_col, graph_params, cutoffs=[],
+                 showlegend=False):
+        super().__init__(title, y_label, df, PINERY_COL.SampleName, y_col,
+                         graph_params, cutoffs, showlegend)
+
+
+class CallReadySubplot(Subplot):
+    def __init__(self, title, y_label, df, y_col, graph_params, cutoffs=[],
+                 showlegend=False):
+        super().__init__(title, y_label, df, ml_col, y_col,
+                         graph_params, cutoffs, showlegend)
+
+
+class GraphTitles:
+    AT_DROPOUT = "AT Dropout (%)"
+    BASE_PAIRS = "Base Pairs"
+    CALLABILITY_14_8 = "Callability (14x/8x) (%)"
+    CODING = "Coding Bases (%)"
+    CORRECT_READ_STRAND = "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧"
+    DEDUPLICATED_COVERAGE = "Deduplicated Coverage (x)"
+    DUPLICATION = "Duplication (%)"
+    DV200 = "DV200"
+    EXCLUDED_DUE_TO_OVERLAP = "Excluded due to Overlap (%)"
+    FIVE_TO_THREE = "5 to 3 Prime Bias"
+    GC_DROPOUT = "GC Dropout (%)"
+    HS_LIBRARY_SIZE = "HS Library Size"
+    MEAN_INSERT_SIZE = "Mean Insert Size (bp)"
+    MEAN_TARGET_COVERAGE = "Mean Target Coverage"
+    NONE = ""
+    NON_PRIMARY_READS = "Non-Primary Reads (%)"
+    ON_TARGET_READS = "On-Target Reads (%)"
+    PCT = "%"
+    PLOIDY = "Ploidy"
+    PURITY = "Purity (%)"
+    RATIO = "Ratio"
+    READ_COUNTS = "Read Counts"
+    RIN = "RIN"
+    RRNA_CONTAM = "Ribosomal RNA Contamination (%)"
+    TOTAL_READS = "Total Reads (Passed Filter)"
+    TOTAL_READS_Y = "# PF Reads x 10e6"
+    UNIQUE_READS = "🚧 Unique Reads (Passed Filter) (%) -- DATA MAY BE SUSPECT 🚧"
+    UNMAPPED_READS = "Unmapped Reads (%)"
+    UNMAPPED_READS_COUNTS = "Unmapped Reads"
+    X = "x"

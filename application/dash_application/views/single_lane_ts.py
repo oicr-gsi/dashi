@@ -5,6 +5,7 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -65,6 +66,9 @@ RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
+    "Unmapped Reads (%)": "percent Unmapped Reads",
+    "Non-Primary Reads (%)": "percent Non-Primary Reads",
+    "Reads On Target (%)": "percent Reads On Target",
 }
 
 initial = get_initial_single_lane_values()
@@ -83,6 +87,15 @@ def get_bamqc_data():
     bamqc_df = util.get_bamqc3()
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc_df[special_cols["Unmapped Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.UnmappedReads] / bamqc_df[BAMQC_COL.TotalReads] *
+        100, 3)
+    bamqc_df[special_cols["Non-Primary Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.NonPrimaryReads] / bamqc_df[BAMQC_COL.TotalReads]
+        * 100, 3)
+    bamqc_df[special_cols["Reads On Target (%)"]] = round(
+        bamqc_df[BAMQC_COL.ReadsOnTarget] / bamqc_df[BAMQC_COL.TotalReads] *
+        100, 3)
 
     pinery_samples = util.get_pinery_samples()
 
@@ -142,49 +155,49 @@ shape_colour = ColourShapeSingleLane(
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
 
-def generate_total_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
+def total_reads_subplot(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
         [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
 
 
-def generate_unmapped_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
-        graph_params)
+def unmapped_reads_subplot(df, graph_params):
+    graph_title = gt.UNMAPPED_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Unmapped Reads (%)"], graph_params)
 
 
-def generate_nonprimary_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
-        graph_params)
+def nonprimary_reads_subplot(df, graph_params):
+    graph_title = gt.NON_PRIMARY_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Non-Primary Reads (%)"], graph_params)
 
 
-def generate_on_target_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
-        graph_params)
+def on_target_reads_subplot(df, graph_params):
+    graph_title = gt.ON_TARGET_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Reads On Target (%)"], graph_params)
 
 
-def generate_mean_insert_size_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean],
-        graph_params,
+def mean_insert_size_subplot(df, graph_params):
+    graph_title = gt.MEAN_INSERT_SIZE
+    y_label = gt.BASE_PAIRS
+    return SingleLaneSubplot(graph_title, y_label, df,
+        BAMQC_COL.InsertMean, graph_params,
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
-graphs = [
-    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_unmapped_reads_subplot, "Unmapped Reads (%)", "%"),
-    (generate_nonprimary_reads_subplot, "Non-Primary Reads (%)", "%"),
-    (generate_on_target_reads_subplot, "On Target Reads (%)", "%"),
-    (generate_mean_insert_size_subplot, "Mean Insert Size (bp)", "Base Pairs")
+graph_funcs = [
+    total_reads_subplot,
+    unmapped_reads_subplot,
+    nonprimary_reads_subplot,
+    on_target_reads_subplot,
+    mean_insert_size_subplot,
 ]
 
 
@@ -315,7 +328,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -427,7 +441,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

@@ -9,6 +9,7 @@ import gsiqcetl.column
 import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -197,73 +198,73 @@ shape_colour = ColourShapeSingleLane(
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 
-def generate_total_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
+def total_reads_subplot(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
         [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
 
 
-def generate_mean_insert_size_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean],
+def mean_insert_size_subplot(df, graph_params):
+    graph_title = gt.MEAN_INSERT_SIZE
+    y_label = gt.BASE_PAIRS
+    return SingleLaneSubplot(graph_title, y_label, df, BAMQC_COL.InsertMean,
         graph_params,
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
-def generate_duplication_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        graph_params)
+def duplication_subplot(df, graph_params):
+    graph_title = gt.DUPLICATION
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, graph_params)
 
 
-def generate_unmapped_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Unmapped Reads"]],
-        graph_params)
+def unmapped_reads_subplot(df, graph_params):
+    graph_title = gt.UNMAPPED_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Unmapped Reads"], graph_params)
 
 
-def generate_non_primary_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Non-Primary Reads"]],
-        graph_params)
+def non_primary_subplot(df, graph_params):
+    graph_title = gt.NON_PRIMARY_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Non-Primary Reads"], graph_params)
 
 
-def generate_on_target_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["On-target Reads"]],
-        graph_params)
+def on_target_reads_subplot(df, graph_params):
+    graph_title = gt.ON_TARGET_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["On-target Reads"], graph_params)
 
 
-def generate_purity_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Purity"]],
-        graph_params)
+def purity_subplot(df, graph_params):
+    graph_title = gt.PURITY
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Purity"], graph_params)
 
 
-def generate_ploidy_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[ICHOR_COL.Ploidy],
-        graph_params)
+def ploidy_subplot(df, graph_params):
+    graph_title = gt.PLOIDY
+    y_label = gt.NONE
+    return SingleLaneSubplot(graph_title, y_label, df,
+        ICHOR_COL.Ploidy, graph_params)
 
 
-graphs = [
-    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_mean_insert_size_subplot, "Mean Insert Size (bp)", "Base Pairs"),
-    (generate_duplication_subplot, "Duplication (%)", "%"),
-    (generate_unmapped_reads_subplot, "Unmapped Reads (%)", "%"),
-    (generate_non_primary_subplot, "Non-Primary Reads (%)", "%"),
-    (generate_on_target_reads_subplot, "On Target Reads (%)", "%"),
-    (generate_purity_subplot, "Purity", "%"),
-    (generate_ploidy_subplot, "Ploidy", "")
+graph_funcs = [
+    total_reads_subplot,
+    mean_insert_size_subplot,
+    duplication_subplot,
+    unmapped_reads_subplot,
+    non_primary_subplot,
+    on_target_reads_subplot,
+    purity_subplot,
+    ploidy_subplot,
 ]
 
 def dataversion():
@@ -400,7 +401,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -513,7 +515,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

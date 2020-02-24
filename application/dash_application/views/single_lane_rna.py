@@ -6,6 +6,7 @@ from dash.dependencies import Input, Output, State
 
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
+from ..utility.plot_builder import GraphTitles as gt
 from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
@@ -195,73 +196,73 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
 
-def generate_total_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        graph_params,
+def total_reads_subplot(df, graph_params):
+    graph_title = gt.TOTAL_READS
+    y_label = gt.TOTAL_READS_Y
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Total Reads (Passed Filter)"], graph_params,
         [(cutoff_pf_reads_label, initial[cutoff_pf_reads])], showlegend=True)
 
 
-def generate_unique_reads_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Uniq Reads"]],
-        graph_params)
+def unique_reads_subplot(df, graph_params):
+    graph_title = gt.UNIQUE_READS
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Percent Uniq Reads"], graph_params)
 
 
-def generate_five_to_three_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
-        graph_params)
+def five_to_three_subplot(df, graph_params):
+    graph_title = gt.FIVE_TO_THREE
+    y_label = gt.RATIO
+    return SingleLaneSubplot(graph_title, y_label, df,
+        RNA_COL.Median5Primeto3PrimeBias, graph_params)
 
 
-def generate_correct_read_strand_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Correct Strand Reads"]],
-        graph_params)
+def correct_read_strand_subplot(df, graph_params):
+    graph_title = gt.CORRECT_READ_STRAND
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        special_cols["Percent Correct Strand Reads"], graph_params)
 
 
-def generate_coding_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.ProportionCodingBases],
-        graph_params)
+def coding_subplot(df, graph_params):
+    graph_title = gt.CODING
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        RNA_COL.ProportionCodingBases, graph_params)
 
 
-def generate_rrna_contam_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
-        graph_params,
+def rrna_contam_subplot(df, graph_params):
+    graph_title = gt.RRNA_CONTAM
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df,
+        RNA_COL.rRNAContaminationreadsaligned, graph_params,
         [(cutoff_rrna_label, graph_params[cutoff_rrna])])
 
 
-def generate_dv200_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[PINERY_COL.DV200],
+def dv200_subplot(df, graph_params):
+    graph_title = gt.DV200
+    y_label = gt.PCT
+    return SingleLaneSubplot(graph_title, y_label, df, PINERY_COL.DV200,
         graph_params)
 
 
-def generate_rin_subplot(df, graph_params):
-    return generate_traces(df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[PINERY_COL.RIN],
+def rin_subplot(df, graph_params):
+    graph_title = gt.RIN
+    y_label = gt.NONE
+    return SingleLaneSubplot(graph_title, y_label, df, PINERY_COL.RIN,
         graph_params)
 
 
-graphs = [
-    (generate_total_reads_subplot, "Total Reads (Passed Filter)", "# PF Reads x 10e6"),
-    (generate_unique_reads_subplot, "Unique Reads(Passed Filter) (%)", "%"),
-    (generate_five_to_three_subplot, "5 to 3 Prime Bias", "Ratio"),
-    (generate_correct_read_strand_subplot, "Correct Strand Reads (%)", "%"),
-    (generate_coding_subplot, "Coding (%)", "%"),
-    (generate_rrna_contam_subplot, "Ribosomal RNA Contamination (%)", "%"),
-    (generate_dv200_subplot, "DV200", "%"),
-    (generate_rin_subplot, "RIN", "")
+graph_funcs = [
+    total_reads_subplot,
+    unique_reads_subplot,
+    five_to_three_subplot,
+    correct_read_strand_subplot,
+    coding_subplot,
+    rrna_contam_subplot,
+    dv200_subplot,
+    rin_subplot,
 ]
 
 
@@ -394,14 +395,15 @@ def layout(query_string):
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
             ]),
 
-		        # Graphs + Tables tabs
+                # Graphs + Tables tabs
                 html.Div(className="nine columns", 
                 children=[
                     core.Tabs([
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            generate_graphs(ids["graphs"], df, initial, graphs)
+                            generate_graphs(ids["graphs"], df, initial,
+                                            graph_funcs)
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -515,7 +517,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            update_graphs(df, graph_params, graphs),
+            update_graphs(df, graph_params, graph_funcs),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict("records", into=dd),
