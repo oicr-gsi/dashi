@@ -301,8 +301,8 @@ def layout(query_string):
                                       ids['jira-issue-with-runs-button'],
                                       {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
-            html.Div(className="sidebar four columns", children=[
-                html.Button("Update", id=ids['update-button-top'], className="update-button"),
+            html.Div(className="sidebar one-third column", children=[
+                html.Button("Update", id=ids['update-button'], className="update-button"),
                 sidebar_utils.approve_run_button(ids["approve-run-button"]),
 
                 html.Br(),
@@ -395,7 +395,7 @@ def layout(query_string):
             ]),
 
             	# Graphs + Tables tabs
-                html.Div(className="nine columns", 
+                html.Div(className="two-thirds column",
                 children=[
                     core.Tabs([
                         # Graphs tab
