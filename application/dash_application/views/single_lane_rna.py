@@ -277,7 +277,7 @@ def layout(query_string):
                                       ids['jira-issue-with-runs-button'],
                                       {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
-            html.Div(className="sidebar three columns", children=[
+            html.Div(className="sidebar one-third column", children=[
                 html.Button("Update", id=ids['update-button'], className="update-button"),
                 sidebar_utils.approve_run_button(ids['approve-run-button']),
                 html.Br(),
@@ -364,36 +364,35 @@ def layout(query_string):
                     ids["rrna-contamination-cutoff"], initial[cutoff_rrna]),
             ]),
 
-                # Graphs + Tables tabs
-                html.Div(className="nine columns", 
-                children=[
-                    core.Tabs([
-                        # Graphs tab
-                        core.Tab(label="Graphs",
-                        children=[
-                            generate_graphs(ids["graphs"], df, initial,
-                                            graph_funcs)
-                        ]),
-                        # Tables tab
-                        core.Tab(label="Tables",
-                        children=[
-                            table_tabs(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                df,
-                                rnaseqqc_table_columns,
-                                [
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_rrna_label,
-                                    RNA_COL.rRNAContaminationreadsaligned, initial[cutoff_rrna],
-                                    (lambda row, col, cutoff: row[col] > cutoff))
-                                ]
-                            )
-                        ])
-                    ]) # End Tabs
-                ]) # End Div
+            # Graphs + Tables tabs
+            html.Div(className="two-thirds column",
+            children=[
+                core.Tabs([
+                    # Graphs tab
+                    core.Tab(label="Graphs",
+                    children=[
+                        generate_graphs(ids["graphs"], df, initial,
+                                        graph_funcs)
+                    ]),
+                    # Tables tab
+                    core.Tab(label="Tables",
+                    children=[
+                        table_tabs(
+                            ids["failed-samples"],
+                            ids["data-table"],
+                            df,
+                            rnaseqqc_table_columns,
+                            [
+                                (cutoff_pf_reads_label,
+                                special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                (lambda row, col, cutoff: row[col] < cutoff)),
+                                (cutoff_rrna_label,
+                                RNA_COL.rRNAContaminationreadsaligned, initial[cutoff_rrna],
+                                (lambda row, col, cutoff: row[col] > cutoff))
+                            ])
+                    ])
+                ]) # End Tabs
+            ]) # End Div
             ]) # End Div
         ]) # End Div
     ]) # End Loading
