@@ -129,10 +129,6 @@ def get_rna_data():
     # Unique reads match the machine produced reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.UniqReads] / 1e6, 3)
-    rna_df[special_cols["Percent Correct Strand Reads"]] = round(
-        (rna_df[RNA_COL.CorrectStrandReads] / rna_df[RNA_COL.TotalReads]) *
-        100, 1
-    )
 
     # Pull in sample metadata from Pinery
     pinery_samples = util.get_pinery_samples()
@@ -210,7 +206,7 @@ def generate_correct_read_strand(df, graph_params):
         "Correct Strand Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Correct Strand Reads"]],
+        lambda d: d[RNA_COL.ProportionCorrectStrandReads]*100,
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
