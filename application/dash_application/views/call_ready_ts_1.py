@@ -222,7 +222,7 @@ def generate_mean_target_coverage(df, graph_params):
 
 def generate_callability(df, graph_params):
     return generate(
-        "Callability (14x/8x)", df,
+        "Callability (14x/8x) (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Callability (14x/8x)"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -233,7 +233,7 @@ def generate_callability(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return generate(
-        "Mean Insert Size", df,
+        "Mean Insert Size (bp)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
@@ -265,7 +265,7 @@ def generate_duplicate_rate(df, graph_params):
 
 def generate_purity(df, graph_params):
     return generate(
-        "Purity", df,
+        "Purity (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -275,17 +275,17 @@ def generate_purity(df, graph_params):
 
 def generate_fraction_excluded(df, graph_params):
     return generate(
-        "Fraction Excluded due to Overlap", df,
+        "Excluded due to Overlap (%)", df,
         lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.PctExcOverlap],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
+        "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         util.ml_col)
 
 
 def generate_at_dropout(df, graph_params):
     return generate(
-        "AT Dropout %", df,
+        "AT Dropout (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.AtDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -295,7 +295,7 @@ def generate_at_dropout(df, graph_params):
 
 def generate_gc_dropout(df, graph_params):
     return generate(
-        "GC Dropout %", df,
+        "GC Dropout (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[HSMETRICS_COL.GCDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
