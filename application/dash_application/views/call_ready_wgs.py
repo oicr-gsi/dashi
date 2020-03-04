@@ -52,7 +52,6 @@ ids = init_ids([
 
 		# Graphs
 		"total-reads",
-		"unique-reads",
 		"mean-coverage",
 		"callability",
 		"mean-insert",
@@ -198,15 +197,6 @@ collapsing_functions = {
 shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_PREPS)
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None, True)
 
-def generate_unique_reads(df, graph_params):
-    return generate(
-        "🚧  Unique Reads (Passed Filter) -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Unique Reads (Passed Filter)"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
-        util.ml_col)
-
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
@@ -329,8 +319,6 @@ def layout(query_string):
                         [
                             {"label": "Total Reads",
                             "value": BAMQC_COL.TotalReads},
-                            {"label": "Unique Reads",
-                            "value": special_cols["Unique Reads (Passed Filter)"]},
                             {"label": "Callability",
                             "value": CALL_COL.Callability},
                             {"label": "Purity",
@@ -379,10 +367,6 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(
-                                id=ids["unique-reads"],
-                                figure=generate_unique_reads(df, initial)
-                            ),
                             core.Graph(
                                 id=ids["total-reads"],
                                 figure=generate_total_reads(
@@ -465,7 +449,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            Output(ids["unique-reads"], "figure"),
             Output(ids["mean-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
@@ -567,7 +550,6 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),
-            generate_unique_reads(df, graph_params),
             generate_deduplicated_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
