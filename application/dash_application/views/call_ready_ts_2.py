@@ -280,7 +280,7 @@ def generate_fraction_excluded(df, graph_params):
     return generate(
         "Excluded due to Overlap (%)", df,
         lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.PctExcOverlap],
+        lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         util.ml_col)
