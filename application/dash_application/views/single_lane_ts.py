@@ -181,7 +181,7 @@ def generate_on_target_reads(current_data, graph_params):
 
 def generate_mean_insert_size(current_data, graph_params):
     return generate(
-        "Mean Insert Size",
+        "Mean Insert Size (bp)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean],
