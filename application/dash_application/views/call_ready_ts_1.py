@@ -47,7 +47,6 @@ ids = init_ids([
 
     # Graphs
     'total-reads',
-    'unique-reads',
     'mean-target-coverage',
     'callability',
     'mean-insert-size',
@@ -210,16 +209,6 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTI
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
 
-def generate_unique_reads(df, graph_params):
-    return generate(
-       "🚧 Percent Unique Reads (PF) -- DATA MAY BE SUSPECT 🚧", df,
-       lambda d: d[util.ml_col],
-       lambda d: d[special_cols["Percent Unique Reads (PF)"]],
-       "%", graph_params["colour_by"], graph_params["shape_by"],
-       graph_params["shownames_val"], [],
-       util.ml_col)
-
-
 def generate_mean_target_coverage(df, graph_params):
     return generate(
         "Mean Target Coverage", df,
@@ -358,8 +347,6 @@ def layout(query_string):
                                                      [
                                                          {"label": "Total Reads",
                                                           "value": BAMQC_COL.TotalReads},
-                                                         # {"label": "Unique Reads",
-                                                         # "value": },
                                                          {"label": "Mean Target Coverage",
                                                           "value": HSMETRICS_COL.MeanTargetCoverage},
                                                          {"label": "Callability",
@@ -426,10 +413,6 @@ def layout(query_string):
                                     initial["colour_by"], initial["shape_by"], initial["shownames_val"],
                                     [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
                                     (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
-
-                            core.Graph(
-                            id=ids["unique-reads"],
-                            figure=generate_unique_reads(df, initial)),
 
                             core.Graph(
                                 id=ids["mean-target-coverage"],
@@ -508,7 +491,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            Output(ids["unique-reads"], "figure"),
             Output(ids["mean-target-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert-size"], "figure"),
@@ -608,7 +590,6 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_tumour_cutoff)]
             ),
-            generate_unique_reads(df, graph_params),
             generate_mean_target_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),

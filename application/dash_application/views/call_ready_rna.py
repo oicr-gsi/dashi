@@ -43,7 +43,6 @@ ids = init_ids([
 
     # Graphs
     'total-reads',
-    'unique-reads',
     'five-to-three-bias',
     'correct-read-strand',
     'coding',
@@ -134,16 +133,6 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTI
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, True)
 
 
-def generate_unique_reads(df, graph_params):
-   return generate(
-       "🚧 Unique Reads (PF) -- DATA MAY BE SUSPECT 🚧", df,
-       lambda d: d[util.ml_col],
-       lambda d: d[special_cols["Unique Reads (PF)"]],
-       "%", graph_params["colour_by"], graph_params["shape_by"],
-       graph_params["shownames_val"], [],
-       util.ml_col)
-
-
 def generate_five_to_three(df, graph_params):
     return generate(
        "5 to 3 Prime Bias", df,
@@ -229,8 +218,6 @@ def layout(query_string):
                                                         {"label":"Total Reads",
                                                          "value":
                                                              RNASEQQC2_COL.TotalReads},
-                                                        {"label": "Unique Reads",
-                                                         "value": special_cols["Unique Reads (PF)"]},
                                                         {"label": "5 to 3 Prime Bias",
                                                          "value":
                                                              RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias},
@@ -283,10 +270,6 @@ def layout(query_string):
                                     [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
 
                             core.Graph(
-                            id=ids["unique-reads"],
-                            figure=generate_unique_reads(df, initial)),
-
-                            core.Graph(
                                 id=ids["five-to-three-bias"],
                                 figure=generate_five_to_three(df, initial)),
 
@@ -331,7 +314,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            Output(ids["unique-reads"], "figure"),
             Output(ids["five-to-three-bias"], "figure"),
             Output(ids["correct-read-strand"], "figure"),
             Output(ids["coding"], "figure"),
@@ -397,7 +379,6 @@ def init_callbacks(dash_app):
                 special_cols["Total Reads (Passed Filter)"],
                 colour_by, shape_by, show_names,
                 [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_unique_reads(df, graph_params),
             generate_five_to_three(df, graph_params),
             generate_correct_read_strand(df, graph_params),
             generate_coding(df, graph_params),
