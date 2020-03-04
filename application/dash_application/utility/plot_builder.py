@@ -340,7 +340,7 @@ def generate_total_reads(
         show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
 ) -> go.Figure:
     return generate(
-        "Passed Filter Reads",
+        "Total Reads (Passed Filter)",
         df,
         lambda d: d[x_col],
         lambda d: d[y_col],

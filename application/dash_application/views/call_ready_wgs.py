@@ -203,7 +203,7 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
-        "Deduplicated Coverage", df,
+        "Coverage (Deduplicated)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
         "", graph_params["colour_by"], graph_params["shape_by"],
@@ -305,11 +305,37 @@ def layout(query_string):
                                                      initial["second_sort"],
                                                      [
                                                          {
-                                                             "label": "Total Reads",
+                                                             "label": "Total Reads "
+                                                                      "(Passed Filter)",
                                                              "value": BAMQC_COL.TotalReads},
                                                          {
-                                                             "label": "Callability",
-                                                             "value": CALL_COL.Callability}
+                                                             "label":
+                                                                 "Coverage ("
+                                                                 "Deduplicated)",
+                                                             "value":
+                                                                 BAMQC_COL.CoverageDeduplicated},
+                                                         {
+                                                             "label":
+                                                                 "Callability",
+                                                             "value":
+                                                                 CALL_COL.Callability},
+                                                         {
+                                                             "label": "Mean "
+                                                                      "Insert Size",
+                                                             "value":
+                                                                BAMQC_COL.InsertMean},
+                                                         {
+                                                             "label":
+                                                                 "Duplication",
+                                                             "value":
+                                                                 BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
+                                                         {
+                                                             "label":
+                                                                 "Unmapped "
+                                                                 "Reads",
+                                                             "value":
+                                                                 special_cols["Unmapped Reads"]
+                                                         }
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
