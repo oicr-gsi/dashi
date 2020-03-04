@@ -17,7 +17,7 @@ from ..utility import log_utils
 logger = logging.getLogger(__name__)
 
 page_name = 'call-ready-rna'
-title = "Call-Ready RNA"
+title = "Call-Ready RNA-seq"
 
 ids = init_ids([
     # Buttons
@@ -146,7 +146,7 @@ def generate_five_to_three(df, graph_params):
 
 def generate_correct_read_strand(df, graph_params):
     return generate(
-        "🚧 % Correct Read Strand -- DATA MAY BE SUSPECT 🚧", df,
+        "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", df,
         lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
         "%",graph_params["colour_by"], graph_params["shape_by"],
@@ -156,7 +156,7 @@ def generate_correct_read_strand(df, graph_params):
 
 def generate_coding(df, graph_params):
     return generate(
-        "% Coding", df,
+        "Coding (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -166,7 +166,7 @@ def generate_coding(df, graph_params):
 
 def generate_rrna_contam(df, graph_params):
     return generate(
-        "% rRNA Contamination", df,
+        "rRNA Contamination (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["% rRNA Contamination"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],

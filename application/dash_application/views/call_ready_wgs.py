@@ -25,8 +25,6 @@ ids = init_ids([
     "update-button",
 
     # Sidebar controls
-    "all-library-designs",
-    "library-designs-list",
     "all-projects",
     "projects-list",
     "all-institutes",
@@ -286,9 +284,6 @@ def layout(query_string):
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
                                                   ALL_PROJECTS),
-                    sidebar_utils.select_library_designs(
-                        ids["all-library-designs"], ids["library-designs-list"],
-                        ALL_LIBRARY_DESIGNS),
                     sidebar_utils.select_tissue_materials(
                         ids["all-tissue-materials"],
                         ids["tissue-materials-list"],
