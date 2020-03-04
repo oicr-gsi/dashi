@@ -231,6 +231,14 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 t=50,
                 pad=4
             )
+    y_axis = {
+        'title': {
+            'text': axis_text
+        }
+    }
+    if axis_text == '%':
+        y_axis['range'] = [0, 100]
+
     if sorted_data.empty:
         return go.Figure(
             data=[go.Scattergl(
@@ -243,11 +251,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 xaxis={'visible': False,
                     'rangemode': 'normal',
                     'autorange': True},
-                yaxis={
-                    'title': {
-                        'text': axis_text
-                    }
-                }
+                yaxis=y_axis
             )
         )
     traces = []
@@ -297,6 +301,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 "opacity": 1
             }
         ))
+
     return go.Figure(
         data = traces,
         layout = go.Layout(
@@ -305,11 +310,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},
-            yaxis={
-                'title': {
-                    'text': axis_text
-                }
-            }
+            yaxis=y_axis
         )
     )
 
