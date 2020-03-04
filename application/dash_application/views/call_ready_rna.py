@@ -165,7 +165,7 @@ def generate_coding(df, graph_params):
 
 def generate_rrna_contam(df, graph_params):
     return generate(
-        "🚧 % rRNA Contamination -- DATA MAY BE SUSPECT 🚧", df,
+        "% rRNA Contamination", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["% rRNA Contamination"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
