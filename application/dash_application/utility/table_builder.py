@@ -140,7 +140,7 @@ def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_column
                                 limits)]),
                 ]),
             core.Tab(
-                label="Raw Data",
+                label="🐌 Raw Data 🐌",
                 children=[
                     html.Div(
                         className='data-table',
