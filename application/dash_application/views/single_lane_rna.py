@@ -72,6 +72,7 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
     "Percent Uniq Reads": "Percent Unique Reads",
     "Percent Correct Strand Reads": "Percent Correct Strand Reads",
+    "Percent Coding": "Percent Coding",
 }
 
 # Specify which columns to display in the DataTable
@@ -79,7 +80,8 @@ first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
     special_cols["Total Reads (Passed Filter)"],
     special_cols["Percent Uniq Reads"],
-    special_cols["Percent Correct Strand Reads"]
+    special_cols["Percent Correct Strand Reads"],
+    special_cols["Percent Coding"],
 ]
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
@@ -129,6 +131,10 @@ def get_rna_data():
     # Unique reads match the machine produced reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.UniqReads] / 1e6, 3)
+    rna_df[special_cols["Percent Correct Strand Reads"]] = round(
+        rna_df[RNA_COL.ProportionCorrectStrandReads] * 100, 3)
+    rna_df[special_cols["Percent Coding"]] = round(
+        rna_df[RNA_COL.ProportionCodingBases] * 100, 3)
 
     # Pull in sample metadata from Pinery
     pinery_samples = util.get_pinery_samples()
@@ -177,7 +183,7 @@ RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
 def generate_unique_reads(df, graph_params):
     return generate(
-        "Unique Passed Filter Reads (%)",
+        "Unique Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Uniq Reads"]],
@@ -206,7 +212,7 @@ def generate_correct_read_strand(df, graph_params):
         "Correct Strand Reads (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.ProportionCorrectStrandReads]*100,
+        lambda d: d[special_cols["Percent Correct Strand Reads"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -219,7 +225,7 @@ def generate_coding(df, graph_params):
         "Coding (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.ProportionCodingBases],
+        lambda d: d[special_cols["Percent Coding"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -229,7 +235,7 @@ def generate_coding(df, graph_params):
 
 def generate_rrna_contam(df, graph_params):
     return generate(
-        "Ribosomal RNA (%)",
+        "rRNA Contamination (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
@@ -243,11 +249,11 @@ def generate_rrna_contam(df, graph_params):
 
 def generate_dv200(df, graph_params):
     return generate(
-        "DV200",
+        "DV200 (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.DV200],
-        "",
+        "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"]
@@ -275,7 +281,8 @@ def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
     # intial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
-    #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
+    #  * if query.req_start/req_end: use all runs, so that the start/end filters
+    #    will be applied
     if "req_runs" in query and query["req_runs"]:
         initial["runs"] = query["req_runs"]
     elif "req_start" in query and query["req_start"]:
@@ -344,15 +351,15 @@ def layout(query_string):
                     [
                         {"label": "Total Reads",
                          "value": RNA_COL.TotalReads},
-                        {"label": "% Unique Reads",
+                        {"label": "Unique Reads",
                          "value": special_cols["Percent Uniq Reads"]},
                         {"label": "5Prime to 3Prime Bias",
                          "value": RNA_COL.Median5Primeto3PrimeBias},
-                        {"label": "% Correct Read Strand",
+                        {"label": "Correct Read Strand",
                          "value": RNA_COL.CorrectStrandReads},
-                        {"label": "% Coding",
+                        {"label": "Coding",
                          "value": RNA_COL.ProportionCodingBases},
-                        {"label": "% rRNA Contamination",
+                        {"label": "rRNA Contamination",
                          "value": RNA_COL.rRNAContaminationreadsaligned},
                         {"label": "DV200",
                          "value": PINERY_COL.DV200},
