@@ -56,8 +56,6 @@ ids = init_ids([
     "callability",
     "mean-insert",
     "duplicate-rate",
-    "purity",
-    "ploidy",
     "unmapped-reads",
 
     # Tables
@@ -66,7 +64,6 @@ ids = init_ids([
 ])
 
 BAMQC_COL = gsiqcetl.column.BamQc3MergedColumn
-ICHOR_COL = gsiqcetl.column.IchorCnaMergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
@@ -82,7 +79,6 @@ special_cols = {
     "Purity": "percent purity",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
-    "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID BamQC3": "File SWID BamQC3",
 }
 
@@ -91,7 +87,6 @@ def get_merged_wgs_data():
     """
     Join together all the dataframes needed for graphing:
       * BamQC (where most of the graphed QC data comes from)
-      * ichorCNA (where the remainder of the graphed QC data comes from)
       * Pinery (sample information)
       * Instruments (to allow filtering by instrument model)
       * Runs (needed to join Pinery to Instruments)
@@ -102,18 +97,12 @@ def get_merged_wgs_data():
     pinery_samples = util.filter_by_library_design(pinery_samples,
                                                    util.wgs_lib_designs)
 
-    ichorcna_df = util.get_ichorcna_merged()
-    ichorcna_df = util.filter_by_library_design(ichorcna_df,
-                                                util.wgs_lib_designs,
-                                                ICHOR_COL.LibraryDesign)
     callability_df = util.get_mutect_callability()
     callability_df = util.filter_by_library_design(callability_df,
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
     bamqc3_df = util.get_bamqc3_merged()
 
-    ichorcna_df[special_cols["Purity"]] = round(
-        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
@@ -124,9 +113,6 @@ def get_merged_wgs_data():
     bamqc3_df[special_cols["Unmapped Reads"]] = round(
         bamqc3_df[BAMQC_COL.UnmappedReads] / bamqc3_df[BAMQC_COL.TotalReads]
         * 100.0, 3)
-    ichorcna_df.rename(
-        columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]},
-        inplace=True)
     callability_df.rename(columns={
         CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
                           inplace=True)
@@ -134,37 +120,26 @@ def get_merged_wgs_data():
         columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]},
         inplace=True)
 
-    # Join IchorCNA and Callability data
-    wgs_df = ichorcna_df.merge(
+    # Join BamQC3 and Callability data
+    wgs_df = bamqc3_df.merge(
         callability_df,
-        how="outer",
-        left_on=util.ichorcna_merged_columns,
+        how="left",
+        left_on=util.bamqc3_merged_columns,
         right_on=util.callability_merged_columns,
         suffixes=('', '_x')
     )
 
-    # Join BamQC3 and IchorCNA+Pinery data
-    wgs_df = wgs_df.merge(
-        bamqc3_df,
-        how="left",
-        left_on=util.ichorcna_merged_columns,
-        right_on=util.bamqc3_merged_columns,
-        suffixes=('', '_y')
-    )
-
     # Join QC data and Pinery data
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples,
-                                                util.ichorcna_merged_columns)
+                                                util.bamqc3_merged_columns)
 
     wgs_df = util.remove_suffixed_columns(wgs_df,
                                           '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df,
                                           '_x')  # Callability duplicate columns
-    wgs_df = util.remove_suffixed_columns(wgs_df,
-                                          '_y')  # BamQC3 duplicate columns
 
     return wgs_df, util.cache.versions(
-        ["ichorcnamerged", "mutectcallability", "bamqc3merged"])
+        ["mutectcallability", "bamqc3merged"])
 
 
 # Make the WGS dataframe
@@ -271,26 +246,6 @@ def generate_duplicate_rate(df, graph_params):
         util.ml_col)
 
 
-def generate_purity(df, graph_params):
-    return generate(
-        "Purity (%)", df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Purity"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
-        util.ml_col)
-
-
-def generate_ploidy(df, graph_params):
-    return generate(
-        "Ploidy", df,
-        lambda d: d[util.ml_col],
-        lambda d: d[ICHOR_COL.Ploidy],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
-        util.ml_col)
-
-
 def generate_unmapped_reads(df, graph_params):
     return generate(
         "Unmapped Reads (%)", df,
@@ -354,12 +309,7 @@ def layout(query_string):
                                                              "value": BAMQC_COL.TotalReads},
                                                          {
                                                              "label": "Callability",
-                                                             "value": CALL_COL.Callability},
-                                                         {"label": "Purity",
-                                                          "value": special_cols[
-                                                              "Purity"]},
-                                                         {"label": "Ploidy",
-                                                          "value": ICHOR_COL.Ploidy}
+                                                             "value": CALL_COL.Callability}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
@@ -454,16 +404,6 @@ def layout(query_string):
                                                       df, initial)
                                               ),
                                               core.Graph(
-                                                  id=ids["purity"],
-                                                  figure=generate_purity(df,
-                                                                         initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["ploidy"],
-                                                  figure=generate_ploidy(df,
-                                                                         initial)
-                                              ),
-                                              core.Graph(
                                                   id=ids["unmapped-reads"],
                                                   figure=generate_unmapped_reads(
                                                       df, initial)
@@ -554,8 +494,6 @@ def init_callbacks(dash_app):
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
-            Output(ids["purity"], "figure"),
-            Output(ids["ploidy"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
@@ -666,8 +604,6 @@ def init_callbacks(dash_app):
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
-            generate_purity(df, graph_params),
-            generate_ploidy(df, graph_params),
             generate_unmapped_reads(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
