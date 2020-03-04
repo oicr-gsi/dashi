@@ -115,6 +115,9 @@ def get_merged_wgs_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (bamqc3_df[BAMQC_COL.NonPrimaryReads] /
         bamqc3_df[BAMQC_COL.TotalReads])) * 100
+    bamqc3_df[special_cols["Unmapped Reads"]] = round(
+        bamqc3_df[BAMQC_COL.UnmappedReads] / bamqc3_df[BAMQC_COL.TotalReads]
+        * 100.0, 3)
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns = {CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
         inplace = True)
@@ -212,7 +215,7 @@ def generate_deduplicated_coverage(df, graph_params):
 
 def generate_callability(df, graph_params):
     return generate(
-        "Callability (14x/18x)", df,
+        "Callability (14x/8x) (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Percent Callability"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -223,7 +226,7 @@ def generate_callability(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return generate(
-        "Mean Insert Size", df,
+        "Mean Insert Size (bp)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
@@ -245,7 +248,7 @@ def generate_duplicate_rate(df, graph_params):
 
 def generate_purity(df, graph_params):
     return generate(
-        "Purity", df,
+        "Purity (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
@@ -265,10 +268,10 @@ def generate_ploidy(df, graph_params):
 
 def generate_unmapped_reads(df, graph_params):
     return generate(
-        "Unmapped Reads", df,
+        "Unmapped Reads (%)", df,
         lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.UnmappedReads],
-        "Read Counts", graph_params["colour_by"], graph_params["shape_by"],
+        lambda d: d[special_cols["Unmapped Reads"]],
+        "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
         util.ml_col)
 
