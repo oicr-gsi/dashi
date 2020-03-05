@@ -7,6 +7,15 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200305-1136] - 2020-03-05
+## Changed
+  * Standardized graph axes and titles
+  * Updated some underlying data calculations
+  * Removed Purity & Ploidy graphs from call-ready WGS
+  * Wrapped graphs and tables in tabs for better table access
+## Added
+  * Buttons to create JIRA tickets
+
 ## [200214-1500] - 2020-02-14
 ### Changed
   * Update how % rRNA contamination is calculated for call-ready RNA
