@@ -51,6 +51,7 @@ ids = init_ids([
     # Graphs
     "total-reads",
     "mean-coverage",
+    "coverage-per-gb",
     "callability",
     "mean-insert",
     "duplicate-rate",
@@ -74,7 +75,7 @@ special_cols = {
     "Total Reads (Passed Filter)": "total reads passed filter",
     "Unique Reads (Passed Filter)": "percent unique reads",
     "Unmapped Reads": "percent unmapped reads",
-    "Purity": "percent purity",
+    "Coverage per Gb": "coverage per gb",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
@@ -111,6 +112,10 @@ def get_merged_wgs_data():
     bamqc3_df[special_cols["Unmapped Reads"]] = round(
         bamqc3_df[BAMQC_COL.UnmappedReads] / bamqc3_df[BAMQC_COL.TotalReads]
         * 100.0, 3)
+    bamqc3_df[special_cols["Coverage per Gb"]] = round(
+        bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (bamqc3_df[
+                 BAMQC_COL.TotalReads] *  bamqc3_df[
+                 BAMQC_COL.AverageReadLength] / 1e9), 3)
     callability_df.rename(columns={
         CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
                           inplace=True)
@@ -209,6 +214,15 @@ def generate_deduplicated_coverage(df, graph_params):
         [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
          (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
         util.ml_col)
+
+
+def generate_deduplicated_coverage_per_gb(df, graph_params):
+    return generate(
+        "Coverage per Gb (Deduplicated)", df,
+        lambda d: d[util.ml_col],
+        lambda d: d[special_cols["Coverage per Gb"]],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"], [], util.ml_col)
 
 
 def generate_callability(df, graph_params):
@@ -412,6 +426,11 @@ def layout(query_string):
                                                       df, initial)
                                               ),
                                               core.Graph(
+                                                  id=ids["coverage-per-gb"],
+                                                  figure=generate_deduplicated_coverage_per_gb(
+                                                      df, initial)
+                                              ),
+                                              core.Graph(
                                                   id=ids["callability"],
                                                   figure=generate_callability(
                                                       df, initial)
@@ -514,6 +533,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["total-reads"], "figure"),
             Output(ids["mean-coverage"], "figure"),
+            Output(ids["coverage-per-gb"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
@@ -624,6 +644,7 @@ def init_callbacks(dash_app):
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),
             generate_deduplicated_coverage(df, graph_params),
+            generate_deduplicated_coverage_per_gb(df, graph_params),
             generate_callability(df, graph_params),
             generate_mean_insert_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
