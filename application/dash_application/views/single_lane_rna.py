@@ -195,16 +195,18 @@ def generate_unique_reads(df, graph_params):
 
 
 def generate_five_to_three(df, graph_params):
-    return generate(
+    fig = generate(
         "5 to 3 Prime Bias",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
-        "Ratio",
+        "Log Ratio",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"]
     )
+    fig.update_layout(yaxis_type="log")
+    return fig
 
 
 def generate_correct_read_strand(df, graph_params):
