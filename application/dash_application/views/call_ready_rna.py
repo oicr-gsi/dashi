@@ -139,7 +139,8 @@ def generate_five_to_three(df, graph_params):
        "5 to 3 Prime Bias", df,
        lambda d: d[util.ml_col],
        lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
-       "", graph_params["colour_by"], graph_params["shape_by"],
+       "Log Ratio",
+       graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
        util.ml_col)
     fig.update_layout(yaxis_type="log")
