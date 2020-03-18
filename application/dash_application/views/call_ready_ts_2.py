@@ -305,6 +305,21 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"], [],
         util.ml_col)
 
+def generate_bar():
+    datas = [[1,1], [1,3]]
+    traces = []
+    for datum in datas:
+        graph = go.Bar(
+            x = [datum[0]],
+            y = [datum[1]]
+        )
+
+        traces.append(graph)
+
+    return go.Figure(
+        data = traces
+    )
+
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
@@ -443,6 +458,10 @@ def layout(query_string):
                             # core.Graph(
                             #     id=ids["hs-library-size"],
                             #     figure=generate_hs_library_size(df, initial)),
+
+                            core.Graph(
+                                figure = generate_bar()
+                            ),
 
                             core.Graph(
                                 id=ids["duplicate-rate"],
