@@ -135,13 +135,16 @@ RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, 
 
 
 def generate_five_to_three(df, graph_params):
-    return generate(
+    fig = generate(
        "5 to 3 Prime Bias", df,
        lambda d: d[util.ml_col],
        lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
-       "", graph_params["colour_by"], graph_params["shape_by"],
+       "Log Ratio",
+       graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
        util.ml_col)
+    fig.update_layout(yaxis_type="log")
+    return fig
 
 
 def generate_correct_read_strand(df, graph_params):
