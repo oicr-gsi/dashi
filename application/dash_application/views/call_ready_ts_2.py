@@ -306,7 +306,7 @@ def generate_gc_dropout(df, graph_params):
         util.ml_col)
 
 def generate_bar():
-    datas = [[1,1], [1,3]]
+    datas = [[1,1,2], [1,3,2]]
     graph = go.Bar(
         x = datas[0],
         y = datas[1]
