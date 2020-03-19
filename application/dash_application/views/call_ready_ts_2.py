@@ -307,17 +307,13 @@ def generate_gc_dropout(df, graph_params):
 
 def generate_bar():
     datas = [[1,1], [1,3]]
-    traces = []
-    for datum in datas:
-        graph = go.Bar(
-            x = [datum[0]],
-            y = [datum[1]]
-        )
-
-        traces.append(graph)
+    graph = go.Bar(
+        x = datas[0],
+        y = datas[1]
+    )
 
     return go.Figure(
-        data = traces
+        data = graph
     )
 
 
