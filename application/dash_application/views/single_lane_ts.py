@@ -9,7 +9,7 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQcColumn
+from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
 
@@ -59,7 +59,7 @@ ids = init_ids([
     'data-table'
 ])
 
-BAMQC_COL = BamQcColumn
+BAMQC_COL = BamQc3Column
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
@@ -81,7 +81,7 @@ cutoff_insert_mean = "cutoff_insert_mean"
 initial[cutoff_insert_mean] = 150
 
 def get_bamqc_data():
-    bamqc_df = util.get_bamqc()
+    bamqc_df = util.get_bamqc3()
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
 
@@ -123,7 +123,6 @@ first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
 ]
 most_bamqc_cols = [*BAMQC_COL.values()]
-most_bamqc_cols.remove(BAMQC_COL.BamFile)
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
     PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
