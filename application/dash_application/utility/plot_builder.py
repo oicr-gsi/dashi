@@ -61,7 +61,9 @@ COLOURS=[
 ]
 
 CUTOFF_LINE_COLOURS = [
-    'darkolivegreen', 'darkblue', 'darkorchid'
+    '#222255', # dark blue
+    '#225555', # dark cyan
+    '#225522'  # dark green
 ]
 
 BIG_MARKER_SIZE = 20
