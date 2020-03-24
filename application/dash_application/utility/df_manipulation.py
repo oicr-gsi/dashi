@@ -1,11 +1,7 @@
-import dash_core_components as core
-import dash_html_components as html
-import datetime
 import pandas
 from pandas import DataFrame, Series
 from typing import List
 
-import pinery.column
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
@@ -28,6 +24,7 @@ RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
+FASTQC_COL = gsiqcetl.column.FastqcColumn
 sample_type_col = "Sample Type"
 ml_col = "Merged Library"
 
@@ -40,6 +37,7 @@ ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
                         ICHORCNA_COL.Barcodes]
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
+fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
 
 pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
     PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
@@ -138,6 +136,7 @@ _mutect_callability = normalized_merged(cache.mutectcallability.mutectcallabilit
 _hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
 _rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
                                      rnaseqqc2_merged_columns)
+_fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
@@ -248,6 +247,10 @@ def get_bamqc():
 
 def get_bamqc3():
     return _bamqc3.copy(deep=True)
+
+
+def get_fastqc():
+    return _fastqc.copy(deep=True)
 
 
 def get_ichorcna():

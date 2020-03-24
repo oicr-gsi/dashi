@@ -122,15 +122,26 @@ def get_rna_data():
     #  contain multiple DataFrame/caches)
     rna_df = util.get_rnaseqqc()
 
+    # RNA-SeqQC does not correctly report total reads :(
+    # Use FastQC (summing R1 and R2) to get machine produced total reads
+    fq_total_reads = util.get_fastqc().groupby(
+        [util.FASTQC_COL.Run, util.FASTQC_COL.Lane, util.FASTQC_COL.Barcodes]
+    )[util.FASTQC_COL.TotalSequences].sum().to_frame().reset_index()
+
+    rna_df = rna_df.merge(
+        fq_total_reads,
+        how="left",
+        left_on=util.rnaseqqc_ius_columns,
+        right_on=util.fastqc_ius_columns,
+        suffixes=('', '_fastqc')
+    )
+
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
-    # The expectation is to show how many reads the machine produced
-    # The RNA-SeqQC Total Reads column is the number of aligned reads,
-    # which includes supplemental reads
-    # Unique reads match the machine produced reads
+    # Use FastQC derived Total Reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[RNA_COL.UniqReads] / 1e6, 3)
+        rna_df[util.FASTQC_COL.TotalSequences] / 1e6, 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
         rna_df[RNA_COL.ProportionCorrectStrandReads] * 100, 3)
     rna_df[special_cols["Percent Coding"]] = round(
