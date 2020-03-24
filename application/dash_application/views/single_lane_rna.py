@@ -10,7 +10,7 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import RnaSeqQcColumn as RnaColumn, FastqcColumn
+from gsiqcetl.column import RnaSeqQc2Column as RnaColumn, FastqcColumn
 import pinery
 import logging
 
@@ -75,7 +75,7 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
     "Percent Uniq Reads": "Percent Unique Reads",
     "Percent Correct Strand Reads": "Percent Correct Strand Reads",
-    "Percent Coding": "Percent Coding",
+    "rRNA Percent Contamination": "rRNA Percent Contamination"
 }
 
 # Specify which columns to display in the DataTable
@@ -84,7 +84,7 @@ first_col_set = [
     special_cols["Total Reads (Passed Filter)"],
     special_cols["Percent Uniq Reads"],
     special_cols["Percent Correct Strand Reads"],
-    special_cols["Percent Coding"],
+    special_cols["rRNA Percent Contamination"]
 ]
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
@@ -115,15 +115,7 @@ def get_rna_data():
       * Instruments (to allow filtering by instrument model)
       * Runs (needed to join Pinery to Instruments)
     """
-    # Get the RNA-SeqQC data
-    # NB: have to go two layers down to get the actual cache:
-    #  * QCETLCache(): returns an object of all caches
-    #  * QCETLCache().rnaseqqc: returns the items associated with the
-    #  rnaseqqc cache
-    #  * QCETLCache().rnaseqqc.rnaseqqc: returns the DataFrame/cache named
-    #  "rnaseqqc" within the rnaseqqc cache (as some caches like bcl2fastq
-    #  contain multiple DataFrame/caches)
-    rna_df = util.get_rnaseqqc()
+    rna_df = util.get_rnaseqqc2()
 
     # RNA-SeqQC does not correctly report total reads :(
     # Use FastQC (summing R1 and R2) to get machine produced total reads
@@ -138,21 +130,22 @@ def get_rna_data():
     rna_df = rna_df.merge(
         fq_total_reads,
         how="left",
-        left_on=util.rnaseqqc_ius_columns,
+        left_on=util.rnaseqqc2_ius_columns,
         right_on=util.fastqc_ius_columns,
         suffixes=('', '_fastqc')
     )
 
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
-        (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
+        rna_df[RNA_COL.UniqueReads] / (rna_df[RNA_COL.NonPrimaryReads] + rna_df[RNA_COL.UniqueReads]) * 100, 1)
     # Use FastQC derived Total Reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[FastqcColumn.TotalSequences] / 1e6, 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
-        rna_df[RNA_COL.ProportionCorrectStrandReads] * 100, 3)
-    rna_df[special_cols["Percent Coding"]] = round(
-        rna_df[RNA_COL.ProportionCodingBases] * 100, 3)
+        rna_df[RNA_COL.MetricsPercentCorrectStrandReads] * 100, 3)
+    rna_df[special_cols["rRNA Percent Contamination"]] = round(
+        rna_df[RNA_COL.RRnaContaminationProperlyPaired] / rna_df[RNA_COL.RRnaContaminationInTotal] * 100, 3
+    )
 
     # Pull in sample metadata from Pinery
     pinery_samples = util.get_pinery_samples()
@@ -162,7 +155,7 @@ def get_rna_data():
 
     # Join RNAseqQc and Pinery data
     rna_df = util.df_with_pinery_samples_ius(rna_df, pinery_samples,
-                                         util.rnaseqqc_ius_columns)
+                                         util.rnaseqqc2_ius_columns)
 
     # Join RNAseqQc and instrument model
     rna_df = util.df_with_instrument_model(rna_df, PINERY_COL.SequencerRunName)
@@ -220,7 +213,7 @@ def generate_five_to_three(df, graph_params):
         "5 to 3 Prime Bias",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.Median5Primeto3PrimeBias],
+        lambda d: d[RNA_COL.MetricsMedian5PrimeTo3PrimeBias],
         "Log Ratio",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -232,7 +225,7 @@ def generate_five_to_three(df, graph_params):
 
 def generate_correct_read_strand(df, graph_params):
     return generate(
-        "Correct Strand Reads (%)",
+        "🚧 Correct Strand Reads (%) -- NOT ENABLED YET 🚧",
         df,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Correct Strand Reads"]],
@@ -248,7 +241,7 @@ def generate_coding(df, graph_params):
         "Coding (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Coding"]],
+        lambda d: d[RNA_COL.MetricsPercentCodingBases],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -261,7 +254,7 @@ def generate_rrna_contam(df, graph_params):
         "rRNA Contamination (%)",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[RNA_COL.rRNAContaminationreadsaligned],
+        lambda d: d[special_cols["rRNA Percent Contamination"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -381,13 +374,13 @@ def layout(query_string):
                         {"label": "Unique Reads",
                          "value": special_cols["Percent Uniq Reads"]},
                         {"label": "5Prime to 3Prime Bias",
-                         "value": RNA_COL.Median5Primeto3PrimeBias},
+                         "value": RNA_COL.MetricsMedian5PrimeTo3PrimeBias},
                         {"label": "Correct Read Strand",
-                         "value": RNA_COL.CorrectStrandReads},
+                         "value": RNA_COL.MetricsPercentCorrectStrandReads},
                         {"label": "Coding",
-                         "value": RNA_COL.ProportionCodingBases},
-                        {"label": "rRNA Contamination",
-                         "value": RNA_COL.rRNAContaminationreadsaligned},
+                         "value": RNA_COL.MetricsPercentCodingBases},
+                        {"label": "rRNA Percentage Contamination",
+                         "value": special_cols["rRNA Percent Contamination"]},
                         {"label": "DV200",
                          "value": PINERY_COL.DV200},
                         {"label": "RIN",
@@ -486,7 +479,7 @@ def layout(query_string):
                                     special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_label,
-                                    RNA_COL.rRNAContaminationreadsaligned, initial[cutoff_rrna],
+                                    special_cols["rRNA Percent Contamination"], initial[cutoff_rrna],
                                     (lambda row, col, cutoff: row[col] > cutoff))
                                 ]
                             )
@@ -581,7 +574,7 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
             (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            (cutoff_rrna_label, RNA_COL.rRNAContaminationreadsaligned, rrna_cutoff,
+            (cutoff_rrna_label, special_cols["rRNA Percent Contamination"], rrna_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
         ])
 

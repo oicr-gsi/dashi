@@ -17,7 +17,7 @@ BAMQC_COL = gsiqcetl.column.BamQcColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
-RNASEQQC_COL = gsiqcetl.column.RnaSeqQcColumn
+RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
 BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
 ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
@@ -44,13 +44,13 @@ bamqc3_ius_columns = [BAMQC3_COL.Run, BAMQC3_COL.Lane, BAMQC3_COL.Barcodes]
 bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
                         ICHORCNA_COL.Barcodes]
-rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
-                        RNASEQQC_COL.Barcodes]
 fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
 bedtools_calc_ius_columns = [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes]
 bedtools_percentile_ius_columns = [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes]
 kraken2_ius_columns = [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes]
 cfmedip_ius_columns = [CFMEDIP_COL.Run, CFMEDIP_COL.Lane, CFMEDIP_COL.Barcodes]
+rnaseqqc2_ius_columns = [RNASEQQC2_COL.Run, RNASEQQC2_COL.Lane,
+                        RNASEQQC2_COL.Barcodes]
 
 pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
     PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
@@ -142,7 +142,7 @@ Open a single instance of each cache, and use copies for the reports.
 cache = QCETLCache()
 _bcl2fastq_known = cache.bcl2fastq.known
 _bcl2fastq_unknown = cache.bcl2fastq.unknown
-_rnaseqqc = normalized_ius(cache.rnaseqqc.rnaseqqc, rnaseqqc_ius_columns)
+_rnaseqqc2 = normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
 _bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 _bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
@@ -324,8 +324,9 @@ def get_samtools_stats_cov2_human():
 def get_samtools_stats_cov2_depleted():
     return _samtools_stats_cov2_depleted.copy(deep=True)
 
-def get_rnaseqqc():
-    return _rnaseqqc.copy(deep=True)
+
+def get_rnaseqqc2():
+    return _rnaseqqc2.copy(deep=True)
 
 
 def get_bamqc3_merged():

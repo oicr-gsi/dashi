@@ -5,7 +5,6 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
-import gsiqcetl.column
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
