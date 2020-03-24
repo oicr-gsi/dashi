@@ -48,12 +48,15 @@ ALL_SYMBOLS = [
     'line-nw-open'
 ]
 
-PLOTLY_DEFAULT_COLOURS=[
+# Colourblind-friendly palette shuffled to make more distinct
+# Source https://personal.sron.nl/~pault/#sec:qualitative
+# Tested with 'A11Y Color Blindness Empathy Test' extension for Firefox
+COLOURS=[
     '#4477AA',  # blue
-    '#66CCEE',  # cyan
-    '#228833',  # green
     '#CCBB44',  # yellow
+    '#66CCEE',  # cyan
     '#EE6677',  # red
+    '#228833',  # green
     '#AA3377'   # purple
 ]
 
@@ -328,7 +331,7 @@ def _get_shapes_for_values(shapeby: List[str]):
 
 
 def _get_colours_for_values(colourby: List[str]):
-    return _get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
+    return _get_dict_wrapped(colourby, COLOURS)
 
 
 # Generators for graphs used on multiple pages
