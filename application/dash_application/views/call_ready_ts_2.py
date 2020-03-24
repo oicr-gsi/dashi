@@ -305,11 +305,11 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"], [],
         util.ml_col)
 
-def generate_bar():
-    datas = [[1,1,2], [1,3,2]]
+def generate_bar(df):
+    
     graph = go.Bar(
-        x = datas[0],
-        y = datas[1]
+        x = ,
+        y = 
     )
 
     return go.Figure(
@@ -456,7 +456,8 @@ def layout(query_string):
                             #     figure=generate_hs_library_size(df, initial)),
 
                             core.Graph(
-                                figure = generate_bar()
+                                id = "bartest",
+                                figure = generate_bar(df)
                             ),
 
                             core.Graph(
@@ -534,6 +535,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
+            Output("bartest", "figure")
         ],
         [Input(ids["update-button"], "n_clicks")],
         [
@@ -636,6 +638,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
+            generate_bar(df)
         ]
 
     @dash_app.callback(
