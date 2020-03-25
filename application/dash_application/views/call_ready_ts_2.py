@@ -306,15 +306,22 @@ def generate_gc_dropout(df, graph_params):
         util.ml_col)
 
 def generate_bar(df):
+    graphs = []
+    criteria = [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, HSMETRICS_COL.OffBaitBases]
+    for col in criteria:
+        graph = go.Bar(
+            name = col,
+            x = df[util.ml_col],
+            y = df[col]
+        )
+        graphs.append(graph)
     
-    graph = go.Bar(
-        x = ,
-        y = 
+    figure = go.Figure(
+        data = graphs
     )
+    figure.update_layout(barmode='stack')
 
-    return go.Figure(
-        data = graph
-    )
+    return figure
 
 
 def layout(query_string):
