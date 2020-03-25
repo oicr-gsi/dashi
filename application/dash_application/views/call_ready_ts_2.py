@@ -313,9 +313,9 @@ def generate_bar(df):
     criteria = [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, HSMETRICS_COL.OffBaitBases]
     for col in criteria:
         graph = go.Bar(
-            name = col,
+            name = col + " (%)",
             x = df[util.ml_col],
-            y = df[col]
+            y = df[col] / df[special_cols["Total Bait Bases"]]
         )
         graphs.append(graph)
     
