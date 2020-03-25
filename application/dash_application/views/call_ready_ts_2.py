@@ -46,6 +46,7 @@ ids = init_ids([
     'pf-normal-cutoff',
 
     # Graphs
+    'bait-bases',
     'total-reads',
     'unique-reads',
     'mean-target-coverage',
@@ -466,7 +467,7 @@ def layout(query_string):
                             #     figure=generate_hs_library_size(df, initial)),
 
                             core.Graph(
-                                id = "bartest",
+                                id = ids['bait-bases'],
                                 figure = generate_bar(df)
                             ),
 
@@ -545,7 +546,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
-            Output("bartest", "figure")
+            Output(ids['bait-bases'], "figure")
         ],
         [Input(ids["update-button"], "n_clicks")],
         [
