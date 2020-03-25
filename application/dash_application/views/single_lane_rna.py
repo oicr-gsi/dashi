@@ -10,7 +10,7 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import RnaSeqQcColumn as RnaColumn
+from gsiqcetl.column import RnaSeqQcColumn as RnaColumn, FastqcColumn
 import pinery
 import logging
 
@@ -122,15 +122,30 @@ def get_rna_data():
     #  contain multiple DataFrame/caches)
     rna_df = util.get_rnaseqqc()
 
+    # RNA-SeqQC does not correctly report total reads :(
+    # Use FastQC (summing R1 and R2) to get machine produced total reads
+    # `groupby` groups the fastqc files for each sample
+    # For each grouped sample, the Total Sequences are summed
+    # The result is a Series, converted to a DataFrame
+    # The indexes are the groupby values and are reset to allow for merging
+    fq_total_reads = util.get_fastqc().groupby(
+        [FastqcColumn.Run, FastqcColumn.Lane, FastqcColumn.Barcodes]
+    )[FastqcColumn.TotalSequences].sum().to_frame().reset_index()
+
+    rna_df = rna_df.merge(
+        fq_total_reads,
+        how="left",
+        left_on=util.rnaseqqc_ius_columns,
+        right_on=util.fastqc_ius_columns,
+        suffixes=('', '_fastqc')
+    )
+
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         (rna_df[RNA_COL.UniqReads] / rna_df[RNA_COL.TotalReads]) * 100, 1)
-    # The expectation is to show how many reads the machine produced
-    # The RNA-SeqQC Total Reads column is the number of aligned reads,
-    # which includes supplemental reads
-    # Unique reads match the machine produced reads
+    # Use FastQC derived Total Reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[RNA_COL.UniqReads] / 1e6, 3)
+        rna_df[FastqcColumn.TotalSequences] / 1e6, 3)
     rna_df[special_cols["Percent Correct Strand Reads"]] = round(
         rna_df[RNA_COL.ProportionCorrectStrandReads] * 100, 3)
     rna_df[special_cols["Percent Coding"]] = round(
