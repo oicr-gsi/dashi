@@ -48,21 +48,22 @@ ALL_SYMBOLS = [
     'line-nw-open'
 ]
 
-PLOTLY_DEFAULT_COLOURS=[
-    '#1f77b4',  # muted blue
-    '#ff7f0e',  # safety orange
-    '#2ca02c',  # cooked asparagus green
-    '#d62728',  # brick red
-    '#9467bd',  # muted purple
-    '#8c564b',  # chestnut brown
-    '#e377c2',  # raspberry yogurt pink
-    '#7f7f7f',  # middle gray
-    '#bcbd22',  # curry yellow-green
-    '#17becf'   # blue-teal
+# Colourblind-friendly palette shuffled to make more distinct
+# Source https://personal.sron.nl/~pault/#sec:qualitative
+# Tested with 'A11Y Color Blindness Empathy Test' extension for Firefox
+COLOURS=[
+    '#4477AA',  # blue
+    '#CCBB44',  # yellow
+    '#66CCEE',  # cyan
+    '#EE6677',  # red
+    '#228833',  # green
+    '#AA3377'   # purple
 ]
 
 CUTOFF_LINE_COLOURS = [
-    'darkolivegreen', 'darkblue', 'darkorchid'
+    '#222255', # dark blue
+    '#225555', # dark cyan
+    '#225522'  # dark green
 ]
 
 BIG_MARKER_SIZE = 20
@@ -332,7 +333,7 @@ def _get_shapes_for_values(shapeby: List[str]):
 
 
 def _get_colours_for_values(colourby: List[str]):
-    return _get_dict_wrapped(colourby, PLOTLY_DEFAULT_COLOURS)
+    return _get_dict_wrapped(colourby, COLOURS)
 
 
 # Generators for graphs used on multiple pages
