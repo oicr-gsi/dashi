@@ -25,7 +25,8 @@ ids = init_ids([
     # Buttons
     "jira-issue-with-runs-button",
     "general-jira-issue-button",
-    "update-button",
+    "update-button-top",
+    "update-button-bottom",
     "approve-run-button",
 
     # Sidebar controls
@@ -322,7 +323,7 @@ def layout(query_string):
                                       {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar four columns", children=[
-                html.Button("Update", id=ids['update-button'], className="update-button"),
+                html.Button("Update", id=ids['update-button-top'], className="update-button"),
                 sidebar_utils.approve_run_button(ids["approve-run-button"]),
 
                 html.Br(),
@@ -405,6 +406,9 @@ def layout(query_string):
                     ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
                 sidebar_utils.insert_mean_cutoff(
                     ids["insert-mean-cutoff"], initial[cutoff_insert_mean]),
+
+                html.Br(),
+                html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
             ]),
 
             	# Graphs + Tables tabs
@@ -498,7 +502,8 @@ def init_callbacks(dash_app):
             Output(ids["jira-issue-with-runs-button"], "style"),
         ],
         [
-            Input(ids["update-button"], "n_clicks")
+            Input(ids["update-button-top"], "n_clicks"),
+            Input(ids["update-button-bottom"], "n_clicks")
         ],
         [
             State(ids['run-id-list'], 'value'),
@@ -520,6 +525,7 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(click,
+                       click2,
                        runs,
                        instruments,
                        projects,

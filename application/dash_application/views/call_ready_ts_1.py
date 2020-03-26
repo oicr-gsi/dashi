@@ -21,7 +21,8 @@ title = "Call-Ready TS 1"
 ids = init_ids([
     # Buttons
     'jira-issue-button',
-    'update-button',
+    'update-button-top',
+    'update-button-bottom',
 
     # Sidebar controls
     'all-projects',
@@ -322,7 +323,7 @@ def layout(query_string):
                 html.A("Go to Call-Ready Targeted Sequencing Page 2",
                        href="/call-ready-ts-2"),
                     html.Br(),
-                    html.Button("Update", id=ids["update-button"]),
+                    html.Button("Update", id=ids["update-button-top"]),
                     html.Br(),
                     html.Br(),
 
@@ -399,6 +400,9 @@ def layout(query_string):
                                                ids["insert-size-cutoff"], initial[cutoff_insert_mean]),
                     # sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                     #                            ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
+
+                    html.Br(),
+                    html.Button("Update", id=ids["update-button-bottom"]),
                 ]),
 
                 # Graphs + Tables tabs
@@ -507,7 +511,8 @@ def init_callbacks(dash_app):
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
         ],
-        [Input(ids["update-button"], "n_clicks")],
+        [Input(ids["update-button-top"], "n_clicks"),
+        Input(ids["update-button-bottom"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
             State(ids["tissue-materials-list"], "value"),
@@ -529,6 +534,7 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(click,
+                       click2,
                        projects,
                        tissue_materials,
                        sample_types,
