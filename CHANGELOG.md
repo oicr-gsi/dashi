@@ -7,6 +7,16 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200326-1116] - 2020-03-26
+## Changed
+  * RNA-seq 5/3 bias is on log scale
+  * Single-Lane TS uses bamqc3
+  * RNA-seq uses FASTQC for Total REads
+  * Colour palette now colourblindness-friendly
+## Added
+  * add cr-WGS Coverage per Gb graph
+  * add stacked bar chart for Percentage On/Near/Off Bait to Call-Ready TS 2
+
 ## [200305-1136] - 2020-03-05
 ## Changed
   * Standardized graph axes and titles
