@@ -321,7 +321,15 @@ def generate_bar(df):
         graphs.append(graph)
     
     figure = go.Figure(
-        data = graphs
+        data = graphs,
+        layout = go.Layout(
+            title = "On/Near/Off Bait Bases (%)",
+            yaxis = {
+                'title': {
+                    'text': "%"
+                }
+            }
+        )
     )
     figure.update_layout(barmode='stack')
 
