@@ -262,6 +262,7 @@ def show_data_labels_input_call_ready(show_names_id: str,
         select_all_id: str) -> core.Loading:
     return _show_data_labels_input(show_names_id, selected_value,
         select_all_text, select_all_id, [
+            {'label': 'Reference', 'value': COMMON_COL.Reference},
             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
             {'label': 'Sample', 'value': PINERY_COL.RootSampleName},
             {'label': 'Library Design', 'value': PINERY_COL.LibrarySourceTemplateType},

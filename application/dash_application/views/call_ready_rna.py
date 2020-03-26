@@ -6,7 +6,6 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
 import gsiqcetl.column
-import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs, cutoff_table_data_merged
@@ -27,6 +26,8 @@ ids = init_ids([
     # Sidebar controls
     'all-projects',
     'projects-list',
+    "all-references",
+    "references-list",
     'all-tissue-materials',
     'tissue-materials-list',
     'all-sample-types',
@@ -77,6 +78,8 @@ def get_merged_rna_data():
     pinery_samples = util.filter_by_library_design(pinery_samples, util.rna_lib_designs)
 
     rna_df = util.get_rnaseqqc2_merged()
+    #TODO: Remove once Reference is added by ETL
+    rna_df[gsiqcetl.column.ColumnNames.Reference] = "Unknown"
     rna_df = util.filter_by_library_design(rna_df, util.rna_lib_designs,
                                            RNASEQQC2_COL.LibraryDesign)
 
@@ -122,6 +125,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
 ALL_SAMPLES = util.unique_set(RNA_DF, PINERY_COL.RootSampleName)
+ALL_REFERENCES = util.unique_set(RNA_DF, RNASEQQC2_COL.Reference)
 
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
@@ -130,7 +134,10 @@ collapsing_functions = {
     "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types")
 }
 
-shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES, ALL_TISSUE_MATERIALS)
+shape_colour = ColourShapeCallReady(
+    ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES,
+    ALL_TISSUE_MATERIALS, ALL_REFERENCES
+)
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, True)
 
 
@@ -181,10 +188,11 @@ def generate_rrna_contam(df, graph_params):
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
 
-    df = reshape_call_ready_df(RNA_DF, initial["projects"], initial[
-        "tissue_materials"], initial["sample_types"],
+    df = reshape_call_ready_df(RNA_DF, initial["projects"], initial["references"],
+                               initial["tissue_materials"], initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
+                               initial["colour_by"], initial["shape_by"],
+                               shape_colour.items_for_df(), [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -203,6 +211,9 @@ def layout(query_string):
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
                                                   ALL_PROJECTS),
+                    sidebar_utils.select_reference(ids["all-references"],
+                                                   ids["references-list"],
+                                                   ALL_REFERENCES),
                     sidebar_utils.select_tissue_materials(ids["all-tissue-materials"],
                                                      ids["tissue-materials-list"],
                                                      ALL_TISSUE_MATERIALS),
@@ -330,6 +341,7 @@ def init_callbacks(dash_app):
         [Input(ids["update-button"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
+            State(ids['references-list'], 'value'),
             State(ids["tissue-materials-list"], "value"),
             State(ids["sample-types-list"], "value"),
             State(ids["first-sort"], "value"),
@@ -345,6 +357,7 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        projects,
+                       references,
                        tissue_materials,
                        sample_types,
                        first_sort,
@@ -358,7 +371,7 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_call_ready_df(RNA_DF, projects, tissue_materials,
+        df = reshape_call_ready_df(RNA_DF, projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
                                    shape_colour.items_for_df(), search_sample)
@@ -402,6 +415,14 @@ def init_callbacks(dash_app):
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['references-list'], 'value'),
+        [Input(ids['all-references'], 'n_clicks')]
+    )
+    def all_references_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x for x in ALL_REFERENCES]
 
     @dash_app.callback(
         Output(ids["tissue-materials-list"], "value"),
