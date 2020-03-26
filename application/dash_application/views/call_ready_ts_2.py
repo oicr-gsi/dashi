@@ -316,7 +316,7 @@ def generate_bar(df):
         graph = go.Bar(
             name = col + " (%)",
             x = df[util.ml_col],
-            y = df[col] / df[special_cols["Total Bait Bases"]]
+            y = df[col] / df[special_cols["Total Bait Bases"]] * 100
         )
         graphs.append(graph)
     
@@ -324,11 +324,22 @@ def generate_bar(df):
         data = graphs,
         layout = go.Layout(
             title = "On/Near/Off Bait Bases (%)",
+            xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
             yaxis = {
                 'title': {
                     'text': "%"
-                }
-            }
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
         )
     )
     figure.update_layout(barmode='stack')
