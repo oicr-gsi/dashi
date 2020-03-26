@@ -291,7 +291,7 @@ def layout(query_string):
                                                                             title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
-                    html.Button("Update", id=ids["update-button-top"]),
+                    html.Button("Update", id=ids["update-button-top"], className="update-button"),
                     html.Br(),
                     html.Br(),
 
@@ -395,7 +395,7 @@ def layout(query_string):
                                                initial[cutoff_duplicate_rate]),
 
                     html.Br(),
-                    html.Button("Update", id=ids["update-button-bottom"]),
+                    html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs

@@ -196,7 +196,7 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
-                    html.Button("Update", id=ids["update-button-top"]),
+                    html.Button("Update", id=ids["update-button-top"], className="update-button"),
                     html.Br(),
                     html.Br(),
 
@@ -260,7 +260,7 @@ def layout(query_string):
                                                initial[cutoff_rrna_contam]),
 
                     html.Br(),
-                    html.Button("Update", id=ids["update-button-bottom"])
+                    html.Button("Update", id=ids["update-button-bottom"], className="update-button")
                 ]),
 
                 # Graphs + Tables tabs

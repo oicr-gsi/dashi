@@ -323,7 +323,7 @@ def layout(query_string):
                 html.A("Go to Call-Ready Targeted Sequencing Page 2",
                        href="/call-ready-ts-2"),
                     html.Br(),
-                    html.Button("Update", id=ids["update-button-top"]),
+                    html.Button("Update", id=ids["update-button-top"], className="update-button"),
                     html.Br(),
                     html.Br(),
 
@@ -402,7 +402,7 @@ def layout(query_string):
                     #                            ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
 
                     html.Br(),
-                    html.Button("Update", id=ids["update-button-bottom"]),
+                    html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs

@@ -227,7 +227,7 @@ def layout(query_string):
                                           {"display": "none"}, "")]),
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
-                    html.Button('Update', id=ids['update-button-top'], className="update-button-top"),
+                    html.Button('Update', id=ids['update-button-top'], className="update-button"),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -306,7 +306,7 @@ def layout(query_string):
                         ids['insert-size-mean-cutoff'], initial[cutoff_insert_mean]),
                     
                     html.Br(),
-                    html.Button('Update', id=ids['update-button-bottom'], className="update-button-bottom"),
+                    html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs
