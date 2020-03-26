@@ -54,8 +54,6 @@ ids = init_ids([
     "total-reads",
     "mean-insert",
     "duplication",
-    "purity",
-    "ploidy",
     "unmapped-reads",
     "non-primary-reads",
     "on-target-reads",
@@ -261,32 +259,6 @@ def generate_on_target_reads(df, graph_params):
         graph_params["shownames_val"]
     )
 
-
-def generate_purity(df, graph_params):
-    return generate(
-        "Purity",
-        df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Purity"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
-
-
-def generate_ploidy(df, graph_params):
-    return generate(
-        "Ploidy",
-        df,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[ICHOR_COL.Ploidy],
-        "",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
-
 def dataversion():
     return DATAVERSION
 
@@ -433,14 +405,6 @@ def layout(query_string):
                                 figure=generate_duplication(df, initial)
                             ),
                             core.Graph(
-                                id=ids["purity"],
-                                figure=generate_purity(df, initial)
-                            ),
-                            core.Graph(
-                                id=ids["ploidy"],
-                                figure=generate_ploidy(df, initial)
-                            ),
-                            core.Graph(
                                 id=ids["unmapped-reads"],
                                 figure=generate_unmapped_reads(df, initial)
                             ),
@@ -485,8 +449,6 @@ def init_callbacks(dash_app):
             Output(ids["total-reads"], "figure"),
             Output(ids["mean-insert"], "figure"),
             Output(ids["duplication"], "figure"),
-            Output(ids["purity"], "figure"),
-            Output(ids["ploidy"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["non-primary-reads"], "figure"),
             Output(ids["on-target-reads"], "figure"),
@@ -573,8 +535,6 @@ def init_callbacks(dash_app):
                 shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_mean_insert_size(df, graph_params),
             generate_duplication(df, graph_params),
-            generate_purity(df, graph_params),
-            generate_ploidy(df, graph_params),
             generate_unmapped_reads(df, graph_params),
             generate_non_primary(df, graph_params),
             generate_on_target_reads(df, graph_params),
