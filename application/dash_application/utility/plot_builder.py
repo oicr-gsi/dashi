@@ -315,7 +315,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
-
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0

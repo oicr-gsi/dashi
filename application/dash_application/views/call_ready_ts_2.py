@@ -46,6 +46,7 @@ ids = init_ids([
     'pf-normal-cutoff',
 
     # Graphs
+    'bait-bases',
     'total-reads',
     'unique-reads',
     'mean-target-coverage',
@@ -82,7 +83,8 @@ special_cols = {
     "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
-    "File SWID HsMetrics": "File SWID HsMetrics"
+    "File SWID HsMetrics": "File SWID HsMetrics",
+    "Total Bait Bases": "Total bait bases"
 }
 
 
@@ -121,6 +123,8 @@ def get_merged_ts_data():
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability (14x/8x)"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
+    hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
+
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
@@ -305,6 +309,43 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"], [],
         util.ml_col)
 
+def generate_bar(df):
+    graphs = []
+    criteria = [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, HSMETRICS_COL.OffBaitBases]
+    for col in criteria:
+        graph = go.Bar(
+            name = col + " (%)",
+            x = df[util.ml_col],
+            y = df[col] / df[special_cols["Total Bait Bases"]] * 100
+        )
+        graphs.append(graph)
+    
+    figure = go.Figure(
+        data = graphs,
+        layout = go.Layout(
+            title = "On/Near/Off Bait Bases (%)",
+            xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
+            yaxis = {
+                'title': {
+                    'text': "%"
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
+        )
+    )
+    figure.update_layout(barmode='stack')
+
+    return figure
+
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
@@ -445,6 +486,11 @@ def layout(query_string):
                             #     figure=generate_hs_library_size(df, initial)),
 
                             core.Graph(
+                                id = ids['bait-bases'],
+                                figure = generate_bar(df)
+                            ),
+
+                            core.Graph(
                                 id=ids["duplicate-rate"],
                                 figure=generate_duplicate_rate(df, initial)),
 
@@ -519,6 +565,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
+            Output(ids['bait-bases'], "figure")
         ],
         [Input(ids["update-button"], "n_clicks")],
         [
@@ -621,6 +668,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
+            generate_bar(df)
         ]
 
     @dash_app.callback(
