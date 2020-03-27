@@ -113,8 +113,8 @@ def select_projects(all_projects_id: str, projects_id: str, projects: List[
 
 def select_reference(all_references_id: str, references_id: str, references: List[
     str]) -> core.Loading:
-    return select_with_select_all("All Genome Builds", all_references_id,
-                                  "Filter by Genome Build", references_id, references)
+    return select_with_select_all("All References", all_references_id,
+                                  "Filter by Reference", references_id, references)
 
 
 def select_kits(all_kits_id: str, kits_id: str, kits: List[str]) -> \

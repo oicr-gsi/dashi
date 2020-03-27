@@ -197,7 +197,8 @@ collapsing_functions = {
     "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
         selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
     "sample_types": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_SAMPLE_TYPES, "all_sample_types")
+        selected, ALL_SAMPLE_TYPES, "all_sample_types"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
 shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS,
