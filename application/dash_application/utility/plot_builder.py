@@ -400,8 +400,7 @@ def get_initial_call_ready_values():
 
 
 class ColourShapeSingleLane:
-    #TODO: Make reference mandatory
-    def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference=[]):
+    def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference):
         self.projects = projects
         self.runs = runs
         self.kits = kits
@@ -432,8 +431,7 @@ class ColourShapeSingleLane:
 
 
 class ColourShapeCallReady:
-    #TODO: Make reference mandatory
-    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials, reference=[]):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials, reference):
         self.projects = projects
         self.library_designs = library_designs
         self.institutes = institutes

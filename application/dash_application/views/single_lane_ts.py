@@ -32,6 +32,8 @@ ids = init_ids([
     'instruments-list',
     'all-projects',
     'projects-list',
+    "all-references",
+    "references-list",
     'all-kits',
     'kits-list',
     'all-library-designs',
@@ -82,6 +84,8 @@ initial[cutoff_insert_mean] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc3()
+    # TODO: Temporary injection while ETL gets released
+    bamqc_df[BAMQC_COL.Reference] = "Unknown"
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
 
@@ -107,6 +111,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
 ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
+ALL_REFERENCES = util.unique_set(bamqc, BAMQC_COL.Reference)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -133,8 +138,10 @@ later_col_set = [
 ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
 
 
-shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
-                                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
+shape_colour = ColourShapeSingleLane(
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
+    ALL_REFERENCES,
+)
 # Add shape, colour, and size cols to dataframe 
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
@@ -208,7 +215,7 @@ def layout(query_string):
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
     df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["kits"],
+                                initial["projects"], initial["references"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
@@ -237,7 +244,7 @@ def layout(query_string):
                                             query["req_runs"]),
 
                     sidebar_utils.run_range_input(ids["date-range"],
-                                                query["req_start"],
+                                               query["req_start"],
                                                 query["req_end"]),
 
                     sidebar_utils.hr(),
@@ -245,6 +252,10 @@ def layout(query_string):
                     sidebar_utils.select_projects(ids["all-projects"],
                                                 ids["projects-list"],
                                                 ALL_PROJECTS),
+
+                    sidebar_utils.select_reference(ids["all-references"],
+                                                   ids["references-list"],
+                                                   ALL_REFERENCES),
 
                     sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                             ALL_KITS),
@@ -382,6 +393,7 @@ def init_callbacks(dash_app):
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
+            State(ids['references-list'], 'value'),
             State(ids['kits-list'], 'value'),
             State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
@@ -401,6 +413,7 @@ def init_callbacks(dash_app):
             runs,
             instruments,
             projects,
+            references,
             kits,
             library_designs,
             first_sort, 
@@ -416,7 +429,7 @@ def init_callbacks(dash_app):
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(bamqc, runs, instruments, projects, kits, library_designs,
+        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -485,6 +498,14 @@ def init_callbacks(dash_app):
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['references-list'], 'value'),
+        [Input(ids['all-references'], 'n_clicks')]
+    )
+    def all_references_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x for x in ALL_REFERENCES]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),
