@@ -22,7 +22,8 @@ title = "Call-Ready RNA-seq"
 ids = init_ids([
     # Buttons
     'jira-issue-button',
-    'update-button',
+    'update-button-top',
+    'update-button-bottom',
 
     # Sidebar controls
     'all-projects',
@@ -195,7 +196,7 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
-                    html.Button("Update", id=ids["update-button"]),
+                    html.Button("Update", id=ids["update-button-top"], className="update-button"),
                     html.Br(),
                     html.Br(),
 
@@ -257,6 +258,9 @@ def layout(query_string):
                                                ids["pf-cutoff"], initial[cutoff_pf_reads]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
                                                initial[cutoff_rrna_contam]),
+
+                    html.Br(),
+                    html.Button("Update", id=ids["update-button-bottom"], className="update-button")
                 ]),
 
                 # Graphs + Tables tabs
@@ -327,7 +331,8 @@ def init_callbacks(dash_app):
             Output(ids["data-table"], "data"),
             Output(ids["search-sample"], "options"),
         ],
-        [Input(ids["update-button"], "n_clicks")],
+        [Input(ids["update-button-top"], "n_clicks"),
+        Input(ids["update-button-bottom"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
             State(ids["tissue-materials-list"], "value"),
@@ -344,6 +349,7 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(click,
+                       click2,
                        projects,
                        tissue_materials,
                        sample_types,
