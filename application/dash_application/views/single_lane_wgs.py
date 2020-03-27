@@ -37,6 +37,8 @@ ids = init_ids([
     "library-designs-list",
     "all-projects",
     "projects-list",
+    "all-references",
+    "references-list",
     "all-kits",
     "kits-list",
     "first-sort",
@@ -130,6 +132,8 @@ def get_wgs_data():
                                ICHOR_COL.TumorFraction]]
 
     bamqc_df = util.get_bamqc3()
+    # TODO: Temporary injection while ETL gets released
+    bamqc_df[BAMQC_COL.Reference] = "Unknown"
 
     # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
@@ -150,7 +154,8 @@ def get_wgs_data():
     wgs_df = bamqc_df.merge(
         ichorcna_df, how="outer",
         left_on=util.bamqc_ius_columns,
-        right_on=util.ichorcna_ius_columns
+        right_on=util.ichorcna_ius_columns,
+        suffixes=['', '_ichorcn']
     )
 
     # Join BamQC+ichorCNA and Pinery data
@@ -178,6 +183,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
 ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
+ALL_REFERENCES = util.unique_set(WGS_DF, BAMQC_COL.Reference)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -189,8 +195,10 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
 }
 
-shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
-                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
+shape_colour = ColourShapeSingleLane(
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
+    ALL_REFERENCES,
+)
 
 # Add shape col to WG dataframe
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
@@ -304,7 +312,7 @@ def layout(query_string):
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
     df = reshape_single_lane_df(WGS_DF, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["kits"],
+                                initial["projects"], initial["references"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
@@ -342,6 +350,10 @@ def layout(query_string):
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
                                               ALL_PROJECTS),
+
+                sidebar_utils.select_reference(ids["all-references"],
+                                               ids["references-list"],
+                                               ALL_REFERENCES),
 
                 sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                           ALL_KITS),
@@ -504,6 +516,7 @@ def init_callbacks(dash_app):
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
+            State(ids['references-list'], 'value'),
             State(ids['kits-list'], 'value'),
             State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
@@ -523,6 +536,7 @@ def init_callbacks(dash_app):
                        runs,
                        instruments,
                        projects,
+                       references,
                        kits,
                        library_designs,
                        first_sort,
@@ -538,7 +552,7 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(WGS_DF, runs, instruments, projects, kits, library_designs,
+        df = reshape_single_lane_df(WGS_DF, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -609,6 +623,14 @@ def init_callbacks(dash_app):
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
+
+    @dash_app.callback(
+        Output(ids['references-list'], 'value'),
+        [Input(ids['all-references'], 'n_clicks')]
+    )
+    def all_references_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x for x in ALL_REFERENCES]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),

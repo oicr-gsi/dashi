@@ -27,6 +27,8 @@ ids = init_ids([
     # Sidebar controls
     "all-projects",
     "projects-list",
+    "all-references",
+    "references-list",
     "all-institutes",
     "institutes-list",
     "all-tissue-materials",
@@ -101,6 +103,8 @@ def get_merged_wgs_data():
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
     bamqc3_df = util.get_bamqc3_merged()
+    # TODO: Temporary injection while ETL gets released
+    bamqc3_df[BAMQC_COL.Reference] = "Unknown"
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
@@ -184,6 +188,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF,
                                       PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
+ALL_REFERENCES = util.unique_set(WGS_DF, BAMQC_COL.Reference)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -199,7 +204,7 @@ collapsing_functions = {
 
 shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS,
                                     ALL_INSTITUTES, ALL_SAMPLE_TYPES,
-                                    ALL_TISSUE_MATERIALS)
+                                    ALL_TISSUE_MATERIALS, ALL_REFERENCES)
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
                             True)
 
@@ -272,7 +277,7 @@ def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
     # no queries apply here...yet
 
-    df = reshape_call_ready_df(WGS_DF, initial["projects"],
+    df = reshape_call_ready_df(WGS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"],
                                initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
@@ -298,6 +303,9 @@ def layout(query_string):
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
                                                   ALL_PROJECTS),
+                    sidebar_utils.select_reference(ids["all-references"],
+                                                   ids["references-list"],
+                                                   ALL_REFERENCES),
                     sidebar_utils.select_tissue_materials(
                         ids["all-tissue-materials"],
                         ids["tissue-materials-list"],
@@ -546,6 +554,7 @@ def init_callbacks(dash_app):
         [Input(ids["update-button"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
+            State(ids['references-list'], 'value'),
             State(ids["tissue-materials-list"], "value"),
             State(ids["sample-types-list"], "value"),
             State(ids["first-sort"], "value"),
@@ -566,6 +575,7 @@ def init_callbacks(dash_app):
     )
     def update_pressed(click,
                        projects,
+                       references,
                        tissue_materials,
                        sample_types,
                        first_sort,
@@ -584,7 +594,7 @@ def init_callbacks(dash_app):
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_call_ready_df(WGS_DF, projects, tissue_materials,
+        df = reshape_call_ready_df(WGS_DF, projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
                                    shape_colour.items_for_df(), search_sample)
@@ -662,6 +672,13 @@ def init_callbacks(dash_app):
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
+    @dash_app.callback(
+        Output(ids['references-list'], 'value'),
+        [Input(ids['all-references'], 'n_clicks')]
+    )
+    def all_references_requested(click):
+        sidebar_utils.update_only_if_clicked(click)
+        return [x for x in ALL_REFERENCES]
 
     @dash_app.callback(
         Output(ids['tissue-materials-list'], 'value'),
