@@ -103,8 +103,6 @@ def get_merged_wgs_data():
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
     bamqc3_df = util.get_bamqc3_merged()
-    # TODO: Temporary injection while ETL gets released
-    bamqc3_df[BAMQC_COL.Reference] = "Unknown"
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)

@@ -78,8 +78,6 @@ def get_merged_rna_data():
     pinery_samples = util.filter_by_library_design(pinery_samples, util.rna_lib_designs)
 
     rna_df = util.get_rnaseqqc2_merged()
-    #TODO: Remove once Reference is added by ETL
-    rna_df[gsiqcetl.column.ColumnNames.Reference] = "Unknown"
     rna_df = util.filter_by_library_design(rna_df, util.rna_lib_designs,
                                            RNASEQQC2_COL.LibraryDesign)
 

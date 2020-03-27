@@ -132,8 +132,6 @@ def get_wgs_data():
                                ICHOR_COL.TumorFraction]]
 
     bamqc_df = util.get_bamqc3()
-    # TODO: Temporary injection while ETL gets released
-    bamqc_df[BAMQC_COL.Reference] = "Unknown"
 
     # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(

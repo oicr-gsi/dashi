@@ -123,8 +123,6 @@ def get_rna_data():
     #  "rnaseqqc" within the rnaseqqc cache (as some caches like bcl2fastq
     #  contain multiple DataFrame/caches)
     rna_df = util.get_rnaseqqc()
-    # TODO: Temporary injection while ETL gets released
-    rna_df['Reference'] = "Unknown"
 
     # RNA-SeqQC does not correctly report total reads :(
     # Use FastQC (summing R1 and R2) to get machine produced total reads

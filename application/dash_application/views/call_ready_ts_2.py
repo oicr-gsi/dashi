@@ -105,8 +105,6 @@ def get_merged_ts_data():
     pinery_samples = util.filter_by_library_design(pinery_samples, util.ex_lib_designs)
 
     ichorcna_df = util.get_ichorcna_merged()
-    # TODO: Temporary injection while ETL gets released
-    ichorcna_df[ICHOR_COL.Reference] = "Unknown"
     ichorcna_df = util.filter_by_library_design(ichorcna_df, util.ex_lib_designs, ICHOR_COL.LibraryDesign)
 
     hsmetrics_df = util.get_hsmetrics_merged()
