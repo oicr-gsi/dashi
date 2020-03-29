@@ -4,11 +4,13 @@ import pandas
 import plotly.graph_objects as go
 from pandas import DataFrame
 import pinery
+import gsiqcetl.column
 from .df_manipulation import sample_type_col
 from .sidebar_utils import runs_in_range
 
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
+COMMON_COL = gsiqcetl.column.ColumnNames
 
 """
 Avoid the following symbols, which fail to render correctly:
@@ -74,6 +76,7 @@ DATA_LABEL_ORDER = [
     PINERY_COL.TissueOrigin,
     PINERY_COL.TissueType,
     PINERY_COL.GroupID,
+    COMMON_COL.Reference,
     PINERY_COL.TissuePreparation,
     PINERY_COL.PrepKit,
     PINERY_COL.SequencerRunName,
@@ -85,6 +88,7 @@ DATA_LABEL_NAME = {
     PINERY_COL.GroupID: 'Group ID: ',
     PINERY_COL.TissuePreparation: 'Tissue Preparation: ',
     PINERY_COL.PrepKit: 'Kit: ',
+    COMMON_COL.Reference: 'Reference: '
 }
 
 
@@ -166,14 +170,14 @@ def _fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
     return df
 
 
-def reshape_single_lane_df(df, runs, instruments, projects, kits, library_designs,
+def reshape_single_lane_df(df, runs, instruments, projects, references, kits, library_designs,
         start_date, end_date, first_sort, second_sort, colour_by, shape_by,
         shape_or_colour_values, searchsample) -> DataFrame:
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-    if not runs and not instruments and not projects and not kits and not library_designs:
+    if not runs and not instruments and not projects and not kits and not library_designs and not references:
         df = DataFrame(columns=df.columns)
 
     if runs:
@@ -182,6 +186,8 @@ def reshape_single_lane_df(df, runs, instruments, projects, kits, library_design
         df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+    if references:
+        df = df[df[COMMON_COL.Reference].isin(references)]
     if kits:
         df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
     if library_designs:
@@ -196,17 +202,19 @@ def reshape_single_lane_df(df, runs, instruments, projects, kits, library_design
     return df
 
 
-def reshape_call_ready_df(df, projects, tissue_preps, sample_types,
+def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
         first_sort, second_sort, colour_by, shape_by, shape_or_colour_values, searchsample):
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-    if not projects and not tissue_preps and not sample_types:
+    if not projects and not tissue_preps and not sample_types and not references:
         df = DataFrame(columns=df.columns)
 
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+    if references:
+        df = df[df[COMMON_COL.Reference].isin(references)]
     if tissue_preps:
         df = df[df[pinery.column.SampleProvenanceColumn.TissuePreparation].isin(
             tissue_preps)]
@@ -359,6 +367,7 @@ def get_initial_single_lane_values():
         "runs": [],
         "instruments": [],
         "projects": [],
+        "references": [],
         "kits": [],
         "library_designs": [],
         "start_date": None,
@@ -367,13 +376,14 @@ def get_initial_single_lane_values():
         "second_sort": None,
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
         "shape_by": pinery.column.SampleProvenanceColumn.PrepKit,
-        "shownames_val": None
+        "shownames_val": None,
     }
 
 
 def get_initial_call_ready_values():
     return {
         "projects": [],
+        "references": [],
         "kits": [],
         "library_designs": [],
         "institutes": [],
@@ -390,12 +400,13 @@ def get_initial_call_ready_values():
 
 
 class ColourShapeSingleLane:
-    def __init__(self, projects, runs, kits, tissue_materials, library_designs):
+    def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference):
         self.projects = projects
         self.runs = runs
         self.kits = kits
         self.tissue_materials = tissue_materials
         self.library_designs = library_designs
+        self.reference = reference
 
     @staticmethod
     def dropdown():
@@ -404,7 +415,8 @@ class ColourShapeSingleLane:
             {"label": "Run", "value": PINERY_COL.SequencerRunName},
             {"label": "Kit", "value": PINERY_COL.PrepKit},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
-            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType}
+            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+            {"label": "Reference", "value": COMMON_COL.Reference},
         ]
 
     def items_for_df(self):
@@ -413,17 +425,19 @@ class ColourShapeSingleLane:
             PINERY_COL.SequencerRunName: self.runs,
             PINERY_COL.PrepKit: self.kits,
             PINERY_COL.TissuePreparation: self.tissue_materials,
-            PINERY_COL.LibrarySourceTemplateType: self.library_designs
+            PINERY_COL.LibrarySourceTemplateType: self.library_designs,
+            COMMON_COL.Reference: self.reference,
         }
 
 
 class ColourShapeCallReady:
-    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials, reference):
         self.projects = projects
         self.library_designs = library_designs
         self.institutes = institutes
         self.sample_types = sample_types
         self.tissue_materials = tissue_materials
+        self.reference = reference
 
     @staticmethod
     def dropdown():
@@ -433,6 +447,7 @@ class ColourShapeCallReady:
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Reference", "value": COMMON_COL.Reference},
         ]
 
     def items_for_df(self):
@@ -442,4 +457,5 @@ class ColourShapeCallReady:
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
             PINERY_COL.TissuePreparation: self.tissue_materials,
+            COMMON_COL.Reference: self.reference,
         }

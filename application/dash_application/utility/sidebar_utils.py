@@ -9,11 +9,13 @@ from dash.exceptions import PreventUpdate
 from pandas import DataFrame, Series, Timestamp
 
 import pinery.column
+import gsiqcetl.column
 from . import df_manipulation as df_tools
 
 
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
+COMMON_COL = gsiqcetl.column.ColumnNames
 ALL_RUNS = df_tools.get_runs()
 
 def frange(range_min, range_max, step):
@@ -109,6 +111,12 @@ def select_projects(all_projects_id: str, projects_id: str, projects: List[
                                   "Filter by Projects", projects_id, projects)
 
 
+def select_reference(all_references_id: str, references_id: str, references: List[
+    str]) -> core.Loading:
+    return select_with_select_all("All References", all_references_id,
+                                  "Filter by Reference", references_id, references)
+
+
 def select_kits(all_kits_id: str, kits_id: str, kits: List[str]) -> \
         core.Loading:
     return select_with_select_all("All Kits", all_kits_id, "Filter by Kits",
@@ -143,7 +151,9 @@ default_first_sort = [
     {"label": "Project",
      "value": PINERY_COL.StudyTitle},
     {"label": "Run",
-     "value": PINERY_COL.SequencerRunName}
+     "value": PINERY_COL.SequencerRunName},
+    {"label": "Reference",
+     "value": COMMON_COL.Reference},
 ]
 
 
@@ -238,6 +248,7 @@ def show_data_labels_input_single_lane(
         select_all_text, select_all_id, [
             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
             {'label': 'Kit', 'value': PINERY_COL.PrepKit},
+            {'label': 'Reference', 'value': COMMON_COL.Reference},
             {'label': 'Run', 'value': PINERY_COL.SequencerRunName},
             {'label': 'Sample', 'value': PINERY_COL.SampleName},
             {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
@@ -251,6 +262,7 @@ def show_data_labels_input_call_ready(show_names_id: str,
         select_all_id: str) -> core.Loading:
     return _show_data_labels_input(show_names_id, selected_value,
         select_all_text, select_all_id, [
+            {'label': 'Reference', 'value': COMMON_COL.Reference},
             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
             {'label': 'Sample', 'value': PINERY_COL.RootSampleName},
             {'label': 'Library Design', 'value': PINERY_COL.LibrarySourceTemplateType},
@@ -303,7 +315,6 @@ def get_requested_run_date_range(last_string) -> List[str]:
 
 def parse_query(query) -> List[str]:
     query_dict = parse_query_string(query[1:])  # slice off the leading question mark
-    print(query_dict)
     queries = {
         "req_start": None,
         "req_end": None,
