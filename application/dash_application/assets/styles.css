@@ -487,6 +487,10 @@ input[type="radio"] {
     display: inline;
 }
 
+rect.bg {
+    fill: white !important;
+}
+
 label > .label-body {
     display: inline-block;
     margin-left: 0.5rem;

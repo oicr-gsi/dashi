@@ -271,8 +271,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 xaxis={'visible': False,
                     'rangemode': 'normal',
                     'autorange': True},
-                yaxis=y_axis,
-                template="none"
+                yaxis=y_axis
             )
         )
     traces = []
@@ -358,8 +357,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},
-            yaxis=y_axis,
-            template="none"
+            yaxis=y_axis
         )
     )
 
