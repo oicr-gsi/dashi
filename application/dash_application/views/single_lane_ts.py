@@ -13,6 +13,9 @@ from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
 
+import datashader as ds
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
@@ -198,6 +201,22 @@ def generate_mean_insert_size(current_data, graph_params):
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
+def generate_ds_test(current_data):
+    current_data['index_col'] = current_data.index
+    cvs = ds.Canvas(plot_width=100, plot_height=100)
+    agg = cvs.points(current_data, 'index_col', BAMQC_COL.InsertSD)
+    x = np.array(agg.coords['index_col'])
+    y = np.array(agg.coords[BAMQC_COL.InsertSD])
+
+    agg = np.array(agg.values, dtype=np.float)
+    agg[agg<1] = np.nan
+
+    return go.Figure(
+        go.scattergl(
+            x = x,
+            y = y
+        )
+    )
 
 def dataversion():
     return DATAVERSION
@@ -326,6 +345,8 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
+                            core.Graph("dstest",
+                                figure=generate_ds_test(df)),
                             core.Graph(id=ids['total-reads'],
                                 figure=generate_total_reads(
                                     df,
@@ -390,6 +411,7 @@ def init_callbacks(dash_app):
             Output(ids["search-sample"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
+            Output("dstest", 'figure')
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -477,7 +499,8 @@ def init_callbacks(dash_app):
             df.to_dict('records', into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
             jira_href,
-            jira_style
+            jira_style,
+            generate_ds_test(df)
         ]
 
     @dash_app.callback(
