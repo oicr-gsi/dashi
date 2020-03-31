@@ -355,7 +355,8 @@ def generate_bait(df):
                 b=50,
                 t=50,
                 pad=4
-            )
+            ),
+            template="none"
         )
     )
     figure.update_layout(barmode='stack')
