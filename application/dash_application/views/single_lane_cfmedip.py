@@ -333,8 +333,8 @@ def layout(query_string):
                         ids['first-sort'],
                         initial["first_sort"],
                         [
-                            {"label": "Centre",
-                            "value": None}, #TODO ???? not a column
+                            {"label": "Institute",
+                            "value": PINERY_COL.Institute}, 
                             {"label": "Sample Type",
                             "value": None}, #TODO where is this
                             {"label": "Tissue Type",
