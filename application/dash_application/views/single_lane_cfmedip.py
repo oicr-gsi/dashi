@@ -52,13 +52,13 @@ ids = init_ids([
 
     #Graphs
     'number-windows',
-    'percent-pf-reads-aligned', #TODO: on the rshiny printout this graph appears TWICE with different values??
+    'percent-pf-reads-aligned',
     'percent-duplication',
-    'CpG-relH-enrichment',
-    'CpG-GoGe-enrichment',
+    'relative-cpg-freq-enrichment',
+    'observed-to-expected-enrichment',
     'AT-dropout',
     'percent-thaliana',
-    'thaliana-beta',
+    'methylation-beta',
 
     #Data table
     'failed-samples',
@@ -192,12 +192,12 @@ def generate_percent_duplcation(current_data, graph_params):
     )
 
 
-def generate_cpg_relh_enrichment(current_data, graph_params):
+def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
     return generate(
-        "CpG relH Enrichment",
+        "Relative CpG Frequency Enrichment",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean], #TODO: column
+        lambda d: d[CFMEDIP_COL.RelativeCpGFrequencyEnrichment],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -205,12 +205,12 @@ def generate_cpg_relh_enrichment(current_data, graph_params):
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
-def generate_cpg_goge_enrichment(current_data, graph_params):
+def generate_observed_to_expected_enrichment(current_data, graph_params):
     return generate(
-        "CpG GoGe Enrichment",
+        "Observed to Expected Enrichment",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean], #TODO: column
+        lambda d: d[CFMEDIP_COL.ObservedToExpectedEnrichment],
         "", 
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -231,12 +231,12 @@ def generate_at_dropout(current_data, graph_params):
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
-def generate_pct_thaliana(current_data, graph_params):
+def generate_percent_thaliana(current_data, graph_params):
     return generate(
         "Thaliana (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[CFMEDIP_COL.PercentageAthaliana], #TODO: is this the right column?
+        lambda d: d[CFMEDIP_COL.PercentageAthaliana],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -244,12 +244,12 @@ def generate_pct_thaliana(current_data, graph_params):
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
-def generate_thaliana_beta(current_data, graph_params):
+def generate_methylation_beta(current_data, graph_params):
     return generate(
-        "Thaliana Beta",
+        "Methylation Beta",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean], #TODO: column
+        lambda d: d[CFMEDIP_COL.MethylationBeta],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -399,22 +399,21 @@ def layout(query_string):
                             core.Graph(id=ids['percent-duplication'],
                                 figure=generate_percent_duplcation(df,initial)
                             ),
-                            core.Graph(id=ids['CpG-relH-enrichment'],
-                                figure=generate_cpg_relh_enrichment(df, initial)
+                            core.Graph(id=ids['relative-cpg-freq-enrichment'],
+                                figure=generate_relative_cpg_frequency_enrichment(df, initial)
                             ),
-                            core.Graph(id=ids['CpG-GoGe-enrichment'],
-                                figure=generate_cpg_goge_enrichment(df, initial)
+                            core.Graph(id=ids['observed-to-expected-enrichment'],
+                                figure=generate_observed_to_expected_enrichment(df, initial)
                             ),
                             core.Graph(id=ids['AT-dropout'],
                                 figure=generate_at_dropout(df, initial)
                             ),
                             core.Graph(id=ids['percent-thaliana'],
-                                figure=generate_pct_thaliana(df, initial)
+                                figure=generate_percent_thaliana(df, initial)
                             ),
-                            core.Graph(id=ids['thaliana-beta'],
-                                figure=generate_thaliana_beta(df, initial)
+                            core.Graph(id=ids['methylation-beta'],
+                                figure=generate_methylation_beta(df, initial)
                             ),
-                            #TODO: second % pf reads aligned chart?
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -445,11 +444,14 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['total-reads'], 'figure'),
-            Output(ids['unmapped-reads'], 'figure'),
-            Output(ids['non-primary-reads'], 'figure'),
-            Output(ids['on-target-reads'], 'figure'),
-            Output(ids['mean-insert-size'], 'figure'),
+            Output(ids['number-windows'], 'figure'),
+            Output(ids['percent-pf-reads-aligned'], 'figure'),
+            Output(ids['percent-duplication'], 'figure'),
+            Output(ids['relative-cpg-freq-enrichment'], 'figure'),
+            Output(ids['observed-to-expected-enrichment'], 'figure'),
+            Output(ids['AT-dropout'], 'figure'),
+            Output(ids['percent-thaliana'], 'figure'),
+            Output(ids['methylation-beta'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -530,14 +532,14 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_total_reads(
-                df, PINERY_COL.SampleName,
-                special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_unmapped_reads(df, graph_params),
-            generate_nonprimary_reads(df, graph_params),
-            generate_on_target_reads(df, graph_params),
-            generate_mean_insert_size(df, graph_params),
+            generate_number_windows(df, graph_params),
+            generate_percent_pf_reads_aligned(df, graph_params),
+            generate_percent_duplcation(df, graph_params),
+            generate_relative_cpg_frequency_enrichment(df, graph_params),
+            generate_observed_to_expected_enrichment(df, graph_params),
+            generate_at_dropout(df, graph_params),
+            generate_percent_thaliana(df, graph_params),
+            generate_methylation_beta(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
