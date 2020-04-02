@@ -198,7 +198,7 @@ def generate_cpg_relh_enrichment(current_data, graph_params):
         current_data,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean], #TODO: column
-        "CpG relH Enrichment", #TODO: better units
+        "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -211,7 +211,7 @@ def generate_cpg_goge_enrichment(current_data, graph_params):
         current_data,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean], #TODO: column
-        "CpG GoGe Enrichment", #TODO: Better units
+        "", 
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -220,11 +220,11 @@ def generate_cpg_goge_enrichment(current_data, graph_params):
 
 def generate_at_dropout(current_data, graph_params):
     return generate(
-        "AT Dropout",
+        "AT Dropout (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[CFMEDIP_COL.ATDropout], #TODO: column
-        "AT Dropout", #TODO: Better Units
+        lambda d: d[CFMEDIP_COL.ATDropout], 
+        "%", 
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -250,7 +250,7 @@ def generate_thaliana_beta(current_data, graph_params):
         current_data,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMean], #TODO: column
-        "Thaliana Beta", #TODO: better units?
+        "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
