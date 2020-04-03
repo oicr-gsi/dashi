@@ -9,7 +9,7 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc3Column, CfMeDipQcColumn
+from gsiqcetl.column import CfMeDipQcColumn
 import pinery
 import logging
 
@@ -46,7 +46,6 @@ ids = init_ids([
     'search-sample',
     'show-data-labels',
     'show-all-data-labels',
-    'insert-size-mean-cutoff',
     'passed-filter-reads-cutoff',
     "date-range",
 
@@ -65,7 +64,6 @@ ids = init_ids([
     'data-table'
 ])
 
-BAMQC_COL = BamQc3Column
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
@@ -78,43 +76,37 @@ special_cols = {
 initial = get_initial_single_lane_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = CFMEDIP_COL.RelativeCpGFrequencyEnrichment
+initial["institutes"] = []
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_label = "Total PF Reads minimum"
 cutoff_pf_reads = "cutoff_pf_reads"
 initial[cutoff_pf_reads] = 0.01
-cutoff_insert_mean_label = "Insert Mean minimum"
-cutoff_insert_mean = "cutoff_insert_mean"
-initial[cutoff_insert_mean] = 150
 
-def get_bamqc_data():
-    bamqc_df = util.get_bamqc3()
-    bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+def get_cfmedip_data():
+    cfmedip_df = util.get_cfmedip()
 
     pinery_samples = util.get_pinery_samples()
 
-    bamqc_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples, util.bamqc_ius_columns)
+    cfmedip_df = util.df_with_pinery_samples_ius(cfmedip_df, pinery_samples, util.cfmedip_ius_columns)
 
-    bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
+    cfmedip_df = util.df_with_instrument_model(cfmedip_df, PINERY_COL.SequencerRunName)
 
-    bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
-
-    return bamqc_df, util.cache.versions(["bamqc"])
+    return cfmedip_df, util.cache.versions(["cfmedipqc"])
 
 
-(bamqc, DATAVERSION) = get_bamqc_data()
+(cfmedip, DATAVERSION) = get_cfmedip_data()
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
-ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
-ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(bamqc, BAMQC_COL.Reference)
+ALL_PROJECTS = util.unique_set(cfmedip, PINERY_COL.StudyTitle)
+ALL_RUNS = util.unique_set(cfmedip, PINERY_COL.SequencerRunName, True) # reverse order
+ALL_KITS = util.unique_set(cfmedip, PINERY_COL.PrepKit)
+ALL_TISSUE_MATERIALS = util.unique_set(cfmedip, PINERY_COL.TissuePreparation)
+ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(cfmedip)
+ALL_SAMPLE_TYPES = util.unique_set(cfmedip, util.sample_type_col)
+ALL_REFERENCES = util.unique_set(cfmedip, cfmedip_COL.Reference)
+ALL_INSTITUTES = util.unique_set(cfmedip, PINERY_COL.Institute)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -123,7 +115,6 @@ collapsing_functions = {
     "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
     "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
     "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
@@ -131,7 +122,7 @@ collapsing_functions = {
 first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
 ]
-most_bamqc_cols = [*BAMQC_COL.values()]
+most_cfmedip_cols = [*CFMEDIP_COL.values()]
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
     PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
@@ -139,15 +130,18 @@ later_col_set = [
     PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
     INSTRUMENT_COLS.ModelName
 ]
-ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
+ex_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 
-shape_colour = ColourShapeSingleLane( # TODO: add 'Centre'?
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
-    ALL_REFERENCES,
+shape_colour = ColourShapeCfMeDIP(
+    ALL_PROJECTS, 
+    ALL_INSTITUTES, 
+    ALL_SAMPLE_TYPES,
+    ALL_TISSUE_MATERIALS, 
+    ALL_REFERENCES
 )
 # Add shape, colour, and size cols to dataframe 
-bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
+cfmedip = add_graphable_cols(cfmedip, initial, shape_colour.items_for_df())
 
 
 def generate_number_windows(current_data, graph_params):
@@ -158,7 +152,7 @@ def generate_number_windows(current_data, graph_params):
     #     "Log10 # Windows at 1, 10, 50, 100x",
     #     current_data,
     #     lambda d: d[PINERY_COL.SampleName],
-    #     lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
+    #     lambda d: sidebar_utils.percentage_of(d, cfmedip_COL.UnmappedReads, cfmedip_COL.TotalReads),
     #     "Log10 Coverage",
     #     graph_params["colour_by"],
     #     graph_params["shape_by"],
@@ -175,7 +169,8 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
     )
 
 
@@ -202,7 +197,6 @@ def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 def generate_observed_to_expected_enrichment(current_data, graph_params):
@@ -215,7 +209,6 @@ def generate_observed_to_expected_enrichment(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 def generate_at_dropout(current_data, graph_params):
@@ -228,7 +221,6 @@ def generate_at_dropout(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 def generate_percent_thaliana(current_data, graph_params):
@@ -241,7 +233,6 @@ def generate_percent_thaliana(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 def generate_methylation_beta(current_data, graph_params):
@@ -254,7 +245,6 @@ def generate_methylation_beta(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
     )
 
 def dataversion():
@@ -272,9 +262,9 @@ def layout(query_string):
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
-    df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"],
+    df = reshape_single_lane_df(cfmedip, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
-                                initial["library_designs"], initial["start_date"],
+                                None, initial["institutes"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
@@ -336,9 +326,9 @@ def layout(query_string):
                             {"label": "Institute",
                             "value": PINERY_COL.Institute}, 
                             {"label": "Sample Type",
-                            "value": None}, #TODO where is this
+                            "value": util.sample_type_col},
                             {"label": "Tissue Type",
-                            "value": None}, #TODO where is this
+                            "value": PINERY_COL.TissueType}, 
                         ]
                     ),
 
@@ -346,10 +336,10 @@ def layout(query_string):
                         ids['second-sort'],
                         initial["second_sort"],
                         [
-                            {"label": "enrichment.score.relH",
-                            "value": None}, #TODO Not a column
-                            {"label": "enrichment.score.GoGe",
-                            "value": None}, #TODO not a column
+                            {"label": "Relative CpG Frequency Enrichment",
+                            "value": CFMEDIP_COL.RelativeCpGFrequencyEnrichment}, 
+                            {"label": "Observed to Expected Enrichment",
+                            "value": CFMEDIP_COL.ObservedToExpectedEnrichment}, 
                             {"label": "PERCENT_DUPLICATION",
                             "value": CFMEDIP_COL.PercentDuplication}
                         ]
@@ -376,9 +366,7 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.total_reads_cutoff_input(
                         ids['passed-filter-reads-cutoff'], initial[cutoff_pf_reads]),
-                    sidebar_utils.insert_mean_cutoff(
-                        ids['insert-size-mean-cutoff'], initial[cutoff_insert_mean]),
-                    
+                        
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
@@ -424,7 +412,7 @@ def layout(query_string):
                                 df,
                                 ex_table_columns,
                                 [
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                    (cutoff_insert_mean_label, cfmedip_COL.InsertMean, initial[cutoff_insert_mean],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_pf_reads_label,
                                     special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
@@ -502,7 +490,7 @@ def init_callbacks(dash_app):
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
+        df = reshape_single_lane_df(cfmedip, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -518,7 +506,7 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
+                (cutoff_insert_mean_label, cfmedip_COL.InsertMean, insert_mean_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
                                                     "Filter)"], total_reads_cutoff,

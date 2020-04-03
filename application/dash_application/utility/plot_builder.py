@@ -636,3 +636,30 @@ class ColourShapeCallReady:
             PINERY_COL.TissuePreparation: self.tissue_materials,
             COMMON_COL.Reference: self.reference,
         }
+
+class ColourShapeCfMeDIP:
+    def __init__(self, projects, institutes, sample_types, tissue_materials, reference):
+        self.projects = projects
+        self.institutes = institutes
+        self.sample_types = sample_types
+        self.tissue_materials = tissue_materials
+        self.reference = reference
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Institute", "value": PINERY_COL.Institute},
+            {"label": "Sample Type", "value": sample_type_col},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Reference", "value": COMMON_COL.Reference},
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.Institute: self.institutes,
+            sample_type_col: self.sample_types,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
+            COMMON_COL.Reference: self.reference,
+        }
