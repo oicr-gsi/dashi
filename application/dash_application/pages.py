@@ -19,6 +19,7 @@ pagenames = [
     # "rnaseqc",
     # "runreport",
     # "runscanner",
+    "SARS-CoV-2"
 ]
 
 # Please do not edit this array
