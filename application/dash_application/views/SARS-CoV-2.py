@@ -94,19 +94,34 @@ def generate_on_target_reads_bar(current_data, graph_params):
 
 
 def generate_average_coverage_scatter(current_data, graph_params):
-return generate(
-    "Average Coverage",
-    current_data,
-    lambda d: d[PINERY_COL.SampleName],
-    lambda d: d[], #TODO: column
-    "", #TODO: Units
-    graph_params["colour_by"],
-    graph_params["shape_by"],
-    graph_params["shownames_val"]
-)
+    return generate(
+        "Average Coverage",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[], #TODO: column
+        "", #TODO: Units
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
 
 def generate_on_target_reads_scatter(current_data, graph_params):
-return generate(
+    return generate(
+        "On Target Reads, SARS-CoV-2 (%)",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[], #TODO: column
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
+
+def generate_coverage_percentiles_line(current_data, graph_params):
+    return None
+    #TODO: line chart
+
+    return generate(
     "On Target Reads, SARS-CoV-2 (%)",
     current_data,
     lambda d: d[PINERY_COL.SampleName],
@@ -117,21 +132,17 @@ return generate(
     graph_params["shownames_val"]
 )
 
-def generate_coverage_percentiles_line(current_data, graph_params):
-    return None
-    #TODO: line chart
-
 def generate_coverage_uniformity_scatter(current_data, graph_params):
-return generate(
-    "Uniformity of Coverage",
-    current_data,
-    lambda d: d[PINERY_COL.SampleName],
-    lambda d: d[], #TODO: column
-    "", #TODO: Units
-    graph_params["colour_by"],
-    graph_params["shape_by"],
-    graph_params["shownames_val"]
-)
+    return generate(
+        "Uniformity of Coverage",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[], #TODO: column
+        "", #TODO: Units
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
 
 def dataversion():
     return DATAVERSION
