@@ -83,9 +83,6 @@ collapsing_functions = {
 
 
 def generate_on_target_reads_bar(current_data, graph_params):
-    return None
-    # TODO: stacked bar chart
-
     return generate_bar(
         current_data,
         #TODO: get all genomes,
