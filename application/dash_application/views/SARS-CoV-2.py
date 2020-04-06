@@ -39,6 +39,8 @@ ids = init_ids([
     'kits-list',
     'all-library-designs',
     'library-designs-list',
+    'all-templates',
+    'templates-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -192,6 +194,14 @@ def layout(query_string):
                     sidebar_utils.select_library_designs(
                         ids["all-library-designs"], ids["library-designs-list"],
                         ALL_LIBRARY_DESIGNS),
+
+                    sidebar_utils.select_with_select_all(
+                        "All Templates", 
+                        ids['all-templates'], 
+                        "Filter by Template", 
+                        ids['templates-list'], 
+                        ALL_TEMPLATES
+                    ),
 
                     sidebar_utils.hr(),
 
