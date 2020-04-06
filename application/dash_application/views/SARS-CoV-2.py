@@ -86,6 +86,16 @@ def generate_on_target_reads_bar(current_data, graph_params):
     return None
     # TODO: stacked bar chart
 
+    return generate_bar(
+        current_data,
+        #TODO: get all genomes,
+        lambda d: d[PINERY_COL.SampleName], #TODO is that right? jira says 'reads'
+        lambda d, col: , # TODO f'n
+        "On-Target (%)",
+        "%"
+    )
+
+
 def generate_average_coverage_scatter(current_data, graph_params):
 return generate(
     "Average Coverage",
