@@ -118,18 +118,18 @@ def generate_on_target_reads_scatter(current_data, graph_params):
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
-    return None
-    #TODO: line chart
+    #TODO: line chart needs multiple values per sample, figure that out
 
     return generate(
-    "On Target Reads, SARS-CoV-2 (%)",
+    "Coverage Percentile",
     current_data,
     lambda d: d[PINERY_COL.SampleName],
     lambda d: d[], #TODO: column
-    "%",
+    "n% of Genome covered",
     graph_params["colour_by"],
     graph_params["shape_by"],
-    graph_params["shownames_val"]
+    graph_params["shownames_val"],
+    markermode="lines+markers"
 )
 
 def generate_coverage_uniformity_scatter(current_data, graph_params):
