@@ -81,6 +81,7 @@ collapsing_functions = {
 }
 
 
+#TODO: It sounds like /all/ graphs need cutoff lines for "Minimum lines for average SARS-CoV-2 coverage, on-target percentage"?
 
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
