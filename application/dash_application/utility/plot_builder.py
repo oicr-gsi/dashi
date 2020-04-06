@@ -323,6 +323,42 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
+def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+    graphs = []
+    for col in criteria:
+        graph = go.Bar(
+            name = col + " (%)",
+            x = x_fn(df),
+            y = y_fn(df, col)
+        )
+        graphs.append(graph)
+    
+    figure = go.Figure(
+        data = graphs,
+        layout = go.Layout(
+            title = title_text,
+            xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
+            yaxis = {
+                'title': {
+                    'text': yaxis_text
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
+        )
+    )
+    figure.update_layout(barmode='stack')
+
+    return figure
+
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0
