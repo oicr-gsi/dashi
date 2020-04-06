@@ -7,6 +7,14 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200406-1118] - 2020-04-06
+## Changed
+  * Purity & Ploidy removed from Single Lane WGS
+  * Pinery URL in docker
+
+## Added
+  * Proof-of-principle Genome Build features for Single Lane reports
+
 ## [200326-1116] - 2020-03-26
 ## Changed
   * RNA-seq 5/3 bias is on log scale
