@@ -231,7 +231,8 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
+             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName,
+             markermode="markers"):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -278,7 +279,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             name=name_format(name),
             hovertext=hovertext,
             showlegend=True,
-            mode="markers",
+            mode=markermode,
             marker={
                 "symbol": data['shape'],
                 "color": data['colour'], # Please note the 'u'
