@@ -328,7 +328,7 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar one-third column", children=[
-                    html.Button("Update", id=ids["update-button"]),
+                    html.Button("Update", id=ids["update-button-top"]),
                     html.Br(),
                     html.Br(),
 
@@ -340,12 +340,12 @@ def layout(query_string):
                                                    ids["references-list"],
                                                    ALL_REFERENCES),
                     sidebar_utils.select_tissue_materials(
-                                                     ids["all-tissue-materials"],
-                                                     ids["tissue-materials-list"],
-                                                     ALL_TISSUE_MATERIALS),
+                        ids["all-tissue-materials"],
+                        ids["tissue-materials-list"],
+                        ALL_TISSUE_MATERIALS),
                     sidebar_utils.select_sample_types(ids["all-sample-types"],
-                                                     ids["sample-types-list"],
-                                                     ALL_SAMPLE_TYPES),
+                                                      ids["sample-types-list"],
+                                                      ALL_SAMPLE_TYPES),
                     sidebar_utils.hr(),
 
                     # Sort, colour and shape
@@ -408,54 +408,55 @@ def layout(query_string):
                                                ids["insert-size-cutoff"], initial[cutoff_insert_mean]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["duplicate-rate-max"], initial[cutoff_duplicate_rate]),
+
+                    html.Br(),
+                    html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs
                 html.Div(className="two-thirds column",
-                children=[
-                    core.Tabs([
-                        # Graphs tab
-                        core.Tab(label="Graphs",
-                        children=[
-                            generate_graphs(ids["graphs"], df, initial,
-                                            graph_funcs)
-                        ]),
-                        # Tables tab
-                        core.Tab(label="Tables",
-                            children=[
-                                table_tabs(
-                                    ids["failed-samples"],
-                                    ids["data-table"],
-                                    df,
-                                    ts_table_columns,
-                                    [
-                                        (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                                         initial[cutoff_pf_reads_tumour],
-                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                        (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                                         initial[cutoff_pf_reads_normal],
-                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                        (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
-                                         initial[cutoff_coverage_tumour],
-                                         (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                        (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
-                                         initial[cutoff_coverage_normal],
-                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                        (cutoff_callability_label, special_cols["Callability (14x/8x)"],
-                                         initial[cutoff_callability],
-                                         (lambda row, col, cutoff: row[col] < cutoff)),
-                                        (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                                         (lambda row, col, cutoff: row[col] < cutoff)),
-                                        (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                         initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
-                                    ]
-                                )
-                             ])
+                         children=[
+                             core.Tabs([
+                                 # Graphs tab
+                                 core.Tab(label="Graphs",
+                                          children=[
+                                              generate_graphs(ids["graphs"], df, initial,
+                                                              graph_funcs)
+                                          ]),
+                                 # Tables tab
+                                 core.Tab(label="Tables",
+                                          children=[
+                                              table_tabs(
+                                                  ids["failed-samples"],
+                                                  ids["data-table"],
+                                                  df,
+                                                  ts_table_columns,
+                                                  [
+                                                      (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                                                       initial[cutoff_pf_reads_tumour],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                                                       initial[cutoff_pf_reads_normal],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                                                       initial[cutoff_coverage_tumour],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                                                       initial[cutoff_coverage_normal],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                                                       initial[cutoff_callability],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                                       initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
+                                                  ]
+                                              )
+                                          ])
 
-                        ])
-                    ])
-                ])
-        ])
+                             ])
+                         ])
             ])
         ])
     ])
@@ -471,7 +472,7 @@ def init_callbacks(dash_app):
             Output(ids["search-sample"], "options"),
         ],
         [Input(ids["update-button-top"], "n_clicks"),
-        Input(ids["update-button-bottom"], "n_clicks")],
+         Input(ids["update-button-bottom"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
             State(ids['references-list'], 'value'),

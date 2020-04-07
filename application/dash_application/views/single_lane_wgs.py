@@ -302,7 +302,7 @@ def layout(query_string):
                                       {"display": "none"}, "")]),
         html.Div(className="row flex-container", children=[
             html.Div(className="sidebar one-third column", children=[
-                html.Button("Update", id=ids['update-button'], className="update-button"),
+                html.Button("Update", id=ids['update-button-top'], className="update-button"),
                 sidebar_utils.approve_run_button(ids["approve-run-button"]),
 
                 html.Br(),

@@ -210,7 +210,7 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar one-third column", children=[
-                    html.Button("Update", id=ids["update-button"]),
+                    html.Button("Update", id=ids["update-button-top"]),
                     html.Br(),
                     html.Br(),
 

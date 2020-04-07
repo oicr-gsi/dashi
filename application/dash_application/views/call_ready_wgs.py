@@ -53,13 +53,7 @@ ids = init_ids([
     "cutoff-duplicate-rate",
 
     # Graphs
-    "total-reads",
-    "mean-coverage",
-    "coverage-per-gb",
-    "callability",
-    "mean-insert",
-    "duplicate-rate",
-    "unmapped-reads",
+    "graphs",
 
     # Tables
     "failed-samples",
@@ -111,18 +105,18 @@ def get_merged_wgs_data():
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (
-                bamqc3_df[BAMQC_COL.NonPrimaryReads] /
-                bamqc3_df[BAMQC_COL.TotalReads])) * 100
+            bamqc3_df[BAMQC_COL.NonPrimaryReads] /
+            bamqc3_df[BAMQC_COL.TotalReads])) * 100
     bamqc3_df[special_cols["Unmapped Reads"]] = round(
         bamqc3_df[BAMQC_COL.UnmappedReads] / bamqc3_df[BAMQC_COL.TotalReads]
         * 100.0, 3)
     bamqc3_df[special_cols["Coverage per Gb"]] = round(
         bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (bamqc3_df[
-                 BAMQC_COL.TotalReads] *  bamqc3_df[
-                 BAMQC_COL.AverageReadLength] / 1e9), 3)
+                                                         BAMQC_COL.TotalReads] *  bamqc3_df[
+                                                         BAMQC_COL.AverageReadLength] / 1e9), 3)
     callability_df.rename(columns={
         CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
-                          inplace=True)
+        inplace=True)
     bamqc3_df.rename(
         columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]},
         inplace=True)
@@ -214,71 +208,71 @@ def total_reads(df, graph_params):
     graph_title = gt.TOTAL_READS
     y_label = gt.TOTAL_READS_Y
     return CallReadySubplot(graph_title, y_label, df,
-        special_cols["Total Reads (Passed Filter)"], graph_params,
-        [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
-         (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])],
-        showlegend=True)
+                            special_cols["Total Reads (Passed Filter)"], graph_params,
+                            [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
+                             (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])],
+                            showlegend=True)
 
 
 def unique_reads(df, graph_params):
     graph_title = gt.UNIQUE_READS
     y_label = gt.PCT
     return CallReadySubplot(graph_title, y_label, df,
-        special_cols["Unique Reads (Passed Filter)"], graph_params)
+                            special_cols["Unique Reads (Passed Filter)"], graph_params)
 
 
 def deduplicated_coverage(df, graph_params):
     graph_title = gt.DEDUPLICATED_COVERAGE
     y_label = gt.X
     return CallReadySubplot(graph_title, y_label, df,
-        BAMQC_COL.CoverageDeduplicated, graph_params,
-        [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
-         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])])
+                            BAMQC_COL.CoverageDeduplicated, graph_params,
+                            [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
+                             (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])])
 
 
 def callability(df, graph_params):
     graph_title = gt.CALLABILITY_14_8
     y_label = gt.PCT
     return CallReadySubplot(graph_title, y_label, df,
-        special_cols["Percent Callability"], graph_params,
-        [(cutoff_callability_label, graph_params[cutoff_callability])])
+                            special_cols["Percent Callability"], graph_params,
+                            [(cutoff_callability_label, graph_params[cutoff_callability])])
 
 
 def mean_insert_size(df, graph_params):
     graph_title = gt.MEAN_INSERT_SIZE
     y_label = gt.BASE_PAIRS
     return CallReadySubplot(graph_title, y_label, df,
-        BAMQC_COL.InsertMean, graph_params,
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
+                            BAMQC_COL.InsertMean, graph_params,
+                            [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])])
 
 
 def duplicate_rate(df, graph_params):
     graph_title = gt.DUPLICATION
     y_label = gt.PCT
     return CallReadySubplot(graph_title, y_label, df,
-        BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, graph_params,
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])])
+                            BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, graph_params,
+                            [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])])
 
 
 def purity(df, graph_params):
     graph_title = gt.PURITY
     y_label = gt.PCT
     return CallReadySubplot(graph_title, y_label, df,
-        special_cols["Purity"], graph_params)
+                            special_cols["Purity"], graph_params)
 
 
 def ploidy(df, graph_params):
     graph_title = gt.PLOIDY
     y_label = gt.NONE
     return CallReadySubplot(graph_title, y_label, df, ICHOR_COL.Ploidy,
-        graph_params)
+                            graph_params)
 
 
 def unmapped_reads(df, graph_params):
     graph_title = gt.UNMAPPED_READS_COUNTS
     y_label = gt.READ_COUNTS
     return CallReadySubplot(graph_title, y_label, df, BAMQC_COL.UnmappedReads,
-        graph_params)
+                            graph_params)
 
 
 graph_funcs = [
@@ -288,8 +282,6 @@ graph_funcs = [
     callability,
     mean_insert_size,
     duplicate_rate,
-    purity,
-    ploidy,
     unmapped_reads,
 ]
 
@@ -316,7 +308,7 @@ def layout(query_string):
                                                                             title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar one-third column", children=[
-                    html.Button("Update", id=ids["update-button"]),
+                    html.Button("Update", id=ids["update-button-top"]),
                     html.Br(),
                     html.Br(),
 
@@ -363,7 +355,7 @@ def layout(query_string):
                                                              "label": "Mean "
                                                                       "Insert Size",
                                                              "value":
-                                                                BAMQC_COL.InsertMean},
+                                                                 BAMQC_COL.InsertMean},
                                                          {
                                                              "label":
                                                                  "Duplication",
@@ -428,47 +420,47 @@ def layout(query_string):
 
                 # Graphs + Tables tabs
                 html.Div(className="two-thirds column",
-                children=[
-                    core.Tabs([
-                        # Graphs tab
-                        core.Tab(label="Graphs",
-                        children=[
-                            generate_graphs(ids["graphs"], df, initial,
-                                            graph_funcs)
-                        ]),
-                        # Tables tab
-                        core.Tab(label="Tables",
-                        children=[
-                            table_tabs(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                df,
-                                wgs_table_columns,
-                                [
-                                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial[cutoff_pf_reads_tumour],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial[cutoff_pf_reads_normal],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
-                                    initial[cutoff_coverage_tumour],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_coverage_normal_label, BAMQC_COL.CoverageDeduplicated,
-                                    initial[cutoff_coverage_normal],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_callability_label, special_cols["Percent Callability"],
-                                    initial[cutoff_callability],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                    initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
-                                ]
-                            )
-                        ])
-                    ]) # End Tabs
-                ]) # End Div
+                         children=[
+                             core.Tabs([
+                                 # Graphs tab
+                                 core.Tab(label="Graphs",
+                                          children=[
+                                              generate_graphs(ids["graphs"], df, initial,
+                                                              graph_funcs)
+                                          ]),
+                                 # Tables tab
+                                 core.Tab(label="Tables",
+                                          children=[
+                                              table_tabs(
+                                                  ids["failed-samples"],
+                                                  ids["data-table"],
+                                                  df,
+                                                  wgs_table_columns,
+                                                  [
+                                                      (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+                                                       initial[cutoff_pf_reads_tumour],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+                                                       initial[cutoff_pf_reads_normal],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
+                                                       initial[cutoff_coverage_tumour],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_coverage_normal_label, BAMQC_COL.CoverageDeduplicated,
+                                                       initial[cutoff_coverage_normal],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_callability_label, special_cols["Percent Callability"],
+                                                       initial[cutoff_callability],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                                       initial[cutoff_duplicate_rate], (lambda row, col, cutoff: row[col] > cutoff)),
+                                                  ]
+                                              )
+                                          ])
+                             ]) # End Tabs
+                         ]) # End Div
             ]) # End Div
         ]) # End Div
     ]) # End Loading
@@ -484,7 +476,7 @@ def init_callbacks(dash_app):
             Output(ids["search-sample"], "options")
         ],
         [Input(ids["update-button-top"], "n_clicks"),
-        Input(ids["update-button-bottom"], "n_clicks")],
+         Input(ids["update-button-bottom"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
             State(ids['references-list'], 'value'),
