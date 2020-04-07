@@ -66,7 +66,7 @@ ids = init_ids([
     'failed-samples',
     'data-table',
     # Cutoffs
-    'average-coverage_cutoff',
+    'average-coverage_cutoff', # TODO: Isn't this a hard limit ie, not user adjustable?
 ])
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
@@ -127,7 +127,7 @@ def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
         #TODO: get all genomes,
-        lambda d: d[PINERY_COL.SampleName], #TODO is that right? jira says 'reads'
+        lambda d: d[PINERY_COL.SampleName],
         lambda d, col: None, # TODO f'n
         "On-Target (%)",
         "%"
@@ -143,7 +143,8 @@ def generate_average_coverage_scatter(current_data, graph_params):
         "Average Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        [(cutoff_average_coverage, 75)] # Should be unchanging, TODO: why won't this draw??
     )
 
 def generate_on_target_reads_scatter(current_data, graph_params):
@@ -151,11 +152,11 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         "On Target Reads, SARS-CoV-2 (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[None], #TODO: column
+        lambda d: d[None], #TODO: might have to come from Kraken?
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"] #TODO cutoff line
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
@@ -182,7 +183,7 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
     )
 
 def dataversion():
@@ -284,15 +285,6 @@ def layout(query_string):
                                                         ids['show-all-data-labels']),
 
                     sidebar_utils.hr(),
-
-                    # Cutoffs
-                    # TODO: Add meaningful cutoffs
-                    sidebar_utils.cutoff_input(
-                        cutoff_average_coverage,
-                        ids['average-coverage_cutoff'],
-                        initial[cutoff_average_coverage]
-                    ),
-
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
@@ -311,9 +303,9 @@ def layout(query_string):
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
-                            core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                                figure=generate_on_target_reads_scatter(df, initial)
-                            ),
+                            # core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
+                            #     figure=generate_on_target_reads_scatter(df, initial)
+                            # ),
                             # core.Graph(id=ids['coverage-percentiles-line'],
                                 # figure=generate_coverage_percentiles_line(df, initial)
                             # ),
