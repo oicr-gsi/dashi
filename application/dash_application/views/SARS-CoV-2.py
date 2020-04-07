@@ -84,7 +84,7 @@ def add_fake_pinery_cols(df):
 
 
 # TODO: Local copy is loaded, as workflow does not exist
-cache = QCETLCache('/home/slazic/del_qc/')
+cache = QCETLCache('/home/avarsava/Workspace/dashi/cache_files/')
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
 add_fake_pinery_cols(BEDTOOLS_CALC_DF)
@@ -139,7 +139,7 @@ def generate_average_coverage_scatter(current_data, graph_params):
         "Average Coverage",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BEDTOOLS_CALC_COL.MeanCoverage], #TODO: column
+        lambda d: d[BEDTOOLS_CALC_COL.MeanCoverage],
         "Average Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -178,8 +178,8 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
         "Uniformity of Coverage",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[None], #TODO: column
-        "", #TODO: Units
+        lambda d: d[BEDTOOLS_CALC_COL.CoverageUniformity] * 100,
+        "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"]
@@ -311,15 +311,15 @@ def layout(query_string):
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
-                            # core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                                # figure=generate_on_target_reads_scatter(df, initial)
-                            # ),
+                            core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
+                                figure=generate_on_target_reads_scatter(df, initial)
+                            ),
                             # core.Graph(id=ids['coverage-percentiles-line'],
                                 # figure=generate_coverage_percentiles_line(df, initial)
                             # ),
-                            # core.Graph(id=ids['coverage-uniformity-scatter'],
-                                # figure=generate_coverage_uniformity_scatter(df, initial)
-                            # ),
+                            core.Graph(id=ids['coverage-uniformity-scatter'],
+                                figure=generate_coverage_uniformity_scatter(df, initial)
+                            ),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -352,7 +352,7 @@ def init_callbacks(dash_app):
             Output(ids['average-coverage-scatter'], 'figure'),
             # Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
             # Output(ids['coverage-percentiles-line'], 'figure'),
-            # Output(ids['coverage-uniformity-scatter'], 'figure'),
+            Output(ids['coverage-uniformity-scatter'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -429,7 +429,7 @@ def init_callbacks(dash_app):
             generate_average_coverage_scatter(df, graph_params),
             # generate_on_target_reads_scatter(df, graph_params),
             # generate_coverage_percentiles_line(df, graph_params),
-            # generate_coverage_uniformity_scatter(df, graph_params),
+            generate_coverage_uniformity_scatter(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
