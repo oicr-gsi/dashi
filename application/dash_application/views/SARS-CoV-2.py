@@ -9,7 +9,7 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc3Column
+from gsiqcetl.api import QCETLCache, QCETLColumns
 import pinery
 import logging
 
@@ -64,10 +64,42 @@ ids = init_ids([
     'variants-observed', #TODO: Graph Type?
     #Data table
     'failed-samples',
-    'data-table'
+    'data-table',
+    # Cutoffs
+    'average-coverage_cutoff',
 ])
 
+PINERY_COL = pinery.column.SampleProvenanceColumn
 
+# TODO: Fake pinery columns are injected (change this to a merge when the time is right)
+def add_fake_pinery_cols(df):
+    df[PINERY_COL.StudyTitle] = 'CVD'
+    df[PINERY_COL.PrepKit] = 'Kapa Virus'
+    df[PINERY_COL.InstrumentName] = 'NovaSeq'
+    df[PINERY_COL.TissuePreparation] = 'Virus'
+    df[PINERY_COL.LibrarySourceTemplateType] = 'TS'
+    df[PINERY_COL.SequencerRunName] = '200403_M00146_0174_000000000-D8CTN'
+    df[PINERY_COL.SampleName] = 'OneSample'
+    df[util.sample_type_col] = 'Normal'
+
+
+# TODO: Local copy is loaded, as workflow does not exist
+cache = QCETLCache('/home/slazic/del_qc/')
+# Mean Coverage and Coverage uniformity
+BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
+add_fake_pinery_cols(BEDTOOLS_CALC_DF)
+BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
+
+# Build lists of attributes for sorting, shaping, and filtering on
+ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.PrepKit)
+# TODO: Remove kludge and uncomment real line after Pinery is merged
+ILLUMINA_INSTRUMENT_MODELS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.InstrumentName)
+#ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
+ALL_TISSUE_MATERIALS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
+ALL_SAMPLE_TYPES = util.unique_set(BEDTOOLS_CALC_DF, util.sample_type_col)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -77,8 +109,16 @@ collapsing_functions = {
     "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
     "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
+
+cutoff_average_coverage = "Average Coverage Minimum"
+initial = get_initial_single_lane_values()
+initial[cutoff_average_coverage] = 20
+initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
+
+shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
+                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, None)
+
 
 
 #TODO: It sounds like /all/ graphs need cutoff lines for "Minimum lines for average SARS-CoV-2 coverage, on-target percentage"?
@@ -88,7 +128,7 @@ def generate_on_target_reads_bar(current_data, graph_params):
         current_data,
         #TODO: get all genomes,
         lambda d: d[PINERY_COL.SampleName], #TODO is that right? jira says 'reads'
-        lambda d, col: , # TODO f'n
+        lambda d, col: None, # TODO f'n
         "On-Target (%)",
         "%"
     )
@@ -99,8 +139,8 @@ def generate_average_coverage_scatter(current_data, graph_params):
         "Average Coverage",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[], #TODO: column
-        "", #TODO: Units
+        lambda d: d[BEDTOOLS_CALC_COL.MeanCoverage], #TODO: column
+        "Average Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"]
@@ -111,7 +151,7 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         "On Target Reads, SARS-CoV-2 (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[], #TODO: column
+        lambda d: d[None], #TODO: column
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -125,7 +165,7 @@ def generate_coverage_percentiles_line(current_data, graph_params):
     "Coverage Percentile",
     current_data,
     lambda d: d[PINERY_COL.SampleName],
-    lambda d: d[], #TODO: column
+    lambda d: d[None], #TODO: column
     "n% of Genome covered",
     graph_params["colour_by"],
     graph_params["shape_by"],
@@ -138,7 +178,7 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
         "Uniformity of Coverage",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[], #TODO: column
+        lambda d: d[None], #TODO: column
         "", #TODO: Units
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -146,7 +186,9 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
     )
 
 def dataversion():
-    return DATAVERSION
+    # TODO: Do it properly
+    return "kludge_version"
+    # return DATAVERSION
 
 
 def layout(query_string):
@@ -160,8 +202,8 @@ def layout(query_string):
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
-    df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["references"], initial["kits"],
+    df = reshape_single_lane_df(BEDTOOLS_CALC_DF, initial["runs"], initial["instruments"],
+                                initial["projects"], None, initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
@@ -199,10 +241,6 @@ def layout(query_string):
                                                 ids["projects-list"],
                                                 ALL_PROJECTS),
 
-                    sidebar_utils.select_reference(ids["all-references"],
-                                                   ids["references-list"],
-                                                   ALL_REFERENCES),
-
                     sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
                                             ALL_KITS),
 
@@ -213,14 +251,6 @@ def layout(query_string):
                     sidebar_utils.select_library_designs(
                         ids["all-library-designs"], ids["library-designs-list"],
                         ALL_LIBRARY_DESIGNS),
-
-                    sidebar_utils.select_with_select_all(
-                        "All Templates", 
-                        ids['all-templates'], 
-                        "Filter by Template", 
-                        ids['templates-list'], 
-                        ALL_TEMPLATES
-                    ),
 
                     sidebar_utils.hr(),
 
@@ -233,15 +263,7 @@ def layout(query_string):
                         initial["second_sort"],
                         [
                                 {"label": "Total Reads",
-                                "value": BAMQC_COL.TotalReads},
-                                {"label": "Unmapped Reads",
-                                "value": BAMQC_COL.UnmappedReads},
-                                {"label": "Non-primary Reads",
-                                "value": BAMQC_COL.NonPrimaryReads},
-                                {"label": "On-target Reads",
-                                "value": BAMQC_COL.ReadsOnTarget},
-                                {"label": "Mean Insert Size",
-                                "value": BAMQC_COL.InsertMean}
+                                "value": BEDTOOLS_CALC_COL.MeanCoverage},
                         ]
                     ),
 
@@ -264,11 +286,13 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.total_reads_cutoff_input(
-                        ids['passed-filter-reads-cutoff'], initial[cutoff_pf_reads]),
-                    sidebar_utils.insert_mean_cutoff(
-                        ids['insert-size-mean-cutoff'], initial[cutoff_insert_mean]),
-                    
+                    # TODO: Add meaningful cutoffs
+                    sidebar_utils.cutoff_input(
+                        cutoff_average_coverage,
+                        ids['average-coverage_cutoff'],
+                        initial[cutoff_average_coverage]
+                    ),
+
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
@@ -280,21 +304,22 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(id=ids['on-target-reads-various-bar'],
-                                figure=generate_on_target_reads_bar(df, initial)
-                            ),
+                            # TODO: Add in all graphs
+                            # core.Graph(id=ids['on-target-reads-various-bar'],
+                                # figure=generate_on_target_reads_bar(df, initial)
+                            # ),
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
-                            core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                                figure=generate_on_target_reads_scatter(df, initial)
-                            ),
-                            core.Graph(id=ids['coverage-percentiles-line'],
-                                figure=generate_coverage_percentiles_line(df, initial)
-                            ),
-                            core.Graph(id=ids['coverage-uniformity-scatter'],
-                                figure=generate_coverage_uniformity_scatter(df, initial)
-                            ), 
+                            # core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
+                                # figure=generate_on_target_reads_scatter(df, initial)
+                            # ),
+                            # core.Graph(id=ids['coverage-percentiles-line'],
+                                # figure=generate_coverage_percentiles_line(df, initial)
+                            # ),
+                            # core.Graph(id=ids['coverage-uniformity-scatter'],
+                                # figure=generate_coverage_uniformity_scatter(df, initial)
+                            # ),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -303,12 +328,10 @@ def layout(query_string):
                                 ids["failed-samples"],
                                 ids["data-table"],
                                 df,
-                                ex_table_columns,
+                                # TODO: Move this to the top of module
+                                [BEDTOOLS_CALC_COL.MeanCoverage],
                                 [
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, initial[cutoff_average_coverage],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -325,11 +348,11 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['on-target-reads-various-bar'], 'figure'),
+            # Output(ids['on-target-reads-various-bar'], 'figure'),
             Output(ids['average-coverage-scatter'], 'figure'),
-            Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
-            Output(ids['coverage-percentiles-line'], 'figure'),
-            Output(ids['coverage-uniformity-scatter'], 'figure'),
+            # Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
+            # Output(ids['coverage-percentiles-line'], 'figure'),
+            # Output(ids['coverage-uniformity-scatter'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -343,7 +366,6 @@ def init_callbacks(dash_app):
             State(ids['run-id-list'], 'value'),
             State(ids['instruments-list'], 'value'),
             State(ids['projects-list'], 'value'),
-            State(ids['references-list'], 'value'),
             State(ids['kits-list'], 'value'),
             State(ids['library-designs-list'], 'value'),
             State(ids['first-sort'], 'value'),
@@ -354,6 +376,7 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
+            State(ids['average-coverage_cutoff'], 'value'),
             State('url', 'search'),
         ]
     )
@@ -362,7 +385,6 @@ def init_callbacks(dash_app):
             runs,
             instruments,
             projects,
-            references,
             kits,
             library_designs,
             first_sort, 
@@ -373,10 +395,11 @@ def init_callbacks(dash_app):
             show_names,
             start_date,
             end_date,
+            average_coverage_cutoff,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
+        df = reshape_single_lane_df(BEDTOOLS_CALC_DF, runs, instruments, projects, None, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -386,16 +409,12 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads: total_reads_cutoff,
-            cutoff_insert_mean: insert_mean_cutoff
+            cutoff_average_coverage: average_coverage_cutoff,
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
-                 (lambda row, col, cutoff: row[col] < cutoff)),
-                (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
-                                                    "Filter)"], total_reads_cutoff,
+                (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, average_coverage_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
@@ -406,11 +425,11 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_on_target_reads_bar(df, graph_params),
+            # generate_on_target_reads_bar(df, graph_params),
             generate_average_coverage_scatter(df, graph_params),
-            generate_on_target_reads_scatter(df, graph_params),
-            generate_coverage_percentiles_line(df, graph_params),
-            generate_coverage_uniformity_scatter(df, graph_params),
+            # generate_on_target_reads_scatter(df, graph_params),
+            # generate_coverage_percentiles_line(df, graph_params),
+            # generate_coverage_uniformity_scatter(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
@@ -442,14 +461,6 @@ def init_callbacks(dash_app):
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
         return [x for x in ALL_PROJECTS]
-
-    @dash_app.callback(
-        Output(ids['references-list'], 'value'),
-        [Input(ids['all-references'], 'n_clicks')]
-    )
-    def all_references_requested(click):
-        sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),
