@@ -415,7 +415,9 @@ def generate_subplot(subplots: List[Subplot]):
         rows=len(subplots),
         cols=1,
         vertical_spacing=0.02,
-        shared_xaxes=True,
+        # This can be enabled again when ploty bug is fixed
+        # https://github.com/plotly/plotly.js/issues/4718
+        # shared_xaxes=True,
         subplot_titles=[subplot.title for subplot in subplots]
     )
 
