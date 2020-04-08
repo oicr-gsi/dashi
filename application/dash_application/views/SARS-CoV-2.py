@@ -89,8 +89,15 @@ pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
 add_fake_pinery_cols(BEDTOOLS_CALC_DF)
-SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human 
-SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted 
+
+SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human
+add_fake_pinery_cols(SAMTOOLS_STATS_COV2_HUMAN_DF)
+
+SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
+add_fake_pinery_cols(SAMTOOLS_STATS_COV2_DEPLETED_DF)
+
+BEDTOOLS_COV_PERC_DF = cache.bedtools_sars_cov2.genomecov_coverage_percentile
+add_fake_pinery_cols(BEDTOOLS_COV_PERC_DF)
 
 
 BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
@@ -98,19 +105,16 @@ BEDTOOLS_PERCENTILE_COL = QCETLColumns().bedtools_sars_cov2.genomecov_coverage_p
 SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
 SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
 
-BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
+BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
 stats_col = QCETLColumns().samtools_stats_sars_cov2.human
 special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
-human = cache.samtools_stats_sars_cov2.human
-covid = cache.samtools_stats_sars_cov2.depleted
-stats_merged = human.merge(covid, how="outer", on=[stats_col.Barcodes, stats_col.Run, stats_col.Lane], suffixes=['_human', '_covid'])
+stats_merged = SAMTOOLS_STATS_COV2_HUMAN_DF.merge(SAMTOOLS_STATS_COV2_DEPLETED_DF, how="outer", on=[stats_col.Barcodes, stats_col.Run, stats_col.Lane], suffixes=['_human', '_covid'])
 stats_merged = stats_merged[
     special_columns + [stats_col.Barcodes, stats_col.Run, stats_col.Lane]
 ]
 stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
-stats_merged
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
 
 
