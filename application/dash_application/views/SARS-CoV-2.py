@@ -88,7 +88,15 @@ cache = QCETLCache('/home/avarsava/Workspace/dashi/cache_files/')
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
 add_fake_pinery_cols(BEDTOOLS_CALC_DF)
+SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human 
+SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted 
+
+
 BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
+SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
+SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
+
+
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
@@ -112,8 +120,8 @@ collapsing_functions = {
 }
 
 cutoff_average_coverage = "Average Coverage Minimum"
+average_coverage_cutoff = 20
 initial = get_initial_single_lane_values()
-initial[cutoff_average_coverage] = 20
 initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
 
 shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
@@ -323,7 +331,7 @@ def layout(query_string):
                                 # TODO: Move this to the top of module
                                 [BEDTOOLS_CALC_COL.MeanCoverage],
                                 [
-                                    (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, initial[cutoff_average_coverage],
+                                    (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, average_coverage_cutoff,
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -368,7 +376,6 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
-            State(ids['average-coverage_cutoff'], 'value'),
             State('url', 'search'),
         ]
     )
@@ -387,7 +394,6 @@ def init_callbacks(dash_app):
             show_names,
             start_date,
             end_date,
-            average_coverage_cutoff,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
@@ -401,7 +407,6 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_average_coverage: average_coverage_cutoff,
         }
 
         dd = defaultdict(list)
