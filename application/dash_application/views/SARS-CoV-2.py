@@ -91,10 +91,8 @@ BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
 add_fake_pinery_cols(BEDTOOLS_CALC_DF)
 
 SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human
-add_fake_pinery_cols(SAMTOOLS_STATS_COV2_HUMAN_DF)
 
 SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
-add_fake_pinery_cols(SAMTOOLS_STATS_COV2_DEPLETED_DF)
 
 BEDTOOLS_COV_PERC_DF = cache.bedtools_sars_cov2.genomecov_coverage_percentile
 add_fake_pinery_cols(BEDTOOLS_COV_PERC_DF)
