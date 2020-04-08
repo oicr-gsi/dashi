@@ -127,10 +127,6 @@ initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
 shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, None)
 
-
-
-#TODO: It sounds like /all/ graphs need cutoff lines for "Minimum lines for average SARS-CoV-2 coverage, on-target percentage"?
-
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
