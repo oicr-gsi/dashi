@@ -141,10 +141,12 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, None)
 
 def generate_on_target_reads_bar(current_data, graph_params):
+    if(not current_data.empty):
+        pdb.set_trace()
     return generate_bar(
         current_data,
         special_columns,
-        lambda d: d[stats_col.Run],
+        lambda d: d[PINERY_COL.SampleName],
         lambda d, col: d[col] * 100,
         "On-Target (%)",
         "%"
@@ -513,7 +515,6 @@ def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
 
@@ -541,12 +542,12 @@ def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
+    
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
 
     if runs:
         df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
-        
     if instruments:
         df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
     if projects:
