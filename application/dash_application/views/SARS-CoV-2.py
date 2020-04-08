@@ -148,7 +148,7 @@ def generate_average_coverage_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_average_coverage, 75)] # Should be unchanging, TODO: why won't this draw??
+        [(cutoff_average_coverage, average_coverage_cutoff)] # Should be unchanging, TODO: why won't this draw??
     )
 
 def generate_on_target_reads_scatter(current_data, graph_params):
