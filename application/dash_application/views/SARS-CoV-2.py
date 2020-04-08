@@ -12,7 +12,7 @@ from ..utility import log_utils
 from gsiqcetl.api import QCETLCache, QCETLColumns
 import pinery
 import logging
-
+import pdb
 logger = logging.getLogger(__name__)
 
 page_name = 'SARS-CoV-2'
@@ -82,27 +82,23 @@ def add_fake_pinery_cols(df):
     df[PINERY_COL.SampleName] = 'OneSample'
     df[util.sample_type_col] = 'Normal'
 
-
-# TODO: Local copy is loaded, as workflow does not exist
-cache = QCETLCache('/home/avarsava/Workspace/dashi/cache_files/')
+#TODO: load cache from df_manipulation
+cache = QCETLCache()
 pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
-add_fake_pinery_cols(BEDTOOLS_CALC_DF)
 
 SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human
 
 SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
 
 BEDTOOLS_COV_PERC_DF = cache.bedtools_sars_cov2.genomecov_coverage_percentile
-add_fake_pinery_cols(BEDTOOLS_COV_PERC_DF)
-
 
 BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
 BEDTOOLS_PERCENTILE_COL = QCETLColumns().bedtools_sars_cov2.genomecov_coverage_percentile
 SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
 SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
-
+BEDTOOLS_CALC_DF = util.df_with_pinery_samples_ius(BEDTOOLS_CALC_DF, pinery_samples, [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes])
 BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
 stats_col = QCETLColumns().samtools_stats_sars_cov2.human
 special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
@@ -114,7 +110,6 @@ stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
-add_fake_pinery_cols(stats_merged)
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
@@ -519,37 +514,24 @@ def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs
     graph-friendly form.
     """
 
-    print("Starting with empty df: " + str(df.empty))
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
-        print("empty df!")
 
     if runs:
-        print(runs)
-        print(df[pinery.column.SampleProvenanceColumn.SequencerRunName].unique())
         df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
-        print("Rearranged for runs:" + str(df.empty))
     if instruments:
         df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
-        print("Rearranged for instruments:" + str(df.empty))
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
-        print("Rearranged for projects:" + str(df.empty))
     if kits:
         df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
-        print("Rearranged for kits:" + str(df.empty))
     if library_designs:
         df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
             library_designs)]
-        print("Rearranged for library designs:" + str(df.empty))
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
-    print("Filtered to dates:" + str(df.empty))
     df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
-    print("filled in shaped column:" + str(df.empty))
     df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
-    print("filled in colour column:" + str(df.empty))
     df = fill_in_size_col(df, None)
-    print("filled in size column:" + str(df.empty))
     return df
 
 def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
@@ -559,38 +541,25 @@ def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-    print("starting with empty df:" + str(df.empty))
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
-        print("empty df!")
 
     if runs:
-        print(runs)
-        print(df[pinery.column.SampleProvenanceColumn.SequencerRunName].unique())
         df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
-        print("Rearranged for runs:" + str(df.empty))
         
     if instruments:
         df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
-        print("Rearranged for instruments:" + str(df.empty))
     if projects:
         df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
-        print("Rearranged for projects:" + str(df.empty))
     if kits:
         df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
-        print("Rearranged for kits:" + str(df.empty))
     if library_designs:
         df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
             library_designs)]
-        print("Rearranged for library designs:" + str(df.empty))
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
-    print("Rearranged for dates:" + str(df.empty))
     sort_by = [first_sort, second_sort]
     # df = df.sort_values(by=sort_by) TODO: This doesn't work without some weird merges. don't try for now
     df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
-    print("filled in shape col::" + str(df.empty))
     df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
-    print("fiulled in colour col::" + str(df.empty))
     df = fill_in_size_col(df, None)
-    print("filled in size col:" + str(df.empty))
     return df

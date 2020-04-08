@@ -1,4 +1,5 @@
 import pandas
+import numpy
 from pandas import DataFrame, Series
 from typing import List
 
@@ -223,6 +224,8 @@ _projects = _pinery_client.get_projects()
 
 _active_projects = _projects.loc[_projects[PROJECT_COL.IsActive]]
 _active_projects = _active_projects[PROJECT_COL.Name].unique()
+#TODO: These aren't showing up and we don't know why
+_active_projects = numpy.append(_active_projects, numpy.array(['SCTSK', 'SCTSN', 'TGL57']))
 
 _runs_with_instruments = _runs.copy(deep=True).merge(
     _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
