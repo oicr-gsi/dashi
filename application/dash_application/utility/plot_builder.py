@@ -124,14 +124,14 @@ def create_data_label(
 
 def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict,
         highlight_samples: List[str]=None, call_ready: bool=False) -> DataFrame:
-    df = _fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
-    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
+    df = fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
+    df = fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
                              highlight_samples, call_ready)
-    df = _fill_in_size_col(df, highlight_samples, call_ready)
+    df = fill_in_size_col(df, highlight_samples, call_ready)
     return df
 
 
-def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
+def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
     if df.empty:
         df['shape'] = pandas.Series
@@ -144,7 +144,7 @@ def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 
-def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
+def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict, highlight_samples: List[str]=None, call_ready: bool=False):
     if df.empty:
         df['colour'] = pandas.Series
@@ -161,7 +161,7 @@ def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
     return df
 
 
-def _fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
+def fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
         call_ready: bool=False):
     df['markersize'] = 12
     if highlight_samples:
@@ -196,9 +196,9 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-    df = _fill_in_size_col(df, searchsample)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_size_col(df, searchsample)
     return df
 
 
@@ -223,11 +223,10 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
-    df = _fill_in_size_col(df, searchsample, True)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
+    df = fill_in_size_col(df, searchsample, True)
     return df
-
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,

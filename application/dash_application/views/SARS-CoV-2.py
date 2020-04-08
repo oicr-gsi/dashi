@@ -85,6 +85,7 @@ def add_fake_pinery_cols(df):
 
 # TODO: Local copy is loaded, as workflow does not exist
 cache = QCETLCache('/home/avarsava/Workspace/dashi/cache_files/')
+pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
 add_fake_pinery_cols(BEDTOOLS_CALC_DF)
@@ -93,9 +94,24 @@ SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
 
 
 BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
+BEDTOOLS_PERCENTILE_COL = QCETLColumns().bedtools_sars_cov2.genomecov_coverage_percentile
 SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
 SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
 
+BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
+stats_col = QCETLColumns().samtools_stats_sars_cov2.human
+special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
+human = cache.samtools_stats_sars_cov2.human
+covid = cache.samtools_stats_sars_cov2.depleted
+stats_merged = human.merge(covid, how="outer", on=[stats_col.Barcodes, stats_col.Run, stats_col.Lane], suffixes=['_human', '_covid'])
+stats_merged = stats_merged[
+    special_columns + [stats_col.Barcodes, stats_col.Run, stats_col.Lane]
+]
+stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
+for c in special_columns:
+    stats_merged[c] = stats_merged[c] / stats_merged['total']
+stats_merged
+stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
@@ -130,9 +146,9 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
-        #TODO: get all genomes,
-        lambda d: d[PINERY_COL.SampleName],
-        lambda d, col: None, # TODO f'n
+        special_columns,
+        lambda d: d[stats_col.Run],
+        lambda d, col: d[col] * 100,
         "On-Target (%)",
         "%"
     )
@@ -164,18 +180,16 @@ def generate_on_target_reads_scatter(current_data, graph_params):
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
-    #TODO: line chart needs multiple values per sample, figure that out
-
     return generate(
     "Coverage Percentile",
     current_data,
-    lambda d: d[PINERY_COL.SampleName],
-    lambda d: d[None], #TODO: column
+    lambda d: d[BEDTOOLS_PERCENTILE_COL.Coverage],
+    lambda d: d[BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered],
     "n% of Genome covered",
     graph_params["colour_by"],
     graph_params["shape_by"],
     graph_params["shownames_val"],
-    markermode="lines+markers"
+    markermode="lines"
 )
 
 def generate_coverage_uniformity_scatter(current_data, graph_params):
@@ -213,6 +227,17 @@ def layout(query_string):
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
+
+    stats_df = reshape_stats_df(stats_merged, initial["runs"], initial["instruments"],
+                                initial["projects"], initial["kits"],
+                                initial["library_designs"], initial["start_date"],
+                                initial["end_date"], initial["first_sort"],
+                                initial["second_sort"])
+
+    percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, initial["runs"], initial["instruments"],
+                                initial["projects"], initial["kits"],
+                                initial["library_designs"], initial["start_date"],
+                                initial["end_date"])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -301,18 +326,18 @@ def layout(query_string):
                         core.Tab(label="Graphs",
                         children=[
                             # TODO: Add in all graphs
-                            # core.Graph(id=ids['on-target-reads-various-bar'],
-                                # figure=generate_on_target_reads_bar(df, initial)
-                            # ),
+                            core.Graph(id=ids['on-target-reads-various-bar'],
+                                figure=generate_on_target_reads_bar(stats_df, initial)
+                            ),
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
                             # core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
                             #     figure=generate_on_target_reads_scatter(df, initial)
                             # ),
-                            # core.Graph(id=ids['coverage-percentiles-line'],
-                                # figure=generate_coverage_percentiles_line(df, initial)
-                            # ),
+                            core.Graph(id=ids['coverage-percentiles-line'],
+                                figure=generate_coverage_percentiles_line(percentile_df, initial)
+                            ),
                             core.Graph(id=ids['coverage-uniformity-scatter'],
                                 figure=generate_coverage_uniformity_scatter(df, initial)
                             ),
@@ -344,10 +369,10 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            # Output(ids['on-target-reads-various-bar'], 'figure'),
+            Output(ids['on-target-reads-various-bar'], 'figure'),
             Output(ids['average-coverage-scatter'], 'figure'),
             # Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
-            # Output(ids['coverage-percentiles-line'], 'figure'),
+            Output(ids['coverage-percentiles-line'], 'figure'),
             Output(ids['coverage-uniformity-scatter'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
@@ -397,6 +422,10 @@ def init_callbacks(dash_app):
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
+        percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date)
+        stats_df = reshape_stats_df(stats_merged, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date, first_sort, second_sort)
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
 
         graph_params = {
@@ -418,10 +447,10 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            # generate_on_target_reads_bar(df, graph_params),
+            generate_on_target_reads_bar(stats_df, graph_params),
             generate_average_coverage_scatter(df, graph_params),
             # generate_on_target_reads_scatter(df, graph_params),
-            # generate_coverage_percentiles_line(df, graph_params),
+            generate_coverage_percentiles_line(percentile_df, graph_params),
             generate_coverage_uniformity_scatter(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
@@ -479,3 +508,87 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x['value'] for x in avail_options]
+
+def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs,
+        start_date, end_date) -> DataFrame:
+        
+    """
+    This performs dataframe manipulation based on the input filters, and gets the data into a
+    graph-friendly form.
+    """
+
+    print("Starting with empty df: " + str(df.empty))
+    if not runs and not instruments and not projects and not kits and not library_designs:
+        df = DataFrame(columns=df.columns)
+        print("empty df!")
+
+    if runs:
+        print(runs)
+        print(df[pinery.column.SampleProvenanceColumn.SequencerRunName].unique())
+        df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
+        print("Rearranged for runs:" + str(df.empty))
+    if instruments:
+        df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
+        print("Rearranged for instruments:" + str(df.empty))
+    if projects:
+        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+        print("Rearranged for projects:" + str(df.empty))
+    if kits:
+        df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
+        print("Rearranged for kits:" + str(df.empty))
+    if library_designs:
+        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
+            library_designs)]
+        print("Rearranged for library designs:" + str(df.empty))
+    df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
+    print("Filtered to dates:" + str(df.empty))
+    df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
+    print("filled in shaped column:" + str(df.empty))
+    df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
+    print("filled in colour column:" + str(df.empty))
+    df = fill_in_size_col(df, None)
+    print("filled in size column:" + str(df.empty))
+    return df
+
+def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
+        start_date, end_date, first_sort, second_sort) -> DataFrame:
+        
+    """
+    This performs dataframe manipulation based on the input filters, and gets the data into a
+    graph-friendly form.
+    """
+    print("starting with empty df:" + str(df.empty))
+    if not runs and not instruments and not projects and not kits and not library_designs:
+        df = DataFrame(columns=df.columns)
+        print("empty df!")
+
+    if runs:
+        print(runs)
+        print(df[pinery.column.SampleProvenanceColumn.SequencerRunName].unique())
+        df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
+        print("Rearranged for runs:" + str(df.empty))
+        
+    if instruments:
+        df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
+        print("Rearranged for instruments:" + str(df.empty))
+    if projects:
+        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+        print("Rearranged for projects:" + str(df.empty))
+    if kits:
+        df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
+        print("Rearranged for kits:" + str(df.empty))
+    if library_designs:
+        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
+            library_designs)]
+        print("Rearranged for library designs:" + str(df.empty))
+    df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
+    print("Rearranged for dates:" + str(df.empty))
+    sort_by = [first_sort, second_sort]
+    # df = df.sort_values(by=sort_by) TODO: This doesn't work without some weird merges. don't try for now
+    df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
+    print("filled in shape col::" + str(df.empty))
+    df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
+    print("fiulled in colour col::" + str(df.empty))
+    df = fill_in_size_col(df, None)
+    print("filled in size col:" + str(df.empty))
+    return df
