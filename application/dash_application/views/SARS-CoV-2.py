@@ -116,7 +116,7 @@ stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
-
+add_fake_pinery_cols(stats_merged)
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
