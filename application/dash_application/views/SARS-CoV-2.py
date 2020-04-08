@@ -189,7 +189,7 @@ def generate_coverage_percentiles_line(current_data, graph_params):
     current_data,
     lambda d: d[BEDTOOLS_PERCENTILE_COL.Coverage],
     lambda d: d[BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered],
-    "n% of Genome covered",
+    "%",
     graph_params["colour_by"],
     graph_params["shape_by"],
     graph_params["shownames_val"],
