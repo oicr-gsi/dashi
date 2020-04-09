@@ -146,7 +146,7 @@ def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
         special_columns,
-        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[PINERY_COL.SampleName] + d[PINERY_COL.LaneNumber].astype(str) + d[PINERY_COL.SequencerRunName],
         lambda d, col: d[col] * 100,
         "On-Target (%)",
         "%"
@@ -166,12 +166,13 @@ def generate_average_coverage_scatter(current_data, graph_params):
         [(cutoff_average_coverage, average_coverage_cutoff)] # Should be unchanging
     )
 
+
 #TODO: why is there seemingly only one Sample where this works
 def generate_on_target_reads_scatter(current_data, graph_params):
     return generate(
-        "On Target Reads, SARS-CoV-2 (%)",
+        "Kraken2 on human depleted BAM: SARS-CoV-2 (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][PINERY_COL.SampleName],
         lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][KRAKEN2_COL.PercentAtClade],
         "%",
         graph_params["colour_by"],
@@ -180,17 +181,14 @@ def generate_on_target_reads_scatter(current_data, graph_params):
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
-    return generate(
-    "Coverage Percentile",
-    current_data,
-    lambda d: d[BEDTOOLS_PERCENTILE_COL.Coverage],
-    lambda d: d[BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered],
-    "%",
-    graph_params["colour_by"],
-    graph_params["shape_by"],
-    graph_params["shownames_val"],
-    markermode="markers"
-)
+    return generate_line(
+        current_data,
+        [PINERY_COL.SampleName, PINERY_COL.LaneNumber, PINERY_COL.SequencerRunName],
+        lambda d: d[BEDTOOLS_PERCENTILE_COL.Coverage],
+        lambda d: d[BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered],
+        "Coverage Percentile",
+        "%"
+    )
 
 def generate_coverage_uniformity_scatter(current_data, graph_params):
     return generate(

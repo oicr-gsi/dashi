@@ -359,6 +359,46 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
 
     return figure
 
+
+# TODO: Make this more general. Currently it is written for the SARS-CoV-2 view
+def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+    graphs = []
+    for name, df in df.groupby(criteria):
+        graph = go.Line(
+            name = '<br>'.join(str(x) for x in name) + '<br>',
+            x = x_fn(df),
+            y = y_fn(df)
+        )
+        graphs.append(graph)
+
+    figure = go.Figure(
+        data = graphs,
+        layout = go.Layout(
+            title = title_text,
+            xaxis={'visible': False,
+                   'rangemode': 'normal',
+                   'autorange': True},
+            yaxis = {
+                'title': {
+                    'text': yaxis_text
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            ),
+            hoverlabel={"namelength": -1},
+        )
+    )
+    figure.update_layout(barmode='stack')
+
+    return figure
+
+
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
     index = 0
