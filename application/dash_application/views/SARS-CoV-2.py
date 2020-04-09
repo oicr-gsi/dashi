@@ -87,17 +87,18 @@ cache = QCETLCache()
 pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
 BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
-
 SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human
-
 SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
-
 BEDTOOLS_COV_PERC_DF = cache.bedtools_sars_cov2.genomecov_coverage_percentile
+KRAKEN2_DF = cache.kraken2.kraken2
 
+KRAKEN2_COL = QCETLColumns().kraken2.kraken2
 BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
 BEDTOOLS_PERCENTILE_COL = QCETLColumns().bedtools_sars_cov2.genomecov_coverage_percentile
 SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
 SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
+
+
 BEDTOOLS_CALC_DF = util.df_with_pinery_samples_ius(BEDTOOLS_CALC_DF, pinery_samples, [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes])
 BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
 stats_col = QCETLColumns().samtools_stats_sars_cov2.human
@@ -110,6 +111,7 @@ stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
+KRAKEN2_DF = util.df_with_pinery_samples_ius(KRAKEN2_DF, pinery_samples, [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes])
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
@@ -141,8 +143,6 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, None)
 
 def generate_on_target_reads_bar(current_data, graph_params):
-    if(not current_data.empty):
-        pdb.set_trace()
     return generate_bar(
         current_data,
         special_columns,
@@ -163,15 +163,16 @@ def generate_average_coverage_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_average_coverage, average_coverage_cutoff)] # Should be unchanging, TODO: why won't this draw??
+        [(cutoff_average_coverage, average_coverage_cutoff)] # Should be unchanging
     )
 
+#TODO: why is there seemingly only one Sample where this works
 def generate_on_target_reads_scatter(current_data, graph_params):
     return generate(
         "On Target Reads, SARS-CoV-2 (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[None], #TODO: might have to come from Kraken?
+        lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][KRAKEN2_COL.PercentAtClade],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -188,7 +189,7 @@ def generate_coverage_percentiles_line(current_data, graph_params):
     graph_params["colour_by"],
     graph_params["shape_by"],
     graph_params["shownames_val"],
-    markermode="lines"
+    markermode="markers"
 )
 
 def generate_coverage_uniformity_scatter(current_data, graph_params):
@@ -226,6 +227,11 @@ def layout(query_string):
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
+
+    kraken2_df = reshape_percentile_df(KRAKEN2_DF, initial["runs"], initial["instruments"],
+                                initial["projects"], initial["kits"],
+                                initial["library_designs"], initial["start_date"],
+                                initial["end_date"])
 
     stats_df = reshape_stats_df(stats_merged, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
@@ -331,9 +337,9 @@ def layout(query_string):
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
-                            # core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                            #     figure=generate_on_target_reads_scatter(df, initial)
-                            # ),
+                            core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
+                                figure=generate_on_target_reads_scatter(kraken2_df, initial)
+                            ),
                             core.Graph(id=ids['coverage-percentiles-line'],
                                 figure=generate_coverage_percentiles_line(percentile_df, initial)
                             ),
@@ -349,6 +355,7 @@ def layout(query_string):
                                 ids["data-table"],
                                 df,
                                 # TODO: Move this to the top of module
+                                # TODO: there is SO much information that's not in here and i do not know how to add it 
                                 [BEDTOOLS_CALC_COL.MeanCoverage],
                                 [
                                     (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, average_coverage_cutoff,
@@ -370,7 +377,7 @@ def init_callbacks(dash_app):
             Output(ids["approve-run-button"], "style"),
             Output(ids['on-target-reads-various-bar'], 'figure'),
             Output(ids['average-coverage-scatter'], 'figure'),
-            # Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
+            Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
             Output(ids['coverage-percentiles-line'], 'figure'),
             Output(ids['coverage-uniformity-scatter'], 'figure'),
             Output(ids["failed-samples"], "columns"),
@@ -420,6 +427,9 @@ def init_callbacks(dash_app):
         df = reshape_single_lane_df(BEDTOOLS_CALC_DF, runs, instruments, projects, None, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
+        
+        kraken2_df = reshape_percentile_df(KRAKEN2_DF, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date)
 
         percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date)
@@ -448,7 +458,7 @@ def init_callbacks(dash_app):
             approve_run_style,
             generate_on_target_reads_bar(stats_df, graph_params),
             generate_average_coverage_scatter(df, graph_params),
-            # generate_on_target_reads_scatter(df, graph_params),
+            generate_on_target_reads_scatter(kraken2_df, graph_params),
             generate_coverage_percentiles_line(percentile_df, graph_params),
             generate_coverage_uniformity_scatter(df, graph_params),
             failure_columns,
