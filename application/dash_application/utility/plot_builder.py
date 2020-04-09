@@ -364,10 +364,11 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
 def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
     graphs = []
     for name, df in df.groupby(criteria):
-        graph = go.Line(
+        graph = go.Scattergl(
             name = '<br>'.join(str(x) for x in name) + '<br>',
             x = x_fn(df),
-            y = y_fn(df)
+            y = y_fn(df),
+            mode="lines"
         )
         graphs.append(graph)
 
@@ -394,7 +395,6 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
             hoverlabel={"namelength": -1},
         )
     )
-    figure.update_layout(barmode='stack')
 
     return figure
 
