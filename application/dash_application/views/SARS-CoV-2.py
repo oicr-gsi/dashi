@@ -65,22 +65,9 @@ ids = init_ids([
     #Data table
     'failed-samples',
     'data-table',
-    # Cutoffs
-    'average-coverage_cutoff', # TODO: Isn't this a hard limit ie, not user adjustable?
 ])
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-
-# TODO: Fake pinery columns are injected (change this to a merge when the time is right)
-def add_fake_pinery_cols(df):
-    df[PINERY_COL.StudyTitle] = 'CVD'
-    df[PINERY_COL.PrepKit] = 'Kapa Virus'
-    df[PINERY_COL.InstrumentName] = 'NovaSeq'
-    df[PINERY_COL.TissuePreparation] = 'Virus'
-    df[PINERY_COL.LibrarySourceTemplateType] = 'TS'
-    df[PINERY_COL.SequencerRunName] = '200403_M00146_0174_000000000-D8CTN'
-    df[PINERY_COL.SampleName] = 'OneSample'
-    df[util.sample_type_col] = 'Normal'
 
 #TODO: load cache from df_manipulation
 cache = QCETLCache()
@@ -134,8 +121,12 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
 }
 
-cutoff_average_coverage = "Average Coverage Minimum"
-average_coverage_cutoff = 20
+# TODO: Set these again once we have real values
+avg_coverage_cutoff_label = "Average Coverage Minimum"
+avg_coverage_cutoff_value = 20
+on_target_cutoff_label = "On-Target Percentage Minimum"
+on_target_cutoff_value = 20
+
 initial = get_initial_single_lane_values()
 initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
 
@@ -163,7 +154,7 @@ def generate_average_coverage_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_average_coverage, average_coverage_cutoff)] # Should be unchanging
+        [(avg_coverage_cutoff_label, avg_coverage_cutoff_value)] # Should be unchanging
     )
 
 
@@ -177,7 +168,8 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"] #TODO cutoff line
+        graph_params["shownames_val"],
+        [(on_target_cutoff_label, on_target_cutoff_value)] # Should be unchanging
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
@@ -295,7 +287,7 @@ def layout(query_string):
                         ids['second-sort'],
                         initial["second_sort"],
                         [
-                                {"label": "Total Reads",
+                                {"label": "Average Coverage",
                                 "value": BEDTOOLS_CALC_COL.MeanCoverage},
                         ]
                     ),
@@ -356,7 +348,7 @@ def layout(query_string):
                                 # TODO: there is SO much information that's not in here and i do not know how to add it 
                                 [BEDTOOLS_CALC_COL.MeanCoverage],
                                 [
-                                    (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, average_coverage_cutoff,
+                                    (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff_value,
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -443,7 +435,7 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_average_coverage, BEDTOOLS_CALC_COL.MeanCoverage, average_coverage_cutoff,
+                (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff_value,
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
