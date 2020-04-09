@@ -149,7 +149,6 @@ _fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
 _hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
 _kraken2 = normalized_ius(cache.kraken2.kraken2, kraken2_ius_columns)
 _mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
-
 _rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
                                      rnaseqqc2_merged_columns)
 _samtools_stats_cov2_human = cache.samtools_stats_sars_cov2.human
