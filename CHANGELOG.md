@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200409-1535] - 2020-04-09
+## Added
+  * SARS-CoV-2 report
+
 ## [200406-1118] - 2020-04-06
 ## Changed
   * Purity & Ploidy removed from Single Lane WGS
