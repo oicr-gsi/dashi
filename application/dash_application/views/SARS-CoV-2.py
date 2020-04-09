@@ -130,8 +130,8 @@ on_target_cutoff_value = 20
 initial = get_initial_single_lane_values()
 initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
 
-shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
-                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, None)
+shape_colour = ColourShapeSARSCoV2(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
+                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
 
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
@@ -218,16 +218,19 @@ def layout(query_string):
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
 
-    kraken2_df = reshape_percentile_df(KRAKEN2_DF, initial["runs"], initial["instruments"],
+    kraken2_df = reshape_stats_df(KRAKEN2_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
-                                initial["end_date"])
+                                initial["end_date"], initial["first_sort"],
+                                initial["second_sort"], initial["colour_by"],
+                                initial["shape_by"], shape_colour.items_for_df(), [])
 
     stats_df = reshape_stats_df(stats_merged, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
-                                initial["second_sort"])
+                                initial["second_sort"], initial["colour_by"], initial["shape_by"],
+                                shape_colour.items_for_df(), [])
 
     percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
@@ -281,7 +284,13 @@ def layout(query_string):
 
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(ids['first-sort'],
-                                                    initial["first_sort"]),
+                                                    initial["first_sort"],
+                                                    [
+                                                        {"label": "Project",
+                                                        "value": PINERY_COL.StudyTitle},
+                                                        {"label": "Run",
+                                                        "value": PINERY_COL.SequencerRunName},
+                                                    ]),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
@@ -338,7 +347,7 @@ def layout(query_string):
                             ),
                         ]),
                         # Tables tab
-                        core.Tab(label="Tables",
+                        core.Tab(label="Tables - 🚧 WIP",
                         children=[
                             table_tabs(
                                 ids["failed-samples"],
@@ -418,13 +427,16 @@ def init_callbacks(dash_app):
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
         
-        kraken2_df = reshape_percentile_df(KRAKEN2_DF, runs, instruments, projects, kits, library_designs,
-                                    start_date, end_date)
-
         percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date)
+
+        kraken2_df = reshape_stats_df(KRAKEN2_DF, runs, instruments, projects, kits, library_designs,
+                                    start_date, end_date, first_sort, second_sort, colour_by,
+                                    shape_by, shape_colour.items_for_df(), searchsample)
         stats_df = reshape_stats_df(stats_merged, runs, instruments, projects, kits, library_designs,
-                                    start_date, end_date, first_sort, second_sort)
+                                    start_date, end_date, first_sort, second_sort, colour_by,
+                                    shape_by, shape_colour.items_for_df(), searchsample)
+
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
 
         graph_params = {
@@ -530,19 +542,18 @@ def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs
         df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
             library_designs)]
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
-    df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
-    df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
+    # df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
+    # df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
     df = fill_in_size_col(df, None)
     return df
 
 def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
-        start_date, end_date, first_sort, second_sort) -> DataFrame:
-        
+        start_date, end_date, first_sort, second_sort, colour_by, shape_by,
+        shape_or_colour_values, searchsample) -> DataFrame:
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
     """
-    
     if not runs and not instruments and not projects and not kits and not library_designs:
         df = DataFrame(columns=df.columns)
 
@@ -559,8 +570,8 @@ def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
             library_designs)]
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
-    # df = df.sort_values(by=sort_by) TODO: This doesn't work without some weird merges. don't try for now
-    df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
-    df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
-    df = fill_in_size_col(df, None)
+    #df = df.sort_values(by=sort_by) TODO: This doesn't work without merging everything together
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_size_col(df, searchsample)
     return df

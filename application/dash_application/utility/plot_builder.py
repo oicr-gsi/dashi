@@ -475,6 +475,33 @@ def get_initial_call_ready_values():
     }
 
 
+class ColourShapeSARSCoV2:
+    def __init__(self, projects, runs, kits, tissue_materials, library_designs):
+        self.projects = projects
+        self.runs = runs
+        self.kits = kits
+        self.tissue_materials = tissue_materials
+        self.library_designs = library_designs
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Run", "value": PINERY_COL.SequencerRunName},
+            {"label": "Kit", "value": PINERY_COL.PrepKit},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.SequencerRunName: self.runs,
+            PINERY_COL.PrepKit: self.kits,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
+            PINERY_COL.LibrarySourceTemplateType: self.library_designs,
+        }
+
 class ColourShapeSingleLane:
     def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference):
         self.projects = projects
