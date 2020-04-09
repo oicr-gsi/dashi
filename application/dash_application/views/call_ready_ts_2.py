@@ -317,9 +317,17 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"], [],
         util.ml_col)
 
-def generate_bar(df):
-    graphs = []
+def generate_bait(df):
     criteria = [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, HSMETRICS_COL.OffBaitBases]
+    return generate_bar(
+        df, 
+        criteria, 
+        lambda d: d[util.ml_col],
+        lambda d, col: d[col] / d[special_cols["Total Bait Bases"]] * 100,
+        "On/Near/Off Bait Bases (%)",
+        "%"
+    )
+    
     for col in criteria:
         graph = go.Bar(
             name = col + " (%)",
@@ -502,7 +510,7 @@ def layout(query_string):
 
                             core.Graph(
                                 id = ids['bait-bases'],
-                                figure = generate_bar(df)
+                                figure = generate_bait(df)
                             ),
 
                             core.Graph(
@@ -687,7 +695,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
-            generate_bar(df)
+            generate_bait(df)
         ]
 
     @dash_app.callback(

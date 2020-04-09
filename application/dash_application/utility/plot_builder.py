@@ -124,14 +124,14 @@ def create_data_label(
 
 def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict,
         highlight_samples: List[str]=None, call_ready: bool=False) -> DataFrame:
-    df = _fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
-    df = _fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
+    df = fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
+    df = fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
                              highlight_samples, call_ready)
-    df = _fill_in_size_col(df, highlight_samples, call_ready)
+    df = fill_in_size_col(df, highlight_samples, call_ready)
     return df
 
 
-def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
+def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
         dict):
     if df.empty:
         df['shape'] = pandas.Series
@@ -144,7 +144,7 @@ def _fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 
-def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
+def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
         dict, highlight_samples: List[str]=None, call_ready: bool=False):
     if df.empty:
         df['colour'] = pandas.Series
@@ -161,7 +161,7 @@ def _fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
     return df
 
 
-def _fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
+def fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
         call_ready: bool=False):
     df['markersize'] = 12
     if highlight_samples:
@@ -196,9 +196,9 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-    df = _fill_in_size_col(df, searchsample)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_size_col(df, searchsample)
     return df
 
 
@@ -223,15 +223,15 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = _fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = _fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
-    df = _fill_in_size_col(df, searchsample, True)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
+    df = fill_in_size_col(df, searchsample, True)
     return df
-
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName):
+             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName,
+             markermode="markers"):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -278,7 +278,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             name=name_format(name),
             hovertext=hovertext,
             showlegend=True,
-            mode="markers",
+            mode=markermode,
             marker={
                 "symbol": data['shape'],
                 "color": data['colour'], # Please note the 'u'
@@ -322,6 +322,82 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             yaxis=y_axis
         )
     )
+
+def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+    graphs = []
+    for col in criteria:
+        graph = go.Bar(
+            name = col + " (%)",
+            x = x_fn(df),
+            y = y_fn(df, col)
+        )
+        graphs.append(graph)
+    
+    figure = go.Figure(
+        data = graphs,
+        layout = go.Layout(
+            title = title_text,
+            xaxis={'visible': False,
+                    'rangemode': 'normal',
+                    'autorange': True},
+            yaxis = {
+                'title': {
+                    'text': yaxis_text
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            )
+        )
+    )
+    figure.update_layout(barmode='stack')
+
+    return figure
+
+
+# TODO: Make this more general. Currently it is written for the SARS-CoV-2 view
+def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+    graphs = []
+    for name, df in df.groupby(criteria):
+        graph = go.Scattergl(
+            name = '<br>'.join(str(x) for x in name) + '<br>',
+            x = x_fn(df),
+            y = y_fn(df),
+            mode="lines"
+        )
+        graphs.append(graph)
+
+    figure = go.Figure(
+        data = graphs,
+        layout = go.Layout(
+            title = title_text,
+            xaxis={'visible': False,
+                   'rangemode': 'normal',
+                   'autorange': True},
+            yaxis = {
+                'title': {
+                    'text': yaxis_text
+                },
+                'range': [0,100]
+            },
+            margin = go.layout.Margin(
+                l=50,
+                r=50,
+                b=50,
+                t=50,
+                pad=4
+            ),
+            hoverlabel={"namelength": -1},
+        )
+    )
+
+    return figure
+
 
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
@@ -398,6 +474,33 @@ def get_initial_call_ready_values():
         "shownames_val": None
     }
 
+
+class ColourShapeSARSCoV2:
+    def __init__(self, projects, runs, kits, tissue_materials, library_designs):
+        self.projects = projects
+        self.runs = runs
+        self.kits = kits
+        self.tissue_materials = tissue_materials
+        self.library_designs = library_designs
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Run", "value": PINERY_COL.SequencerRunName},
+            {"label": "Kit", "value": PINERY_COL.PrepKit},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.SequencerRunName: self.runs,
+            PINERY_COL.PrepKit: self.kits,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
+            PINERY_COL.LibrarySourceTemplateType: self.library_designs,
+        }
 
 class ColourShapeSingleLane:
     def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference):
