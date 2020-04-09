@@ -12,7 +12,6 @@ from ..utility import log_utils
 from gsiqcetl.api import QCETLCache, QCETLColumns
 import pinery
 import logging
-import pdb
 logger = logging.getLogger(__name__)
 
 page_name = 'SARS-CoV-2'
