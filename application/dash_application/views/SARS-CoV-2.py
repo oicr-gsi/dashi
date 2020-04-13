@@ -390,7 +390,7 @@ def layout(query_string):
                             ),
                         ]),
                         # Tables tab
-                        core.Tab(label="Tables - 🚧 WIP",
+                        core.Tab(label="Tables",
                         children=[
                             table_tabs(
                                 ids["failed-samples"],
