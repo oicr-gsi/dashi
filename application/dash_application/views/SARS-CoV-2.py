@@ -97,7 +97,37 @@ stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
+
 KRAKEN2_DF = util.df_with_pinery_samples_ius(KRAKEN2_DF, pinery_samples, [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes])
+# Only care for Covid numbers. Be very careful about removing this, as it will make merges break
+KRAKEN2_DF = KRAKEN2_DF[KRAKEN2_DF[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"]
+
+BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+    KRAKEN2_DF, how="outer",
+    on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
+    suffixes=('', "_kraken2")
+)
+BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+    stats_merged, how="outer",
+    on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
+    suffixes=('', "_samtools")
+)
+
+# Need to convert Coverage percentiles into a wide format so merge does not explode
+# Pad coverage to make sure sorting stays proper
+BEDTOOLS_COV_PERC_DF['Coverage Above'] = 'Coverage Above ' + BEDTOOLS_COV_PERC_DF[BEDTOOLS_PERCENTILE_COL.Coverage].astype(str).str.zfill(3)
+BEDTOOLS_COV_PERC_WIDE_DF = BEDTOOLS_COV_PERC_DF.pivot_table(
+    index=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
+    columns='Coverage Above',
+    values=BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered
+).reset_index()
+
+BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+    BEDTOOLS_COV_PERC_WIDE_DF, how="outer",
+    on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
+    suffixes=('', "_bedtools-coverage")
+)
+
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
@@ -132,6 +162,21 @@ initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
 shape_colour = ColourShapeSARSCoV2(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
 
+RAW_DATA_COLUMNS = [
+    BEDTOOLS_CALC_COL.Run,
+    BEDTOOLS_CALC_COL.Lane,
+    BEDTOOLS_CALC_COL.Barcodes,
+    BEDTOOLS_CALC_COL.MeanCoverage,
+    BEDTOOLS_CALC_COL.CoverageUniformity,
+    KRAKEN2_COL.PercentAtClade,
+    # Custom samtools columns due to merge
+    'reads mapped_human',
+    'reads unmapped_human',
+    'reads mapped_covid',
+    'reads unmapped_covid',
+    # Add columns produced by wide coverage percentage dataframe
+] + [x for x in BEDTOOLS_COV_PERC_WIDE_DF if x.startswith('Coverage Above')]
+
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
@@ -157,7 +202,6 @@ def generate_average_coverage_scatter(current_data, graph_params):
     )
 
 
-#TODO: why is there seemingly only one Sample where this works
 def generate_on_target_reads_scatter(current_data, graph_params):
     return generate(
         "Kraken2 on human depleted BAM: SARS-CoV-2 (%)",
@@ -352,9 +396,7 @@ def layout(query_string):
                                 ids["failed-samples"],
                                 ids["data-table"],
                                 df,
-                                # TODO: Move this to the top of module
-                                # TODO: there is SO much information that's not in here and i do not know how to add it 
-                                [BEDTOOLS_CALC_COL.MeanCoverage],
+                                RAW_DATA_COLUMNS,
                                 [
                                     (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff_value,
                                     (lambda row, col, cutoff: row[col] < cutoff)),
@@ -425,7 +467,7 @@ def init_callbacks(dash_app):
         df = reshape_single_lane_df(BEDTOOLS_CALC_DF, runs, instruments, projects, None, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
-        
+
         percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date)
 
