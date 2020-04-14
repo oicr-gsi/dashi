@@ -409,6 +409,8 @@ def layout(query_string):
                                 [
                                     (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, initial["avg_coverage_cutoff"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (on_target_cutoff_label, KRAKEN2_COL.PercentAtClade, initial["on_target_cutoff"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
                         ])
@@ -505,6 +507,8 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
                 (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, initial["avg_coverage_cutoff"],
                  (lambda row, col, cutoff: row[col] < cutoff)),
+                 (on_target_cutoff_label, KRAKEN2_COL.PercentAtClade, initial["on_target_cutoff"],
+                    (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
