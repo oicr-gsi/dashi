@@ -505,9 +505,9 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, initial["avg_coverage_cutoff"],
+                (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
-                 (on_target_cutoff_label, KRAKEN2_COL.PercentAtClade, initial["on_target_cutoff"],
+                 (on_target_cutoff_label, KRAKEN2_COL.PercentAtClade, on_target_cutoff,
                     (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
