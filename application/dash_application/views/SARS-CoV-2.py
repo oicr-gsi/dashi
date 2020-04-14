@@ -200,7 +200,7 @@ def generate_average_coverage_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])] # Should be unchanging
+        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])]
     )
 
 
@@ -214,7 +214,7 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(on_target_cutoff_label, graph_params["on_target_cutoff"])] # Should be unchanging
+        [(on_target_cutoff_label, graph_params["on_target_cutoff"])]
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
