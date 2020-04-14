@@ -7,7 +7,7 @@ import pinery
 import gsiqcetl.column
 from .df_manipulation import sample_type_col
 from .sidebar_utils import runs_in_range
-
+import re
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
@@ -367,7 +367,10 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
             name = '<br>'.join(str(x) for x in name) + '<br>',
             x = x_fn(df),
             y = y_fn(df),
-            mode="lines"
+            mode="lines",
+            line={
+                "color": re.search('#.{6}', str(df['colour'].unique())).group(0),
+            }
         )
         graphs.append(graph)
 
