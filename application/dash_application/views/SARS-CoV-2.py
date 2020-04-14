@@ -222,6 +222,7 @@ def generate_coverage_percentiles_line(current_data, graph_params):
         lambda d: d[BEDTOOLS_PERCENTILE_COL.Coverage],
         lambda d: d[BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered],
         "Coverage Percentile",
+        "Depth of Coverage (Mapped Reads)",
         "%"
     )
 

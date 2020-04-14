@@ -361,7 +361,7 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
 
 
 # TODO: Make this more general. Currently it is written for the SARS-CoV-2 view
-def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+def generate_line(df, criteria, x_fn, y_fn, title_text, xaxis_text, yaxis_text):
     graphs = []
     for name, df in df.groupby(criteria):
         graph = go.Scattergl(
@@ -376,9 +376,12 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text):
         data = graphs,
         layout = go.Layout(
             title = title_text,
-            xaxis={'visible': False,
-                   'rangemode': 'normal',
-                   'autorange': True},
+            xaxis={'visible': True,
+                   'rangemode': 'nonnegative',
+                   'autorange': True,
+                   'title': {
+                       'text': xaxis_text
+                   }},
             yaxis = {
                 'title': {
                     'text': yaxis_text
