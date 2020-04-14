@@ -12,6 +12,7 @@ from ..utility import log_utils
 from gsiqcetl.api import QCETLCache, QCETLColumns
 import pinery
 import logging
+
 logger = logging.getLogger(__name__)
 
 page_name = 'SARS-CoV-2'
@@ -279,7 +280,7 @@ def layout(query_string):
     percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
-                                initial["end_date"])
+                                initial["end_date"], initial["colour_by"], shape_colour.items_for_df())
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -470,7 +471,7 @@ def init_callbacks(dash_app):
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
         percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
-                                    start_date, end_date)
+                                    start_date, end_date, colour_by, shape_colour.items_for_df())
 
         kraken2_df = reshape_stats_df(KRAKEN2_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
@@ -563,7 +564,7 @@ def init_callbacks(dash_app):
         return [x['value'] for x in avail_options]
 
 def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs,
-        start_date, end_date) -> DataFrame:
+        start_date, end_date, colour_by, shape_or_colour_values) -> DataFrame:
         
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
@@ -584,8 +585,7 @@ def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs
         df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
             library_designs)]
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
-    # df = fill_in_shape_col(df, initial["shape_by"], shape_colour.items_for_df())
-    # df = fill_in_colour_col(df, initial["colour_by"], shape_colour.items_for_df(), None)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
     df = fill_in_size_col(df, None)
     return df
 
@@ -612,7 +612,7 @@ def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
             library_designs)]
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
-    #df = df.sort_values(by=sort_by) TODO: This doesn't work without merging everything together
+    #df = df.sort_values(by=sort_by) #TODO: This doesn't work without merging everything together?
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
     df = fill_in_size_col(df, searchsample)
