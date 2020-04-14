@@ -48,6 +48,8 @@ ids = init_ids([
     'show-data-labels',
     'show-all-data-labels',
     'date-range',
+    'average-coverage-cutoff',
+    'on-target-cutoff',
 
     #Graphs
     'on-target-reads-various-bar',
@@ -150,14 +152,14 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
 }
 
-# TODO: Set these again once we have real values
-avg_coverage_cutoff_label = "Average Coverage Minimum"
-avg_coverage_cutoff_value = 20
-on_target_cutoff_label = "On-Target Percentage Minimum"
-on_target_cutoff_value = 20
-
 initial = get_initial_single_lane_values()
 initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
+
+# TODO: Set these again once we have real values
+avg_coverage_cutoff_label = "Average Coverage Minimum"
+initial["avg_coverage_cutoff"] = 20
+on_target_cutoff_label = "On-Target Percentage Minimum"
+initial["on_target_cutoff"] = 20
 
 shape_colour = ColourShapeSARSCoV2(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
@@ -198,7 +200,7 @@ def generate_average_coverage_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(avg_coverage_cutoff_label, avg_coverage_cutoff_value)] # Should be unchanging
+        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])] # Should be unchanging
     )
 
 
@@ -212,7 +214,7 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(on_target_cutoff_label, on_target_cutoff_value)] # Should be unchanging
+        [(on_target_cutoff_label, graph_params["on_target_cutoff"])] # Should be unchanging
     )
 
 def generate_coverage_percentiles_line(current_data, graph_params):
@@ -360,6 +362,12 @@ def layout(query_string):
                                                         initial["shownames_val"],
                                                         'ALL LABELS',
                                                         ids['show-all-data-labels']),
+                    
+                    sidebar_utils.cutoff_input("Average Coverage minimum",
+                        ids['average-coverage-cutoff'], initial['avg_coverage_cutoff']),
+
+                    sidebar_utils.cutoff_input("On-Target minimum",
+                        ids['on-target-cutoff'], initial['on_target_cutoff']),
 
                     sidebar_utils.hr(),
                     html.Br(),
@@ -399,7 +407,7 @@ def layout(query_string):
                                 df,
                                 RAW_DATA_COLUMNS,
                                 [
-                                    (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff_value,
+                                    (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, initial["avg_coverage_cutoff"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -444,6 +452,8 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
+            State(ids["average-coverage-cutoff"], 'value'),
+            State(ids["on-target-cutoff"], 'value'),
             State('url', 'search'),
         ]
     )
@@ -462,6 +472,8 @@ def init_callbacks(dash_app):
             show_names,
             start_date,
             end_date,
+            avg_coverage_cutoff,
+            on_target_cutoff,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
@@ -485,11 +497,13 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
+            "avg_coverage_cutoff": avg_coverage_cutoff,
+            "on_target_cutoff": on_target_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, avg_coverage_cutoff_value,
+                (avg_coverage_cutoff_label, BEDTOOLS_CALC_COL.MeanCoverage, initial["avg_coverage_cutoff"],
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
