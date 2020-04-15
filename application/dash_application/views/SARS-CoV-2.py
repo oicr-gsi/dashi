@@ -345,6 +345,8 @@ def layout(query_string):
                         [
                                 {"label": "Average Coverage",
                                 "value": BEDTOOLS_CALC_COL.MeanCoverage},
+                                {"label": "Sequencing Control Type",
+                                "value": PINERY_COL.SequencingControlType}
                         ]
                     ),
 
