@@ -158,19 +158,37 @@ _pinery_samples = _pinery_samples.fillna({
 _pinery_samples = _pinery_samples.astype({
     PINERY_COL.SequencerRunName: 'str',
     PINERY_COL.LaneNumber: 'int64',
-    "IUSTag": 'str',
+    PINERY_COL.IUSTag: 'str',
     PINERY_COL.GroupID: 'str'})
 # Fill in the "Sample Type" column (Tumor/Reference/Blood/Unknown)
 _pinery_samples[sample_type_col] = _pinery_samples.apply(label_sample_type, axis=1)
 # Drop columns we definitely don't care about.
-_pinery_samples = _pinery_samples.drop(axis=1, columns=[PINERY_COL.NanodropConcentration, PINERY_COL.QubitConcentration, "RunIDandPosition", "TargetedResequencing", "TubeID", "RIN",
-"PrepKit", "PoolName", "Organism", "STRResult", "QubitConcentration", "SampleProvenanceID",
-"TissuePreparation", "TissueType", "SampleName", "RootSampleName", "Version", "NanodropConcentration",
-"TissueOrigin", "Purpose", "SequencerRunName", "SequencingParameters", "UMIs", "GroupIDDescription",
-"DV200", "CreateDate", "InstrumentName", "ParentSampleName", "SubProject", "TemplateType",
-"RunBaseMask", "RunDir", "ExternalName", "Institute", "StudyTitle", "LastModified",
-"GroupID", "SequencerRunPlatformModel", "ReceiveDate", "TissueRegion", "WorkflowType", "Skip",
-"LaneNumber", "LibrarySourceTemplateType"])
+_pinery_samples = _pinery_samples.drop(axis=1, columns=[
+    PINERY_COL.NanodropConcentration,
+    PINERY_COL.QubitConcentration,
+    PINERY_COL.RunIDandPosition,
+    PINERY_COL.TubeID,
+    PINERY_COL.PoolName,
+    PINERY_COL.STRResult,
+    PINERY_COL.QubitConcentration,
+    PINERY_COL.SampleProvenanceID,
+    PINERY_COL.Version,
+    PINERY_COL.NanodropConcentration,
+    PINERY_COL.Purpose,
+    PINERY_COL.SequencingParameters,
+    PINERY_COL.GroupIDDescription,
+    PINERY_COL.CreateDate,
+    PINERY_COL.ParentSampleName,
+    PINERY_COL.TemplateType,
+    PINERY_COL.RunBaseMask,
+    PINERY_COL.RunDir,
+    PINERY_COL.LastModified,
+    PINERY_COL.SequencerRunPlatformModel,
+    PINERY_COL.ReceiveDate,
+    PINERY_COL.TissueRegion,
+    PINERY_COL.WorkflowType,
+    PINERY_COL.Skip,
+    ])
 
 # Helper function for the _pinery_merged_samples aggregation below.
 # Takes a list of values and converts it to a comma-separated string.
