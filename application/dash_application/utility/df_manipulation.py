@@ -6,7 +6,7 @@ from typing import List
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
-
+import pdb
 
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
@@ -242,8 +242,6 @@ _projects = _pinery_client.get_projects()
 
 _active_projects = _projects.loc[_projects[PROJECT_COL.IsActive]]
 _active_projects = _active_projects[PROJECT_COL.Name].unique()
-#TODO: These aren't showing up and we don't know why
-_active_projects = numpy.append(_active_projects, numpy.array(['SCTSK', 'SCTSN', 'TGL57']))
 
 _runs_with_instruments = _runs.copy(deep=True).merge(
     _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
