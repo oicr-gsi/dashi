@@ -7,7 +7,6 @@ from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
 
-
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
 wgs_lib_designs = ["AS", "CH", "CM", "NN", "WG"]
@@ -140,7 +139,7 @@ _rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
 _fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
 
 _pinery_client = pinery.PineryClient()
-_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v5")
+_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
 _pinery_samples = _provenance_client.get_all_samples()
 # NaN sample attrs need to be changed to a str.
 # Use the expected default values
@@ -152,7 +151,8 @@ _pinery_samples = _pinery_samples.fillna({
     PINERY_COL.TissuePreparation: "Unspecified",
     PINERY_COL.GroupID: "",
     PINERY_COL.GroupIDDescription: "",
-    PINERY_COL.Institute: "Unspecified"
+    PINERY_COL.Institute: "Unspecified",
+    PINERY_COL.SequencingControlType: "Sample"
 })
 # Cast the primary key/join columns to explicit types now that the NA values are filled in
 _pinery_samples = _pinery_samples.astype({

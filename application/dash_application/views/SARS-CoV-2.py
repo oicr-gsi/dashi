@@ -142,6 +142,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.TissuePrepar
 ALL_LIBRARY_DESIGNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
 ALL_SAMPLE_TYPES = util.unique_set(BEDTOOLS_CALC_DF, util.sample_type_col)
+ALL_SEQUENCING_CONTROL_TYPES = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.SequencingControlType)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -163,7 +164,7 @@ on_target_cutoff_label = "On-Target Percentage Minimum"
 initial["on_target_cutoff"] = 20
 
 shape_colour = ColourShapeSARSCoV2(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
-                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS)
+                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, ALL_SEQUENCING_CONTROL_TYPES)
 
 RAW_DATA_COLUMNS = [
     BEDTOOLS_CALC_COL.Run,
