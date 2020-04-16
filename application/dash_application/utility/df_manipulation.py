@@ -6,7 +6,6 @@ from typing import List
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
-import pdb
 
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
