@@ -105,12 +105,12 @@ KRAKEN2_DF = util.df_with_pinery_samples_ius(KRAKEN2_DF, pinery_samples, [KRAKEN
 # Only care for Covid numbers. Be very careful about removing this, as it will make merges break
 KRAKEN2_DF = KRAKEN2_DF[KRAKEN2_DF[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"]
 
-BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+BEDTOOLS_DF = BEDTOOLS_CALC_DF.merge(
     KRAKEN2_DF, how="outer",
     on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
     suffixes=('', "_kraken2")
 )
-BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+BEDTOOLS_DF = BEDTOOLS_DF.merge(
     stats_merged, how="outer",
     on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
     suffixes=('', "_samtools")
@@ -125,7 +125,7 @@ BEDTOOLS_COV_PERC_WIDE_DF = BEDTOOLS_COV_PERC_DF.pivot_table(
     values=BEDTOOLS_PERCENTILE_COL.PercentGenomeCovered
 ).reset_index()
 
-BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
+BEDTOOLS_DF = BEDTOOLS_DF.merge(
     BEDTOOLS_COV_PERC_WIDE_DF, how="outer",
     on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
     suffixes=('', "_bedtools-coverage")
@@ -133,16 +133,16 @@ BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF.merge(
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.PrepKit)
+ALL_PROJECTS = util.unique_set(BEDTOOLS_DF, PINERY_COL.StudyTitle)
+ALL_KITS = util.unique_set(BEDTOOLS_DF, PINERY_COL.PrepKit)
 # TODO: Remove kludge and uncomment real line after Pinery is merged
-ILLUMINA_INSTRUMENT_MODELS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.InstrumentName)
+ILLUMINA_INSTRUMENT_MODELS = util.unique_set(BEDTOOLS_DF, PINERY_COL.InstrumentName)
 #ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
-ALL_TISSUE_MATERIALS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.TissuePreparation)
-ALL_LIBRARY_DESIGNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_RUNS = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
-ALL_SAMPLE_TYPES = util.unique_set(BEDTOOLS_CALC_DF, util.sample_type_col)
-ALL_SEQUENCING_CONTROL_TYPES = util.unique_set(BEDTOOLS_CALC_DF, PINERY_COL.SequencingControlType)
+ALL_TISSUE_MATERIALS = util.unique_set(BEDTOOLS_DF, PINERY_COL.TissuePreparation)
+ALL_LIBRARY_DESIGNS = util.unique_set(BEDTOOLS_DF, PINERY_COL.LibrarySourceTemplateType)
+ALL_RUNS = util.unique_set(BEDTOOLS_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
+ALL_SAMPLE_TYPES = util.unique_set(BEDTOOLS_DF, util.sample_type_col)
+ALL_SEQUENCING_CONTROL_TYPES = util.unique_set(BEDTOOLS_DF, PINERY_COL.SequencingControlType)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -259,26 +259,12 @@ def layout(query_string):
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
-    df = reshape_single_lane_df(BEDTOOLS_CALC_DF, initial["runs"], initial["instruments"],
+    df = reshape_single_lane_df(BEDTOOLS_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], None, initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
-
-    kraken2_df = reshape_stats_df(KRAKEN2_DF, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["kits"],
-                                initial["library_designs"], initial["start_date"],
-                                initial["end_date"], initial["first_sort"],
-                                initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], shape_colour.items_for_df(), [])
-
-    stats_df = reshape_stats_df(stats_merged, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["kits"],
-                                initial["library_designs"], initial["start_date"],
-                                initial["end_date"], initial["first_sort"],
-                                initial["second_sort"], initial["colour_by"], initial["shape_by"],
-                                shape_colour.items_for_df(), [])
 
     percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["kits"],
@@ -344,10 +330,14 @@ def layout(query_string):
                         ids['second-sort'],
                         initial["second_sort"],
                         [
-                                {"label": "Average Coverage",
-                                "value": BEDTOOLS_CALC_COL.MeanCoverage},
-                                {"label": "Sequencing Control Type",
-                                "value": PINERY_COL.SequencingControlType}
+                            {"label": "Average Coverage",
+                             "value": BEDTOOLS_CALC_COL.MeanCoverage},
+                            {"label": "SARS-CoV-2 Percentage",
+                             "value": KRAKEN2_COL.PercentAtClade},
+                            {"label": "Uniformity of Coverage",
+                             "value": BEDTOOLS_CALC_COL.CoverageUniformity},
+                            {"label": "Sequencing Control Type",
+                             "value": PINERY_COL.SequencingControlType}
                         ]
                     ),
 
@@ -387,13 +377,13 @@ def layout(query_string):
                         children=[
                             # TODO: Add in all graphs
                             core.Graph(id=ids['on-target-reads-various-bar'],
-                                figure=generate_on_target_reads_bar(stats_df, initial)
+                                figure=generate_on_target_reads_bar(df, initial)
                             ),
                             core.Graph(id=ids['average-coverage-scatter'],
                                 figure=generate_average_coverage_scatter(df, initial)
                             ),
                             core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                                figure=generate_on_target_reads_scatter(kraken2_df, initial)
+                                figure=generate_on_target_reads_scatter(df, initial)
                             ),
                             core.Graph(id=ids['coverage-percentiles-line'],
                                 figure=generate_coverage_percentiles_line(percentile_df, initial)
@@ -483,19 +473,12 @@ def init_callbacks(dash_app):
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(BEDTOOLS_CALC_DF, runs, instruments, projects, None, kits, library_designs,
+        df = reshape_single_lane_df(BEDTOOLS_DF, runs, instruments, projects, None, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
         percentile_df = reshape_percentile_df(BEDTOOLS_PERCENTILE_DF, runs, instruments, projects, kits, library_designs,
                                     start_date, end_date, colour_by, shape_colour.items_for_df())
-
-        kraken2_df = reshape_stats_df(KRAKEN2_DF, runs, instruments, projects, kits, library_designs,
-                                    start_date, end_date, first_sort, second_sort, colour_by,
-                                    shape_by, shape_colour.items_for_df(), searchsample)
-        stats_df = reshape_stats_df(stats_merged, runs, instruments, projects, kits, library_designs,
-                                    start_date, end_date, first_sort, second_sort, colour_by,
-                                    shape_by, shape_colour.items_for_df(), searchsample)
 
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
 
@@ -522,9 +505,9 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_on_target_reads_bar(stats_df, graph_params),
+            generate_on_target_reads_bar(df, graph_params),
             generate_average_coverage_scatter(df, graph_params),
-            generate_on_target_reads_scatter(kraken2_df, graph_params),
+            generate_on_target_reads_scatter(df, graph_params),
             generate_coverage_percentiles_line(percentile_df, graph_params),
             generate_coverage_uniformity_scatter(df, graph_params),
             failure_columns,
@@ -586,7 +569,7 @@ def init_callbacks(dash_app):
 
 def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs,
         start_date, end_date, colour_by, shape_or_colour_values) -> DataFrame:
-        
+
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
@@ -608,33 +591,4 @@ def reshape_percentile_df(df, runs, instruments, projects, kits, library_designs
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values)
     df = fill_in_size_col(df, None)
-    return df
-
-def reshape_stats_df(df, runs, instruments, projects, kits, library_designs,
-        start_date, end_date, first_sort, second_sort, colour_by, shape_by,
-        shape_or_colour_values, searchsample) -> DataFrame:
-    """
-    This performs dataframe manipulation based on the input filters, and gets the data into a
-    graph-friendly form.
-    """
-    if not runs and not instruments and not projects and not kits and not library_designs:
-        df = DataFrame(columns=df.columns)
-
-    if runs:
-        df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
-    if instruments:
-        df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
-    if projects:
-        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
-    if kits:
-        df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
-    if library_designs:
-        df = df[df[pinery.column.SampleProvenanceColumn.LibrarySourceTemplateType].isin(
-            library_designs)]
-    df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
-    sort_by = [first_sort, second_sort]
-    #df = df.sort_values(by=sort_by) #TODO: This doesn't work without merging everything together?
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
-    df = fill_in_size_col(df, searchsample)
     return df
