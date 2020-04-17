@@ -11,6 +11,7 @@ import re
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
+BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
 
 """
 Avoid the following symbols, which fail to render correctly:
@@ -88,7 +89,9 @@ DATA_LABEL_NAME = {
     PINERY_COL.GroupID: 'Group ID: ',
     PINERY_COL.TissuePreparation: 'Tissue Preparation: ',
     PINERY_COL.PrepKit: 'Kit: ',
-    COMMON_COL.Reference: 'Reference: '
+    COMMON_COL.Reference: 'Reference: ',
+    BEDTOOLS_COL.Coverage90Percentile: '90 Percentile Coverage: ',
+    BEDTOOLS_COL.Coverage10Percentile: '10 Percentile Coverage: ',
 }
 
 
@@ -110,7 +113,8 @@ def create_data_label(
         return []
 
     no_order = [x for x in cols if x not in DATA_LABEL_ORDER]
-    ordered = sorted(cols, key=lambda x: DATA_LABEL_ORDER.index(x))
+    ordered = [x for x in cols if x in DATA_LABEL_ORDER]
+    ordered = sorted(ordered, key=lambda x: DATA_LABEL_ORDER.index(x))
     ordered.extend(no_order)
 
     def apply_label(row):
@@ -231,7 +235,7 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName,
-             markermode="markers"):
+             markermode="markers", bar_positive=None, bar_negative=None):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
                 l=50,
@@ -270,11 +274,30 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     else:
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
     for name, data in grouped_data:
-        hovertext = create_data_label(data, hovertext_cols)
+        y_data = y_fn(data)
+
+        if bar_positive and bar_negative:
+            error_y = dict(
+                type='data',
+                symmetric=False,
+                array=data[bar_positive] - y_data,
+                arrayminus=y_data - data[bar_negative]
+            )
+
+            # Error bar info is not displayed, so is added to hover label
+            if hovertext_cols is None:
+                hovertext_display_cols = [bar_positive, bar_negative]
+            else:
+                hovertext_display_cols = hovertext_cols + [bar_positive, bar_negative]
+        else:
+            error_y = None
+            hovertext_display_cols = hovertext_cols
+
+        hovertext = create_data_label(data, hovertext_display_cols)
 
         graph = go.Scattergl(
             x=x_fn(data),
-            y=y_fn(data),
+            y=y_data,
             name=name_format(name),
             hovertext=hovertext,
             showlegend=True,
@@ -287,6 +310,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             # Hover labels are not cropped
             # https://github.com/plotly/plotly.js/issues/460
             hoverlabel={"namelength": -1},
+            error_y=error_y,
         )
         traces.append(graph)
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
