@@ -7,6 +7,15 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200417-1147] - 2020-04-17
+## Changed
+  * SARS-CoV-2 data table works
+  * SARS-CoV-2 Coverage Percentiles graph has x axis labels
+  * SARS-CoV-2 Percentile graph is colourable
+  * SARS-CoV-2 has adjustable cutoff lines
+  * SARS-CoV-2 report sortable, colourable by Sequencing Control Type
+  * SARS-CoV-2 sorting fixed
+
 ## [200409-1535] - 2020-04-09
 ## Added
   * SARS-CoV-2 report
