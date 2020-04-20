@@ -172,7 +172,7 @@ RAW_DATA_COLUMNS = [
 def generate_on_target_reads_bar(current_data, graph_params):
     return generate_bar(
         current_data,
-        special_columns,
+        ['reads mapped_human', 'reads mapped_covid'],
         lambda d: d[PINERY_COL.SampleName] + d[PINERY_COL.LaneNumber].astype(str) + d[PINERY_COL.SequencerRunName],
         lambda d, col: d[col] * 100,
         "On-Target (%)",
