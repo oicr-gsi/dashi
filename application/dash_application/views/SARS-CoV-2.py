@@ -9,9 +9,9 @@ from ..utility.table_builder import table_tabs, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.api import QCETLCache, QCETLColumns
 import pinery
 import logging
+from ..utility.df_manipulation import KRAKEN2_COL, BEDTOOLS_CALC_COL, BEDTOOLS_PERCENTILE_COL, SAMTOOLS_STATS_COV2_COL
 
 logger = logging.getLogger(__name__)
 
@@ -71,37 +71,25 @@ ids = init_ids([
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
-#TODO: load cache from df_manipulation
-cache = QCETLCache()
 pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
-BEDTOOLS_CALC_DF = cache.bedtools_sars_cov2.genomecov_calculations
-SAMTOOLS_STATS_COV2_HUMAN_DF = cache.samtools_stats_sars_cov2.human
-SAMTOOLS_STATS_COV2_DEPLETED_DF = cache.samtools_stats_sars_cov2.depleted
-BEDTOOLS_COV_PERC_DF = cache.bedtools_sars_cov2.genomecov_coverage_percentile
-KRAKEN2_DF = cache.kraken2.kraken2
+BEDTOOLS_CALC_DF = util.df_with_pinery_samples_ius(util.get_bedtools_calc(), pinery_samples, util.bedtools_calc_ius_columns)
+SAMTOOLS_STATS_COV2_HUMAN_DF = util.get_samtools_stats_cov2_human()
+SAMTOOLS_STATS_COV2_DEPLETED_DF = util.get_samtools_stats_cov2_depleted()
+BEDTOOLS_COV_PERC_DF = util.get_bedtools_cov_perc()
+BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, util.bedtools_percentile_ius_columns)
+KRAKEN2_DF = util.df_with_pinery_samples_ius(util.get_kraken2(), pinery_samples, util.kraken2_ius_columns)
 
-KRAKEN2_COL = QCETLColumns().kraken2.kraken2
-BEDTOOLS_CALC_COL = QCETLColumns().bedtools_sars_cov2.genomecov_calculations
-BEDTOOLS_PERCENTILE_COL = QCETLColumns().bedtools_sars_cov2.genomecov_coverage_percentile
-SAMTOOLS_STATS_COV2_HUMAN_COL = QCETLColumns().samtools_stats_sars_cov2.human
-SAMTOOLS_STATS_COV2_DEPLETED_COL = QCETLColumns().samtools_stats_sars_cov2.depleted
-
-
-BEDTOOLS_CALC_DF = util.df_with_pinery_samples_ius(BEDTOOLS_CALC_DF, pinery_samples, [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes])
-BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes])
-stats_col = QCETLColumns().samtools_stats_sars_cov2.human
 special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
-stats_merged = SAMTOOLS_STATS_COV2_HUMAN_DF.merge(SAMTOOLS_STATS_COV2_DEPLETED_DF, how="outer", on=[stats_col.Barcodes, stats_col.Run, stats_col.Lane], suffixes=['_human', '_covid'])
+stats_merged = SAMTOOLS_STATS_COV2_HUMAN_DF.merge(SAMTOOLS_STATS_COV2_DEPLETED_DF, how="outer", on=[SAMTOOLS_STATS_COV2_COL.Barcodes, SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane], suffixes=['_human', '_covid'])
 stats_merged = stats_merged[
-    special_columns + [stats_col.Barcodes, stats_col.Run, stats_col.Lane]
+    special_columns + [SAMTOOLS_STATS_COV2_COL.Barcodes, SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane]
 ]
 stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
 for c in special_columns:
     stats_merged[c] = stats_merged[c] / stats_merged['total']
-stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [stats_col.Run, stats_col.Lane, stats_col.Barcodes])
+stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane, SAMTOOLS_STATS_COV2_COL.Barcodes])
 
-KRAKEN2_DF = util.df_with_pinery_samples_ius(KRAKEN2_DF, pinery_samples, [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes])
 # Only care for Covid numbers. Be very careful about removing this, as it will make merges break
 KRAKEN2_DF = KRAKEN2_DF[KRAKEN2_DF[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"]
 
@@ -245,9 +233,7 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
     )
 
 def dataversion():
-    # TODO: Do it properly
-    return "kludge_version"
-    # return DATAVERSION
+    return util.cache.versions(["bedtools_sars_cov2", "kraken2", "samtools_stats_sars_cov2"])
 
 
 def layout(query_string):

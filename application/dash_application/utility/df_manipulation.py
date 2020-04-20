@@ -25,6 +25,10 @@ INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
 FASTQC_COL = gsiqcetl.column.FastqcColumn
+KRAKEN2_COL = gsiqcetl.column.Kraken2Column
+BEDTOOLS_CALC_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
+BEDTOOLS_PERCENTILE_COL = gsiqcetl.column.BedToolsGenomeCovCoveragePercentileColumn
+SAMTOOLS_STATS_COV2_COL = gsiqcetl.column.SamtoolsStatsColumn
 sample_type_col = "Sample Type"
 ml_col = "Merged Library"
 
@@ -38,6 +42,9 @@ ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
                         RNASEQQC_COL.Barcodes]
 fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
+bedtools_calc_ius_columns = [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes]
+bedtools_percentile_ius_columns = [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes]
+kraken2_ius_columns = [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes]
 
 pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
     PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
@@ -60,6 +67,7 @@ rnaseqqc2_merged_columns = [RNASEQQC2_MERGED_COL.Project,
     RNASEQQC2_MERGED_COL.Donor, RNASEQQC2_MERGED_COL.GroupID,
     RNASEQQC2_MERGED_COL.LibraryDesign, RNASEQQC2_MERGED_COL.TissueOrigin,
     RNASEQQC2_MERGED_COL.TissueType]
+
 
 TUMOUR = "Tumour"
 BLOOD = "Blood"
@@ -130,13 +138,19 @@ _rnaseqqc = normalized_ius(cache.rnaseqqc.rnaseqqc, rnaseqqc_ius_columns)
 _bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 _bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
+_bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns)
+_bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
 _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
-_mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
+_fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
 _hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
+_kraken2 = normalized_ius(cache.kraken2.kraken2, kraken2_ius_columns)
+_mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
 _rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
                                      rnaseqqc2_merged_columns)
-_fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
+_samtools_stats_cov2_human = cache.samtools_stats_sars_cov2.human
+_samtools_stats_cov2_depleted = cache.samtools_stats_sars_cov2.depleted
+
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
@@ -267,6 +281,11 @@ def get_bamqc():
 def get_bamqc3():
     return _bamqc3.copy(deep=True)
 
+def get_bedtools_calc():
+    return _bedtools_calc.copy(deep=True)
+
+def get_bedtools_cov_perc():
+    return _bedtools_cov_perc.copy(deep=True)
 
 def get_fastqc():
     return _fastqc.copy(deep=True)
@@ -275,6 +294,14 @@ def get_fastqc():
 def get_ichorcna():
     return _ichorcna.copy(deep=True)
 
+def get_kraken2():
+    return _kraken2.copy(deep=True)
+
+def get_samtools_stats_cov2_human():
+    return _samtools_stats_cov2_human.copy(deep=True)
+
+def get_samtools_stats_cov2_depleted():
+    return _samtools_stats_cov2_depleted.copy(deep=True)
 
 def get_rnaseqqc():
     return _rnaseqqc.copy(deep=True)
