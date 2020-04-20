@@ -155,7 +155,7 @@ collapsing_functions = {
 }
 
 initial = get_initial_single_lane_values()
-initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
+initial["second_sort"] = BEDTOOLS_CALC_COL.MedianCoverage
 
 # TODO: Set these again once we have real values
 avg_coverage_cutoff_label = "Average Coverage Minimum"
@@ -333,7 +333,7 @@ def layout(query_string):
                         initial["second_sort"],
                         [
                             {"label": "Average Coverage",
-                             "value": BEDTOOLS_CALC_COL.MeanCoverage},
+                             "value": BEDTOOLS_CALC_COL.MedianCoverage},
                             {"label": "SARS-CoV-2 Percentage",
                              "value": KRAKEN2_COL.PercentAtClade},
                             {"label": "Uniformity of Coverage",

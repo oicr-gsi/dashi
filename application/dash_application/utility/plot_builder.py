@@ -252,9 +252,16 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     if axis_text == '%':
         y_axis['range'] = [0, 100]
 
+    # Webgl bugs occur with error bars: https://github.com/oicr-gsi/dashi/pull/170
+    if bar_positive is None and bar_negative is None:
+        graph_type = "scattergl"
+    else:
+        graph_type = "scatter"
+
     if sorted_data.empty:
         return go.Figure(
-            data=[go.Scattergl(
+            data=[dict(
+                type=graph_type,
                 x=None,
                 y=None
             )],
@@ -281,7 +288,9 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 type='data',
                 symmetric=False,
                 array=data[bar_positive] - y_data,
-                arrayminus=y_data - data[bar_negative]
+                arrayminus=y_data - data[bar_negative],
+                # Allows for only one color. `groupby` ensures this
+                color=data['colour'].iloc[0],
             )
 
             # Error bar info is not displayed, so is added to hover label
@@ -295,7 +304,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
 
         hovertext = create_data_label(data, hovertext_display_cols)
 
-        graph = go.Scattergl(
+        graph = dict(
+            type=graph_type,
             x=x_fn(data),
             y=y_data,
             name=name_format(name),
@@ -314,7 +324,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
         traces.append(graph)
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
-        traces.append(go.Scattergl( # Cutoff line
+        traces.append(dict( # Cutoff line
+            type=graph_type,
             x=sorted_data[name_col], 
             y=[cutoff_value] * len(sorted_data),
             mode="lines",
@@ -322,7 +333,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             name=cutoff_label
         ))
     if not highlight_df.empty:
-        traces.append(go.Scattergl( # Draw highlighted items on top
+        traces.append(dict( # Draw highlighted items on top
+            type=graph_type,
             x=x_fn(highlight_df),
             y=y_fn(highlight_df),
             name="Highlighted Samples",
