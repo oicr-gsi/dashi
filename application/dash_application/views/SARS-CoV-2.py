@@ -231,9 +231,7 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
     )
 
 def dataversion():
-    # TODO: Do it properly
-    return "kludge_version"
-    # return DATAVERSION
+    return util.cache.versions(["bedtools_sars_cov2", "kraken2", "samtools_stats_sars_cov2"])
 
 
 def layout(query_string):
