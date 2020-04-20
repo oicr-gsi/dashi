@@ -49,12 +49,12 @@ ids = init_ids([
     'show-data-labels',
     'show-all-data-labels',
     'date-range',
-    'average-coverage-cutoff',
+    'median-coverage-cutoff',
     'on-target-cutoff',
 
     #Graphs
     'on-target-reads-various-bar',
-    'average-coverage-scatter',
+    'median-coverage-scatter',
     'on-target-reads-sars-cov-2-scatter',
     'coverage-percentiles-line',
     'coverage-uniformity-scatter',
@@ -155,7 +155,7 @@ collapsing_functions = {
 }
 
 initial = get_initial_single_lane_values()
-initial["second_sort"] = BEDTOOLS_CALC_COL.MeanCoverage
+initial["second_sort"] = BEDTOOLS_CALC_COL.MedianCoverage
 
 # TODO: Set these again once we have real values
 avg_coverage_cutoff_label = "Average Coverage Minimum"
@@ -192,17 +192,19 @@ def generate_on_target_reads_bar(current_data, graph_params):
     )
 
 
-def generate_average_coverage_scatter(current_data, graph_params):
+def generate_median_coverage_scatter(current_data, graph_params):
     return generate(
-        "Average Coverage",
+        "Median Coverage with 10/90 Percentile",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BEDTOOLS_CALC_COL.MeanCoverage],
-        "Average Coverage",
+        lambda d: d[BEDTOOLS_CALC_COL.MedianCoverage],
+        "Median Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])]
+        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])],
+        bar_positive=BEDTOOLS_CALC_COL.Coverage90Percentile,
+        bar_negative=BEDTOOLS_CALC_COL.Coverage10Percentile,
     )
 
 
@@ -331,7 +333,7 @@ def layout(query_string):
                         initial["second_sort"],
                         [
                             {"label": "Average Coverage",
-                             "value": BEDTOOLS_CALC_COL.MeanCoverage},
+                             "value": BEDTOOLS_CALC_COL.MedianCoverage},
                             {"label": "SARS-CoV-2 Percentage",
                              "value": KRAKEN2_COL.PercentAtClade},
                             {"label": "Uniformity of Coverage",
@@ -357,8 +359,8 @@ def layout(query_string):
                                                         'ALL LABELS',
                                                         ids['show-all-data-labels']),
                     
-                    sidebar_utils.cutoff_input("Average Coverage minimum",
-                        ids['average-coverage-cutoff'], initial['avg_coverage_cutoff']),
+                    sidebar_utils.cutoff_input("Median Coverage minimum",
+                        ids['median-coverage-cutoff'], initial['avg_coverage_cutoff']),
 
                     sidebar_utils.cutoff_input("On-Target minimum",
                         ids['on-target-cutoff'], initial['on_target_cutoff']),
@@ -375,22 +377,21 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            # TODO: Add in all graphs
-                            core.Graph(id=ids['on-target-reads-various-bar'],
-                                figure=generate_on_target_reads_bar(df, initial)
-                            ),
-                            core.Graph(id=ids['average-coverage-scatter'],
-                                figure=generate_average_coverage_scatter(df, initial)
-                            ),
+                            core.Graph(id=ids['median-coverage-scatter'],
+                                       figure=generate_median_coverage_scatter(df, initial)
+                                       ),
                             core.Graph(id=ids['on-target-reads-sars-cov-2-scatter'],
-                                figure=generate_on_target_reads_scatter(df, initial)
-                            ),
-                            core.Graph(id=ids['coverage-percentiles-line'],
-                                figure=generate_coverage_percentiles_line(percentile_df, initial)
-                            ),
+                                       figure=generate_on_target_reads_scatter(df, initial)
+                                       ),
                             core.Graph(id=ids['coverage-uniformity-scatter'],
-                                figure=generate_coverage_uniformity_scatter(df, initial)
-                            ),
+                                       figure=generate_coverage_uniformity_scatter(df, initial)
+                                       ),
+                            core.Graph(id=ids['on-target-reads-various-bar'],
+                                       figure=generate_on_target_reads_bar(df, initial)
+                                       ),
+                            core.Graph(id=ids['coverage-percentiles-line'],
+                                       figure=generate_coverage_percentiles_line(percentile_df, initial)
+                                       ),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -421,7 +422,7 @@ def init_callbacks(dash_app):
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
             Output(ids['on-target-reads-various-bar'], 'figure'),
-            Output(ids['average-coverage-scatter'], 'figure'),
+            Output(ids['median-coverage-scatter'], 'figure'),
             Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
             Output(ids['coverage-percentiles-line'], 'figure'),
             Output(ids['coverage-uniformity-scatter'], 'figure'),
@@ -448,7 +449,7 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
-            State(ids["average-coverage-cutoff"], 'value'),
+            State(ids["median-coverage-cutoff"], 'value'),
             State(ids["on-target-cutoff"], 'value'),
             State('url', 'search'),
         ]
@@ -506,7 +507,7 @@ def init_callbacks(dash_app):
             approve_run_href,
             approve_run_style,
             generate_on_target_reads_bar(df, graph_params),
-            generate_average_coverage_scatter(df, graph_params),
+            generate_median_coverage_scatter(df, graph_params),
             generate_on_target_reads_scatter(df, graph_params),
             generate_coverage_percentiles_line(percentile_df, graph_params),
             generate_coverage_uniformity_scatter(df, graph_params),
