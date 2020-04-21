@@ -8,7 +8,7 @@ import gsiqcetl.column
 from .df_manipulation import sample_type_col
 from .sidebar_utils import runs_in_range
 import re
-
+import pdb
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
 BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
@@ -545,6 +545,23 @@ def get_initial_call_ready_values():
         "shownames_val": None
     }
 
+def get_initial_cfmedip_values():
+    return {
+        "runs": [],
+        "instruments": [],
+        "projects": [],
+        "references": [],
+        "kits": [],
+        "library_designs": [],
+        "start_date": None,
+        "end_date": None,
+        "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "second_sort": None,
+        "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shape_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shownames_val": None,
+    }
+
 
 class ColourShapeSARSCoV2:
     def __init__(self, projects, runs, kits, tissue_materials, library_designs, seq_control_types):
@@ -638,8 +655,9 @@ class ColourShapeCallReady:
         }
 
 class ColourShapeCfMeDIP:
-    def __init__(self, projects, institutes, sample_types, tissue_materials, reference):
+    def __init__(self, projects, runs, institutes, sample_types, tissue_materials, reference):
         self.projects = projects
+        self.runs = runs
         self.institutes = institutes
         self.sample_types = sample_types
         self.tissue_materials = tissue_materials
@@ -649,6 +667,7 @@ class ColourShapeCfMeDIP:
     def dropdown():
         return [
             {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Run", "value": PINERY_COL.SequencerRunName},
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
@@ -658,6 +677,7 @@ class ColourShapeCfMeDIP:
     def items_for_df(self):
         return {
             PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.SequencerRunName: self.runs,
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
             PINERY_COL.TissuePreparation: self.tissue_materials,

@@ -19,7 +19,8 @@ pagenames = [
     # "rnaseqc",
     # "runreport",
     # "runscanner",
-    "SARS-CoV-2"
+    "SARS-CoV-2",
+    'single_lane_cfmedip'
 ]
 
 # Please do not edit this array

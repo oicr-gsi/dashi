@@ -12,7 +12,6 @@ from ..utility import log_utils
 from gsiqcetl.column import CfMeDipQcColumn
 import pinery
 import logging
-
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-cfmedip'
@@ -37,8 +36,8 @@ ids = init_ids([
     "references-list",
     'all-kits',
     'kits-list',
-    'all-library-designs',
-    'library-designs-list',
+    'all-institutes',
+    'institutes-list',
     'first-sort',
     'second-sort',
     'colour-by',
@@ -73,7 +72,7 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
 }
 
-initial = get_initial_single_lane_values()
+initial = get_initial_cfmedip_values()
 
 # Set additional initial values for dropdown menus
 initial["second_sort"] = CFMEDIP_COL.RelativeCpGFrequencyEnrichment
@@ -105,7 +104,7 @@ ALL_KITS = util.unique_set(cfmedip, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(cfmedip, PINERY_COL.TissuePreparation)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(cfmedip)
 ALL_SAMPLE_TYPES = util.unique_set(cfmedip, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(cfmedip, cfmedip_COL.Reference)
+ALL_REFERENCES = util.unique_set(cfmedip, CFMEDIP_COL.Reference)
 ALL_INSTITUTES = util.unique_set(cfmedip, PINERY_COL.Institute)
 
 # N.B. The keys in this object must match the argument names for
@@ -118,23 +117,24 @@ collapsing_functions = {
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
-# Specify which columns to display in the DataTable
-first_col_set = [
-    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
-]
-most_cfmedip_cols = [*CFMEDIP_COL.values()]
-later_col_set = [
-    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
-    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
-    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
-    PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
-    INSTRUMENT_COLS.ModelName
-]
-ex_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
+# # Specify which columns to display in the DataTable
+# first_col_set = [
+#     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
+# ]
+# most_cfmedip_cols = [*CFMEDIP_COL.values()]
+# later_col_set = [
+#     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
+#     PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
+#     PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
+#     PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
+#     INSTRUMENT_COLS.ModelName
+# ]
+# ex_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 
 shape_colour = ColourShapeCfMeDIP(
     ALL_PROJECTS, 
+    ALL_RUNS,
     ALL_INSTITUTES, 
     ALL_SAMPLE_TYPES,
     ALL_TISSUE_MATERIALS, 
@@ -262,9 +262,9 @@ def layout(query_string):
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
 
-    df = reshape_single_lane_df(cfmedip, initial["runs"], initial["instruments"],
+    df = reshape_cfmedip_df(cfmedip, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
-                                None, initial["institutes"], initial["start_date"],
+                                initial["institutes"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
@@ -312,9 +312,9 @@ def layout(query_string):
                                                     ids["instruments-list"],
                                                     ILLUMINA_INSTRUMENT_MODELS),
 
-                    sidebar_utils.select_library_designs(
-                        ids["all-library-designs"], ids["library-designs-list"],
-                        ALL_LIBRARY_DESIGNS),
+                    sidebar_utils.select_with_select_all("All Institutes", ids['all-institutes'],
+                                  "Filter by Institute", ids['institutes-list'],
+                                  ALL_INSTITUTES),
 
                     sidebar_utils.hr(),
 
@@ -404,22 +404,22 @@ def layout(query_string):
                             ),
                         ]),
                         # Tables tab
-                        core.Tab(label="Tables",
-                        children=[
-                            table_tabs(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                df,
-                                ex_table_columns,
-                                [
-                                    (cutoff_insert_mean_label, cfmedip_COL.InsertMean, initial[cutoff_insert_mean],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                ]
-                            )
-                        ])
+                        # core.Tab(label="Tables",
+                        # children=[
+                        #     table_tabs(
+                        #         ids["failed-samples"],
+                        #         ids["data-table"],
+                        #         df,
+                        #         None,
+                        #         [
+                        #             (cutoff_insert_mean_label, CFMEDIP_COL.InsertMean, initial[cutoff_insert_mean],
+                        #             (lambda row, col, cutoff: row[col] < cutoff)),
+                        #             (cutoff_pf_reads_label,
+                        #             special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                        #             (lambda row, col, cutoff: row[col] < cutoff)),
+                        #         ]
+                        #     )
+                        # ])
                     ]) # End Tabs
                 ]) # End Div
             ]) # End Div
@@ -455,14 +455,12 @@ def init_callbacks(dash_app):
             State(ids['projects-list'], 'value'),
             State(ids['references-list'], 'value'),
             State(ids['kits-list'], 'value'),
-            State(ids['library-designs-list'], 'value'),
+            State(ids['institutes-list'], 'value'),
             State(ids['first-sort'], 'value'),
             State(ids['second-sort'], 'value'),
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'), 
-            State(ids['show-data-labels'], 'value'),
-            State(ids['insert-size-mean-cutoff'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -476,21 +474,20 @@ def init_callbacks(dash_app):
             projects,
             references,
             kits,
-            library_designs,
+            institutes,
             first_sort, 
             second_sort, 
             colour_by,
             shape_by,
             searchsample,
             show_names,
-            insert_mean_cutoff,
             total_reads_cutoff,
             start_date,
             end_date,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
-        df = reshape_single_lane_df(cfmedip, runs, instruments, projects, references, kits, library_designs,
+        df = reshape_cfmedip_df(cfmedip, runs, instruments, projects, references, kits, institutes,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -506,7 +503,7 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_insert_mean_label, cfmedip_COL.InsertMean, insert_mean_cutoff,
+                (cutoff_insert_mean_label, CFMEDIP_COL.InsertMean, insert_mean_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
                                                     "Filter)"], total_reads_cutoff,
@@ -577,12 +574,12 @@ def init_callbacks(dash_app):
         return [x for x in ALL_KITS]
 
     @dash_app.callback(
-        Output(ids['library-designs-list'], 'value'),
-        [Input(ids['all-library-designs'], 'n_clicks')]
+        Output(ids['institutes-list'], 'value'),
+        [Input(ids['all-institutes'], 'n_clicks')]
     )
-    def all_library_designs_requested(click):
+    def all_institutes_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_LIBRARY_DESIGNS]
+        return [x for x in ALL_INSTITUTES]
 
     @dash_app.callback(
         Output(ids['show-data-labels'], 'value'),
@@ -592,3 +589,34 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x['value'] for x in avail_options]
+
+def reshape_cfmedip_df(df, runs, instruments, projects, references, kits, institutes,
+        start_date, end_date, first_sort, second_sort, colour_by, shape_by,
+        shape_or_colour_values, searchsample) -> DataFrame:
+    """
+    This performs dataframe manipulation based on the input filters, and gets the data into a
+    graph-friendly form.
+    """
+    if not runs and not instruments and not projects and not kits and not institutes and not references:
+        df = DataFrame(columns=df.columns)
+
+    if runs:
+        df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs)]
+    if instruments:
+        df = df[df[pinery.column.InstrumentWithModelColumn.ModelName].isin(instruments)]
+    if projects:
+        df = df[df[pinery.column.SampleProvenanceColumn.StudyTitle].isin(projects)]
+    if references:
+        df = df[df[COMMON_COL.Reference].isin(references)]
+    if kits:
+        df = df[df[pinery.column.SampleProvenanceColumn.PrepKit].isin(kits)]
+    if institutes:
+        df = df[df[pinery.column.SampleProvenanceColumn.Institute].isin(
+            institutes)]
+    df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
+    sort_by = [first_sort, second_sort]
+    df = df.sort_values(by=sort_by)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_size_col(df, searchsample)
+    return df
