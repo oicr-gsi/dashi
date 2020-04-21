@@ -70,6 +70,7 @@ ids = init_ids([
 ])
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
+INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 
 pinery_samples = util.get_pinery_samples()
 # Mean Coverage and Coverage uniformity
@@ -123,9 +124,13 @@ BEDTOOLS_DF = BEDTOOLS_DF.merge(
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(BEDTOOLS_DF, PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(BEDTOOLS_DF, PINERY_COL.PrepKit)
-# TODO: Remove kludge and uncomment real line after Pinery is merged
-ILLUMINA_INSTRUMENT_MODELS = util.unique_set(BEDTOOLS_DF, PINERY_COL.InstrumentName)
-#ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
+
+BEDTOOLS_CALC_DF = util.df_with_instrument_model(BEDTOOLS_CALC_DF, PINERY_COL.SequencerRunName)
+ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(BEDTOOLS_CALC_DF)
+BEDTOOLS_CALC_DF = BEDTOOLS_CALC_DF[BEDTOOLS_CALC_DF[INSTRUMENT_COLS.ModelName].isin(ILLUMINA_INSTRUMENT_MODELS)]
+# TODO: Do the other dataframes need to be similarly filtered?
+
+
 ALL_TISSUE_MATERIALS = util.unique_set(BEDTOOLS_DF, PINERY_COL.TissuePreparation)
 ALL_LIBRARY_DESIGNS = util.unique_set(BEDTOOLS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(BEDTOOLS_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
