@@ -73,13 +73,11 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 
 pinery_samples = util.get_pinery_samples()
-# Mean Coverage and Coverage uniformity
-BEDTOOLS_CALC_DF = util.df_with_pinery_samples_ius(util.get_bedtools_calc(), pinery_samples, util.bedtools_calc_ius_columns)
 SAMTOOLS_STATS_COV2_HUMAN_DF = util.get_samtools_stats_cov2_human()
 SAMTOOLS_STATS_COV2_DEPLETED_DF = util.get_samtools_stats_cov2_depleted()
 BEDTOOLS_COV_PERC_DF = util.get_bedtools_cov_perc()
 BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, util.bedtools_percentile_ius_columns)
-KRAKEN2_DF = util.df_with_pinery_samples_ius(util.get_kraken2(), pinery_samples, util.kraken2_ius_columns)
+KRAKEN2_DF = util.get_kraken2()
 
 special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
 stats_merged = SAMTOOLS_STATS_COV2_HUMAN_DF.merge(SAMTOOLS_STATS_COV2_DEPLETED_DF, how="outer", on=[SAMTOOLS_STATS_COV2_COL.Barcodes, SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane], suffixes=['_human', '_covid'])
@@ -94,7 +92,7 @@ stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [SA
 # Only care for Covid numbers. Be very careful about removing this, as it will make merges break
 KRAKEN2_DF = KRAKEN2_DF[KRAKEN2_DF[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"]
 
-BEDTOOLS_DF = BEDTOOLS_CALC_DF.merge(
+BEDTOOLS_DF = util.get_bedtools_calc().merge(
     KRAKEN2_DF, how="outer",
     on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
     suffixes=('', "_kraken2")
@@ -119,6 +117,8 @@ BEDTOOLS_DF = BEDTOOLS_DF.merge(
     on=[BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes],
     suffixes=('', "_bedtools-coverage")
 )
+
+BEDTOOLS_DF = util.df_with_pinery_samples_ius(BEDTOOLS_DF, pinery_samples, util.bedtools_calc_ius_columns)
 
 
 # Build lists of attributes for sorting, shaping, and filtering on
