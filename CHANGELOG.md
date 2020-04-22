@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * SARS-CoV-2 coverage graph uses median coverage with 10/90 percentile error bars
+  * No legends for cutoff lines nor highlighted samples, to preserve graph widths
+  * SARS-CoV-2 On Target bar chart no longer shows unmapped numbers
+  * Graphs now have white background colour
+  * SARS-CoV-2 report now more accurately gets all Samples
 
 ## [200417-1147] - 2020-04-17
 ## Changed
