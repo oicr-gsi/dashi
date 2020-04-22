@@ -291,6 +291,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 arrayminus=y_data - data[bar_negative],
                 # Allows for only one color. `groupby` ensures this
                 color=data['colour'].iloc[0],
+                width=0,
             )
 
             # Error bar info is not displayed, so is added to hover label
