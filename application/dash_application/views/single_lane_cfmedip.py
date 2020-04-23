@@ -12,6 +12,8 @@ from ..utility import log_utils
 from gsiqcetl.column import CfMeDipQcColumn
 import pinery
 import logging
+import pdb
+
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-cfmedip'
@@ -117,19 +119,19 @@ collapsing_functions = {
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
-# # Specify which columns to display in the DataTable
-# first_col_set = [
-#     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
-# ]
-# most_cfmedip_cols = [*CFMEDIP_COL.values()]
-# later_col_set = [
-#     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
-#     PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
-#     PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
-#     PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
-#     INSTRUMENT_COLS.ModelName
-# ]
-# ex_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
+# Specify which columns to display in the DataTable
+first_col_set = [
+    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
+]
+most_cfmedip_cols = [*CFMEDIP_COL.values()]
+later_col_set = [
+    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
+    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
+    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
+    PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
+    INSTRUMENT_COLS.ModelName
+]
+cfmedip_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 
 shape_colour = ColourShapeCfMeDIP(
@@ -253,7 +255,7 @@ def dataversion():
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
-    # intial runs: should be empty unless query requests otherwise:
+    # initial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
     if "req_runs" in query and query["req_runs"]:
@@ -404,22 +406,20 @@ def layout(query_string):
                             ),
                         ]),
                         # Tables tab
-                        # core.Tab(label="Tables",
-                        # children=[
-                        #     table_tabs(
-                        #         ids["failed-samples"],
-                        #         ids["data-table"],
-                        #         df,
-                        #         None,
-                        #         [
-                        #             (cutoff_insert_mean_label, CFMEDIP_COL.InsertMean, initial[cutoff_insert_mean],
-                        #             (lambda row, col, cutoff: row[col] < cutoff)),
-                        #             (cutoff_pf_reads_label,
-                        #             special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
-                        #             (lambda row, col, cutoff: row[col] < cutoff)),
-                        #         ]
-                        #     )
-                        # ])
+                        core.Tab(label="Tables",
+                        children=[
+                            table_tabs(
+                                ids["failed-samples"],
+                                ids["data-table"],
+                                df,
+                                cfmedip_table_columns,
+                                [
+                                    (cutoff_pf_reads_label,
+                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
+                                ]
+                            )
+                        ])
                     ]) # End Tabs
                 ]) # End Div
             ]) # End Div
@@ -461,6 +461,7 @@ def init_callbacks(dash_app):
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'), 
+            State(ids['show-data-labels'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -485,6 +486,8 @@ def init_callbacks(dash_app):
             start_date,
             end_date,
             search_query):
+        sidebar_utils.update_only_if_clicked(click)
+        sidebar_utils.update_only_if_clicked(click2)
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
         df = reshape_cfmedip_df(cfmedip, runs, instruments, projects, references, kits, institutes,
