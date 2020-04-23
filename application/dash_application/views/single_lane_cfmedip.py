@@ -486,8 +486,8 @@ def init_callbacks(dash_app):
             start_date,
             end_date,
             search_query):
-        sidebar_utils.update_only_if_clicked(click)
-        sidebar_utils.update_only_if_clicked(click2)
+        # sidebar_utils.update_only_if_clicked(click)
+        # sidebar_utils.update_only_if_clicked(click2)
         log_utils.log_filters(locals(), collapsing_functions, logger)
 
         df = reshape_cfmedip_df(cfmedip, runs, instruments, projects, references, kits, institutes,
@@ -500,14 +500,11 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads: total_reads_cutoff,
-            cutoff_insert_mean: insert_mean_cutoff
+            cutoff_pf_reads: total_reads_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_insert_mean_label, CFMEDIP_COL.InsertMean, insert_mean_cutoff,
-                 (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
                                                     "Filter)"], total_reads_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
