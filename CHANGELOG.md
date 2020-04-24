@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 ## Changed
+  * locks down dependency versions to specific versions to avoid breaking changes, please run 'pip install -r requirements.txt --upgrade --no-cache-dir` 
+
+## [200422-1118] - 2020-04-22
+## Changed
   * SARS-CoV-2 coverage graph uses median coverage with 10/90 percentile error bars
   * No legends for cutoff lines nor highlighted samples, to preserve graph widths
   * SARS-CoV-2 On Target bar chart no longer shows unmapped numbers
