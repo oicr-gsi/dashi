@@ -86,6 +86,9 @@ initial[cutoff_pf_reads] = 0.01
 
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
+    cfmedip_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        cfmedip_df[CFMEDIP_COL.TotalReads] / 1e6, 3
+    )
 
     pinery_samples = util.get_pinery_samples()
 
@@ -325,12 +328,16 @@ def layout(query_string):
                         ids['first-sort'],
                         initial["first_sort"],
                         [
+                            {"label": "Project",
+                            "value": PINERY_COL.StudyTitle},
                             {"label": "Institute",
                             "value": PINERY_COL.Institute}, 
                             {"label": "Sample Type",
                             "value": util.sample_type_col},
                             {"label": "Tissue Type",
-                            "value": PINERY_COL.TissueType}, 
+                            "value": PINERY_COL.TissueType},
+                            {"label": "Run",
+                            "value": PINERY_COL.SequencerRunName} 
                         ]
                     ),
 
