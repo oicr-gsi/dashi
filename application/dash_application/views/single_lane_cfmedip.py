@@ -150,19 +150,19 @@ cfmedip = add_graphable_cols(cfmedip, initial, shape_colour.items_for_df())
 
 
 def generate_number_windows(current_data, graph_params):
-    #TODO this one is like 4 different columns?
-    return None
-
-    # return generate(
-    #     "Log10 # Windows at 1, 10, 50, 100x",
-    #     current_data,
-    #     lambda d: d[PINERY_COL.SampleName],
-    #     lambda d: sidebar_utils.percentage_of(d, cfmedip_COL.UnmappedReads, cfmedip_COL.TotalReads),
-    #     "Log10 Coverage",
-    #     graph_params["colour_by"],
-    #     graph_params["shape_by"],
-    #     graph_params["shownames_val"]
-    # )
+    return generate(
+        "Log10 # Windows at 1, 10, 50, 100x",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        [lambda d: d[CFMEDIP_COL.NumWindowsWith1Reads], 
+        lambda d: d[CFMEDIP_COL.NumWindowsWith10Reads],
+        lambda d: d[CFMEDIP_COL.NumWindowsWith50Reads],
+        lambda d: d[CFMEDIP_COL.NumWindowsWith100Reads]],
+        "Log10 Coverage",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
 
 
 def generate_percent_pf_reads_aligned(current_data, graph_params):

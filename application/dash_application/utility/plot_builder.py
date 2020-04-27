@@ -289,50 +289,17 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         name_format = lambda n: "{0}".format(n[0])
     else:
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
-    for name, data in grouped_data:
-        y_data = y_fn(data)
 
-        if bar_positive and bar_negative:
-            error_y = dict(
-                type='data',
-                symmetric=False,
-                array=data[bar_positive] - y_data,
-                arrayminus=y_data - data[bar_negative],
-                # Allows for only one color. `groupby` ensures this
-                color=data['colour'].iloc[0],
-                width=0,
-            )
-
-            # Error bar info is not displayed, so is added to hover label
-            if hovertext_cols is None:
-                hovertext_display_cols = [bar_positive, bar_negative]
-            else:
-                hovertext_display_cols = hovertext_cols + [bar_positive, bar_negative]
-        else:
-            error_y = None
-            hovertext_display_cols = hovertext_cols
-
-        hovertext = create_data_label(data, hovertext_display_cols)
-
-        graph = dict(
-            type=graph_type,
-            x=x_fn(data),
-            y=y_data,
-            name=name_format(name),
-            hovertext=hovertext,
-            showlegend=True,
-            mode=markermode,
-            marker={
-                "symbol": data['shape'],
-                "color": data['colour'], # Please note the 'u'
-                "size": data['markersize']
-            },
-            # Hover labels are not cropped
-            # https://github.com/plotly/plotly.js/issues/460
-            hoverlabel={"namelength": -1},
-            error_y=error_y,
-        )
-        traces.append(graph)
+    if isinstance(y_fn, list):
+        #pdb.set_trace()
+        for fn in y_fn:
+            for name, data in grouped_data:
+                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
+    else: 
+        for name, data in grouped_data:
+            traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
+    
+    
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
             type=graph_type,
@@ -468,6 +435,50 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
     )
 
     return figure
+
+def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type):
+    y_data = y_fn(data)
+
+    if bar_positive and bar_negative:
+        error_y = dict(
+            type='data',
+            symmetric=False,
+            array=data[bar_positive] - y_data,
+            arrayminus=y_data - data[bar_negative],
+            # Allows for only one color. `groupby` ensures this
+            color=data['colour'].iloc[0],
+            width=0,
+        )
+
+        # Error bar info is not displayed, so is added to hover label
+        if hovertext_cols is None:
+            hovertext_display_cols = [bar_positive, bar_negative]
+        else:
+            hovertext_display_cols = hovertext_cols + [bar_positive, bar_negative]
+    else:
+        error_y = None
+        hovertext_display_cols = hovertext_cols
+
+    hovertext = create_data_label(data, hovertext_display_cols)
+
+    return dict(
+        type=graph_type,
+        x=x_fn(data),
+        y=y_data,
+        name=name_format(name),
+        hovertext=hovertext,
+        showlegend=True,
+        mode=markermode,
+        marker={
+            "symbol": data['shape'],
+            "color": data['colour'], # Please note the 'u'
+            "size": data['markersize']
+        },
+        # Hover labels are not cropped
+        # https://github.com/plotly/plotly.js/issues/460
+        hoverlabel={"namelength": -1},
+        error_y=error_y,
+    )
 
 
 def _get_dict_wrapped(key_list, value_list):
