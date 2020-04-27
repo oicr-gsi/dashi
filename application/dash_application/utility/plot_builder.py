@@ -253,7 +253,10 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         'linecolor': 'darkgrey',
         'zeroline': True,
         'zerolinewidth': 1,
-        'zerolinecolor': 'darkgrey'
+        'zerolinecolor': 'darkgrey',
+        'showgrid': True,
+        'gridwidth': 1,
+        'gridcolor': 'lightgrey'
     }
     if axis_text == '%':
         y_axis['range'] = [0, 100]
