@@ -392,6 +392,15 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
                 'title': {
                     'text': yaxis_text
                 },
+                'showline': True,
+                'linewidth': 1,
+                'linecolor': 'darkgrey',
+                'zeroline': True,
+                'zerolinewidth': 1,
+                'zerolinecolor': 'darkgrey',
+                'showgrid': True,
+                'gridwidth': 1,
+                'gridcolor': 'lightgrey',
                 'range': [0,100]
             },
             margin = go.layout.Margin(
@@ -436,6 +445,15 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
                 'title': {
                     'text': yaxis_text
                 },
+                'showline': True,
+                'linewidth': 1,
+                'linecolor': 'darkgrey',
+                'zeroline': True,
+                'zerolinewidth': 1,
+                'zerolinecolor': 'darkgrey',
+                'showgrid': True,
+                'gridwidth': 1,
+                'gridcolor': 'lightgrey',
                 'range': [0,100]
             },
             margin = go.layout.Margin(
