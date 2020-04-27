@@ -388,7 +388,7 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
             xaxis={'visible': False,
                     'rangemode': 'normal',
                     'autorange': True},
-            y_axis = {
+            yaxis = {
                 'title': {
                     'text': axis_text
                 },
@@ -441,7 +441,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
                    'title': {
                        'text': xaxis_text
                    }},
-            y_axis = {
+            yaxis = {
                 'title': {
                     'text': axis_text
                 },
