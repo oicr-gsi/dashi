@@ -401,7 +401,7 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
                 'showgrid': True,
                 'gridwidth': 1,
                 'gridcolor': 'lightgrey',
-                'range': [0, 100]
+                'range': [0,100]
             },
             margin = go.layout.Margin(
                 l=50,
