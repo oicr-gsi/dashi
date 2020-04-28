@@ -291,10 +291,9 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
 
     if isinstance(y_fn, list):
-        #pdb.set_trace()
         for fn in y_fn:
             for name, data in grouped_data:
-                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
+                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, fn(data).name))
     else: 
         for name, data in grouped_data:
             traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
@@ -436,7 +435,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
 
     return figure
 
-def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type):
+def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, additional_hovertext=None):
     y_data = y_fn(data)
 
     if bar_positive and bar_negative:
@@ -460,6 +459,8 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
         hovertext_display_cols = hovertext_cols
 
     hovertext = create_data_label(data, hovertext_display_cols)
+    if additional_hovertext:
+        hovertext += '<br />' + additional_hovertext
 
     return dict(
         type=graph_type,
