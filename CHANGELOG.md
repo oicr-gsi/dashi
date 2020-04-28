@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Changed
   * locks down dependency versions to specific versions to avoid breaking changes, please run 'pip install -r requirements.txt --upgrade --no-cache-dir` 
+  * Improved styling for graphs
 
 ## [200422-1118] - 2020-04-22
 ## Changed
