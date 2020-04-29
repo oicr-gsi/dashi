@@ -290,11 +290,11 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
 
     if isinstance(y_fn, list):
-        in_legend = []
+        in_legend = {}
         for fn in y_fn:
             for name, data in grouped_data:
-                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=(not name_format(name) in in_legend), additional_hovertext=fn(data).name))
-                in_legend.append(name_format(name))
+                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
+                in_legend[name_format(name)] = True
     else: 
         for name, data in grouped_data:
             traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
