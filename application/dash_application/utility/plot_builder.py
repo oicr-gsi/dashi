@@ -122,7 +122,6 @@ def create_data_label(
             DATA_LABEL_NAME.get(x, '') + str(row[x]) for x in ordered
         ]
         return "<br>".join(with_names)
-
     return df.apply(apply_label, axis=1)
 
 
@@ -467,6 +466,7 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
         x=x_fn(data),
         y=y_data,
         name=name_format(name),
+        legendgroup=name_format(name),
         hovertext=hovertext,
         showlegend=True,
         mode=markermode,
