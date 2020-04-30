@@ -105,6 +105,7 @@ def create_data_label(
     Args:
         df: The DataFrame that contains columns that match the labels
         cols: Which columns to generate the labels from
+        additional_text: Text to add which is not taken from a column
 
     Returns:
 
