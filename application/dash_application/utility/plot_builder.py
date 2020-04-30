@@ -96,7 +96,7 @@ DATA_LABEL_NAME = {
 
 
 def create_data_label(
-        df: pandas.DataFrame, cols: Union[None, List[str]]) -> List[str]:
+        df: pandas.DataFrame, cols: Union[None, List[str]], additional_text=None) -> List[str]:
     """
     Creates data labels that are in the correct order and have proper names
     appended. If the columns don't exist in the order constant, their label
@@ -121,6 +121,8 @@ def create_data_label(
         with_names = [
             DATA_LABEL_NAME.get(x, '') + str(row[x]) for x in ordered
         ]
+        if additional_text:
+            with_names += [additional_text]
         return "<br>".join(with_names)
     return df.apply(apply_label, axis=1)
 
@@ -462,9 +464,7 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
         error_y = None
         hovertext_display_cols = hovertext_cols
 
-    hovertext = create_data_label(data, hovertext_display_cols)
-    if additional_hovertext:
-        hovertext += '<br />' + additional_hovertext
+    hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
 
     return dict(
         type=graph_type,
