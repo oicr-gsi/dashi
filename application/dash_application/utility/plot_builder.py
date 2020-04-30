@@ -8,7 +8,7 @@ import gsiqcetl.column
 from .df_manipulation import sample_type_col
 from .sidebar_utils import runs_in_range
 import re
-import pdb
+
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
 BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
@@ -109,8 +109,10 @@ def create_data_label(
     Returns:
 
     """
-    if cols is None:
+    if cols is None and additional_text is None:
         return []
+    if cols is None:
+        return df.apply(lambda r: "<br />"+additional_text, axis=1)
 
     no_order = [x for x in cols if x not in DATA_LABEL_ORDER]
     ordered = [x for x in cols if x in DATA_LABEL_ORDER]
