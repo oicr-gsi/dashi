@@ -153,10 +153,12 @@ def generate_number_windows(current_data, graph_params):
         "Log10 # Windows at 1, 10, 50, 100x",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        [lambda d: d[CFMEDIP_COL.NumWindowsWith1Reads], 
-        lambda d: d[CFMEDIP_COL.NumWindowsWith10Reads],
-        lambda d: d[CFMEDIP_COL.NumWindowsWith50Reads],
-        lambda d: d[CFMEDIP_COL.NumWindowsWith100Reads]],
+        [
+            lambda d: d[CFMEDIP_COL.NumWindowsWith1Reads], 
+            lambda d: d[CFMEDIP_COL.NumWindowsWith10Reads],
+            lambda d: d[CFMEDIP_COL.NumWindowsWith50Reads],
+            lambda d: d[CFMEDIP_COL.NumWindowsWith100Reads]
+        ],
         "Log10 Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
