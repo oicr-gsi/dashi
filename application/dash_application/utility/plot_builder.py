@@ -316,20 +316,37 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             name=cutoff_label
         ))
     if not highlight_df.empty:
-        traces.append(dict( # Draw highlighted items on top
-            type=graph_type,
-            x=x_fn(highlight_df),
-            y=y_fn(highlight_df),
-            name="Highlighted Samples",
-            mode='markers',
-            showlegend=False,
-            marker={
-                "symbol": highlight_df['shape'],
-                "color": highlight_df['colour'],
-                "size": highlight_df['markersize'],
-                "opacity": 1
-            }
-        ))
+        if isinstance(y_fn, list):
+            for fn in y_fn: # Don't like looping over this twice but unsure whether these can be guaranteed to be in foreground otherwise
+                traces.append(dict( # Draw highlighted items on top
+                    type=graph_type,
+                    x=x_fn(highlight_df),
+                    y=fn(highlight_df),
+                    name="Highlighted Samples",
+                    mode='markers',
+                    showlegend=False,
+                    marker={
+                        "symbol": highlight_df['shape'],
+                        "color": highlight_df['colour'],
+                        "size": highlight_df['markersize'],
+                        "opacity": 1
+                    }
+                ))
+        else:
+            traces.append(dict( # Draw highlighted items on top
+                type=graph_type,
+                x=x_fn(highlight_df),
+                y=y_fn(highlight_df),
+                name="Highlighted Samples",
+                mode='markers',
+                showlegend=False,
+                marker={
+                    "symbol": highlight_df['shape'],
+                    "color": highlight_df['colour'],
+                    "size": highlight_df['markersize'],
+                    "opacity": 1
+                }
+            ))
 
     return go.Figure(
         data = traces,
