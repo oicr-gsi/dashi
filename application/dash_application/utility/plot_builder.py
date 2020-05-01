@@ -96,7 +96,7 @@ DATA_LABEL_NAME = {
 
 
 def create_data_label(
-        df: pandas.DataFrame, cols: Union[None, List[str]]) -> List[str]:
+        df: pandas.DataFrame, cols: Union[None, List[str]], additional_text=None) -> List[str]:
     """
     Creates data labels that are in the correct order and have proper names
     appended. If the columns don't exist in the order constant, their label
@@ -105,12 +105,15 @@ def create_data_label(
     Args:
         df: The DataFrame that contains columns that match the labels
         cols: Which columns to generate the labels from
+        additional_text: Text to add which is not taken from a column
 
     Returns:
 
     """
-    if cols is None:
+    if cols is None and additional_text is None:
         return []
+    if cols is None:
+        return df.apply(lambda r: "<br />"+additional_text, axis=1)
 
     no_order = [x for x in cols if x not in DATA_LABEL_ORDER]
     ordered = [x for x in cols if x in DATA_LABEL_ORDER]
@@ -121,8 +124,9 @@ def create_data_label(
         with_names = [
             DATA_LABEL_NAME.get(x, '') + str(row[x]) for x in ordered
         ]
+        if additional_text:
+            with_names += [additional_text]
         return "<br>".join(with_names)
-
     return df.apply(apply_label, axis=1)
 
 
@@ -289,50 +293,18 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         name_format = lambda n: "{0}".format(n[0])
     else:
         name_format = lambda n: "{0}<br>{1}".format(n[0], n[1])
-    for name, data in grouped_data:
-        y_data = y_fn(data)
 
-        if bar_positive and bar_negative:
-            error_y = dict(
-                type='data',
-                symmetric=False,
-                array=data[bar_positive] - y_data,
-                arrayminus=y_data - data[bar_negative],
-                # Allows for only one color. `groupby` ensures this
-                color=data['colour'].iloc[0],
-                width=0,
-            )
-
-            # Error bar info is not displayed, so is added to hover label
-            if hovertext_cols is None:
-                hovertext_display_cols = [bar_positive, bar_negative]
-            else:
-                hovertext_display_cols = hovertext_cols + [bar_positive, bar_negative]
-        else:
-            error_y = None
-            hovertext_display_cols = hovertext_cols
-
-        hovertext = create_data_label(data, hovertext_display_cols)
-
-        graph = dict(
-            type=graph_type,
-            x=x_fn(data),
-            y=y_data,
-            name=name_format(name),
-            hovertext=hovertext,
-            showlegend=True,
-            mode=markermode,
-            marker={
-                "symbol": data['shape'],
-                "color": data['colour'], # Please note the 'u'
-                "size": data['markersize']
-            },
-            # Hover labels are not cropped
-            # https://github.com/plotly/plotly.js/issues/460
-            hoverlabel={"namelength": -1},
-            error_y=error_y,
-        )
-        traces.append(graph)
+    if isinstance(y_fn, list):
+        in_legend = {}
+        for fn in y_fn:
+            for name, data in grouped_data:
+                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
+                in_legend[name_format(name)] = True
+    else: 
+        for name, data in grouped_data:
+            traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
+    
+    
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
             type=graph_type,
@@ -344,20 +316,37 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             name=cutoff_label
         ))
     if not highlight_df.empty:
-        traces.append(dict( # Draw highlighted items on top
-            type=graph_type,
-            x=x_fn(highlight_df),
-            y=y_fn(highlight_df),
-            name="Highlighted Samples",
-            mode='markers',
-            showlegend=False,
-            marker={
-                "symbol": highlight_df['shape'],
-                "color": highlight_df['colour'],
-                "size": highlight_df['markersize'],
-                "opacity": 1
-            }
-        ))
+        if isinstance(y_fn, list):
+            for fn in y_fn: # Don't like looping over this twice but unsure whether these can be guaranteed to be in foreground otherwise
+                traces.append(dict( # Draw highlighted items on top
+                    type=graph_type,
+                    x=x_fn(highlight_df),
+                    y=fn(highlight_df),
+                    name="Highlighted Samples",
+                    mode='markers',
+                    showlegend=False,
+                    marker={
+                        "symbol": highlight_df['shape'],
+                        "color": highlight_df['colour'],
+                        "size": highlight_df['markersize'],
+                        "opacity": 1
+                    }
+                ))
+        else:
+            traces.append(dict( # Draw highlighted items on top
+                type=graph_type,
+                x=x_fn(highlight_df),
+                y=y_fn(highlight_df),
+                name="Highlighted Samples",
+                mode='markers',
+                showlegend=False,
+                marker={
+                    "symbol": highlight_df['shape'],
+                    "color": highlight_df['colour'],
+                    "size": highlight_df['markersize'],
+                    "opacity": 1
+                }
+            ))
 
     return go.Figure(
         data = traces,
@@ -367,7 +356,10 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                 'rangemode': 'normal',
                 'autorange': True},
-            yaxis=y_axis
+            yaxis=y_axis,
+            legend = {
+                'tracegroupgap': 0,
+            },
         )
     )
 
@@ -469,6 +461,51 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
 
     return figure
 
+def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=True, additional_hovertext=None):
+    y_data = y_fn(data)
+
+    if bar_positive and bar_negative:
+        error_y = dict(
+            type='data',
+            symmetric=False,
+            array=data[bar_positive] - y_data,
+            arrayminus=y_data - data[bar_negative],
+            # Allows for only one color. `groupby` ensures this
+            color=data['colour'].iloc[0],
+            width=0,
+        )
+
+        # Error bar info is not displayed, so is added to hover label
+        if hovertext_cols is None:
+            hovertext_display_cols = [bar_positive, bar_negative]
+        else:
+            hovertext_display_cols = hovertext_cols + [bar_positive, bar_negative]
+    else:
+        error_y = None
+        hovertext_display_cols = hovertext_cols
+
+    hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
+
+    return dict(
+        type=graph_type,
+        x=x_fn(data),
+        y=y_data,
+        name=name_format(name),
+        legendgroup=name_format(name),
+        hovertext=hovertext,
+        showlegend=show_legend,
+        mode=markermode,
+        marker={
+            "symbol": data['shape'],
+            "color": data['colour'], # Please note the 'u'
+            "size": data['markersize']
+        },
+        # Hover labels are not cropped
+        # https://github.com/plotly/plotly.js/issues/460
+        hoverlabel={"namelength": -1},
+        error_y=error_y,
+    )
+
 
 def _get_dict_wrapped(key_list, value_list):
     kv_dict = {}
@@ -543,6 +580,23 @@ def get_initial_call_ready_values():
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
         "shape_by": sample_type_col,
         "shownames_val": None
+    }
+
+def get_initial_cfmedip_values():
+    return {
+        "runs": [],
+        "instruments": [],
+        "projects": [],
+        "references": [],
+        "kits": [],
+        "library_designs": [],
+        "start_date": None,
+        "end_date": None,
+        "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "second_sort": None,
+        "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shape_by": pinery.column.SampleProvenanceColumn.StudyTitle,
+        "shownames_val": None,
     }
 
 
@@ -631,6 +685,36 @@ class ColourShapeCallReady:
         return {
             PINERY_COL.StudyTitle: self.projects,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs,
+            PINERY_COL.Institute: self.institutes,
+            sample_type_col: self.sample_types,
+            PINERY_COL.TissuePreparation: self.tissue_materials,
+            COMMON_COL.Reference: self.reference,
+        }
+
+class ColourShapeCfMeDIP:
+    def __init__(self, projects, runs, institutes, sample_types, tissue_materials, reference):
+        self.projects = projects
+        self.runs = runs
+        self.institutes = institutes
+        self.sample_types = sample_types
+        self.tissue_materials = tissue_materials
+        self.reference = reference
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Project", "value": PINERY_COL.StudyTitle},
+            {"label": "Run", "value": PINERY_COL.SequencerRunName},
+            {"label": "Institute", "value": PINERY_COL.Institute},
+            {"label": "Sample Type", "value": sample_type_col},
+            {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Reference", "value": COMMON_COL.Reference},
+        ]
+
+    def items_for_df(self):
+        return {
+            PINERY_COL.StudyTitle: self.projects,
+            PINERY_COL.SequencerRunName: self.runs,
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
             PINERY_COL.TissuePreparation: self.tissue_materials,

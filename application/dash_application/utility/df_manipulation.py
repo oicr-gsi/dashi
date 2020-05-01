@@ -7,9 +7,10 @@ from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import pinery
 
+
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
-wgs_lib_designs = ["AS", "CH", "CM", "NN", "WG"]
+wgs_lib_designs = ["AS", "CH", "NN", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC_COL = gsiqcetl.column.BamQcColumn
@@ -29,6 +30,7 @@ KRAKEN2_COL = gsiqcetl.column.Kraken2Column
 BEDTOOLS_CALC_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
 BEDTOOLS_PERCENTILE_COL = gsiqcetl.column.BedToolsGenomeCovCoveragePercentileColumn
 SAMTOOLS_STATS_COV2_COL = gsiqcetl.column.SamtoolsStatsColumn
+CFMEDIP_COL = gsiqcetl.column.CfMeDipQcColumn
 sample_type_col = "Sample Type"
 ml_col = "Merged Library"
 
@@ -45,6 +47,7 @@ fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
 bedtools_calc_ius_columns = [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes]
 bedtools_percentile_ius_columns = [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes]
 kraken2_ius_columns = [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes]
+cfmedip_ius_columns = [CFMEDIP_COL.Run, CFMEDIP_COL.Lane, CFMEDIP_COL.Barcodes]
 
 pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
     PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
@@ -67,7 +70,6 @@ rnaseqqc2_merged_columns = [RNASEQQC2_MERGED_COL.Project,
     RNASEQQC2_MERGED_COL.Donor, RNASEQQC2_MERGED_COL.GroupID,
     RNASEQQC2_MERGED_COL.LibraryDesign, RNASEQQC2_MERGED_COL.TissueOrigin,
     RNASEQQC2_MERGED_COL.TissueType]
-
 
 TUMOUR = "Tumour"
 BLOOD = "Blood"
@@ -140,6 +142,7 @@ _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 _bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
 _bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns)
 _bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
+_cfmedip = cache.cfmedipqc.cfmedipqc
 _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
 _fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
@@ -286,6 +289,9 @@ def get_bedtools_calc():
 
 def get_bedtools_cov_perc():
     return _bedtools_cov_perc.copy(deep=True)
+
+def get_cfmedip():
+    return _cfmedip.copy(deep=True)
 
 def get_fastqc():
     return _fastqc.copy(deep=True)
