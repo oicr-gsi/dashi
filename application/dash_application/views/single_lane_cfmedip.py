@@ -171,7 +171,7 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
         "PF Reads Aligned (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[CFMEDIP_COL.PercentPassedFilterAlignedReads],
+        lambda d: d[CFMEDIP_COL.PercentPassedFilterAlignedReads] * 100,
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
