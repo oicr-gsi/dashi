@@ -317,50 +317,16 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"], [],
         util.ml_col)
 
+
 def generate_bait(df):
-    criteria = [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, HSMETRICS_COL.OffBaitBases]
     return generate_bar(
-        df, 
-        criteria, 
+        df,
+        [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, ],
         lambda d: d[util.ml_col],
         lambda d, col: d[col] / d[special_cols["Total Bait Bases"]] * 100,
-        "On/Near/Off Bait Bases (%)",
+        "On and Near Bait Bases (%)",
         "%"
     )
-    
-    for col in criteria:
-        graph = go.Bar(
-            name = col + " (%)",
-            x = df[util.ml_col],
-            y = df[col] / df[special_cols["Total Bait Bases"]] * 100
-        )
-        graphs.append(graph)
-    
-    figure = go.Figure(
-        data = graphs,
-        layout = go.Layout(
-            title = "On/Near/Off Bait Bases (%)",
-            xaxis={'visible': False,
-                    'rangemode': 'normal',
-                    'autorange': True},
-            yaxis = {
-                'title': {
-                    'text': "%"
-                },
-                'range': [0,100]
-            },
-            margin = go.layout.Margin(
-                l=50,
-                r=50,
-                b=50,
-                t=50,
-                pad=4
-            )
-        )
-    )
-    figure.update_layout(barmode='stack')
-
-    return figure
 
 
 def layout(query_string):
