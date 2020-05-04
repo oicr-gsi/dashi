@@ -130,7 +130,7 @@ def get_wgs_data():
                                ICHOR_COL.Ploidy,
                                ICHOR_COL.TumorFraction]]
 
-    bamqc_df = util.get_bamqc3()
+    bamqc_df = util.get_bamqc3_and_4()
 
     # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(

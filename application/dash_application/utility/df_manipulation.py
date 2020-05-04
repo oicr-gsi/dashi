@@ -1,10 +1,10 @@
 import pandas
-import numpy
 from pandas import DataFrame, Series
 from typing import List
 
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
+import gsiqcetl.common.utility
 import pinery
 
 
@@ -15,9 +15,11 @@ wgs_lib_designs = ["AS", "CH", "NN", "WG"]
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC_COL = gsiqcetl.column.BamQcColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
+BAMQC4_COL = gsiqcetl.column.BamQc4Column
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC_COL = gsiqcetl.column.RnaSeqQcColumn
 BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
+BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
 ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
@@ -39,6 +41,7 @@ pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
 
 bamqc_ius_columns = [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes]
 bamqc3_ius_columns = [BAMQC3_COL.Run, BAMQC3_COL.Lane, BAMQC3_COL.Barcodes]
+bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
                         ICHORCNA_COL.Barcodes]
 rnaseqqc_ius_columns = [RNASEQQC_COL.Run, RNASEQQC_COL.Lane,
@@ -55,6 +58,9 @@ pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
 bamqc3_merged_columns = [BAMQC3_MERGED_COL.Project, BAMQC3_MERGED_COL.Donor,
     BAMQC3_MERGED_COL.GroupID, BAMQC3_MERGED_COL.LibraryDesign,
     BAMQC3_MERGED_COL.TissueOrigin, BAMQC3_MERGED_COL.TissueType]
+bamqc4_merged_columns = [BAMQC4_MERGED_COL.Project, BAMQC4_MERGED_COL.Donor,
+                         BAMQC4_MERGED_COL.GroupID, BAMQC4_MERGED_COL.LibraryDesign,
+                         BAMQC4_MERGED_COL.TissueOrigin, BAMQC4_MERGED_COL.TissueType]
 ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Project,
     ICHORCNA_MERGED_COL.Donor, ICHORCNA_MERGED_COL.GroupID,
     ICHORCNA_MERGED_COL.LibraryDesign, ICHORCNA_MERGED_COL.TissueOrigin,
@@ -140,6 +146,8 @@ _rnaseqqc = normalized_ius(cache.rnaseqqc.rnaseqqc, rnaseqqc_ius_columns)
 _bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 _bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
+_bamqc4 = normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns)
+_bamqc4_merged = normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns)
 _bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns)
 _bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
 _cfmedip = cache.cfmedipqc.cfmedipqc
@@ -284,6 +292,13 @@ def get_bamqc():
 def get_bamqc3():
     return _bamqc3.copy(deep=True)
 
+
+def get_bamqc3_and_4():
+    # Utility function creates new DataFrame, so no need to copy again
+    return gsiqcetl.common.utility.concat_workflow_versions(
+        [_bamqc4, _bamqc3], bamqc4_ius_columns,
+    )
+
 def get_bedtools_calc():
     return _bedtools_calc.copy(deep=True)
 
@@ -315,6 +330,13 @@ def get_rnaseqqc():
 
 def get_bamqc3_merged():
     return _bamqc3_merged.copy(deep=True)
+
+
+def get_bamqc3_and_4_merged():
+    # Utility function creates new DataFrame, so no need to copy again
+    return gsiqcetl.common.utility.concat_workflow_versions(
+        [_bamqc4_merged, _bamqc3_merged], bamqc4_merged_columns,
+    )
 
 
 def get_ichorcna_merged():
