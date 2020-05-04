@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200504-1619] - 2020-05-04
+## Changed
+  * Show only On & Near Bases on TS Bar graph
+  * Use BamQC4 as well as BamQC3
+
+## Added
+  * cfMeDIP report
+
+## [200428-1006] - 2020-04-28
 ## Changed
   * locks down dependency versions to specific versions to avoid breaking changes, please run 'pip install -r requirements.txt --upgrade --no-cache-dir` 
   * Improved styling for graphs
