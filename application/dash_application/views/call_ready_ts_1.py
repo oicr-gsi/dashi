@@ -111,7 +111,7 @@ def get_merged_ts_data():
     callability_df = util.get_mutect_callability()
     callability_df = util.filter_by_library_design(callability_df, util.ex_lib_designs, CALL_COL.LibraryDesign)
 
-    bamqc3_df = util.get_bamqc3_merged()
+    bamqc3_df = util.get_bamqc3_and_4_merged()
     bamqc3_df = util.filter_by_library_design(bamqc3_df, util.ex_lib_designs, BAMQC_COL.LibraryDesign)
 
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(

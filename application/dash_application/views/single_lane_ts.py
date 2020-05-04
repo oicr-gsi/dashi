@@ -84,7 +84,7 @@ cutoff_insert_mean = "cutoff_insert_mean"
 initial[cutoff_insert_mean] = 150
 
 def get_bamqc_data():
-    bamqc_df = util.get_bamqc3()
+    bamqc_df = util.get_bamqc3_and_4()
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
 

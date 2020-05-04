@@ -103,7 +103,7 @@ def get_merged_wgs_data():
     callability_df = util.filter_by_library_design(callability_df,
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
-    bamqc3_df = util.get_bamqc3_merged()
+    bamqc3_df = util.get_bamqc3_and_4_merged()
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
