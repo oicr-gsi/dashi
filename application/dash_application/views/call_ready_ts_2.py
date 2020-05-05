@@ -87,7 +87,9 @@ special_cols = {
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
     "File SWID HsMetrics": "File SWID HsMetrics",
-    "Total Bait Bases": "Total bait bases"
+    "Total Bait Bases": "Total bait bases",
+    "On Bait Percentage": "On Bait Percentage",
+    "Near Bait Percentage": "Near Bait Percentage",
 }
 
 
@@ -127,6 +129,8 @@ def get_merged_ts_data():
     callability_df[special_cols["Callability (14x/8x)"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
+    hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
+    hsmetrics_df[special_cols["Near Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.NearBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
 
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
@@ -321,11 +325,15 @@ def generate_gc_dropout(df, graph_params):
 def generate_bait(df):
     return generate_bar(
         df,
-        [HSMETRICS_COL.OnBaitBases, HSMETRICS_COL.NearBaitBases, ],
+        [special_cols["On Bait Percentage"], special_cols["Near Bait Percentage"], ],
         lambda d: d[util.ml_col],
-        lambda d, col: d[col] / d[special_cols["Total Bait Bases"]] * 100,
+        lambda d, col: d[col],
         "On and Near Bait Bases (%)",
-        "%"
+        "%",
+        fill_color={
+            special_cols["On Bait Percentage"]: "black",
+            special_cols["Near Bait Percentage"]: "red",
+        },
     )
 
 
@@ -399,7 +407,11 @@ def layout(query_string):
                                                          {"label": "AT Dropout",
                                                           "value": HSMETRICS_COL.AtDropout},
                                                          {"label": "GC Dropout",
-                                                          "value": HSMETRICS_COL.GCDropout}
+                                                          "value": HSMETRICS_COL.GCDropout},
+                                                         {"label": "On Bait",
+                                                          "value": special_cols["On Bait Percentage"]},
+                                                         {"label": "Near Bait",
+                                                          "value": special_cols["Near Bait Percentage"]},
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],

@@ -183,7 +183,11 @@ def generate_on_target_reads_bar(current_data, graph_params):
         lambda d: d[PINERY_COL.SampleName] + d[PINERY_COL.LaneNumber].astype(str) + d[PINERY_COL.SequencerRunName],
         lambda d, col: d[col] * 100,
         "On-Target (%)",
-        "%"
+        "%",
+        fill_color={
+            "reads mapped_human": "black",
+            "reads mapped_covid": "red",
+        },
     )
 
 
@@ -332,7 +336,11 @@ def layout(query_string):
                             {"label": "Uniformity of Coverage",
                              "value": BEDTOOLS_CALC_COL.CoverageUniformity},
                             {"label": "Sequencing Control Type",
-                             "value": PINERY_COL.SequencingControlType}
+                             "value": PINERY_COL.SequencingControlType},
+                            {"label": "Mapped to Covid Percentage",
+                             "value": "reads mapped_covid"},
+                            {"label": "Mapped to Human Percentage",
+                             "value": "reads mapped_human"},
                         ]
                     ),
 
