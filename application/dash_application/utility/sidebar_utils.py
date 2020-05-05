@@ -318,12 +318,15 @@ def parse_query(query) -> List[str]:
     queries = {
         "req_start": None,
         "req_end": None,
-        "req_runs": []
+        "req_runs": [],
+        "req_projects": []
     }
     if "last" in query_dict:
         queries["req_start"], queries["req_end"] = get_requested_run_date_range(query_dict["last"][0])
     if "run" in query_dict:
         queries["req_runs"] = query_dict["run"]
+    if "project" in query_dict:
+        queries["req_projects"] = query_dict["project"]
     return queries
 
 

@@ -276,7 +276,11 @@ def generate_unmapped_reads(df, graph_params):
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
     # no queries apply here...yet
-
+    if "req_projects" in query and query["req_projects"]:
+        initial["projects"] = query["req_projects"]
+    elif "req_start" in query and query["req_start"]:
+        initial["runs"] = ALL_PROJECTS
+        query["req_runs"] = ALL_PROJECTS  # fill in the projects dropdown
     df = reshape_call_ready_df(WGS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"],
                                initial["sample_types"],

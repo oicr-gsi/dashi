@@ -205,7 +205,7 @@ def dataversion():
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
-    # intial runs: should be empty unless query requests otherwise:
+    # initial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
     if "req_runs" in query and query["req_runs"]:
