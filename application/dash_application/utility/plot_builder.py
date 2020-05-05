@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Dict
 
 import pandas
 import plotly.graph_objects as go
@@ -363,13 +363,35 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         )
     )
 
-def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
+def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text, fill_color: Dict[str, str]=None):
+    """
+    Factory function to create a stacked bar graph
+
+    Args:
+        df: The DataFrame with the data
+        criteria: Which columns to plot (first will be at the bottom of the stack)
+        x_fn: Function that returns the x-axis values
+        y_fn: Function that returns the y-axis values
+        title_text: Title of the graph
+        yaxis_text: Y-axis title
+        fill_color: Dictionary specifying bar color. Key should match criteria and value
+            is the color
+
+    Returns:
+
+    """
     graphs = []
     for col in criteria:
+        marker = {}
+        if fill_color is not None:
+            if col in fill_color:
+                marker['color'] = fill_color[col]
+
         graph = go.Bar(
             name = col + " (%)",
             x = x_fn(df),
-            y = y_fn(df, col)
+            y = y_fn(df, col),
+            marker=marker,
         )
         graphs.append(graph)
     
@@ -401,7 +423,8 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text):
                 b=50,
                 t=50,
                 pad=4
-            )
+            ),
+            bargap=0.05,
         )
     )
     figure.update_layout(barmode='stack')
