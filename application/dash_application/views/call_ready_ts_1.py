@@ -239,15 +239,21 @@ def generate_callability(df, graph_params):
         util.ml_col)
 
 
-def generate_mean_insert_size(df, graph_params):
+def generate_median_insert_size(df, graph_params):
     return generate(
-        "Mean Insert Size (bp)", df,
+        "Median Insert Size with 10/90 Percentile",
+        df,
         lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.InsertMean],
-        "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
+        lambda d: d[BAMQC_COL.InsertMedian],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        util.ml_col)
+        util.ml_col,
+        bar_positive=BAMQC_COL.Insert90Percentile,
+        bar_negative=BAMQC_COL.Insert10Percentile,
+    )
 
 
 def generate_hs_library_size(df, graph_params):
@@ -447,7 +453,7 @@ def layout(query_string):
 
                             core.Graph(
                                 id=ids["mean-insert-size"],
-                                figure=generate_mean_insert_size(df, initial)),
+                                figure=generate_median_insert_size(df, initial)),
 
                             core.Graph(
                                 id=ids["hs-library-size"],
@@ -621,7 +627,7 @@ def init_callbacks(dash_app):
             ),
             generate_mean_target_coverage(df, graph_params),
             generate_callability(df, graph_params),
-            generate_mean_insert_size(df, graph_params),
+            generate_median_insert_size(df, graph_params),
             generate_hs_library_size(df, graph_params),
             # generate_duplicate_rate(df, graph_params),
             # generate_purity(df, graph_params),

@@ -12,6 +12,7 @@ import re
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
 BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
+BAMQC_COL = gsiqcetl.column.BamQc4Column
 
 """
 Avoid the following symbols, which fail to render correctly:
@@ -92,6 +93,10 @@ DATA_LABEL_NAME = {
     COMMON_COL.Reference: 'Reference: ',
     BEDTOOLS_COL.Coverage90Percentile: '90 Percentile Coverage: ',
     BEDTOOLS_COL.Coverage10Percentile: '10 Percentile Coverage: ',
+    BAMQC_COL.CoverageMedian90Percentile: '90 Percentile Median Coverage: ',
+    BAMQC_COL.CoverageMedian10Percentile: '10 Percentile Median Coverage: ',
+    BAMQC_COL.Insert90Percentile: '90 Percentile Median Insert: ',
+    BAMQC_COL.Insert10Percentile: '10 Percentile Median Insert: ',
 }
 
 
