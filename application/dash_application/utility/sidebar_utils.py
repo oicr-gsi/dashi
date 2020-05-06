@@ -106,9 +106,10 @@ def select_instruments(all_instruments_id: str, instruments_id: str,
 
 
 def select_projects(all_projects_id: str, projects_id: str, projects: List[
-        str]) -> core.Loading:
+        str], requested_projects) -> core.Loading:
     return select_with_select_all("All Projects", all_projects_id,
-                                  "Filter by Projects", projects_id, projects)
+                                  "Filter by Projects", projects_id, projects,
+                                  requested_projects)
 
 
 def select_reference(all_references_id: str, references_id: str, references: List[
