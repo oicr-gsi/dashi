@@ -337,17 +337,25 @@ def jira_button(button_text: str, button_id: str, style: Dict, href: str) -> htm
 
 
 def construct_jira_link(runs, page_name) -> str:
-    base_url = "https://jira.oicr.on.ca/secure/CreateIssueDetails!init.jspa?issuetype=9&pid=11684&priority=10000" \
-               "&labels=dashi"
-    summary = {"summary": page_name + ": "}
-    base_url = base_url + "&" + urllib.parse.urlencode(summary)
+    # JIRA requires a login, so we make all JIRA URLs a login with a self-redirect
+    parameters = {
+      "summary": page_name + ": ",
+      "issuetype": 9,
+      "pid": 11684,
+      "priority": 10000,
+      "labels": "dashi"
+    }
 
     if runs:
-        run_string = "Runs: " + ", ".join(str(run) for run in runs)
-        description = {"description": run_string}
-        return base_url + "&" + urllib.parse.urlencode(description)
-    else:
-        return base_url
+        parameters["description"] = "Runs: " + ", ".join(str(run) for run in runs)
+
+    root_parameters = {
+      "permissionViolation": "true",
+      "page_caps": "",
+      "user_role": "",
+      "os_destination": "/secure/CreateIssueDetails!init.jspa?" + urllib.parse.urlencode(parameters)
+    }
+    return "https://jira.oicr.on.ca/login.jsp?" + urllib.parse.urlencode(root_parameters)
 
 
 def jira_display_button(runs: List[str], page_title: str):
