@@ -7,6 +7,12 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200511-1447] - 2020-05-11
+## Changed
+  * Style changes to bar plots
+  * Single Lane RNAseq now uses RNASeqQC2
+  * JIRA link will prompt for login if not logged into JIRA
+
 ## [200504-1619] - 2020-05-04
 ## Changed
   * Show only On & Near Bases on TS Bar graph
