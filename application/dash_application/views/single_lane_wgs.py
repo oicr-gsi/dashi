@@ -282,6 +282,8 @@ def layout(query_string):
     elif "req_start" in query and query["req_start"]:
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+    if "req_projects" in query and query["req_projects"]:
+        initial["projects"] = query["req_projects"]
 
     df = reshape_single_lane_df(WGS_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
@@ -321,7 +323,8 @@ def layout(query_string):
 
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
-                                              ALL_PROJECTS),
+                                              ALL_PROJECTS,
+                                              query["req_projects"]),
 
                 sidebar_utils.select_reference(ids["all-references"],
                                                ids["references-list"],

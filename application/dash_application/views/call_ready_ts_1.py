@@ -313,6 +313,11 @@ def generate_gc_dropout(df, graph_params):
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
+    if "req_projects" in query and query["req_projects"]:
+        initial["projects"] = query["req_projects"]
+    elif "req_start" in query and query["req_start"]:
+        initial["projects"] = ALL_PROJECTS
+        query["req_projects"] = ALL_PROJECTS  # fill in the projects dropdown
 
     df = reshape_call_ready_df(TS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"], initial["sample_types"],
@@ -338,7 +343,8 @@ def layout(query_string):
                     # Filters
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
-                                                  ALL_PROJECTS),
+                                                  ALL_PROJECTS,
+                                                  query["req_projects"]),
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
                                                    ALL_REFERENCES),
