@@ -8,6 +8,9 @@ import pandas
 from pandas import DataFrame
 import pinery
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Mode(Enum):
     IUS = 0
@@ -103,6 +106,9 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
         (failure_df, columns) = cutoff_table_data_ius(data, limits)
     elif mode == Mode.MERGED:
         (failure_df, columns) = cutoff_table_data_merged(data, limits)
+    else:
+        logger.error("Unrecognized Mode in cutoff_table: {0}".format(mode))
+        raise NotImplementedError
     return tabl.DataTable(
         id=table_id,
         columns=columns,
