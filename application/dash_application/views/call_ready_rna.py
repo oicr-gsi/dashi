@@ -7,7 +7,7 @@ from dash.dependencies import Input, Output, State
 
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs, cutoff_table_data_merged
+from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -305,7 +305,7 @@ def layout(query_string):
                         # Tables tab
                         core.Tab(label="Tables",
                         children=[
-                            table_tabs(
+                            table_tabs_call_ready(
                                 ids["failed-samples"],
                                 ids["data-table"],
                                 df,
