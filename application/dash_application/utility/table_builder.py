@@ -4,9 +4,17 @@ import dash_core_components as core
 import dash_html_components as html
 import dash_table as tabl
 import numpy
+import pandas
 from pandas import DataFrame
 import pinery
+from enum import Enum
+import logging
 
+logger = logging.getLogger(__name__)
+
+class Mode(Enum):
+    IUS = 0
+    MERGED = 1
 
 def build_table(table_id: str, columns: List[str], df: DataFrame):
     return tabl.DataTable(
@@ -93,8 +101,14 @@ def printable_cutoff(cutoff: float) -> str:
 
 def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
                                                                     float,
-                                                                    bool]]):
-    (failure_df, columns) = cutoff_table_data_ius(data, limits)
+                                                                    bool]], mode):
+    if mode == Mode.IUS:
+        (failure_df, columns) = cutoff_table_data_ius(data, limits)
+    elif mode == Mode.MERGED:
+        (failure_df, columns) = cutoff_table_data_merged(data, limits)
+    else:
+        logger.error("Unrecognized Mode in cutoff_table: {0}".format(mode))
+        raise NotImplementedError
     return tabl.DataTable(
         id=table_id,
         columns=columns,
@@ -124,8 +138,8 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
     )
 
 
-def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str],
-               limits: List[Tuple[str, str, float, bool]]):
+def _table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str],
+               limits: List[Tuple[str, str, float, bool]], mode):
     return core.Tabs(
         [
             core.Tab(
@@ -137,7 +151,8 @@ def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_column
                             cutoff_table(
                                 failed_id,
                                 empty_data,
-                                limits)]),
+                                limits,
+                                mode)]),
                 ]),
             core.Tab(
                 label="🐌 Raw Data 🐌",
@@ -150,3 +165,11 @@ def table_tabs(failed_id: str, data_id: str, empty_data: DataFrame, table_column
                                 table_columns,
                                 empty_data)]),
                 ])])
+
+def table_tabs_single_lane(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str],
+               limits: List[Tuple[str, str, float, bool]]):
+    return _table_tabs(failed_id, data_id, empty_data, table_columns, limits, Mode.IUS)
+
+def table_tabs_call_ready(failed_id: str, data_id: str, empty_data: DataFrame, table_columns: List[str],
+               limits: List[Tuple[str, str, float, bool]]):
+    return _table_tabs(failed_id, data_id, empty_data, table_columns, limits, Mode.MERGED)

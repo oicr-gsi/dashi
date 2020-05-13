@@ -9,7 +9,7 @@ import gsiqcetl.column
 import pinery
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs, cutoff_table_data_ius
+from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -282,6 +282,8 @@ def layout(query_string):
     elif "req_start" in query and query["req_start"]:
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+    if "req_projects" in query and query["req_projects"]:
+        initial["projects"] = query["req_projects"]
 
     df = reshape_single_lane_df(WGS_DF, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
@@ -321,7 +323,8 @@ def layout(query_string):
 
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
-                                              ALL_PROJECTS),
+                                              ALL_PROJECTS,
+                                              query["req_projects"]),
 
                 sidebar_utils.select_reference(ids["all-references"],
                                                ids["references-list"],
@@ -435,7 +438,7 @@ def layout(query_string):
                         # Tables tab
                         core.Tab(label="Tables",
                         children=[
-                            table_tabs(
+                            table_tabs_single_lane(
                                 ids["failed-samples"],
                                 ids["data-table"],
                                 df,
