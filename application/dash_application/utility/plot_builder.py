@@ -262,8 +262,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         'gridwidth': 1,
         'gridcolor': 'lightgrey'
     }
-    if axis_text == '%':
-        y_axis['range'] = [0, 100]
+    # if axis_text == '%':
+    #     y_axis['range'] = [0, 100]
 
     # Webgl bugs occur with error bars: https://github.com/oicr-gsi/dashi/pull/170
     if bar_positive is None and bar_negative is None:
@@ -415,7 +415,7 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text, fill_color: D
                 'showgrid': True,
                 'gridwidth': 1,
                 'gridcolor': 'lightgrey',
-                'range': [0,100]
+                'autorange': True
             },
             margin = go.layout.Margin(
                 l=50,
@@ -469,7 +469,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
                 'showgrid': True,
                 'gridwidth': 1,
                 'gridcolor': 'lightgrey',
-                'range': [0,100]
+                'autorange': True
             },
             margin = go.layout.Margin(
                 l=50,
