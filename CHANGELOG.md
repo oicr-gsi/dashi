@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
 
+## Added
+  * Projects may now be specified through the url for all reports. Add 'project=' to the query portion of the URL.
 ## [200511-1447] - 2020-05-11
 ## Changed
   * Style changes to bar plots
