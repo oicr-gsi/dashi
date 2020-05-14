@@ -248,6 +248,7 @@ def show_data_labels_input_single_lane(
         select_all_text: str, select_all_id: str) -> core.Loading:
     return _show_data_labels_input(show_names_id, selected_value,
         select_all_text, select_all_id, [
+            {'label': 'External Name', 'value': PINERY_COL.ExternalName},
             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
             {'label': 'Kit', 'value': PINERY_COL.PrepKit},
             {'label': 'Reference', 'value': COMMON_COL.Reference},
@@ -264,6 +265,7 @@ def show_data_labels_input_call_ready(show_names_id: str,
         select_all_id: str) -> core.Loading:
     return _show_data_labels_input(show_names_id, selected_value,
         select_all_text, select_all_id, [
+            {'label': 'External Name', 'value': PINERY_COL.ExternalName},
             {'label': 'Reference', 'value': COMMON_COL.Reference},
             {'label': 'Group ID', 'value': PINERY_COL.GroupID},
             {'label': 'Sample', 'value': PINERY_COL.RootSampleName},
