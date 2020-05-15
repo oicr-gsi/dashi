@@ -202,17 +202,19 @@ shape_colour = ColourShapeSingleLane(
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 
-def generate_mean_insert_size(df, graph_params):
+def generate_median_insert_size(df, graph_params):
     return generate(
-        "Mean Insert Size",
+        "Median Insert Size with 10/90 Percentile",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean],
+        lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
+        bar_positive=BAMQC_COL.Insert90Percentile,
+        bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
 
@@ -416,7 +418,7 @@ def layout(query_string):
                             ),
                             core.Graph(
                                 id=ids["mean-insert"],
-                                figure=generate_mean_insert_size(df, initial)
+                                figure=generate_median_insert_size(df, initial)
                             ),
                             core.Graph(
                                 id=ids["duplication"],
@@ -555,7 +557,7 @@ def init_callbacks(dash_app):
                 df, PINERY_COL.SampleName,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
                 shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_mean_insert_size(df, graph_params),
+            generate_median_insert_size(df, graph_params),
             generate_duplication(df, graph_params),
             generate_unmapped_reads(df, graph_params),
             generate_non_primary(df, graph_params),

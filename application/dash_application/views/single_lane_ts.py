@@ -185,17 +185,19 @@ def generate_on_target_reads(current_data, graph_params):
     )
 
 
-def generate_mean_insert_size(current_data, graph_params):
+def generate_median_insert_size(current_data, graph_params):
     return generate(
-        "Mean Insert Size (bp)",
+        "Median Insert Size with 10/90 Percentile",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[BAMQC_COL.InsertMean],
+        lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])]
+        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
+        bar_positive=BAMQC_COL.Insert90Percentile,
+        bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
 
@@ -350,7 +352,7 @@ def layout(query_string):
                                 figure=generate_on_target_reads(df,initial)
                             ),
                             core.Graph(id=ids['mean-insert-size'],
-                                figure=generate_mean_insert_size(df, initial)
+                                figure=generate_median_insert_size(df, initial)
                             )
                         ]),
                         # Tables tab
@@ -474,7 +476,7 @@ def init_callbacks(dash_app):
             generate_unmapped_reads(df, graph_params),
             generate_nonprimary_reads(df, graph_params),
             generate_on_target_reads(df, graph_params),
-            generate_mean_insert_size(df, graph_params),
+            generate_median_insert_size(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

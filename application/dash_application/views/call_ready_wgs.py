@@ -55,6 +55,7 @@ ids = init_ids([
     "total-reads",
     "mean-coverage",
     "coverage-per-gb",
+    "median-coverage",
     "callability",
     "mean-insert",
     "duplicate-rate",
@@ -211,7 +212,7 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
-        "Coverage (Deduplicated)", df,
+        "Mean Coverage (Deduplicated)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
         "", graph_params["colour_by"], graph_params["shape_by"],
@@ -223,12 +224,28 @@ def generate_deduplicated_coverage(df, graph_params):
 
 def generate_deduplicated_coverage_per_gb(df, graph_params):
     return generate(
-        "Coverage per Gb (Deduplicated)", df,
+        "Mean Coverage per Gb (Deduplicated)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Coverage per Gb"]],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [], util.ml_col)
 
+
+def generate_median_coverage(df, graph_params):
+    return generate(
+        "Median Coverage with 10/90 Percentile",
+        df,
+        lambda d: d[util.ml_col],
+        lambda d: d[BAMQC_COL.CoverageMedian],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [],
+        util.ml_col,
+        bar_positive=BAMQC_COL.CoverageMedian90Percentile,
+        bar_negative=BAMQC_COL.CoverageMedian10Percentile,
+    )
 
 def generate_callability(df, graph_params):
     return generate(
@@ -241,15 +258,21 @@ def generate_callability(df, graph_params):
         util.ml_col)
 
 
-def generate_mean_insert_size(df, graph_params):
+def generate_median_insert_size(df, graph_params):
     return generate(
-        "Mean Insert Size", df,
+        "Median Insert Size with 10/90 Percentile",
+        df,
         lambda d: d[util.ml_col],
-        lambda d: d[BAMQC_COL.InsertMean],
-        "Base Pairs", graph_params["colour_by"], graph_params["shape_by"],
+        lambda d: d[BAMQC_COL.InsertMedian],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
-        util.ml_col)
+        util.ml_col,
+        bar_positive=BAMQC_COL.Insert90Percentile,
+        bar_negative=BAMQC_COL.Insert10Percentile,
+    )
 
 
 def generate_duplicate_rate(df, graph_params):
@@ -445,6 +468,12 @@ def layout(query_string):
                                                   figure=generate_deduplicated_coverage_per_gb(
                                                       df, initial)
                                               ),
+                                              # TODO: https://jira.oicr.on.ca/browse/GR-1170 (how to calculate median coverage)
+                                              # core.Graph(
+                                              #     id=ids["median-coverage"],
+                                              #     figure=generate_median_coverage(
+                                              #         df, initial)
+                                              # ),
                                               core.Graph(
                                                   id=ids["callability"],
                                                   figure=generate_callability(
@@ -452,7 +481,7 @@ def layout(query_string):
                                               ),
                                               core.Graph(
                                                   id=ids["mean-insert"],
-                                                  figure=generate_mean_insert_size(
+                                                  figure=generate_median_insert_size(
                                                       df, initial)
                                               ),
                                               core.Graph(
@@ -665,7 +694,7 @@ def init_callbacks(dash_app):
             generate_deduplicated_coverage(df, graph_params),
             generate_deduplicated_coverage_per_gb(df, graph_params),
             generate_callability(df, graph_params),
-            generate_mean_insert_size(df, graph_params),
+            generate_median_insert_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
             generate_unmapped_reads(df, graph_params),
             failure_columns,
