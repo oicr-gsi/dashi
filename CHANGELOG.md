@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 ## Changed
+  * Removed Purity from Call-Ready TS 2
+
+## [200519-0811] - 2020-05-19
+## Changed
   * Switched Insert Mean to Insert Median with 10/90 percentiles
   * y-axis on graphs is always set to auto-scale, including on % graphs
 

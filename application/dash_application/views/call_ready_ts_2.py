@@ -57,7 +57,6 @@ ids = init_ids([
     'mean-insert-size',
     'hs-library-size',
     'duplicate-rate',
-    'purity',
     'fraction-excluded',
     'at-dropout',
     'gc-dropout',
@@ -82,7 +81,6 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total reads passed filter",
     "Percent Unique Reads (PF)": "Percent unique reads",
     "Callability (14x/8x)": "callability",
-    "Purity": "Purity",
     "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
@@ -124,8 +122,6 @@ def get_merged_ts_data():
     bamqc3_df[special_cols["Percent Unique Reads (PF)"]] = round(
         bamqc3_df[BAMQC_COL.NonPrimaryReads] / bamqc3_df[
             BAMQC_COL.TotalReads], 3)
-    ichorcna_df[special_cols["Purity"]] = round(
-        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability (14x/8x)"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
@@ -280,17 +276,6 @@ def generate_duplicate_rate(df, graph_params):
         graph_params["shownames_val"],
         [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
         util.ml_col)
-
-
-def generate_purity(df, graph_params):
-    return generate(
-        "Purity (%)", df,
-        lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Purity"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
-        util.ml_col)
-
 
 def generate_fraction_excluded(df, graph_params):
     return generate(
@@ -502,10 +487,6 @@ def layout(query_string):
                                 figure=generate_duplicate_rate(df, initial)),
 
                             core.Graph(
-                                id=ids["purity"],
-                                figure=generate_purity(df, initial)),
-
-                            core.Graph(
                                 id=ids["fraction-excluded"],
                                 figure=generate_fraction_excluded(df, initial)),
 
@@ -564,7 +545,6 @@ def init_callbacks(dash_app):
             # Output(ids["mean-insert-size"], "figure"),
             # Output(ids["hs-library-size"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
-            Output(ids["purity"], "figure"),
             Output(ids["fraction-excluded"], "figure"),
             Output(ids["at-dropout"], "figure"),
             Output(ids["gc-dropout"], "figure"),
@@ -671,7 +651,6 @@ def init_callbacks(dash_app):
             # generate_mean_insert_size(df, graph_params),
             # generate_hs_library_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
-            generate_purity(df, graph_params),
             generate_fraction_excluded(df, graph_params),
             generate_at_dropout(df, graph_params),
             generate_gc_dropout(df, graph_params),
