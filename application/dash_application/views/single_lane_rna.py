@@ -74,7 +74,6 @@ RUN_COLS = pinery.column.RunsColumn
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
     "Percent Uniq Reads": "Percent Unique Reads",
-    "Percent Correct Strand Reads": "Percent Correct Strand Reads",
     "rRNA Percent Contamination": "rRNA Percent Contamination"
 }
 
@@ -83,7 +82,6 @@ first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
     special_cols["Total Reads (Passed Filter)"],
     special_cols["Percent Uniq Reads"],
-    special_cols["Percent Correct Strand Reads"],
     special_cols["rRNA Percent Contamination"]
 ]
 later_col_set = [
@@ -141,8 +139,6 @@ def get_rna_data():
     # Use FastQC derived Total Reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[FastqcColumn.TotalSequences] / 1e6, 3)
-    rna_df[special_cols["Percent Correct Strand Reads"]] = round(
-        rna_df[RNA_COL.MetricsPercentCorrectStrandReads] * 100, 3)
     rna_df[special_cols["rRNA Percent Contamination"]] = round(
         rna_df[RNA_COL.RRnaContaminationProperlyPaired] / rna_df[RNA_COL.RRnaContaminationInTotal] * 100, 3
     )
@@ -228,7 +224,7 @@ def generate_correct_read_strand(df, graph_params):
         "🚧 Correct Strand Reads (%) -- NOT ENABLED YET 🚧",
         df,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: d[special_cols["Percent Correct Strand Reads"]],
+        lambda d: d[RNA_COL.MetricsPercentCorrectStrandReads],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
