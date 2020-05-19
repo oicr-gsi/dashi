@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Changed
   * Switched Insert Mean to Insert Median with 10/90 percentiles
+  * y-axis on graphs is always set to auto-scale, including on % graphs
 
 ## Added
   * Projects may now be specified through the url for all reports. Add 'project=' to the query portion of the URL.
