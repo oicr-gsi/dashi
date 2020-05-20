@@ -5,7 +5,7 @@ from version import __version__ as version
 import os
 import json
 
-run_headers = ["last_updated", "page", "run", "run_completed", "completed", "processing"]
+run_headers = ["run", "page", "run_completed", "last_updated", "completed", "processing"]
 ## Use flask's server-side rendering to create a page from templates/index.html
 ## The @app.route decoration tells flask to return this content for both http://<root> and http://<root>/index
 ## Looks at the project_status.json and run_status.json files in the root of the qc-etl output
