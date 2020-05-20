@@ -5,7 +5,21 @@
   </head>
   <body>
     <h1>Dashi QC</h1>
-    <p>Sorry about this: {{teststr}}</p>
+    <table>
+      <th>
+        {% for element in elements: %}
+        <td>{{ element }}</td>
+        {% endfor %}
+      </th>
+    </table>
+
+
+
+
+
+
+
+
     <h3><a href="/SARS-CoV-2">SARS-CoV-2</a></h3>
 
     <h2>Single-Lane Sequencing Graphs</h2>
