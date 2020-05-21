@@ -4,9 +4,17 @@
     <title>Dashi</title>
   </head>
   <body>
+    <!-- TODO please give this poor page some CSS -->
     <h1>Dashi QC</h1>
-    Three weeks ago was: {{ teststr }}
-    <table>
+    <p>Jump:
+      <ul>
+        <li><a href="#runs">Runs (Last 3 Weeks)</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#reports">Reports</a></li>
+      </ul>
+    </p>
+    <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
+    <table border=1>
       <tr>
         <th>Run (Click to see in report!)</th>
         <th>Last Updated</th>
@@ -25,13 +33,26 @@
       {% endfor %}
     </table>
 
+    <a id="projects"><h2><u>Projects</u></h2></a>
+    <table border=1>
+      <tr>
+        <th>Project (Click to see in report!)</th>
+        <th>Last Updated</th>
+        <th>Completed</th>
+        <th>Processing</th>
+      </tr>
+      {% for proj in projects %}
+      <tr>
+        <td><a href="{{ proj["page"] }}?project={{ proj["project"] }}">{{ proj["project"] }}</a></td>
+        <td>{{ proj["last_updated"] }}</td>
+        <td>{{ proj["completed"] }}</td>
+        <td>{{ proj["processing"] }}</td>
+      </tr>
+      {% endfor %}
+    </table>
 
-
-
-
-
-
-
+    <!-- TODO: Import the header bar from the reports instead of having this list -->
+    <a id="reports"><h2><u>Reports</u></h2></a>
     <h3><a href="/SARS-CoV-2">SARS-CoV-2</a></h3>
 
     <h2>Single-Lane Sequencing Graphs</h2>
