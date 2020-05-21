@@ -5,12 +5,24 @@
   </head>
   <body>
     <h1>Dashi QC</h1>
+    Three weeks ago was: {{ teststr }}
     <table>
-      <th>
-        {% for element in elements: %}
-        <td>{{ element }}</td>
-        {% endfor %}
-      </th>
+      <tr>
+        <th>Run (Click to see in report!)</th>
+        <th>Last Updated</th>
+        <th>Run Completed</th>
+        <th>Completed</th>
+        <th>Processing</th>
+      </tr>
+      {% for run in runs %}
+      <tr>
+        <td><a href="{{ run["page"] }}?run={{ run["run"] }}">{{ run["run"] }}</a></td>
+        <td>{{ run["last_updated"] }}</td>
+        <td>{{ run["run_completed"] }}</td>
+        <td>{{ run["completed"] }}</td>
+        <td>{{ run["processing"] }}</td>
+      </tr>
+      {% endfor %}
     </table>
 
 
