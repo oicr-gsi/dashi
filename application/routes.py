@@ -11,12 +11,14 @@ import time
 ## The @app.route decoration tells flask to return this content for both http://<root> and http://<root>/index
 ## Looks at the project_status.json and run_status.json files in the root of the qc-etl output
 ## to build tables for the home page. Assumes they'll be there and in the correct format.
+## Python uses timestamps in seconds. The project/run files have timestamps in milliseconds
+## hence the multiplying and dividing by 1000
 @app.route('/')
 @app.route('/index')
 def index():
     qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
     three_weeks_ago_ts = (datetime.datetime.today() - datetime.timedelta(days=21)).timestamp()
-    
+
     latest_runs = []
     with open(qc_etl_location + '/run_status.json', 'r') as run_status_file:
         run_json = json.load(run_status_file)
