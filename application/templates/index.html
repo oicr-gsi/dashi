@@ -16,7 +16,8 @@
     <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
     <table border=1>
       <tr>
-        <th>Run (Click to see in report!)</th>
+        <th>Run</th>
+        <th>Report</th>
         <th>Last Updated</th>
         <th>Run Completed</th>
         <th>Completed</th>
@@ -24,7 +25,8 @@
       </tr>
       {% for run in runs %}
       <tr>
-        <td><a href="{{ run["page"] }}?run={{ run["run"] }}">{{ run["run"] }}</a></td>
+        <td>{{ run["run"] }}</td>
+        <td><a href="{{ run["page"] }}?run={{ run["run"] }}">{{ run["page"] }}</a></td>
         <td>{{ run["last_updated"] }}</td>
         <td>{{ run["run_completed"] }}</td>
         <td>{{ run["completed"] }}</td>
@@ -36,14 +38,16 @@
     <a id="projects"><h2><u>Projects</u></h2></a>
     <table border=1>
       <tr>
-        <th>Project (Click to see in report!)</th>
+        <th>Project</th>
+        <th>Report</th>
         <th>Last Updated</th>
         <th>Completed</th>
         <th>Processing</th>
       </tr>
       {% for proj in projects %}
       <tr>
-        <td><a href="{{ proj["page"] }}?project={{ proj["project"] }}">{{ proj["project"] }}</a></td>
+        <td>{{ proj["project"] }}</td>
+        <td><a href="{{ proj["page"] }}?project={{ proj["project"] }}">{{ proj["page"] }}</a></td>
         <td>{{ proj["last_updated"] }}</td>
         <td>{{ proj["completed"] }}</td>
         <td>{{ proj["processing"] }}</td>

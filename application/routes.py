@@ -5,7 +5,6 @@ from version import __version__ as version
 import os
 import json
 import datetime
-import time
 
 ## Use flask's server-side rendering to create a page from templates/index.html
 ## The @app.route decoration tells flask to return this content for both http://<root> and http://<root>/index
