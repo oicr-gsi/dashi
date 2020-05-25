@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200525-1221] - 2020-05-25
 ## Changed
+  * Cutoffs are medians where Median Insert Size graph
+  * Single-Lane RNA-seq Correct Strand % is a percentage
   * Removed Purity from Call-Ready TS 2
+
+## Added
+  * Pulls run and project dump from Shesmu to create tables on front page
 
 ## [200519-0811] - 2020-05-19
 ## Changed
