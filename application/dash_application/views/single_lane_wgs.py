@@ -47,7 +47,7 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
-    "insert-mean-cutoff",
+    "insert-median-cutoff",
     "passed-filter-reads-cutoff",
     "date-range",
     "show-data-labels",
@@ -55,7 +55,7 @@ ids = init_ids([
 
     # Graphs
     "total-reads",
-    "mean-insert",
+    "median-insert",
     "duplication",
     "unmapped-reads",
     "non-primary-reads",
@@ -367,8 +367,8 @@ def layout(query_string):
                          "value": special_cols["Purity"]},
                         {"label": "Ploidy",
                          "value": ICHOR_COL.Ploidy},
-                        {"label": "Mean Insert Size",
-                         "value": BAMQC_COL.InsertMean}
+                        {"label": "median Insert Size",
+                         "value": BAMQC_COL.InsertMedian}
                     ]
                 ),
 
@@ -392,7 +392,7 @@ def layout(query_string):
                 # Cutoffs
                 sidebar_utils.total_reads_cutoff_input(
                     ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
-                sidebar_utils.insert_mean_cutoff(
+                sidebar_utils.insert_median_cutoff(
                     ids["insert-median-cutoff"], initial[cutoff_insert_median]),
 
                 html.Br(),
@@ -417,7 +417,7 @@ def layout(query_string):
                                     [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
                             ),
                             core.Graph(
-                                id=ids["mean-insert"],
+                                id=ids["median-insert"],
                                 figure=generate_median_insert_size(df, initial)
                             ),
                             core.Graph(
@@ -467,7 +467,7 @@ def init_callbacks(dash_app):
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
             Output(ids["total-reads"], "figure"),
-            Output(ids["mean-insert"], "figure"),
+            Output(ids["median-insert"], "figure"),
             Output(ids["duplication"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["non-primary-reads"], "figure"),
@@ -496,7 +496,7 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'),
             State(ids['show-data-labels'], 'value'),
-            State(ids["insert-mean-cutoff"], 'value'),
+            State(ids["insert-median-cutoff"], 'value'),
             State(ids["passed-filter-reads-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -517,7 +517,7 @@ def init_callbacks(dash_app):
                        shape_by,
                        searchsample,
                        show_names,
-                       insert_mean_cutoff,
+                       insert_median_cutoff,
                        total_reads_cutoff,
                        start_date,
                        end_date,

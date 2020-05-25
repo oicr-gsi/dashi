@@ -46,7 +46,7 @@ ids = init_ids([
     'search-sample',
     'show-data-labels',
     'show-all-data-labels',
-    'insert-size-mean-cutoff',
+    'insert-size-median-cutoff',
     'passed-filter-reads-cutoff',
     "date-range",
 
@@ -55,7 +55,7 @@ ids = init_ids([
     'unmapped-reads',
     'non-primary-reads',
     'on-target-reads',
-    'mean-insert-size',
+    'median-insert-size',
 
     #Data table
     'failed-samples',
@@ -291,8 +291,8 @@ def layout(query_string):
                                 "value": BAMQC_COL.NonPrimaryReads},
                                 {"label": "On-target Reads",
                                 "value": BAMQC_COL.ReadsOnTarget},
-                                {"label": "Mean Insert Size",
-                                "value": BAMQC_COL.InsertMean}
+                                {"label": "median Insert Size",
+                                "value": BAMQC_COL.InsertMedian}
                         ]
                     ),
 
@@ -351,7 +351,7 @@ def layout(query_string):
                             core.Graph(id=ids['on-target-reads'],
                                 figure=generate_on_target_reads(df,initial)
                             ),
-                            core.Graph(id=ids['mean-insert-size'],
+                            core.Graph(id=ids['median-insert-size'],
                                 figure=generate_median_insert_size(df, initial)
                             )
                         ]),
@@ -388,7 +388,7 @@ def init_callbacks(dash_app):
             Output(ids['unmapped-reads'], 'figure'),
             Output(ids['non-primary-reads'], 'figure'),
             Output(ids['on-target-reads'], 'figure'),
-            Output(ids['mean-insert-size'], 'figure'),
+            Output(ids['median-insert-size'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -411,7 +411,7 @@ def init_callbacks(dash_app):
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'), 
             State(ids['show-data-labels'], 'value'),
-            State(ids['insert-size-mean-cutoff'], 'value'),
+            State(ids['insert-size-median-cutoff'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -432,7 +432,7 @@ def init_callbacks(dash_app):
             shape_by,
             searchsample,
             show_names,
-            insert_mean_cutoff,
+            insert_median_cutoff,
             total_reads_cutoff,
             start_date,
             end_date,

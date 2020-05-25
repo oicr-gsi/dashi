@@ -48,7 +48,7 @@ ids = init_ids([
     "cutoff-coverage-tumour",
     "cutoff-coverage-normal",
     "cutoff-callability",
-    "cutoff-mean-insert",
+    "cutoff-median-insert",
     "cutoff-duplicate-rate",
 
     # Graphs
@@ -57,7 +57,7 @@ ids = init_ids([
     "coverage-per-gb",
     "median-coverage",
     "callability",
-    "mean-insert",
+    "median-insert",
     "duplicate-rate",
     "unmapped-reads",
 
@@ -422,7 +422,7 @@ def layout(query_string):
                                                ids["cutoff-callability"],
                                                initial[cutoff_callability]),
                     sidebar_utils.cutoff_input(cutoff_insert_median_label,
-                                               ids["cutoff-mean-insert"],
+                                               ids["cutoff-median-insert"],
                                                initial[cutoff_insert_median]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
@@ -480,7 +480,7 @@ def layout(query_string):
                                                       df, initial)
                                               ),
                                               core.Graph(
-                                                  id=ids["mean-insert"],
+                                                  id=ids["median-insert"],
                                                   figure=generate_median_insert_size(
                                                       df, initial)
                                               ),
@@ -579,7 +579,7 @@ def init_callbacks(dash_app):
             Output(ids["mean-coverage"], "figure"),
             Output(ids["coverage-per-gb"], "figure"),
             Output(ids["callability"], "figure"),
-            Output(ids["mean-insert"], "figure"),
+            Output(ids["median-insert"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
             Output(ids["failed-samples"], "columns"),
@@ -605,7 +605,7 @@ def init_callbacks(dash_app):
             State(ids["cutoff-coverage-tumour"], "value"),
             State(ids["cutoff-coverage-normal"], "value"),
             State(ids["cutoff-callability"], "value"),
-            State(ids["cutoff-mean-insert"], "value"),
+            State(ids["cutoff-median-insert"], "value"),
             State(ids["cutoff-duplicate-rate"], "value"),
             State('url', 'search'),
         ]
@@ -627,7 +627,7 @@ def init_callbacks(dash_app):
                        coverage_tumour_cutoff,
                        coverage_normal_cutoff,
                        callability_cutoff,
-                       insert_mean_cutoff,
+                       insert_median_cutoff,
                        duplicate_rate_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
