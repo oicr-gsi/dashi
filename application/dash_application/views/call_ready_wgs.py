@@ -167,9 +167,9 @@ initial[cutoff_pf_reads_normal] = 44
 cutoff_callability_label = "Callability minimum"
 cutoff_callability = "cutoff_callability"
 initial[cutoff_callability] = 50
-cutoff_insert_mean_label = "Insert Mean minimum"
-cutoff_insert_mean = "cutoff_insert_mean"
-initial[cutoff_insert_mean] = 150
+cutoff_insert_median_label = "Insert Median minimum"
+cutoff_insert_median = "cutoff_insert_median"
+initial[cutoff_insert_median] = 150
 cutoff_duplicate_rate_label = "Duplication (%) maximum"
 cutoff_duplicate_rate = "cutoff_duplicate_rate"
 initial[cutoff_duplicate_rate] = 50
@@ -268,7 +268,7 @@ def generate_median_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
+        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         util.ml_col,
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
@@ -421,9 +421,9 @@ def layout(query_string):
                     sidebar_utils.cutoff_input(cutoff_callability_label,
                                                ids["cutoff-callability"],
                                                initial[cutoff_callability]),
-                    sidebar_utils.cutoff_input(cutoff_insert_mean_label,
+                    sidebar_utils.cutoff_input(cutoff_insert_median_label,
                                                ids["cutoff-mean-insert"],
-                                               initial[cutoff_insert_mean]),
+                                               initial[cutoff_insert_median]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
                                                initial[cutoff_duplicate_rate]),
@@ -549,10 +549,10 @@ def layout(query_string):
                                                            cutoff_callability],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
-                                                      (cutoff_insert_mean_label,
-                                                       BAMQC_COL.InsertMean,
+                                                      (cutoff_insert_median_label,
+                                                       BAMQC_COL.InsertMedian,
                                                        initial[
-                                                           cutoff_insert_mean],
+                                                           cutoff_insert_median],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (
@@ -646,7 +646,7 @@ def init_callbacks(dash_app):
             cutoff_coverage_tumour: coverage_tumour_cutoff,
             cutoff_coverage_normal: coverage_normal_cutoff,
             cutoff_callability: callability_cutoff,
-            cutoff_insert_mean: insert_mean_cutoff,
+            cutoff_insert_median: insert_median_cutoff,
             cutoff_duplicate_rate: duplicate_rate_cutoff,
         }
 
@@ -673,7 +673,7 @@ def init_callbacks(dash_app):
             (cutoff_callability_label, special_cols["Percent Callability"],
              callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
+            (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_median_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_duplicate_rate_label,
              BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,

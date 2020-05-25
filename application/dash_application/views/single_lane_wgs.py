@@ -103,9 +103,9 @@ initial["second_sort"] = BAMQC_COL.TotalReads
 cutoff_pf_reads_label = "Total PF Reads minimum"
 cutoff_pf_reads = "cutoff_pf_reads"
 initial[cutoff_pf_reads] = 0.01
-cutoff_insert_mean_label = "Insert Mean minimum"
-cutoff_insert_mean = "cutoff_insert_mean"
-initial[cutoff_insert_mean] = 150
+cutoff_insert_median_label = "Insert Median minimum"
+cutoff_insert_median = "cutoff_insert_median"
+initial[cutoff_insert_median] = 150
 
 
 def get_wgs_data():
@@ -212,7 +212,7 @@ def generate_median_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_mean_label, graph_params[cutoff_insert_mean])],
+        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -393,7 +393,7 @@ def layout(query_string):
                 sidebar_utils.total_reads_cutoff_input(
                     ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
                 sidebar_utils.insert_mean_cutoff(
-                    ids["insert-mean-cutoff"], initial[cutoff_insert_mean]),
+                    ids["insert-median-cutoff"], initial[cutoff_insert_median]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -446,7 +446,7 @@ def layout(query_string):
                                 df,
                                 wgs_table_columns,
                                 [
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial[cutoff_insert_mean],
+                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial[cutoff_insert_median],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_pf_reads_label,
                                     special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
@@ -535,12 +535,12 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             cutoff_pf_reads: total_reads_cutoff,
-            cutoff_insert_mean: insert_mean_cutoff
+            cutoff_insert_median: insert_median_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
+            (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_median_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
