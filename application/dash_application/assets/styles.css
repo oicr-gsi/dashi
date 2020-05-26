@@ -4,6 +4,11 @@
     padding: 10px;
 }
 
+/* somehow, the 'x' overlaps the end date picker without this */
+.DateRangePickerInput_clearDates {
+    margin: 0;
+}
+
 .sidebar {
     background-color: #efefef;
     margin: 1em;
