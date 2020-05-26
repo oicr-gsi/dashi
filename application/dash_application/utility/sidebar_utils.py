@@ -217,9 +217,27 @@ def select_shape_by(shape_by_id: str, shape_by_options: List[Dict],
 def highlight_samples_input(search_samples_id: str, all_samples: List[str]) -> \
         html.Label:
     return html.Label([
-        "Highlight Samples:",
+        "Highlight Samples by Sample Name:",
         core.Dropdown(id=search_samples_id,
                       options=[{'label': x, 'value': x} for x in all_samples],
+                      multi=True
+                      )
+    ])
+
+def highlight_samples_by_ext_name_input_single_lane(search_samples_ext_id: str, df) -> \
+        html.Label:
+    if df is None:
+        return html.Label([
+        "Highlight Samples by External Name:",
+        core.Dropdown(id=search_samples_ext_id,
+                      options=[],
+                      multi=True
+                      )
+        ])
+    return html.Label([
+        "Highlight Samples by External Name:",
+        core.Dropdown(id=search_samples_ext_id,
+                      options=[{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SequencerRunName]} for d in df],
                       multi=True
                       )
     ])

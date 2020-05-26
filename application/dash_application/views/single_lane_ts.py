@@ -12,6 +12,7 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
+import pdb
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ ids = init_ids([
     'colour-by',
     'shape-by',
     'search-sample',
+    'search-sample-ext',
     'show-data-labels',
     'show-all-data-labels',
     'insert-size-median-cutoff',
@@ -306,6 +308,9 @@ def layout(query_string):
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
+
+                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
+                                                          None),
                     
                     sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
                                                         initial["shownames_val"],
@@ -393,6 +398,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
             Output(ids["search-sample"], "options"),
+            Output(ids["search-sample-ext"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
         ],
@@ -410,6 +416,7 @@ def init_callbacks(dash_app):
             State(ids['colour-by'], 'value'),
             State(ids['shape-by'], 'value'),
             State(ids['search-sample'], 'value'), 
+            State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
             State(ids['insert-size-median-cutoff'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
@@ -431,6 +438,7 @@ def init_callbacks(dash_app):
             colour_by,
             shape_by,
             searchsample,
+            searchsampleext,
             show_names,
             insert_median_cutoff,
             total_reads_cutoff,
@@ -461,11 +469,11 @@ def init_callbacks(dash_app):
                                                     "Filter)"], total_reads_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
-
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
-
+        for d in df:
+            print(d)
         return [
             approve_run_href,
             approve_run_style,
@@ -481,6 +489,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
+            [],
             jira_href,
             jira_style
         ]
