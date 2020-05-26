@@ -10,7 +10,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import RnaSeqQc2Column as RnaColumn, FastqcColumn
+from gsiqcetl.column import RnaSeqQc2Column as RnaColumn
 import pinery
 import logging
 
@@ -115,30 +115,11 @@ def get_rna_data():
     """
     rna_df = util.get_rnaseqqc2()
 
-    # RNA-SeqQC does not correctly report total reads :(
-    # Use FastQC (summing R1 and R2) to get machine produced total reads
-    # `groupby` groups the fastqc files for each sample
-    # For each grouped sample, the Total Sequences are summed
-    # The result is a Series, converted to a DataFrame
-    # The indexes are the groupby values and are reset to allow for merging
-    fq_total_reads = util.get_fastqc().groupby(
-        [FastqcColumn.Run, FastqcColumn.Lane, FastqcColumn.Barcodes]
-    )[FastqcColumn.TotalSequences].sum().to_frame().reset_index()
-
-    rna_df = rna_df.merge(
-        fq_total_reads,
-        how="left",
-        left_on=util.rnaseqqc2_ius_columns,
-        right_on=util.fastqc_ius_columns,
-        suffixes=('', '_fastqc')
-    )
-
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         rna_df[RNA_COL.UniqueReads] / (rna_df[RNA_COL.NonPrimaryReads] + rna_df[RNA_COL.UniqueReads]) * 100, 1)
-    # Use FastQC derived Total Reads
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[FastqcColumn.TotalSequences] / 1e6, 3)
+        rna_df[RNA_COL.TotalReads] / 1e6, 3)
     rna_df[special_cols["rRNA Percent Contamination"]] = round(
         rna_df[RNA_COL.RRnaContaminationProperlyPaired] / rna_df[RNA_COL.RRnaContaminationInTotal] * 100, 3
     )
