@@ -237,7 +237,7 @@ def highlight_samples_by_ext_name_input_single_lane(search_samples_ext_id: str, 
     return html.Label([
         "Highlight Samples by External Name:",
         core.Dropdown(id=search_samples_ext_id,
-                      options= [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SequencerRunName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SequencerRunName]].iterrows()],
+                      options= [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
                       multi=True
                       )
     ])

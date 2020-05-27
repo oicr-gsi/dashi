@@ -446,6 +446,8 @@ def init_callbacks(dash_app):
             end_date,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
+        print(searchsample)
+        print(searchsampleext)
 
         df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
@@ -488,7 +490,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
-            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SequencerRunName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SequencerRunName]].iterrows()],
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
             jira_style
         ]
