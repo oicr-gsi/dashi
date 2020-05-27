@@ -41,6 +41,7 @@ ids = init_ids([
     "colour-by",
     "shape-by",
     "search-sample",
+    "search-sample-ext",
     "show-data-labels",
     "show-all-data-labels",
     "cutoff-pf-tumour",
@@ -395,6 +396,9 @@ def layout(query_string):
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
 
+                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
+                                                          None),
+
                     sidebar_utils.show_data_labels_input_call_ready(
                         ids["show-data-labels"],
                         initial["shownames_val"],
@@ -585,7 +589,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
-            Output(ids["search-sample"], "options")
+            Output(ids["search-sample"], "options"),
+            Output(ids['search-sample-ext'], 'options'),
         ],
         [Input(ids["update-button-top"], "n_clicks"),
         Input(ids["update-button-bottom"], "n_clicks")],
@@ -600,6 +605,7 @@ def init_callbacks(dash_app):
             State(ids["shape-by"], "value"),
             State(ids["show-data-labels"], "value"),
             State(ids["search-sample"], "value"),
+            State(ids['search-sample-ext'], 'value'),
             State(ids["cutoff-pf-tumour"], "value"),
             State(ids["cutoff-pf-normal"], "value"),
             State(ids["cutoff-coverage-tumour"], "value"),
@@ -622,6 +628,7 @@ def init_callbacks(dash_app):
                        shape_by,
                        show_names,
                        search_sample,
+                       searchsampleext,
                        pf_reads_tumour_cutoff,
                        pf_reads_normal_cutoff,
                        coverage_tumour_cutoff,
@@ -631,7 +638,10 @@ def init_callbacks(dash_app):
                        duplicate_rate_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
-
+        if search_sample and searchsampleext:
+            search_sample += searchsampleext
+        elif not search_sample and searchsampleext:
+            search_sample = searchsampleext
         df = reshape_call_ready_df(WGS_DF, projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
@@ -701,6 +711,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
         ]
 
     @dash_app.callback(
