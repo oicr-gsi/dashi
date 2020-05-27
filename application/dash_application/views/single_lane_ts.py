@@ -12,7 +12,6 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
-import pdb
 
 logger = logging.getLogger(__name__)
 
