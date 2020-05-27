@@ -446,9 +446,10 @@ def init_callbacks(dash_app):
             end_date,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
-        print(searchsample)
-        print(searchsampleext)
-
+        if searchsample and searchsampleext:
+            searchsample += searchsampleext
+        elif not searchsample and searchsampleext:
+            searchsample = searchsampleext
         df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
