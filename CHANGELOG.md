@@ -10,6 +10,10 @@ and as of version 1.0.0, follows semantic versioning.
   * Removed FastQC dependency for Total Reads from Single Lane RNA-Seq
   * Made date range clearable
 
+## Added
+  * Help button to projects list
+
+  
 ## [200525-1221] - 2020-05-25
 ## Changed
   * Cutoffs are medians where Median Insert Size graph
