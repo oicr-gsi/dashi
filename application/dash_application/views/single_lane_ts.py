@@ -472,8 +472,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
-        for d in df:
-            print(d)
+
         return [
             approve_run_href,
             approve_run_style,
@@ -489,7 +488,7 @@ def init_callbacks(dash_app):
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
-            [],
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SequencerRunName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SequencerRunName]].iterrows()],
             jira_href,
             jira_style
         ]
