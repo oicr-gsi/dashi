@@ -69,7 +69,8 @@ def run_range_input(run_range_id: str, start_date: str=None, end_date: str=None)
                                             max_date_allowed=end_date,
                                             end_date=end_date,
                                             initial_visible_month=end_date,
-                                            display_format="YYYY-MMM-DD"),
+                                            display_format="YYYY-MMM-DD",
+                                            clearable=True),
                        html.Br(),
                        ])
 

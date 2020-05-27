@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Changed
   * Removed FastQC dependency for Total Reads from Single Lane RNA-Seq
+  * Made date range clearable
 
 ## [200525-1221] - 2020-05-25
 ## Changed
