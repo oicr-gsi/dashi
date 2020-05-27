@@ -33,11 +33,15 @@ def percentage_of(data, numerator_col, denominator_col):
 
 def select_with_select_all(select_all_text: str, select_all_id: str,
         all_label_text: str, all_id: str, all_items: List[str],
-        preselected: List[str] = []) -> core.Loading:
+        preselected: List[str] = [], help_link = None) -> core.Loading:
+    help_button = None
+    if help_link:
+        help_button = html.A(href=help_link, className="helpbutton", target="_blank", children="📖")
     return core.Loading(type="circle", children=[
         html.Button(select_all_text, id=select_all_id, className="inline"),
         html.Label([
             all_label_text,
+            help_button,
             core.Dropdown(
                 id=all_id,
                 options=[{"label":x, "value":x} for x in all_items],
@@ -110,7 +114,7 @@ def select_projects(all_projects_id: str, projects_id: str, projects: List[
         str], requested_projects) -> core.Loading:
     return select_with_select_all("All Projects", all_projects_id,
                                   "Filter by Projects", projects_id, projects,
-                                  requested_projects)
+                                  requested_projects, "https://wiki.oicr.on.ca/display/GENOMICS/Active+Projects")
 
 
 def select_reference(all_references_id: str, references_id: str, references: List[

@@ -4,6 +4,13 @@
     padding: 10px;
 }
 
+/* just using the 'style' attribute on the A() object erases the whole thing for mystery reasons */
+.helpbutton {
+    text-decoration: none;
+    float: right;
+    margin-right: 0.1em;
+}
+
 /* somehow, the 'x' overlaps the end date picker without this */
 .DateRangePickerInput_clearDates {
     margin: 0;
