@@ -3,7 +3,7 @@ from typing import List, Tuple, Union, Dict, Callable
 import pandas
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import dash_core_components
+import dash_core_components as core
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
@@ -823,9 +823,6 @@ class Subplot:
             self.bar_negative,
         )
 
-    def is_pct_graph(self):
-        return self.y_label == GraphTitles.PCT
-
 
 class SingleLaneSubplot(Subplot):
     def __init__(
@@ -899,6 +896,7 @@ class CallReadySubplot(Subplot):
         )
 
 
+# TODO: Currently not in use. Big question: How to deal with titles in Dashi?
 class GraphTitles:
     AT_DROPOUT = "AT Dropout (%)"
     BASE_PAIRS = "Base Pairs"
@@ -932,7 +930,7 @@ class GraphTitles:
     X = "x"
 
 
-def generate_subplot(subplots: List[Subplot]):
+def generate_plot_with_subplots(subplots: List[Subplot]):
     """
     Generates a subplot using functions that take a DataFrame and graph paramaters,
     returning a list of traces.
@@ -999,16 +997,16 @@ def generate_subplot_from_func(
         graph_params: Dict[str, str],
         graph_funcs: List[Callable[[DataFrame, Dict[str, str]], Subplot]]
 ):
-    return generate_subplot([func(df, graph_params) for func in graph_funcs])
+    return generate_plot_with_subplots([func(df, graph_params) for func in graph_funcs])
 
 
-def create_subplot_graph(graph_id, df, graph_params, graph_funcs):
+def create_graph_element_with_subplots(graph_id, df, graph_params, graph_funcs):
     """
     Subplots are necessary because of WebGL contexts limit (GR-932).
     """
-    return dash_core_components.Graph(
+    return core.Graph(
         id=graph_id,
-        figure=generate_subplot([func(df, graph_params) for func in graph_funcs]),
+        figure=generate_plot_with_subplots([func(df, graph_params) for func in graph_funcs]),
         config={
             "toImageButtonOptions": {
                 "width": None,

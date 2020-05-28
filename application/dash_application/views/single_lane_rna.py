@@ -425,7 +425,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            create_subplot_graph(ids["graphs"], df, initial, GRAPHS),
+                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
