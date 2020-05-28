@@ -114,7 +114,7 @@ def select_projects(all_projects_id: str, projects_id: str, projects: List[
         str], requested_projects) -> core.Loading:
     return select_with_select_all("All Projects", all_projects_id,
                                   "Filter by Projects", projects_id, projects,
-                                  requested_projects, "https://wiki.oicr.on.ca/display/GENOMICS/Active+Projects")
+                                  requested_projects, "https://miso.oicr.on.ca/miso/projects")
 
 
 def select_reference(all_references_id: str, references_id: str, references: List[
