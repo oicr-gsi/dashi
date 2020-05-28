@@ -270,7 +270,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
 
-    traces = generate_traces(
+    traces = _generate_traces(
         sorted_data,
         x_fn,
         y_fn,
@@ -300,7 +300,7 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     )
 
 
-def generate_traces(
+def _generate_traces(
         sorted_data,
         x_fn,
         y_fn,
