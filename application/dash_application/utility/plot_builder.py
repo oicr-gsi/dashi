@@ -241,18 +241,18 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
     df = fill_in_size_col(df, searchsample, True)
     return df
 
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName,
              markermode="markers", bar_positive=None, bar_negative=None):
-    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     margin = go.layout.Margin(
-                l=50,
-                r=50,
-                b=50,
-                t=50,
-                pad=4
-            )
+        l=50,
+        r=50,
+        b=50,
+        t=50,
+        pad=4
+    )
     y_axis = {
         'title': {
             'text': axis_text
@@ -270,6 +270,50 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
 
+    traces = _generate_traces(
+        sorted_data,
+        x_fn,
+        y_fn,
+        colourby,
+        shapeby,
+        hovertext_cols,
+        cutoff_lines,
+        name_col,
+        markermode,
+        bar_positive,
+        bar_negative
+    )
+
+    return go.Figure(
+        data = traces,
+        layout = go.Layout(
+            title=title_text,
+            margin=margin,
+            xaxis={'visible': False,
+                   'rangemode': 'normal',
+                   'autorange': True},
+            yaxis=y_axis,
+            legend = {
+                'tracegroupgap': 0,
+            },
+        )
+    )
+
+
+def _generate_traces(
+        sorted_data,
+        x_fn,
+        y_fn,
+        colourby,
+        shapeby,
+        hovertext_cols,
+        cutoff_lines: List[Tuple[str, float]]=[],
+        name_col=PINERY_COL.SampleName,
+        markermode="markers",
+        bar_positive=None,
+        bar_negative=None
+):
+    highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     # Webgl bugs occur with error bars: https://github.com/oicr-gsi/dashi/pull/170
     if bar_positive is None and bar_negative is None:
         graph_type = "scattergl"
@@ -277,21 +321,12 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         graph_type = "scatter"
 
     if sorted_data.empty:
-        return go.Figure(
-            data=[dict(
+        return [dict(
                 type=graph_type,
                 x=None,
                 y=None
-            )],
-            layout=go.Layout(
-                title=title_text,
-                margin=margin,
-                xaxis={'visible': False,
-                    'rangemode': 'normal',
-                    'autorange': True},
-                yaxis=y_axis
-            )
-        )
+        )]
+
     traces = []
     grouped_data = sorted_data.groupby([colourby, shapeby]) #Unfortunately necessary
     if colourby == shapeby:
@@ -308,7 +343,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     else: 
         for name, data in grouped_data:
             traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
-    
     
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
@@ -353,20 +387,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
                 }
             ))
 
-    return go.Figure(
-        data = traces,
-        layout = go.Layout(
-            title=title_text,
-            margin=margin,
-            xaxis={'visible': False,
-                'rangemode': 'normal',
-                'autorange': True},
-            yaxis=y_axis,
-            legend = {
-                'tracegroupgap': 0,
-            },
-        )
-    )
+    return traces
+
 
 def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text, fill_color: Dict[str, str]=None):
     """
