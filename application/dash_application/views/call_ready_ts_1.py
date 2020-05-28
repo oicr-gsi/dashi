@@ -226,7 +226,7 @@ def generate_mean_target_coverage(df, graph_params):
         lambda d: d[HSMETRICS_COL.MeanTargetCoverage],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_callability(df, graph_params):
@@ -237,7 +237,7 @@ def generate_callability(df, graph_params):
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_callability_label, graph_params[cutoff_callability])],
-        util.ml_col)
+    )
 
 
 def generate_median_insert_size(df, graph_params):
@@ -251,7 +251,6 @@ def generate_median_insert_size(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
-        util.ml_col,
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -264,7 +263,7 @@ def generate_hs_library_size(df, graph_params):
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
         "", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_duplicate_rate(df, graph_params):
@@ -275,7 +274,7 @@ def generate_duplicate_rate(df, graph_params):
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
-        util.ml_col)
+    )
 
 
 def generate_purity(df, graph_params):
@@ -285,7 +284,7 @@ def generate_purity(df, graph_params):
         lambda d: d[special_cols["Purity"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_fraction_excluded(df, graph_params):
@@ -295,7 +294,7 @@ def generate_fraction_excluded(df, graph_params):
         lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_at_dropout(df, graph_params):
@@ -305,7 +304,7 @@ def generate_at_dropout(df, graph_params):
         lambda d: d[HSMETRICS_COL.AtDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_gc_dropout(df, graph_params):
@@ -315,7 +314,7 @@ def generate_gc_dropout(df, graph_params):
         lambda d: d[HSMETRICS_COL.GCDropout],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def layout(query_string):
