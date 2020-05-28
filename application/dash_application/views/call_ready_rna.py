@@ -11,7 +11,6 @@ from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_mer
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-import pdb
 
 logger = logging.getLogger(__name__)
 
