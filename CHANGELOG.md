@@ -12,6 +12,9 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## Added
   * Help button to projects list
+  
+## Removed
+  * Removed On Target (%) graph from SARS-CoV-2 view 
 
   
 ## [200525-1221] - 2020-05-25
