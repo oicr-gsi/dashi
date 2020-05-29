@@ -784,7 +784,6 @@ class Subplot:
             shapeby,
             hovertext_cols,
             cutoff_lines,
-            name_col,
             markermode,
             bar_positive,
             bar_negative,
@@ -799,7 +798,6 @@ class Subplot:
         self.shapeby = shapeby
         self.hovertext_cols = hovertext_cols
         self.cutoff_lines = [] if cutoff_lines is None else cutoff_lines
-        self.name_col = name_col
         self.markermode = markermode
         self.bar_positive = bar_positive
         self.bar_negative = bar_negative
@@ -814,7 +812,6 @@ class Subplot:
             self.shapeby,
             self.hovertext_cols,
             self.cutoff_lines,
-            self.name_col,
             self.markermode,
             self.bar_positive,
             self.bar_negative,
@@ -833,7 +830,6 @@ class SingleLaneSubplot(Subplot):
             shapeby,
             hovertext_cols,
             cutoff_lines=None,
-            name_col=PINERY_COL.SampleName,
             markermode="markers",
             bar_positive=None,
             bar_negative=None,
@@ -849,7 +845,6 @@ class SingleLaneSubplot(Subplot):
             shapeby,
             hovertext_cols,
             cutoff_lines,
-            name_col,
             markermode,
             bar_positive,
             bar_negative,
@@ -869,7 +864,6 @@ class CallReadySubplot(Subplot):
             shapeby,
             hovertext_cols,
             cutoff_lines=None,
-            name_col=PINERY_COL.SampleName,
             markermode="markers",
             bar_positive=None,
             bar_negative=None,
@@ -885,7 +879,6 @@ class CallReadySubplot(Subplot):
             shapeby,
             hovertext_cols,
             cutoff_lines,
-            name_col,
             markermode,
             bar_positive,
             bar_negative,
