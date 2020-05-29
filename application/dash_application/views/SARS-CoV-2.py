@@ -54,11 +54,12 @@ ids = init_ids([
     'on-target-cutoff',
 
     #Graphs
-    'on-target-reads-various-bar',
     'median-coverage-scatter',
     'on-target-reads-sars-cov-2-scatter',
     'coverage-percentiles-line',
     'coverage-uniformity-scatter',
+    'mapped-host-depleted',
+    'mapped-total',
 
     #Potential Graphs
     'base-by-base-line',
@@ -80,14 +81,15 @@ BEDTOOLS_COV_PERC_DF = util.get_bedtools_cov_perc()
 BEDTOOLS_PERCENTILE_DF = util.df_with_pinery_samples_ius(BEDTOOLS_COV_PERC_DF, pinery_samples, util.bedtools_percentile_ius_columns)
 KRAKEN2_DF = util.get_kraken2()
 
-special_columns = ['reads mapped_human', 'reads unmapped_human', 'reads mapped_covid', 'reads unmapped_covid']
+# Logic behind calculation documented in GR-1187
+special_columns = ['sequences_human', 'reads properly paired_human', 'reads mapped_covid']
 stats_merged = SAMTOOLS_STATS_COV2_HUMAN_DF.merge(SAMTOOLS_STATS_COV2_DEPLETED_DF, how="outer", on=[SAMTOOLS_STATS_COV2_COL.Barcodes, SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane], suffixes=['_human', '_covid'])
 stats_merged = stats_merged[
     special_columns + [SAMTOOLS_STATS_COV2_COL.Barcodes, SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane]
 ]
-stats_merged['total'] = stats_merged[special_columns].sum(axis=1)
-for c in special_columns:
-    stats_merged[c] = stats_merged[c] / stats_merged['total']
+stats_merged["covid_percent_mapped_host_depleted"] = stats_merged["reads mapped_covid"] / (stats_merged["sequences_human"] - stats_merged["reads properly paired_human"]) * 100
+stats_merged["covid_percent_mapped_total"] = stats_merged["reads mapped_covid"] / stats_merged["sequences_human"] * 100
+
 stats_merged = util.df_with_pinery_samples_ius(stats_merged, pinery_samples, [SAMTOOLS_STATS_COV2_COL.Run, SAMTOOLS_STATS_COV2_COL.Lane, SAMTOOLS_STATS_COV2_COL.Barcodes])
 
 # Only care for Covid numbers. Be very careful about removing this, as it will make merges break
@@ -170,26 +172,10 @@ RAW_DATA_COLUMNS = [
     BEDTOOLS_CALC_COL.CoverageUniformity,
     KRAKEN2_COL.PercentAtClade,
     # Custom samtools columns due to merge
-    'reads mapped_human',
-    'reads unmapped_human',
-    'reads mapped_covid',
-    'reads unmapped_covid',
+    "covid_percent_mapped_host_depleted",
+    "covid_percent_mapped_total",
     # Add columns produced by wide coverage percentage dataframe
 ] + [x for x in BEDTOOLS_COV_PERC_WIDE_DF if x.startswith('Coverage Above')]
-
-def generate_on_target_reads_bar(current_data, graph_params):
-    return generate_bar(
-        current_data,
-        ['reads mapped_human', 'reads mapped_covid'],
-        lambda d: d[PINERY_COL.SampleName] + d[PINERY_COL.LaneNumber].astype(str) + d[PINERY_COL.SequencerRunName],
-        lambda d, col: d[col] * 100,
-        "On-Target (%)",
-        "%",
-        fill_color={
-            "reads mapped_human": "black",
-            "reads mapped_covid": "red",
-        },
-    )
 
 
 def generate_median_coverage_scatter(current_data, graph_params):
@@ -221,6 +207,7 @@ def generate_on_target_reads_scatter(current_data, graph_params):
         [(on_target_cutoff_label, graph_params["on_target_cutoff"])]
     )
 
+
 def generate_coverage_percentiles_line(current_data, graph_params):
     return generate_line(
         current_data,
@@ -232,12 +219,39 @@ def generate_coverage_percentiles_line(current_data, graph_params):
         "Depth of Coverage (Mapped Reads)"
     )
 
+
 def generate_coverage_uniformity_scatter(current_data, graph_params):
     return generate(
         "Uniformity of Coverage",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BEDTOOLS_CALC_COL.CoverageUniformity] * 100,
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+    )
+
+
+def generate_covid_mapped_host_depleted_percentage(current_data, graph_params):
+    return generate(
+        "Covid Mapped (% of host depleted reads)",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d["covid_percent_mapped_host_depleted"],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+    )
+
+
+def generate_covid_mapped_percentage_total(current_data, graph_params):
+    return generate(
+        "Covid Mapped (% of total reads)",
+        current_data,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d["covid_percent_mapped_total"],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -341,10 +355,10 @@ def layout(query_string):
                              "value": BEDTOOLS_CALC_COL.CoverageUniformity},
                             {"label": "Sequencing Control Type",
                              "value": PINERY_COL.SequencingControlType},
-                            {"label": "Mapped to Covid Percentage",
-                             "value": "reads mapped_covid"},
-                            {"label": "Mapped to Human Percentage",
-                             "value": "reads mapped_human"},
+                            {"label": "Covid Mapped (% of host depleted reads)",
+                             "value": "covid_percent_mapped_host_depleted"},
+                            {"label": "Covid Mapped (% of total reads)",
+                             "value": "covid_percent_mapped_total"},
                         ]
                     ),
 
@@ -394,8 +408,11 @@ def layout(query_string):
                             core.Graph(id=ids['coverage-uniformity-scatter'],
                                        figure=generate_coverage_uniformity_scatter(df, initial)
                                        ),
-                            core.Graph(id=ids['on-target-reads-various-bar'],
-                                       figure=generate_on_target_reads_bar(df, initial)
+                            core.Graph(id=ids['mapped-host-depleted'],
+                                       figure=generate_covid_mapped_host_depleted_percentage(df, initial)
+                                       ),
+                            core.Graph(id=ids['mapped-total'],
+                                       figure=generate_covid_mapped_percentage_total(df, initial)
                                        ),
                             core.Graph(id=ids['coverage-percentiles-line'],
                                        figure=generate_coverage_percentiles_line(percentile_df, initial)
@@ -429,11 +446,12 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['on-target-reads-various-bar'], 'figure'),
             Output(ids['median-coverage-scatter'], 'figure'),
             Output(ids['on-target-reads-sars-cov-2-scatter'], 'figure'),
             Output(ids['coverage-percentiles-line'], 'figure'),
             Output(ids['coverage-uniformity-scatter'], 'figure'),
+            Output(ids['mapped-host-depleted'], 'figure'),
+            Output(ids['mapped-total'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -520,11 +538,12 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_on_target_reads_bar(df, graph_params),
             generate_median_coverage_scatter(df, graph_params),
             generate_on_target_reads_scatter(df, graph_params),
             generate_coverage_percentiles_line(percentile_df, graph_params),
             generate_coverage_uniformity_scatter(df, graph_params),
+            generate_covid_mapped_host_depleted_percentage(df, graph_params),
+            generate_covid_mapped_percentage_total(df, graph_params),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

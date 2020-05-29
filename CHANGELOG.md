@@ -14,6 +14,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## Added
   * Help button to projects list
+  * 2 SARS-CoV-2 mapping % graphs: % of host depleted, % of total reads
+  
+## Removed
+  * SARS-CoV-2 On Target % graph
 
   
 ## [200525-1221] - 2020-05-25
