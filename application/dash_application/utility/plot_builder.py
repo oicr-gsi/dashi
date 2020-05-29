@@ -244,7 +244,7 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[], name_col=PINERY_COL.SampleName,
+             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
              markermode="markers", bar_positive=None, bar_negative=None):
     margin = go.layout.Margin(
         l=50,
@@ -278,7 +278,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         shapeby,
         hovertext_cols,
         cutoff_lines,
-        name_col,
         markermode,
         bar_positive,
         bar_negative
@@ -308,7 +307,6 @@ def _generate_traces(
         shapeby,
         hovertext_cols,
         cutoff_lines: List[Tuple[str, float]]=[],
-        name_col=PINERY_COL.SampleName,
         markermode="markers",
         bar_positive=None,
         bar_negative=None
@@ -347,7 +345,7 @@ def _generate_traces(
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
             type=graph_type,
-            x=sorted_data[name_col], 
+            x=x_fn(sorted_data),
             y=[cutoff_value] * len(sorted_data),
             showlegend=False,
             mode="lines",
@@ -592,7 +590,6 @@ def generate_total_reads(
         shape_by,
         show_names,
         cutoff_lines,
-        x_col
     )
 
 
