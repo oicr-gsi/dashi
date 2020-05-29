@@ -149,7 +149,7 @@ def generate_five_to_three(df, graph_params):
        "Log Ratio",
        graph_params["colour_by"], graph_params["shape_by"],
        graph_params["shownames_val"], [],
-       util.ml_col)
+    )
     fig.update_layout(yaxis_type="log")
     return fig
 
@@ -161,7 +161,7 @@ def generate_correct_read_strand(df, graph_params):
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
         "%",graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_coding(df, graph_params):
@@ -171,7 +171,7 @@ def generate_coding(df, graph_params):
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"], [],
-        util.ml_col)
+    )
 
 
 def generate_rrna_contam(df, graph_params):
@@ -182,7 +182,7 @@ def generate_rrna_contam(df, graph_params):
         "%", graph_params["colour_by"], graph_params["shape_by"],
         graph_params["shownames_val"],
         [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
-        util.ml_col)
+    )
 
 
 def layout(query_string):
