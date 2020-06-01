@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200601-1019] - 2020-06-01
 ## Changed
   * Removed FastQC dependency for Total Reads from Single Lane RNA-Seq
   * Made date range clearable
