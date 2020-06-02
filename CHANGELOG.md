@@ -7,6 +7,13 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200602-0954] - 2020-06-02
+## Added
+  * 2 SARS-CoV-2 mapping % graphs: % of host depleted, % of total reads
+  
+## Removed
+  * SARS-CoV-2 On Target % graph
+
 ## [200601-1019] - 2020-06-01
 ## Changed
   * Removed FastQC dependency for Total Reads from Single Lane RNA-Seq
@@ -14,10 +21,6 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## Added
   * Help button to projects list
-  * 2 SARS-CoV-2 mapping % graphs: % of host depleted, % of total reads
-  
-## Removed
-  * SARS-CoV-2 On Target % graph
 
   
 ## [200525-1221] - 2020-05-25
