@@ -279,6 +279,8 @@ def show_data_labels_input_single_lane(
             {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
             {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
             {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
+            {'label': 'Run start date', 'value': 'start_date'},
+            {'label': 'Run end date', 'value': 'end_date'}
         ])
 
 

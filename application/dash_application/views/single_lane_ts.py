@@ -12,6 +12,7 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
+import pdb
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +159,7 @@ shape_colour = ColourShapeSingleLane(
 )
 # Add shape, colour, and size cols to dataframe 
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
+bamqc = util.df_with_runs(bamqc)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Reads",
@@ -308,13 +310,23 @@ def layout(query_string):
                     sidebar_utils.select_first_sort(
                         ids['first-sort'],
                         initial["first_sort"],
-                        SORT_BY,
+                        SORT_BY + 
+                            [{"label": "Run start date",
+                            "value": "start_date"},
+                            {"label": "Run end date",
+                            "value": "end_date"}],
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
                         initial["second_sort"],
-                        SORT_BY,
+                        SORT_BY +
+                        [
+                                {"label": "Run start date",
+                                "value": "start_date"},
+                                {"label": "Run end date",
+                                "value": "end_date"}
+                        ]
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],
