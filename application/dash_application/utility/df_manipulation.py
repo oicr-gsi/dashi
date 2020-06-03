@@ -383,6 +383,8 @@ def get_pinery_merged_samples(active_projects_only=True):
 def get_runs():
     return _runs_with_instruments.copy(deep=True)
 
+def df_with_runs(df):
+    return pandas.merge(df, get_runs(), left_on=PINERY_COL.SequencerRunName, right_on='name')
 
 def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
