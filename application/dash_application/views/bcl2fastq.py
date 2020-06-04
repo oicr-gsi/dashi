@@ -2,11 +2,13 @@ import dash_html_components as html
 import dash_core_components as core
 import dash_table
 from dash.dependencies import Input, Output
+import pandas
 
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
 
 import gsiqcetl.bcl2fastq
+import gsiqcetl.bcl2barcode
 import gsiqcetl.column
 
 
@@ -31,14 +33,19 @@ ids = init_ids(
 # There can be many unknown indices in each run. Only display top N
 MAX_UNKNOWN_DISPLAY = 30
 
-DATAVERSION = util.cache.versions(["bcl2fastq"])
-index = util.get_bcl2fastq_known()
-index_col = gsiqcetl.column.Bcl2FastqKnownColumn
+DATAVERSION = util.cache.versions(["bcl2barcode"])
+bcl2barcode = util.get_bcl2barcode()
+bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
+pinery = util.get_pinery_samples()
 
-unknown = util.get_bcl2fastq_unknown()
-un_col = gsiqcetl.column.Bcl2FastqUnknownColumn
+bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery, left_on='Run Alias', right_on='sequencerRunName', how='left')
+unknown_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle'].isnull()]
+known_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle'].notnull()]
 
-all_runs = index[index_col.Run].sort_values(ascending=False).unique()
+known_data_table['Index1'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[0]
+known_data_table['Index2'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[1]
+
+all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
 COL_LIBRARY = "library"
 COL_INDEX = "index"
@@ -59,15 +66,9 @@ UNKNOWN_DATA_TABLE_COLS = [
     {"name": "Lane", "id": "Lane Number"},
 ]
 
-
-""" Sample_run_hidden holds json split format of "Known" columns:
-"FlowCell","Index1","Index2","LIMS IUS SWID","LaneClusterPF","LaneClusterRaw",
-"LaneNumber","LaneYield","QualityScoreSum","ReadNumber","Run","RunNumber","SampleID",
-"SampleName","SampleNumberReads","SampleYield","TrimmedBases","Yield","YieldQ30"
-
- pruned_unknown_hidden holds json split format of "unknown" columns:
- "Count","LaneNumber","Index1","Index2","Run","LIMS IUS SWID
- """
+BCL2BARCODE_DATA_TABLE_COLS = [
+    {"name": "Barcodes", }
+]
 
 def dataversion():
     return DATAVERSION
@@ -159,29 +160,29 @@ def init_callbacks(dash_app):
             update_pie_chart's data value, and update_pie_chart's fraction value
         """
 
-        run = index[index[index_col.Run] == run_alias]
-        run = run[run[index_col.ReadNumber] == 1]
-        run = run[~run[index_col.SampleID].isna()]
-        run = run.drop_duplicates([index_col.SampleID, index_col.Lane])
+        run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
+        run = run[run[bcl2barcode_col.Count] == 1]
+        run = run[~run[bcl2barcode_col.FileSWID].isna()]
+        run = run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
         # TODO: Replace with join from Pinery (on Run, Lane, Index1, Index2)
         #  10X index (SI-GA-H11) will have to be converted to nucleotide
-        run[COL_LIBRARY] = run[index_col.SampleID].str.extract(
+        run[COL_LIBRARY] = run[bcl2barcode_col.FileSWID].str.extract(
             r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
         )
-        run[COL_INDEX] = run[index_col.Index1].str.cat(
-            run[index_col.Index2].fillna(""), sep=" "
+        run[COL_INDEX] = run['Index1'].str.cat(
+            run['Index2'].fillna(""), sep=" "
         )
 
         pruned = gsiqcetl.bcl2fastq.prune_unknown_index_from_run(
-            run_alias, index, unknown
+            run_alias, known_data_table, unknown_data_table
         )
-        pruned[COL_INDEX] = pruned[un_col.Index1].str.cat(
-            pruned[un_col.Index2].fillna(""), sep=" "
+        pruned[COL_INDEX] = pruned['Index1'].str.cat(
+            pruned['Index2'].fillna(""), sep=" "
         )
-        pruned = pruned.sort_values(un_col.Count, ascending=False)
+        pruned = pruned.sort_values(bcl2barcode_col.Count, ascending=False)
 
         total_clusters = gsiqcetl.bcl2fastq.total_clusters_for_run(
-            run_alias, index
+            run_alias, known_data_table
         )
 
         pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
@@ -212,7 +213,7 @@ def create_known_index_bar(run):
             {
                 "x": list(d[COL_LIBRARY].unique()),
                 # One library can be run on multiple lanes. Sum them together.
-                "y": [d[index_col.ReadCount].sum()],
+                "y": [d[bcl2barcode_col.Count].sum()],
                 "type": "bar",
                 "name": inx[0],
                 "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
@@ -242,11 +243,11 @@ def create_unknown_index_bar(pruned):
 
     data_unknown = []
 
-    for lane, d in pruned.groupby(un_col.Lane):
+    for lane, d in pruned.groupby(bcl2barcode_col.Lane):
         data_unknown.append(
             {
                 "x": list(d[COL_INDEX]),
-                "y": list(d[un_col.Count]),
+                "y": list(d[bcl2barcode_col.Count]),
                 "type": "bar",
                 "name": lane,
             }
@@ -272,8 +273,8 @@ def create_pie_chart(run, pruned, total_clusters):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run[index_col.ReadCount].sum()
-    pruned_count = pruned[un_col.Count].sum()
+    known_count = run[bcl2barcode_col.Count].sum()
+    pruned_count = pruned[bcl2barcode_col.Count].sum()
     fraction = (known_count + pruned_count) / total_clusters * 100
     return (
         {

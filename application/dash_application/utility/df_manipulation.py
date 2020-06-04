@@ -142,6 +142,7 @@ Open a single instance of each cache, and use copies for the reports.
 cache = QCETLCache()
 _bcl2fastq_known = cache.bcl2fastq.known
 _bcl2fastq_unknown = cache.bcl2fastq.unknown
+_bcl2barcode = cache.bcl2barcode.bcl2barcode
 _rnaseqqc2 = normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
 _bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
@@ -284,6 +285,8 @@ def get_bcl2fastq_known():
 def get_bcl2fastq_unknown():
     return _bcl2fastq_unknown.copy(deep=True)
 
+def get_bcl2barcode():
+    return _bcl2barcode.copy(deep=True)
 
 def get_bamqc():
     return _bamqc.copy(deep=True)
