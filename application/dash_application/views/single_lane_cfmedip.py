@@ -355,7 +355,9 @@ def layout(query_string):
                             {"label": "Observed to Expected Enrichment",
                             "value": CFMEDIP_COL.ObservedToExpectedEnrichment}, 
                             {"label": "PERCENT_DUPLICATION",
-                            "value": CFMEDIP_COL.PercentDuplication}
+                            "value": CFMEDIP_COL.PercentDuplication},
+                            {"label": "Sample Name",
+                            "value": PINERY_COL.SampleName}
                         ]
                     ),
 
