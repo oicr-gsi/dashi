@@ -249,7 +249,9 @@ def layout(query_string):
                                                          "value":
                                                              RNASEQQC2_COL.MetricsPercentCodingBases},
                                                         {"label": "% rRNA Contamination",
-                                                         "value": special_cols["% rRNA Contamination"]}
+                                                         "value": special_cols["% rRNA Contamination"]},
+                                                         {"label": "Merged Lane",
+                                                         "value": util.ml_col}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
