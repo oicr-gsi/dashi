@@ -253,7 +253,7 @@ def layout(query_string):
     df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
-                                initial["completion_date"], initial["first_sort"],
+                                initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
                                 initial["shape_by"], shape_colour.items_for_df(), [])
 
@@ -453,7 +453,7 @@ def init_callbacks(dash_app):
             State(ids['insert-size-median-cutoff'], 'value'),
             State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
-            State(ids["date-range"], 'completion_date'),
+            State(ids["date-range"], 'end_date'),
             State('url', 'search'),
         ]
     )
@@ -475,7 +475,7 @@ def init_callbacks(dash_app):
             insert_median_cutoff,
             total_reads_cutoff,
             start_date,
-            completion_date,
+            end_date,
             search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if searchsample and searchsampleext:
@@ -483,7 +483,7 @@ def init_callbacks(dash_app):
         elif not searchsample and searchsampleext:
             searchsample = searchsampleext
         df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
-                                    start_date, completion_date, first_sort, second_sort, colour_by,
+                                    start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
