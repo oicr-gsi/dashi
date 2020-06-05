@@ -359,6 +359,8 @@ def layout(query_string):
                              "value": "covid_percent_mapped_host_depleted"},
                             {"label": "Covid Mapped (% of total reads)",
                              "value": "covid_percent_mapped_total"},
+                            {"label": "Sample Name",
+                            "value": PINERY_COL.SampleName}
                         ]
                     ),
 

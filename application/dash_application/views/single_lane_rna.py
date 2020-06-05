@@ -365,7 +365,9 @@ def layout(query_string):
                         {"label": "DV200",
                          "value": PINERY_COL.DV200},
                         {"label": "RIN",
-                         "value": PINERY_COL.RIN}
+                         "value": PINERY_COL.RIN},
+                        {"label": "Sample Name",
+                        "value": PINERY_COL.SampleName}
                     ]
                 ),
 

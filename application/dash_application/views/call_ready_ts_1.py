@@ -389,6 +389,8 @@ def layout(query_string):
                                                          #  "value": HSMETRICS_COL.AtDropout},
                                                          # {"label": "GC Dropout",
                                                          #  "value": HSMETRICS_COL.GCDropout}
+                                                         {"label": "Merged Lane",
+                                                         "value": util.ml_col}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],

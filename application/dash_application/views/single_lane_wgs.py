@@ -368,8 +368,10 @@ def layout(query_string):
                          "value": special_cols["Purity"]},
                         {"label": "Ploidy",
                          "value": ICHOR_COL.Ploidy},
-                        {"label": "median Insert Size",
-                         "value": BAMQC_COL.InsertMedian}
+                        {"label": "Median Insert Size",
+                         "value": BAMQC_COL.InsertMedian},
+                         {"label": "Sample Name",
+                        "value": PINERY_COL.SampleName}
                     ]
                 ),
 
