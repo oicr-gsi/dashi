@@ -634,7 +634,6 @@ def get_initial_single_lane_values():
         "library_designs": [],
         "start_date": None,
         "end_date": None,
-        "completion_date": None,
         "first_sort": pinery.column.SampleProvenanceColumn.StudyTitle,
         "second_sort": None,
         "colour_by": pinery.column.SampleProvenanceColumn.StudyTitle,
