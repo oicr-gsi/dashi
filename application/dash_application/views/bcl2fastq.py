@@ -7,7 +7,6 @@ import pandas
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
 
-import gsiqcetl.bcl2fastq
 import gsiqcetl.bcl2barcode
 import gsiqcetl.column
 
@@ -44,31 +43,9 @@ known_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle']
 
 known_data_table['Index1'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[0]
 known_data_table['Index2'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[1]
+##TODO: process the 10X barcodes into 4 barcodes, as per ticket
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
-
-COL_LIBRARY = "library"
-COL_INDEX = "index"
-
-KNOWN_DATA_TABLE_COLS = [
-    {"name": "Library", "id": "library"},
-    {"name": "Index 1", "id": "Index1"},
-    {"name": "Index 2", "id": "Index2"},
-    {"name": "Library PF Clusters", "id": "ReadCount"},
-    {"name": "Lane", "id": "Lane Number"},
-    {"name": "Lane PF Clusters", "id": "LaneClusterPF"},
-]
-
-UNKNOWN_DATA_TABLE_COLS = [
-    {"name": "Index 1", "id": "Index1"},
-    {"name": "Index 2", "id": "Index2"},
-    {"name": "Count", "id": "Count"},
-    {"name": "Lane", "id": "Lane Number"},
-]
-
-BCL2BARCODE_DATA_TABLE_COLS = [
-    {"name": "Barcodes", }
-]
 
 def dataversion():
     return DATAVERSION
@@ -93,12 +70,6 @@ def layout(qs):
                                 id=ids["known_fraction"],
                                 style={"width": "100%"},
                                 readOnly=True,
-                                # This is the textbox at the bottom, hover over to see title
-                                title=(
-                                    "Assumptions are made about which indexes are known "
-                                    "or unknown. This is due to multiple bcl2fastq analyses "
-                                    "being used on one run. This number should be 100%."
-                                ),
                             ),
                         ],
                         style={"width": "25%", "display": "inline-block"},
@@ -164,26 +135,6 @@ def init_callbacks(dash_app):
         run = run[run[bcl2barcode_col.Count] == 1]
         run = run[~run[bcl2barcode_col.FileSWID].isna()]
         run = run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
-        # TODO: Replace with join from Pinery (on Run, Lane, Index1, Index2)
-        #  10X index (SI-GA-H11) will have to be converted to nucleotide
-        run[COL_LIBRARY] = run[bcl2barcode_col.FileSWID].str.extract(
-            r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
-        )
-        run[COL_INDEX] = run['Index1'].str.cat(
-            run['Index2'].fillna(""), sep=" "
-        )
-
-        pruned = gsiqcetl.bcl2fastq.prune_unknown_index_from_run(
-            run_alias, known_data_table, unknown_data_table
-        )
-        pruned[COL_INDEX] = pruned['Index1'].str.cat(
-            pruned['Index2'].fillna(""), sep=" "
-        )
-        pruned = pruned.sort_values(bcl2barcode_col.Count, ascending=False)
-
-        total_clusters = gsiqcetl.bcl2fastq.total_clusters_for_run(
-            run_alias, known_data_table
-        )
 
         pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
 
@@ -205,20 +156,7 @@ def create_known_index_bar(run):
               data and values for the layout of stacked bar graph of sample indices
               creates bar graph "known_index_bar"
        """
-    data_known = []
-    #   Multiple libraries can use the same index, data must be grouped by both index and libraries
-    #   to prevent duplicate counts
-    for inx, d in run.groupby([COL_INDEX, COL_LIBRARY]):
-        data_known.append(
-            {
-                "x": list(d[COL_LIBRARY].unique()),
-                # One library can be run on multiple lanes. Sum them together.
-                "y": [d[bcl2barcode_col.Count].sum()],
-                "type": "bar",
-                "name": inx[0],
-                "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
-            }
-        )
+   
     return {
         "data": data_known,
         "layout": {
@@ -239,19 +177,7 @@ def create_unknown_index_bar(pruned):
                 creates unknown_index_bar bar graph
               """
 
-    pruned = pruned.head(MAX_UNKNOWN_DISPLAY)
-
-    data_unknown = []
-
-    for lane, d in pruned.groupby(bcl2barcode_col.Lane):
-        data_unknown.append(
-            {
-                "x": list(d[COL_INDEX]),
-                "y": list(d[bcl2barcode_col.Count]),
-                "type": "bar",
-                "name": lane,
-            }
-        )
+    
     return {
         "data": data_unknown,
         "layout": {
@@ -274,8 +200,7 @@ def create_pie_chart(run, pruned, total_clusters):
                   creates value of known_fraction
      """
     known_count = run[bcl2barcode_col.Count].sum()
-    pruned_count = pruned[bcl2barcode_col.Count].sum()
-    fraction = (known_count + pruned_count) / total_clusters * 100
+    
     return (
         {
             "data": [
