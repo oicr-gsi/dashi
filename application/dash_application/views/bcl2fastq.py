@@ -9,7 +9,7 @@ from ..dash_id import init_ids
 
 import gsiqcetl.bcl2barcode
 import gsiqcetl.column
-
+import pdb
 
 page_name = "bcl2fastq-index-qc"
 title = "Bcl2Fastq Index QC"
@@ -36,6 +36,7 @@ DATAVERSION = util.cache.versions(["bcl2barcode"])
 bcl2barcode = util.get_bcl2barcode()
 bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
 pinery = util.get_pinery_samples()
+PINERY_COL = util.PINERY_COL
 
 bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery, left_on='Run Alias', right_on='sequencerRunName', how='left')
 unknown_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle'].isnull()]
@@ -46,6 +47,14 @@ known_data_table['Index2'] = str(known_data_table[bcl2barcode_col.Barcodes]).spl
 ##TODO: process the 10X barcodes into 4 barcodes, as per ticket
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
+
+KNOWN_DATA_TABLE_COLS = [
+
+]
+
+UNKNOWN_DATA_TABLE_COLS = [
+
+]
 
 def dataversion():
     return DATAVERSION
@@ -136,15 +145,15 @@ def init_callbacks(dash_app):
         run = run[~run[bcl2barcode_col.FileSWID].isna()]
         run = run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
 
-        pie_data, textarea_fraction = create_pie_chart(run, pruned, total_clusters)
+        pie_data, textarea_fraction = create_pie_chart(run, run_alias)
 
         return (
             create_known_index_bar(run),
-            create_unknown_index_bar(pruned),
+            create_unknown_index_bar(run),
             pie_data,
             textarea_fraction,
             run.to_dict("records"),
-            pruned.to_dict("records")
+            run.to_dict("records")
         )
 
 
@@ -156,19 +165,26 @@ def create_known_index_bar(run):
               data and values for the layout of stacked bar graph of sample indices
               creates bar graph "known_index_bar"
        """
-   
+    data = {
+        "x": run[PINERY_COL.SampleName],
+        "y": run[bcl2barcode_col.Count],
+        "type": "bar",
+        "name": run[bcl2barcode_col.Barcodes],
+        "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
+    }
+    
     return {
-        "data": data_known,
+        "data": data,
         "layout": {
             "barmode": "stack",
             "title": "Sample Indices",
-            "xaxis": {"title": COL_LIBRARY, "automargin": True},
+            "xaxis": {"title": "Sample", "automargin": True},
             "yaxis": {"title": "Clusters"},
         },
     }
 
 
-def create_unknown_index_bar(pruned):
+def create_unknown_index_bar(run):
     """ Function to create unknown index bar  according to user selected run
             Parameters:
                 pruned: Dataframe of unknown indices filtered and cleaned by 'update_layout'
@@ -176,20 +192,24 @@ def create_unknown_index_bar(pruned):
                 data and layout values for stacked bar graph for unknown indices
                 creates unknown_index_bar bar graph
               """
-
+    data = {
+        "x": run[bcl2barcode_col.Barcodes],
+        "y": run[bcl2barcode_col.Count],
+        "type": "bar",
+    }
     
     return {
-        "data": data_unknown,
+        "data": data,
         "layout": {
             "barmode": "stack",
             "title": "Unknown Indices",
-            "xaxis": {"title": COL_INDEX},
+            "xaxis": {"title": "Index"},
             "yaxis": {"title": "Clusters"},
         },
     }
 
 
-def create_pie_chart(run, pruned, total_clusters):
+def create_pie_chart(run, run_alias):
     """ Function to create pie chart and known fraction according to user selected run
              Parameters:
                   run: Dataframe filtered and cleaned by 'update_layout'
@@ -199,14 +219,19 @@ def create_pie_chart(run, pruned, total_clusters):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run[bcl2barcode_col.Count].sum()
+    known_count = run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
+
+    unknown_from_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
+    unknown_count = unknown_from_run[bcl2barcode_col.Count].sum()
+    fraction = 100 ##idk what you want from me
+
     
     return (
         {
             "data": [
                 {
                     "labels": ["Known", "Unknown"],
-                    "values": [known_count, pruned_count],
+                    "values": [known_count, unknown_count],
                     "type": "pie",
                     "marker": {"colors": ["#349600", "#ef963b"]},
                 }
