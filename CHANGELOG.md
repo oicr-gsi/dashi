@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200608-1438] - 2020-06-08
+## Added
+  * Alphabetical second sort option (Sample Name, Merged Lane) 
+
 ## [200602-0954] - 2020-06-02
 ## Added
   * 2 SARS-CoV-2 mapping % graphs: % of host depleted, % of total reads
