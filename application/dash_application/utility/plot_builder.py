@@ -242,6 +242,36 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
     return df
 
 
+def is_empty_plot(trace_list) -> bool:
+    """
+    Check if any traces will be drawn on the graph
+
+    Args:
+        trace_list: The list of traces. Can be dict or plotly graph objects
+
+    Returns:
+
+    """
+    for t in trace_list:
+        try:
+            if t['x']:
+                return False
+        # Pandas Series has: The truth value of a Series is ambiguous.
+        except ValueError:
+            if t['x'].size:
+                return False
+
+        try:
+            if t['y']:
+                return False
+        # Pandas Series has: The truth value of a Series is ambiguous.
+        except ValueError:
+            if t['y'].size:
+                return False
+
+    return True
+
+
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
@@ -253,20 +283,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         t=50,
         pad=4
     )
-    y_axis = {
-        'title': {
-            'text': axis_text
-        },
-        'showline': True,
-        'linewidth': 1,
-        'linecolor': 'darkgrey',
-        'zeroline': True,
-        'zerolinewidth': 1,
-        'zerolinecolor': 'darkgrey',
-        'showgrid': True,
-        'gridwidth': 1,
-        'gridcolor': 'lightgrey'
-    }
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
 
@@ -282,6 +298,22 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         bar_positive,
         bar_negative
     )
+
+    y_axis = {
+        'title': {
+            'text': axis_text
+        },
+        'showline': True,
+        'linewidth': 1,
+        'linecolor': 'darkgrey',
+        'zeroline': True,
+        'zerolinewidth': 1,
+        'zerolinecolor': 'darkgrey',
+        'showgrid': True,
+        'gridwidth': 1,
+        'gridcolor': 'lightgrey',
+        'rangemode': 'nonnegative' if is_empty_plot(traces) else 'normal'
+    }
 
     return go.Figure(
         data = traces,
@@ -440,7 +472,8 @@ def generate_bar(df, criteria, x_fn, y_fn, title_text, yaxis_text, fill_color: D
                 'showgrid': True,
                 'gridwidth': 1,
                 'gridcolor': 'lightgrey',
-                'autorange': True
+                'autorange': True,
+                'rangemode': 'nonnegative' if is_empty_plot(graphs) else 'normal'
             },
             margin = go.layout.Margin(
                 l=50,
@@ -494,7 +527,8 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
                 'showgrid': True,
                 'gridwidth': 1,
                 'gridcolor': 'lightgrey',
-                'autorange': True
+                'autorange': True,
+                'rangemode': 'nonnegative' if is_empty_plot(graphs) else 'normal'
             },
             margin = go.layout.Margin(
                 l=50,
