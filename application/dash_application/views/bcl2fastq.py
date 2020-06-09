@@ -139,21 +139,23 @@ def init_callbacks(dash_app):
             functions update_known_index_bar, update_unknown_index_bar,
             update_pie_chart's data value, and update_pie_chart's fraction value
         """
+        known_run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
+        known_run = known_run[~known_run[bcl2barcode_col.FileSWID].isna()]
+        known_run = known_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
+        
+        unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
+        unknown_run = unknown_run[~unknown_run[bcl2barcode_col.FileSWID].isna()]
+        unknown_run = unknown_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
 
-        run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
-        run = run[run[bcl2barcode_col.Count] == 1]
-        run = run[~run[bcl2barcode_col.FileSWID].isna()]
-        run = run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
-
-        pie_data, textarea_fraction = create_pie_chart(run, run_alias)
+        pie_data, textarea_fraction = create_pie_chart(known_run, unknown_run)
 
         return (
-            create_known_index_bar(run),
-            create_unknown_index_bar(run),
+            create_known_index_bar(known_run),
+            create_unknown_index_bar(unknown_run),
             pie_data,
             textarea_fraction,
-            run.to_dict("records"),
-            run.to_dict("records")
+            known_run.to_dict("records"),
+            unknown_run.to_dict("records")
         )
 
 
@@ -165,13 +167,15 @@ def create_known_index_bar(run):
               data and values for the layout of stacked bar graph of sample indices
               creates bar graph "known_index_bar"
        """
-    data = {
-        "x": run[PINERY_COL.SampleName],
-        "y": run[bcl2barcode_col.Count],
-        "type": "bar",
-        "name": run[bcl2barcode_col.Barcodes],
-        "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
-    }
+    data = []
+    for i, d in run.groupby([bcl2barcode_col.Barcodes, PINERY_COL.SampleName]):
+        data.append({
+            "x": list(d[PINERY_COL.SampleName].unique()),
+            "y": d[bcl2barcode_col.Count],
+            "type": "bar",
+            "name": i[0],
+            "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
+        })
     
     return {
         "data": data,
@@ -180,6 +184,7 @@ def create_known_index_bar(run):
             "title": "Sample Indices",
             "xaxis": {"title": "Sample", "automargin": True},
             "yaxis": {"title": "Clusters"},
+            "showlegend": True
         },
     }
 
@@ -192,11 +197,15 @@ def create_unknown_index_bar(run):
                 data and layout values for stacked bar graph for unknown indices
                 creates unknown_index_bar bar graph
               """
-    data = {
-        "x": run[bcl2barcode_col.Barcodes],
-        "y": run[bcl2barcode_col.Count],
-        "type": "bar",
-    }
+    data = []
+
+    for lane, d in run.groupby(bcl2barcode_col.Lane):
+        data.append({
+            "x": list(d[bcl2barcode_col.Barcodes]),
+            "y": list(d[bcl2barcode_col.Count]),
+            "type": "bar",
+            "name": lane
+        })
     
     return {
         "data": data,
@@ -205,11 +214,12 @@ def create_unknown_index_bar(run):
             "title": "Unknown Indices",
             "xaxis": {"title": "Index"},
             "yaxis": {"title": "Clusters"},
+            "showlegend": True
         },
     }
 
 
-def create_pie_chart(run, run_alias):
+def create_pie_chart(known_run, unknown_run):
     """ Function to create pie chart and known fraction according to user selected run
              Parameters:
                   run: Dataframe filtered and cleaned by 'update_layout'
@@ -219,10 +229,8 @@ def create_pie_chart(run, run_alias):
                   pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
                   creates value of known_fraction
      """
-    known_count = run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
-
-    unknown_from_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
-    unknown_count = unknown_from_run[bcl2barcode_col.Count].sum()
+    known_count = known_run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
+    unknown_count = unknown_run[bcl2barcode_col.Count].sum()
     fraction = 100 ##idk what you want from me
 
     
