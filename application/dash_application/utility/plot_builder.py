@@ -253,21 +253,10 @@ def is_empty_plot(trace_list) -> bool:
 
     """
     for t in trace_list:
-        try:
-            if t['x']:
-                return False
-        # Pandas Series has: The truth value of a Series is ambiguous.
-        except ValueError:
-            if t['x'].size:
-                return False
-
-        try:
-            if t['y']:
-                return False
-        # Pandas Series has: The truth value of a Series is ambiguous.
-        except ValueError:
-            if t['y'].size:
-                return False
+        if t['x'] is not None and len(t['x']):
+            return False
+        if t['y'] is not None and len(t['y']):
+            return False
 
     return True
 
