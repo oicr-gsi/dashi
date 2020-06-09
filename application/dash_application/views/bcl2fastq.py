@@ -46,6 +46,13 @@ known_data_table['Index1'] = str(known_data_table[bcl2barcode_col.Barcodes]).spl
 known_data_table['Index2'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[1]
 ##TODO: process the 10X barcodes into 4 barcodes, as per ticket
 
+barcode_expansions = {}
+with open("expand_index.strexpand", 'r') as strexpand:
+    for l in strexpand.readlines():
+        x = l.split("\t")
+        barcode_expansions[x[0]] = x[1:]
+
+
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
 KNOWN_DATA_TABLE_COLS = [
@@ -248,3 +255,6 @@ def create_pie_chart(known_run, unknown_run):
         },
         ("Predicted clusters / produced clusters: {}%".format(str(round(fraction, 1)))),
     )
+
+def expand(b):
+  return barcode_expansions.get(b, [b])
