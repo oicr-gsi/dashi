@@ -380,7 +380,9 @@ def layout(query_string):
                                                                  "Reads",
                                                              "value":
                                                                  special_cols["Unmapped Reads"]
-                                                         }
+                                                         },
+                                                        {"label": "Merged Lane",
+                                                         "value": util.ml_col}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],

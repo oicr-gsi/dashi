@@ -404,6 +404,8 @@ def layout(query_string):
                                                           "value": special_cols["On Bait Percentage"]},
                                                          {"label": "Near Bait",
                                                           "value": special_cols["Near Bait Percentage"]},
+                                                          {"label": "Merged Lane",
+                                                         "value": util.ml_col}
                                                      ]),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],

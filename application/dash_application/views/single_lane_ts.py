@@ -292,8 +292,10 @@ def layout(query_string):
                                 "value": BAMQC_COL.NonPrimaryReads},
                                 {"label": "On-target Reads",
                                 "value": BAMQC_COL.ReadsOnTarget},
-                                {"label": "median Insert Size",
-                                "value": BAMQC_COL.InsertMedian}
+                                {"label": "Median Insert Size",
+                                "value": BAMQC_COL.InsertMedian},
+                                {"label": "Sample Name",
+                                "value": PINERY_COL.SampleName}
                         ]
                     ),
 

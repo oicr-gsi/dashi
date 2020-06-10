@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200608-1438] - 2020-06-08
+## Added
+  * Alphabetical second sort option (Sample Name, Merged Lane) 
+
+## [200602-0954] - 2020-06-02
+## Added
+  * 2 SARS-CoV-2 mapping % graphs: % of host depleted, % of total reads
+  
+## Removed
+  * SARS-CoV-2 On Target % graph
+
+## [200601-1019] - 2020-06-01
 ## Changed
   * Removed FastQC dependency for Total Reads from Single Lane RNA-Seq
   * Made date range clearable
