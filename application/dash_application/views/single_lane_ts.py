@@ -70,6 +70,9 @@ RUN_COLS = pinery.column.RunsColumn
 
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
+    "On Target Reads (%)": "On Target Reads (%)",
+    "Unmapped Reads (%)": "Unmapped Reads (%)",
+    "Non-Primary Reads (%)": "Non-Primary Reads (%)",
 }
 
 initial = get_initial_single_lane_values()
@@ -84,10 +87,20 @@ cutoff_insert_median_label = "Insert Median minimum"
 cutoff_insert_median = "cutoff_insert_median"
 initial[cutoff_insert_median] = 150
 
+
 def get_bamqc_data():
     bamqc_df = util.get_bamqc3_and_4()
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc_df[special_cols["On Target Reads (%)"]] = sidebar_utils.percentage_of(
+        bamqc_df, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads
+    )
+    bamqc_df[special_cols["Unmapped Reads (%)"]] = sidebar_utils.percentage_of(
+        bamqc_df, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads
+    )
+    bamqc_df[special_cols["Non-Primary Reads (%)"]] = sidebar_utils.percentage_of(
+        bamqc_df, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads
+    )
 
     pinery_samples = util.get_pinery_samples()
 
@@ -146,13 +159,28 @@ shape_colour = ColourShapeSingleLane(
 # Add shape, colour, and size cols to dataframe 
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
+SORT_BY = sidebar_utils.default_first_sort + [
+    {"label": "Total Reads",
+     "value": BAMQC_COL.TotalReads},
+    {"label": "Unmapped Reads",
+     "value": special_cols["Unmapped Reads (%)"]},
+    {"label": "Non-primary Reads",
+     "value": special_cols["Non-Primary Reads (%)"]},
+    {"label": "On-target Reads",
+     "value": special_cols["On Target Reads (%)"]},
+    {"label": "Median Insert Size",
+     "value": BAMQC_COL.InsertMedian},
+    {"label": "Sample Name",
+     "value": PINERY_COL.SampleName}
+]
+
 
 def generate_unmapped_reads(current_data, graph_params):
     return generate(
         "Unmapped Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads),
+        lambda d: d[special_cols["Unmapped Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -165,7 +193,7 @@ def generate_nonprimary_reads(current_data, graph_params):
         "Non-Primary Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads),
+        lambda d: d[special_cols["Non-Primary Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -178,7 +206,7 @@ def generate_on_target_reads(current_data, graph_params):
         "On Target Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
-        lambda d: sidebar_utils.percentage_of(d, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads),
+        lambda d: d[special_cols["On Target Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -277,26 +305,16 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
-                    sidebar_utils.select_first_sort(ids['first-sort'],
-                                                    initial["first_sort"]),
+                    sidebar_utils.select_first_sort(
+                        ids['first-sort'],
+                        initial["first_sort"],
+                        SORT_BY,
+                    ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
                         initial["second_sort"],
-                        [
-                                {"label": "Total Reads",
-                                "value": BAMQC_COL.TotalReads},
-                                {"label": "Unmapped Reads",
-                                "value": BAMQC_COL.UnmappedReads},
-                                {"label": "Non-primary Reads",
-                                "value": BAMQC_COL.NonPrimaryReads},
-                                {"label": "On-target Reads",
-                                "value": BAMQC_COL.ReadsOnTarget},
-                                {"label": "Median Insert Size",
-                                "value": BAMQC_COL.InsertMedian},
-                                {"label": "Sample Name",
-                                "value": PINERY_COL.SampleName}
-                        ]
+                        SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],

@@ -210,6 +210,36 @@ shape_colour = ColourShapeCallReady(ALL_PROJECTS, ALL_LIBRARY_DESIGNS,
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
                             True)
 
+SORT_BY = shape_colour.dropdown() + [
+    {
+        "label": "Total Reads (Passed Filter)",
+        "value": BAMQC_COL.TotalReads
+    },
+    {
+        "label": "Coverage (Deduplicated)",
+        "value": BAMQC_COL.CoverageDeduplicated,
+    },
+    {
+        "label": "Callability",
+        "value": CALL_COL.Callability
+    },
+    {
+        "label": "Mean Insert Size",
+        "value": BAMQC_COL.InsertMean
+    },
+    {
+        "label": "Duplication",
+        "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
+    },
+    {
+        "label": "Unmapped Reads",
+        "value": special_cols["Unmapped Reads"]
+    },
+    {
+        "label": "Merged Lane",
+        "value": util.ml_col
+    }
+]
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
@@ -342,48 +372,17 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
-                    sidebar_utils.select_first_sort(ids["first-sort"],
-                                                    initial["first_sort"],
-                                                    shape_colour.dropdown()),
+                    sidebar_utils.select_first_sort(
+                        ids["first-sort"],
+                        initial["first_sort"],
+                        SORT_BY,
+                    ),
 
-                    sidebar_utils.select_second_sort(ids["second-sort"],
-                                                     initial["second_sort"],
-                                                     [
-                                                         {
-                                                             "label": "Total Reads "
-                                                                      "(Passed Filter)",
-                                                             "value": BAMQC_COL.TotalReads},
-                                                         {
-                                                             "label":
-                                                                 "Coverage ("
-                                                                 "Deduplicated)",
-                                                             "value":
-                                                                 BAMQC_COL.CoverageDeduplicated},
-                                                         {
-                                                             "label":
-                                                                 "Callability",
-                                                             "value":
-                                                                 CALL_COL.Callability},
-                                                         {
-                                                             "label": "Mean "
-                                                                      "Insert Size",
-                                                             "value":
-                                                                BAMQC_COL.InsertMean},
-                                                         {
-                                                             "label":
-                                                                 "Duplication",
-                                                             "value":
-                                                                 BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
-                                                         {
-                                                             "label":
-                                                                 "Unmapped "
-                                                                 "Reads",
-                                                             "value":
-                                                                 special_cols["Unmapped Reads"]
-                                                         },
-                                                        {"label": "Merged Lane",
-                                                         "value": util.ml_col}
-                                                     ]),
+                    sidebar_utils.select_second_sort(
+                        ids["second-sort"],
+                        initial["second_sort"],
+                        SORT_BY,
+                    ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
@@ -753,13 +752,3 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x["value"] for x in avail_options]
-
-    @dash_app.callback(
-        [
-            Output(ids["colour-by"], "value"),
-            Output(ids["colour-by"], "disabled"),
-        ],
-        [Input(ids["first-sort"], "value")]
-    )
-    def pin_colour_to_first_sort(first_sort):
-        return [first_sort, True]
