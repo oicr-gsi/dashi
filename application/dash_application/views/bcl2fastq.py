@@ -3,6 +3,7 @@ import dash_core_components as core
 import dash_table
 from dash.dependencies import Input, Output
 import pandas
+import os
 
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
@@ -29,6 +30,9 @@ ids = init_ids(
     ]
 )
 
+def expand(b):
+  return barcode_expansions.get(b, [b])
+
 # There can be many unknown indices in each run. Only display top N
 MAX_UNKNOWN_DISPLAY = 30
 
@@ -39,18 +43,30 @@ pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
 
 bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery, left_on='Run Alias', right_on='sequencerRunName', how='left')
-unknown_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle'].isnull()]
-known_data_table = bcl2barcode_with_pinery[bcl2barcode_with_pinery['studyTitle'].notnull()]
+unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()]
+known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()]
 
-known_data_table['Index1'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[0]
-known_data_table['Index2'] = str(known_data_table[bcl2barcode_col.Barcodes]).split("-")[1]
+
 ##TODO: process the 10X barcodes into 4 barcodes, as per ticket
 
-barcode_expansions = {}
-with open("expand_index.strexpand", 'r') as strexpand:
-    for l in strexpand.readlines():
-        x = l.split("\t")
-        barcode_expansions[x[0]] = x[1:]
+for table in [known_data_table, unknown_data_table]:
+    table['Index1'] = str(table[bcl2barcode_col.Barcodes]).split("-")[0]
+    table['Index2'] = str(table[bcl2barcode_col.Barcodes]).split("-")[1]
+    barcode_expansions = {}
+
+    with open(os.getcwd() + "/application/dash_application/assets/expand_index.strexpand", 'r') as strexpand:
+        for l in strexpand.readlines():
+            x = l.split("\t")
+            barcode_expansions[x[0]] = x[1:]
+
+    ## TODO this could probably got require multiple loops
+    for tenx_barcode in barcode_expansions.keys():
+        for new_index in expand(tenx_barcode):
+            new_row = table.loc[table[bcl2barcode_col.Barcodes] == tenx_barcode]
+            new_row['Index1'] = new_index
+            table.append(new_row)
+        table = table[table[bcl2barcode_col.Barcodes] != tenx_barcode]
+
 
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
@@ -256,5 +272,3 @@ def create_pie_chart(known_run, unknown_run):
         ("Predicted clusters / produced clusters: {}%".format(str(round(fraction, 1)))),
     )
 
-def expand(b):
-  return barcode_expansions.get(b, [b])
