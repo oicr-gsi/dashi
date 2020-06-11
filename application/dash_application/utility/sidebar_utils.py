@@ -371,7 +371,7 @@ def construct_jira_link(runs, page_name) -> str:
     # JIRA requires a login, so we make all JIRA URLs a login with a self-redirect
     parameters = {
       "summary": "",
-      "issuetype": 9,
+      "issuetype": 3,
       "pid": 11684,
       "priority": 10000,
       "labels": "dashi",
