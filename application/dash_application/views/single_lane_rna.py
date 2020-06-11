@@ -165,6 +165,27 @@ shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
 # Add shape, colour, and size cols to RNA dataframe
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
+SORT_BY = sidebar_utils.default_first_sort + [
+    {"label": "Total Reads",
+     "value": RNA_COL.TotalReads},
+    {"label": "Unique Reads",
+     "value": special_cols["Percent Uniq Reads"]},
+    {"label": "5Prime to 3Prime Bias",
+     "value": RNA_COL.MetricsMedian5PrimeTo3PrimeBias},
+    {"label": "Correct Read Strand",
+     "value": RNA_COL.MetricsPercentCorrectStrandReads},
+    {"label": "Coding",
+     "value": RNA_COL.MetricsPercentCodingBases},
+    {"label": "rRNA Percentage Contamination",
+     "value": special_cols["rRNA Percent Contamination"]},
+    {"label": "DV200",
+     "value": PINERY_COL.DV200},
+    {"label": "RIN",
+     "value": PINERY_COL.RIN},
+    {"label": "Sample Name",
+     "value": PINERY_COL.SampleName}
+]
+
 
 def generate_total_reads(df, graph_params):
     return SingleLaneSubplot(
@@ -361,32 +382,16 @@ def layout(query_string):
                 sidebar_utils.hr(),
 
                 # Sort, colour, and shape
-                sidebar_utils.select_first_sort(ids["first-sort"],
-                                                initial["first_sort"]),
+                sidebar_utils.select_first_sort(
+                    ids["first-sort"],
+                    initial["first_sort"],
+                    SORT_BY
+                ),
 
                 sidebar_utils.select_second_sort(
                     ids["second-sort"],
                     initial["second_sort"],
-                    [
-                        {"label": "Total Reads",
-                         "value": RNA_COL.TotalReads},
-                        {"label": "Unique Reads",
-                         "value": special_cols["Percent Uniq Reads"]},
-                        {"label": "5Prime to 3Prime Bias",
-                         "value": RNA_COL.MetricsMedian5PrimeTo3PrimeBias},
-                        {"label": "Correct Read Strand",
-                         "value": RNA_COL.MetricsPercentCorrectStrandReads},
-                        {"label": "Coding",
-                         "value": RNA_COL.MetricsPercentCodingBases},
-                        {"label": "rRNA Percentage Contamination",
-                         "value": special_cols["rRNA Percent Contamination"]},
-                        {"label": "DV200",
-                         "value": PINERY_COL.DV200},
-                        {"label": "RIN",
-                         "value": PINERY_COL.RIN},
-                        {"label": "Sample Name",
-                        "value": PINERY_COL.SampleName}
-                    ]
+                    SORT_BY,
                 ),
 
                 sidebar_utils.select_colour_by(ids["colour-by"],

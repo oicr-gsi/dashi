@@ -148,6 +148,26 @@ shape_colour = ColourShapeCfMeDIP(
 # Add shape, colour, and size cols to dataframe 
 cfmedip = add_graphable_cols(cfmedip, initial, shape_colour.items_for_df())
 
+SORT_BY = sidebar_utils.default_first_sort + [
+    {"label": "Project",
+     "value": PINERY_COL.StudyTitle},
+    {"label": "Institute",
+     "value": PINERY_COL.Institute},
+    {"label": "Sample Type",
+     "value": util.sample_type_col},
+    {"label": "Tissue Type",
+     "value": PINERY_COL.TissueType},
+    {"label": "Run",
+     "value": PINERY_COL.SequencerRunName},
+    {"label": "Relative CpG Frequency Enrichment",
+     "value": CFMEDIP_COL.RelativeCpGFrequencyEnrichment},
+    {"label": "Observed to Expected Enrichment",
+     "value": CFMEDIP_COL.ObservedToExpectedEnrichment},
+    {"label": "PERCENT_DUPLICATION",
+     "value": CFMEDIP_COL.PercentDuplication},
+    {"label": "Sample Name",
+     "value": PINERY_COL.SampleName}
+]
 
 def generate_number_windows(current_data, graph_params):
     return generate(
@@ -332,33 +352,13 @@ def layout(query_string):
                     sidebar_utils.select_first_sort(
                         ids['first-sort'],
                         initial["first_sort"],
-                        [
-                            {"label": "Project",
-                            "value": PINERY_COL.StudyTitle},
-                            {"label": "Institute",
-                            "value": PINERY_COL.Institute}, 
-                            {"label": "Sample Type",
-                            "value": util.sample_type_col},
-                            {"label": "Tissue Type",
-                            "value": PINERY_COL.TissueType},
-                            {"label": "Run",
-                            "value": PINERY_COL.SequencerRunName} 
-                        ]
+                        SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
                         initial["second_sort"],
-                        [
-                            {"label": "Relative CpG Frequency Enrichment",
-                            "value": CFMEDIP_COL.RelativeCpGFrequencyEnrichment}, 
-                            {"label": "Observed to Expected Enrichment",
-                            "value": CFMEDIP_COL.ObservedToExpectedEnrichment}, 
-                            {"label": "PERCENT_DUPLICATION",
-                            "value": CFMEDIP_COL.PercentDuplication},
-                            {"label": "Sample Name",
-                            "value": PINERY_COL.SampleName}
-                        ]
+                        SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],

@@ -177,6 +177,27 @@ RAW_DATA_COLUMNS = [
     # Add columns produced by wide coverage percentage dataframe
 ] + [x for x in BEDTOOLS_COV_PERC_WIDE_DF if x.startswith('Coverage Above')]
 
+SORT_BY = [
+    {"label": "Project",
+     "value": PINERY_COL.StudyTitle},
+    {"label": "Run",
+     "value": PINERY_COL.SequencerRunName},
+    {"label": "Average Coverage",
+     "value": BEDTOOLS_CALC_COL.MedianCoverage},
+    {"label": "SARS-CoV-2 Percentage",
+     "value": KRAKEN2_COL.PercentAtClade},
+    {"label": "Uniformity of Coverage",
+     "value": BEDTOOLS_CALC_COL.CoverageUniformity},
+    {"label": "Sequencing Control Type",
+     "value": PINERY_COL.SequencingControlType},
+    {"label": "Covid Mapped (% of host depleted reads)",
+     "value": "covid_percent_mapped_host_depleted"},
+    {"label": "Covid Mapped (% of total reads)",
+     "value": "covid_percent_mapped_total"},
+    {"label": "Sample Name",
+     "value": PINERY_COL.SampleName}
+]
+
 
 def generate_median_coverage_scatter(current_data, graph_params):
     return generate(
@@ -336,32 +357,13 @@ def layout(query_string):
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(ids['first-sort'],
                                                     initial["first_sort"],
-                                                    [
-                                                        {"label": "Project",
-                                                        "value": PINERY_COL.StudyTitle},
-                                                        {"label": "Run",
-                                                        "value": PINERY_COL.SequencerRunName},
-                                                    ]),
+                                                    SORT_BY,
+                                                    ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
                         initial["second_sort"],
-                        [
-                            {"label": "Average Coverage",
-                             "value": BEDTOOLS_CALC_COL.MedianCoverage},
-                            {"label": "SARS-CoV-2 Percentage",
-                             "value": KRAKEN2_COL.PercentAtClade},
-                            {"label": "Uniformity of Coverage",
-                             "value": BEDTOOLS_CALC_COL.CoverageUniformity},
-                            {"label": "Sequencing Control Type",
-                             "value": PINERY_COL.SequencingControlType},
-                            {"label": "Covid Mapped (% of host depleted reads)",
-                             "value": "covid_percent_mapped_host_depleted"},
-                            {"label": "Covid Mapped (% of total reads)",
-                             "value": "covid_percent_mapped_total"},
-                            {"label": "Sample Name",
-                            "value": PINERY_COL.SampleName}
-                        ]
+                        SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],
