@@ -370,15 +370,16 @@ def jira_button(button_text: str, button_id: str, style: Dict, href: str) -> htm
 def construct_jira_link(runs, page_name) -> str:
     # JIRA requires a login, so we make all JIRA URLs a login with a self-redirect
     parameters = {
-      "summary": page_name + ": ",
+      "summary": "",
       "issuetype": 9,
       "pid": 11684,
       "priority": 10000,
-      "labels": "dashi"
+      "labels": "dashi",
+      "description": "Report: " + page_name + "\n"
     }
 
     if runs:
-        parameters["description"] = "Runs: " + ", ".join(str(run) for run in runs)
+        parameters["description"] += "Runs: " + ", ".join(str(run) for run in runs)
 
     root_parameters = {
       "permissionViolation": "true",
