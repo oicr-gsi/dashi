@@ -216,7 +216,7 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
             html.Div(className="row jira-buttons", children=[
-                sidebar_utils.jira_button("File a ticket",
+                sidebar_utils.jira_button("Open an issue",
                                           ids['jira-issue-button'],
                                           {"display": "inline-block"},
                                           sidebar_utils.construct_jira_link([], title))]),
