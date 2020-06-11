@@ -202,6 +202,26 @@ shape_colour = ColourShapeSingleLane(
 # Add shape col to WG dataframe
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
+SORT_BY = sidebar_utils.default_first_sort + [
+    {"label": "Total Reads",
+     "value": BAMQC_COL.TotalReads},
+    {"label": "Duplication",
+     "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
+    {"label": "Unmapped Reads",
+     "value": special_cols["Unmapped Reads"]},
+    {"label": "Non-Primary Reads",
+     "value": special_cols["Non-Primary Reads"]},
+    {"label": "On-target Reads",
+     "value": special_cols["On-target Reads"]},
+    {"label": "Purity",
+     "value": special_cols["Purity"]},
+    {"label": "Ploidy",
+     "value": ICHOR_COL.Ploidy},
+    {"label": "Median Insert Size",
+     "value": BAMQC_COL.InsertMedian},
+    {"label": "Sample Name",
+     "value": PINERY_COL.SampleName}
+]
 
 def generate_median_insert_size(df, graph_params):
     return generate(
@@ -347,32 +367,16 @@ def layout(query_string):
                 sidebar_utils.hr(),
 
                 # Sort, colour, and shape
-                sidebar_utils.select_first_sort(ids['first-sort'],
-                                                initial["first_sort"]),
+                sidebar_utils.select_first_sort(
+                    ids['first-sort'],
+                    initial["first_sort"],
+                    SORT_BY,
+                ),
 
                 sidebar_utils.select_second_sort(
                     ids["second-sort"],
                     initial["second_sort"],
-                    [
-                        {"label": "Total Reads",
-                         "value": BAMQC_COL.TotalReads},
-                        {"label": "Duplication",
-                         "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
-                        {"label": "Unmapped Reads",
-                         "value": special_cols["Unmapped Reads"]},
-                        {"label": "Non-Primary Reads",
-                         "value": special_cols["Non-Primary Reads"]},
-                        {"label": "On-target Reads",
-                         "value": special_cols["On-target Reads"]},
-                        {"label": "Purity",
-                         "value": special_cols["Purity"]},
-                        {"label": "Ploidy",
-                         "value": ICHOR_COL.Ploidy},
-                        {"label": "Median Insert Size",
-                         "value": BAMQC_COL.InsertMedian},
-                         {"label": "Sample Name",
-                        "value": PINERY_COL.SampleName}
-                    ]
+                    SORT_BY,
                 ),
 
                 sidebar_utils.select_colour_by(ids['colour-by'],

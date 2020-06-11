@@ -218,6 +218,29 @@ shape_colour = ColourShapeCallReady(
 )
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
+SORT_BY = shape_colour.dropdown() + [
+    {"label": "Total Reads",
+     "value": BAMQC_COL.TotalReads},
+    {"label": "Mean Target Coverage",
+     "value": HSMETRICS_COL.MeanTargetCoverage},
+    {"label": "Callability",
+     "value": CALL_COL.Callability},
+    {"label": "Tumor Fraction",
+     "value": ICHOR_COL.TumorFraction},
+    {"label": "HS Library Size",
+     "value": HSMETRICS_COL.HsLibrarySize},
+    # {"label": "Duplication (%)",
+    #  "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
+    # {"label": "Fraction Excluded due to Overlap",
+    #  "value": HSMETRICS_COL.PctExcOverlap},
+    # {"label": "AT Dropout",
+    #  "value": HSMETRICS_COL.AtDropout},
+    # {"label": "GC Dropout",
+    #  "value": HSMETRICS_COL.GCDropout}
+    {"label": "Merged Lane",
+     "value": util.ml_col}
+]
+
 
 def generate_mean_target_coverage(df, graph_params):
     return generate(
@@ -364,34 +387,17 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Sort, colour and shape
-                    sidebar_utils.select_first_sort(ids["first-sort"],
-                                                    initial["first_sort"],
-                                                    shape_colour.dropdown()),
+                    sidebar_utils.select_first_sort(
+                        ids["first-sort"],
+                        initial["first_sort"],
+                        SORT_BY
+                    ),
 
-                    sidebar_utils.select_second_sort(ids["second-sort"],
-                                                     initial["second_sort"],
-                                                     [
-                                                         {"label": "Total Reads",
-                                                          "value": BAMQC_COL.TotalReads},
-                                                         {"label": "Mean Target Coverage",
-                                                          "value": HSMETRICS_COL.MeanTargetCoverage},
-                                                         {"label": "Callability",
-                                                          "value": CALL_COL.Callability},
-                                                         {"label": "Tumor Fraction",
-                                                          "value": ICHOR_COL.TumorFraction},
-                                                         {"label": "HS Library Size",
-                                                          "value": HSMETRICS_COL.HsLibrarySize},
-                                                         # {"label": "Duplication (%)",
-                                                         #  "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
-                                                         # {"label": "Fraction Excluded due to Overlap",
-                                                         #  "value": HSMETRICS_COL.PctExcOverlap},
-                                                         # {"label": "AT Dropout",
-                                                         #  "value": HSMETRICS_COL.AtDropout},
-                                                         # {"label": "GC Dropout",
-                                                         #  "value": HSMETRICS_COL.GCDropout}
-                                                         {"label": "Merged Lane",
-                                                         "value": util.ml_col}
-                                                     ]),
+                    sidebar_utils.select_second_sort(
+                        ids["second-sort"],
+                        initial["second_sort"],
+                        SORT_BY,
+                ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
@@ -691,13 +697,3 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x["value"] for x in avail_options]
-
-    @dash_app.callback(
-        [
-            Output(ids["colour-by"], "value"),
-            Output(ids["colour-by"], "disabled"),
-        ],
-        [Input(ids["first-sort"], "value")]
-    )
-    def pin_colour_to_first_sort(first_sort):
-        return [first_sort, True]

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Empty graphs start at 0
+  * Sorting is independent of colour/shape by
+  * First and second sort options are the same
+  
+## Removed
+  * The Call Ready linking Color to First Sort
 
 ## [200608-1438] - 2020-06-08
 ## Added
