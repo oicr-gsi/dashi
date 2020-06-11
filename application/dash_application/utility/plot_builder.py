@@ -211,8 +211,6 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
             library_designs)]
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
-    if first_sort == "start_date":
-        pdb.set_trace()
     df = df.sort_values(by=sort_by)
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
