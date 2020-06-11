@@ -8,11 +8,33 @@
     <h1>Dashi QC</h1>
     <p>Jump:
       <ul>
+        <li><a href="#reports">Reports</a></li>
         <li><a href="#runs">Runs (Last 3 Weeks)</a></li>
         <li><a href="#projects">Projects</a></li>
-        <li><a href="#reports">Reports</a></li>
       </ul>
     </p>
+
+    <!-- TODO: Import the header bar from the reports instead of having this list -->
+    <a id="reports"><h2><u>Reports</u></h2></a>
+    <h3><a href="/SARS-CoV-2">SARS-CoV-2</a></h3>
+
+    <h2>Single-Lane Sequencing Graphs</h2>
+    <h3><a href="/single-lane-cfmedip">Single-Lane cfMeDIP</a></h3>
+    <h3><a href="/single-lane-rna">Single-Lane RNA-seq</a></h3>
+    <h3><a href="/single-lane-ts">Single-Lane Targeted Sequencing</a></h3>
+    <h3><a href="/single-lane-wgs">Single-Lane WGS</a></h3>
+
+    <h2>Single Run Sequencing Graphs</h2>
+    <h3><a href="/bcl2fastq-index-qc">Bcl2fastq Index QC</a></h3>
+
+    <h2>Call-Ready Sequencing Graphs</h2>
+    <h3><a href="/call-ready-rna">Call-Ready RNA-seq</a></h3>
+    <h3><a href="/call-ready-ts-1">Call-Ready Targeted Sequencing
+      <b>1</b></a></h3>
+    <h3><a href="/call-ready-ts-2">Call-Ready Targeted Sequencing
+      <b>2</b></a></h3>
+    <h3><a href="/call-ready-wgs">Call-Ready WGS</a></h3>
+
     <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
     <table border=1>
       <tr>
@@ -54,27 +76,6 @@
       </tr>
       {% endfor %}
     </table>
-
-    <!-- TODO: Import the header bar from the reports instead of having this list -->
-    <a id="reports"><h2><u>Reports</u></h2></a>
-    <h3><a href="/SARS-CoV-2">SARS-CoV-2</a></h3>
-
-    <h2>Single-Lane Sequencing Graphs</h2>
-    <h3><a href="/single-lane-cfmedip">Single-Lane cfMeDIP</a></h3>
-    <h3><a href="/single-lane-rna">Single-Lane RNA-seq</a></h3>
-    <h3><a href="/single-lane-ts">Single-Lane Targeted Sequencing</a></h3>
-    <h3><a href="/single-lane-wgs">Single-Lane WGS</a></h3>
-
-    <h2>Single Run Sequencing Graphs</h2>
-    <h3><a href="/bcl2fastq-index-qc">Bcl2fastq Index QC</a></h3>
-
-    <h2>Call-Ready Sequencing Graphs</h2>
-    <h3><a href="/call-ready-rna">Call-Ready RNA-seq</a></h3>
-    <h3><a href="/call-ready-ts-1">Call-Ready Targeted Sequencing
-      <b>1</b></a></h3>
-    <h3><a href="/call-ready-ts-2">Call-Ready Targeted Sequencing
-      <b>2</b></a></h3>
-    <h3><a href="/call-ready-wgs">Call-Ready WGS</a></h3>
 
     <hr />
     <footer id="footer">Dashi version {{version}}</footer>
