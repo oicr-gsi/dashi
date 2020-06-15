@@ -55,11 +55,11 @@ with open(os.getcwd() + "/application/dash_application/assets/expand_index.strex
         for i in range(1,5):
             barcode_expansions = barcode_expansions.append({'Index': x[0], 'Sequence': x[i].replace("\n", "")}, ignore_index=True)
 
-pdb.set_trace()
-pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
-pinery_with_expanded_barcodes = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 
+pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
+pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on='Run Alias', right_on='sequencerRunName', how='left')
+pdb.set_trace()
 bcl2barcode_with_pinery['Index1'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: s.split("-")[0])
 bcl2barcode_with_pinery['Index2'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: maybe_index2(s))
 
