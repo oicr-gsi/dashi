@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200615-1633] - 2020-06-15
 ## Changed
+  * Adjusted JIRA button behaviour and wording
   * Empty graphs start at 0
   * Sorting is independent of colour/shape by
   * First and second sort options are the same
