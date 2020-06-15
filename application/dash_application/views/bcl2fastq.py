@@ -33,6 +33,12 @@ ids = init_ids(
 def expand(b):
   return barcode_expansions.get(b, [b])
 
+def maybe_index2(s):
+    try:
+        return s.split("-")[1]
+    except IndexError:
+        return ""
+
 # There can be many unknown indices in each run. Only display top N
 MAX_UNKNOWN_DISPLAY = 30
 
@@ -42,32 +48,39 @@ bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
 pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
 
-bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery, left_on='Run Alias', right_on='sequencerRunName', how='left')
+barcode_expansions = pandas.DataFrame(columns=['Index', 'Sequence'])
+with open(os.getcwd() + "/application/dash_application/assets/expand_index.strexpand", 'r') as strexpand:
+    for l in strexpand.readlines():
+        x = l.split("\t")
+        for i in range(1,5):
+            barcode_expansions = barcode_expansions.append({'Index': x[0], 'Sequence': x[i].replace("\n", "")}, ignore_index=True)
+
+pdb.set_trace()
+pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
+pinery_with_expanded_barcodes = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
+
+bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on='Run Alias', right_on='sequencerRunName', how='left')
+bcl2barcode_with_pinery['Index1'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: s.split("-")[0])
+bcl2barcode_with_pinery['Index2'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: maybe_index2(s))
+
+
+
+# for tenx_barcode in barcode_expansions.keys():
+#     print(tenx_barcode)
+#     new_row = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery[bcl2barcode_col.Barcodes] == tenx_barcode]
+#     if new_row.empty: continue
+#     for new_index in expand(tenx_barcode):
+#         print(new_index)
+#         new_row_copy = new_row.copy(deep=True)
+#         pdb.set_trace()
+#         new_row_copy['Index1'] = new_index
+#         new_row_copy[bcl2barcode_col.Barcodes] = new_index
+#         bcl2barcode_with_pinery.append(new_row_copy)
+#     bcl2barcode_with_pinery = bcl2barcode_with_pinery[bcl2barcode_with_pinery[bcl2barcode_col.Barcodes] != tenx_barcode]
+# print("All done!")
+
 unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()]
 known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()]
-
-
-##TODO: process the 10X barcodes into 4 barcodes, as per ticket
-
-for table in [known_data_table, unknown_data_table]:
-    table['Index1'] = str(table[bcl2barcode_col.Barcodes]).split("-")[0]
-    table['Index2'] = str(table[bcl2barcode_col.Barcodes]).split("-")[1]
-    barcode_expansions = {}
-
-    with open(os.getcwd() + "/application/dash_application/assets/expand_index.strexpand", 'r') as strexpand:
-        for l in strexpand.readlines():
-            x = l.split("\t")
-            barcode_expansions[x[0]] = x[1:]
-
-    ## TODO this could probably got require multiple loops
-    for tenx_barcode in barcode_expansions.keys():
-        for new_index in expand(tenx_barcode):
-            new_row = table.loc[table[bcl2barcode_col.Barcodes] == tenx_barcode]
-            new_row['Index1'] = new_index
-            table.append(new_row)
-        table = table[table[bcl2barcode_col.Barcodes] != tenx_barcode]
-
-
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
