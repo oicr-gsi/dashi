@@ -55,32 +55,28 @@ with open(os.getcwd() + "/application/dash_application/assets/expand_index.strex
         for i in range(1,5):
             barcode_expansions = barcode_expansions.append({'Index': x[0], 'Sequence': x[i].replace("\n", "")}, ignore_index=True)
 
-
+# Expand pinery to include 4 rows for every 1 10X barcode
 pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
+
+# Where there is no 10X barcode, fill in with the iusTag
 pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
-bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on='Run Alias', right_on='sequencerRunName', how='left')
-pdb.set_trace()
-bcl2barcode_with_pinery['Index1'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: s.split("-")[0])
-bcl2barcode_with_pinery['Index2'] = bcl2barcode_with_pinery['Sequence'].apply(lambda s: maybe_index2(s))
 
+# Merge the expanded pinery with bcl2barcode to expand the bcl2barcode data the same way
+bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on=['Run Alias', 'Lane Number', 'Barcodes'], right_on=['sequencerRunName', 'laneNumber', 'Sequence'], how='left')
 
-
-# for tenx_barcode in barcode_expansions.keys():
-#     print(tenx_barcode)
-#     new_row = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery[bcl2barcode_col.Barcodes] == tenx_barcode]
-#     if new_row.empty: continue
-#     for new_index in expand(tenx_barcode):
-#         print(new_index)
-#         new_row_copy = new_row.copy(deep=True)
-#         pdb.set_trace()
-#         new_row_copy['Index1'] = new_index
-#         new_row_copy[bcl2barcode_col.Barcodes] = new_index
-#         bcl2barcode_with_pinery.append(new_row_copy)
-#     bcl2barcode_with_pinery = bcl2barcode_with_pinery[bcl2barcode_with_pinery[bcl2barcode_col.Barcodes] != tenx_barcode]
-# print("All done!")
-
+# Failures to merge with the pinery data populate the 'Unknown' table
 unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()]
+
+# Rows which merged successfully are the 'Known' table
 known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()]
+
+# Get Known indices from pinery, since it's been expanded properly
+known_data_table['Index1'] = known_data_table['Sequence'].apply(lambda s: s.split("-")[0])
+known_data_table['Index2'] = known_data_table['Sequence'].apply(lambda s: maybe_index2(s))
+
+#Get Unknown indices from bcl2barcode, since there's no pinery data
+unknown_data_table['Index1'] = unknown_data_table['Barcodes'].apply(lambda s: s.split("-")[0])
+unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: maybe_index2(s))
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
