@@ -172,15 +172,12 @@ def init_callbacks(dash_app):
             update_pie_chart's data value, and update_pie_chart's fraction value
         """
         known_run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
-        known_run = known_run[~known_run[bcl2barcode_col.FileSWID].isna()]
-        known_run = known_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
-        # known_run['Library'] = known_run[bcl2barcode_col.FileSWID].str.extract(
-        #     r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
-        # )
+        known_run = known_run[~known_run[PINERY_COL.SampleProvenanceID].isna()]
+        known_run = known_run.drop_duplicates([PINERY_COL.SampleProvenanceID, bcl2barcode_col.Lane])
         
         unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
-        unknown_run = unknown_run[~unknown_run[bcl2barcode_col.FileSWID].isna()]
-        unknown_run = unknown_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
+        # unknown_run = unknown_run[~unknown_run[bcl2barcode_col.FileSWID].isna()]
+        # unknown_run = unknown_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
 
         pie_data, textarea_fraction = create_pie_chart(known_run, unknown_run)
 
