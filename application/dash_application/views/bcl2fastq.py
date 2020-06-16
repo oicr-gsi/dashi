@@ -174,6 +174,9 @@ def init_callbacks(dash_app):
         known_run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
         known_run = known_run[~known_run[bcl2barcode_col.FileSWID].isna()]
         known_run = known_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
+        # known_run['Library'] = known_run[bcl2barcode_col.FileSWID].str.extract(
+        #     r"SWID_\d+_(\w+_\d+_.*_\d+_[A-Z]{2})_"
+        # )
         
         unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
         unknown_run = unknown_run[~unknown_run[bcl2barcode_col.FileSWID].isna()]
@@ -200,7 +203,7 @@ def create_known_index_bar(run):
               creates bar graph "known_index_bar"
        """
     data = []
-    for i, d in run.groupby([bcl2barcode_col.Barcodes, PINERY_COL.SampleName]):
+    for i, d in run.groupby(['Sequence', PINERY_COL.SampleName]):
         data.append({
             "x": list(d[PINERY_COL.SampleName].unique()),
             "y": d[bcl2barcode_col.Count],
