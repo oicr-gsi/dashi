@@ -10,7 +10,7 @@ from ..dash_id import init_ids
 
 import gsiqcetl.bcl2barcode
 import gsiqcetl.column
-import pdb
+
 
 page_name = "bcl2barcode-index-qc"
 title = "Bcl2Barcode Index QC"
