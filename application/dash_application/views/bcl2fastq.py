@@ -184,8 +184,8 @@ def init_callbacks(dash_app):
         known_run = known_run.drop_duplicates([PINERY_COL.SampleProvenanceID, bcl2barcode_col.Lane])
         
         unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
-        # unknown_run = unknown_run[~unknown_run[bcl2barcode_col.FileSWID].isna()]
-        # unknown_run = unknown_run.drop_duplicates([bcl2barcode_col.FileSWID, bcl2barcode_col.Lane])
+        # unknown_run = unknown_run[~unknown_run[PINERY_COL.SampleProvenanceID].isna()]
+        # unknown_run = unknown_run.drop_duplicates([bcl2barcode_col.SampleProvenanceID, bcl2barcode_col.Lane])
 
         pie_data, textarea_fraction = create_pie_chart(known_run, unknown_run)
 
