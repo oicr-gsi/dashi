@@ -81,11 +81,19 @@ unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: ma
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
 KNOWN_DATA_TABLE_COLS = [
-
+    {"name": "Library", "id": PINERY_COL.SampleName},
+    {"name": "Index 1", "id": "Index1"},
+    {"name": "Index 2", "id": "Index2"},
+    {"name": "Library PF Clusters", "id": bcl2barcode_col.Count},
+    {"name": "Lane", "id": PINERY_COL.LaneNumber},
+    # {"name": "Lane PF Clusters", "id": "LaneClusterPF"},
 ]
 
 UNKNOWN_DATA_TABLE_COLS = [
-
+    {"name": "Index 1", "id": "Index1"},
+    {"name": "Index 2", "id": "Index2"},
+    {"name": "Count", "id": bcl2barcode_col.Count},
+    {"name": "Lane", "id": bcl2barcode_col.Lane},
 ]
 
 def dataversion():
@@ -263,7 +271,7 @@ def create_pie_chart(known_run, unknown_run):
      """
     known_count = known_run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
     unknown_count = unknown_run[bcl2barcode_col.Count].sum()
-    fraction = 100 ##idk what you want from me
+    fraction = 100 ## This needs a new count from ETL
 
     
     return (
