@@ -197,7 +197,6 @@ _pinery_samples = _pinery_samples.drop(axis=1, columns=[
     PINERY_COL.PoolName,
     PINERY_COL.STRResult,
     PINERY_COL.QubitConcentration,
-    PINERY_COL.SampleProvenanceID,
     PINERY_COL.Version,
     PINERY_COL.NanodropConcentration,
     PINERY_COL.Purpose,
