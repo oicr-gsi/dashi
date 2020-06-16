@@ -219,7 +219,7 @@ def create_known_index_bar(run):
         "layout": {
             "barmode": "stack",
             "title": "Sample Indices",
-            "xaxis": {"title": "Sample", "automargin": True},
+            "xaxis": {"title": "Library", "automargin": True},
             "yaxis": {"title": "Clusters"},
             "showlegend": True
         },
