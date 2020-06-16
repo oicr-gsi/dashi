@@ -30,9 +30,6 @@ ids = init_ids(
     ]
 )
 
-def expand(b):
-  return barcode_expansions.get(b, [b])
-
 def maybe_index2(s):
     try:
         return s.split("-")[1]
