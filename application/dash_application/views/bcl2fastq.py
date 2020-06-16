@@ -12,8 +12,8 @@ import gsiqcetl.bcl2barcode
 import gsiqcetl.column
 import pdb
 
-page_name = "bcl2fastq-index-qc"
-title = "Bcl2Fastq Index QC"
+page_name = "bcl2barcode-index-qc"
+title = "Bcl2Barcode Index QC"
 
 ids = init_ids(
     [
