@@ -50,10 +50,10 @@ pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Seque
 bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on=['Run Alias', 'Lane Number', 'Barcodes'], right_on=['sequencerRunName', 'laneNumber', 'Sequence'], how='left')
 
 # Failures to merge with the pinery data populate the 'Unknown' table
-unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()]
+unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()].copy(deep=True)
 
 # Rows which merged successfully are the 'Known' table
-known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()]
+known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()].copy(deep=True)
 
 # Get Known indices from pinery, since it's been expanded properly
 known_data_table['Index1'] = known_data_table['Sequence'].apply(lambda s: s.split("-")[0])
