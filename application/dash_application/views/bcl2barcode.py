@@ -11,7 +11,6 @@ from ..dash_id import init_ids
 import gsiqcetl.bcl2barcode
 import gsiqcetl.column
 
-
 page_name = "bcl2barcode-index-qc"
 title = "Bcl2Barcode Index QC"
 
@@ -39,12 +38,7 @@ bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
 pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
 
-barcode_expansions = pandas.DataFrame(columns=['Index', 'Sequence'])
-with open(os.getenv("BARCODES_STREXPAND"), 'r') as strexpand:
-    for l in strexpand.readlines():
-        x = l.split("\t")
-        for i in range(1,5):
-            barcode_expansions = barcode_expansions.append({'Index': x[0], 'Sequence': x[i].replace("\n", "")}, ignore_index=True)
+barcode_expansions = pandas.read_csv(os.getenv("BARCODES_STREXPAND"), sep="\t", header=None).melt(id_vars=0).drop(labels="variable", axis="columns").set_axis(['Index', 'Sequence'], axis="columns", inplace=False)
 
 # Expand pinery to include 4 rows for every 1 10X barcode
 pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
