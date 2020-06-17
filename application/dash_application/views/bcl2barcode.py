@@ -30,12 +30,6 @@ ids = init_ids(
     ]
 )
 
-def maybe_index2(s):
-    try:
-        return s.split("-")[1]
-    except IndexError:
-        return ""
-
 # There can be many unknown indices in each run. Only display top N
 MAX_UNKNOWN_DISPLAY = 30
 
@@ -69,11 +63,11 @@ known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTit
 
 # Get Known indices from pinery, since it's been expanded properly
 known_data_table['Index1'] = known_data_table['Sequence'].apply(lambda s: s.split("-")[0])
-known_data_table['Index2'] = known_data_table['Sequence'].apply(lambda s: maybe_index2(s))
+known_data_table['Index2'] = known_data_table['Sequence'].apply(lambda s: "" if len(s.split("-")) == 1 else s.split("-")[1])
 
 #Get Unknown indices from bcl2barcode, since there's no pinery data
 unknown_data_table['Index1'] = unknown_data_table['Barcodes'].apply(lambda s: s.split("-")[0])
-unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: maybe_index2(s))
+unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: "" if len(s.split("-")) == 1 else s.split("-")[1])
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
 
