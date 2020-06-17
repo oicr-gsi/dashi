@@ -46,7 +46,7 @@ pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
 
 barcode_expansions = pandas.DataFrame(columns=['Index', 'Sequence'])
-with open(os.getenv("10X_STREXPAND"), 'r') as strexpand:
+with open(os.getenv("BARCODES_STREXPAND"), 'r') as strexpand:
     for l in strexpand.readlines():
         x = l.split("\t")
         for i in range(1,5):
