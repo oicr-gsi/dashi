@@ -1,9 +1,37 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
     <title>Dashi</title>
   </head>
   <body>
+    <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
+      <div class="container">
+        <span class="navbar-brand" style="font-size: 14pt;">Dashi</span>
+        <div class="collapse navbar-collapse" aria-expanded="false">
+          <ul class="ml-auto navbar-nav">
+            <li class="dropdown nav-item" style="font-size: 12pt;">
+              <a class="dropdown-toggle nav-link" aria-haspopup="true" href="#" aria-expanded="false">
+                <!-- ??? -->
+              </a>
+              <div class="dropdown-menu" tabindex="-1" role="menu" aria-hidden="true">
+                <a href="bcl2fastq-index-qc" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Bcl2Fastq Index QC</a>
+                <a href="call-ready-ts-1" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready TS 1</a>
+                <a href="call-ready-ts-2" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready TS 2</a>
+                <a href="call-ready-rna" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready RNA-seq</a>
+                <a href="call-ready-wgs" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready WGS</a>
+                <a href="single-lane-ts" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane Targeted Sequencing</a>
+                <a href="single-lane-rna" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane RNA-seq</a>
+                <a href="single-lane-wgs" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane WGS</a>
+                <a href="SARS-CoV-2" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">SARS-CoV-2</a>
+                <a href="single-lane-cfmedip" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane cfMeDIP</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div> 
+    </nav>
+
     <!-- TODO please give this poor page some CSS -->
     <h1>Dashi QC</h1>
     <p>Jump:
