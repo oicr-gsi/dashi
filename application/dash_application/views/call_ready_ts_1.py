@@ -5,7 +5,6 @@ import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
-import gsiqcetl.column
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
@@ -51,7 +50,7 @@ ids = init_ids([
 
     # Graphs
     'total-reads',
-    'mean-target-coverage',
+    'median-target-coverage',
     'callability',
     'mean-insert-size',
     'hs-library-size',
@@ -66,7 +65,7 @@ ids = init_ids([
     'data-table'
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQc3MergedColumn
+BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 HSMETRICS_COL = gsiqcetl.column.HsMetricsColumn
 ICHOR_COL = gsiqcetl.column.IchorCnaMergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
@@ -221,8 +220,8 @@ TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, Tr
 SORT_BY = shape_colour.dropdown() + [
     {"label": "Total Reads",
      "value": BAMQC_COL.TotalReads},
-    {"label": "Mean Target Coverage",
-     "value": HSMETRICS_COL.MeanTargetCoverage},
+    {"label": "Median Target Coverage",
+     "value": HSMETRICS_COL.MedianTargetCoverage},
     {"label": "Callability",
      "value": CALL_COL.Callability},
     {"label": "Tumor Fraction",
@@ -242,13 +241,16 @@ SORT_BY = shape_colour.dropdown() + [
 ]
 
 
-def generate_mean_target_coverage(df, graph_params):
+def generate_median_target_coverage(df, graph_params):
     return generate(
-        "Mean Target Coverage", df,
+        "Median Target Coverage", df,
         lambda d: d[util.ml_col],
-        lambda d: d[HSMETRICS_COL.MeanTargetCoverage],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        lambda d: d[HSMETRICS_COL.MedianTargetCoverage],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [],
     )
 
 
@@ -454,8 +456,8 @@ def layout(query_string):
                                     (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])])),
 
                             core.Graph(
-                                id=ids["mean-target-coverage"],
-                                figure=generate_mean_target_coverage(df, initial)),
+                                id=ids["median-target-coverage"],
+                                figure=generate_median_target_coverage(df, initial)),
 
                             core.Graph(
                                 id=ids["callability"],
@@ -504,10 +506,10 @@ def layout(query_string):
                                     (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
                                     initial[cutoff_pf_reads_normal],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage,
+                                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
                                     initial[cutoff_coverage_tumour],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage,
+                                    (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
                                     initial[cutoff_coverage_normal],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                     (cutoff_callability_label, special_cols["Callability (14x/8x)"],
@@ -530,7 +532,7 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["total-reads"], "figure"),
-            Output(ids["mean-target-coverage"], "figure"),
+            Output(ids["median-target-coverage"], "figure"),
             Output(ids["callability"], "figure"),
             Output(ids["mean-insert-size"], "figure"),
             Output(ids["hs-library-size"], "figure"),
@@ -620,9 +622,9 @@ def init_callbacks(dash_app):
             (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanTargetCoverage, tumour_coverage_cutoff,
+            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage, tumour_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_coverage_normal_label, HSMETRICS_COL.MeanTargetCoverage, normal_coverage_cutoff,
+            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage, normal_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_callability_label, special_cols["Callability (14x/8x)"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
@@ -641,7 +643,7 @@ def init_callbacks(dash_app):
                 [(cutoff_pf_reads_normal_label, pf_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_tumour_cutoff)]
             ),
-            generate_mean_target_coverage(df, graph_params),
+            generate_median_target_coverage(df, graph_params),
             generate_callability(df, graph_params),
             generate_median_insert_size(df, graph_params),
             generate_hs_library_size(df, graph_params),
