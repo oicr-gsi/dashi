@@ -221,6 +221,7 @@ def create_unknown_index_bar(run):
                 data and layout values for stacked bar graph for unknown indices
                 creates unknown_index_bar bar graph
               """
+    run = run.sort_values(bcl2barcode_col.Count, ascending=False)
     run = run.head(30)
     data = []
 
