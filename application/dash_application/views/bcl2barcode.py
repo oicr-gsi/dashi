@@ -10,6 +10,7 @@ from ..dash_id import init_ids
 
 import gsiqcetl.bcl2barcode
 import gsiqcetl.column
+import pdb
 
 page_name = "bcl2barcode-index-qc"
 title = "Bcl2Barcode Index QC"
@@ -220,6 +221,7 @@ def create_unknown_index_bar(run):
                 data and layout values for stacked bar graph for unknown indices
                 creates unknown_index_bar bar graph
               """
+    run = run.head(30)
     data = []
 
     for lane, d in run.groupby(bcl2barcode_col.Lane):
