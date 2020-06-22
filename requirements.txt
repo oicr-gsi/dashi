@@ -7,7 +7,7 @@ dash_core_components==1.9.1
 dash==1.11.0
 prometheus_flask_exporter>=0.11.0
 plotly>=4.2.1
-git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v0.34.0
+git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v0.36.2
 sd-material-ui>=3.1.2
 scipy>=1.2.0
 python-dotenv>=0.10.3
