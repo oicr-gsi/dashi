@@ -4,6 +4,7 @@ import dash_table
 from dash.dependencies import Input, Output
 import pandas
 import os
+import math
 
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
@@ -30,8 +31,17 @@ ids = init_ids(
     ]
 )
 
-# There can be many unknown indices in each run. Only display top N
-MAX_UNKNOWN_DISPLAY = 30
+def barcode_test(pinery, bcl2barcode):
+    pinery_seq = pinery['Sequence']
+    bcl_seq = bcl2barcode[bcl2barcode_col.Barcodes]
+    if(not isinstance(pinery_seq, str) or not isinstance(bcl_seq, str)):
+        if(math.isnan(pinery_seq) or math.isnan(bcl_seq)):
+            return False
+    seq_length = min(len(pinery_seq), len(bcl_seq))
+    return pinery_seq[0:seq_length] == bcl_seq[0:seq_length]
+
+def barcode_test_test(row):
+    return barcode_test(row, row)
 
 DATAVERSION = util.cache.versions(["bcl2barcode"])
 bcl2barcode = util.get_bcl2barcode()
@@ -48,13 +58,15 @@ pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on
 pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 
 # Merge the expanded pinery with bcl2barcode to expand the bcl2barcode data the same way
-bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on=['Run Alias', 'Lane Number', 'Barcodes'], right_on=['sequencerRunName', 'laneNumber', 'Sequence'], how='left')
+bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on=['Run Alias', 'Lane Number'], right_on=['sequencerRunName', 'laneNumber'], how='left', indicator=True)
+pdb.set_trace()
+bcl2barcode_with_pinery['Match'] = bcl2barcode_with_pinery.apply(lambda r: barcode_test_test(r), axis='columns')
 
 # Failures to merge with the pinery data populate the 'Unknown' table
-unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].isnull()].copy(deep=True)
+unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['Match'] == False].copy(deep=True)
 
 # Rows which merged successfully are the 'Known' table
-known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['studyTitle'].notnull()].copy(deep=True)
+known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['Match'] == True].copy(deep=True)
 
 # Get Known indices from pinery, since it's been expanded properly
 known_data_table['Index1'] = known_data_table['Sequence'].apply(lambda s: s.split("-")[0])
@@ -65,6 +77,12 @@ unknown_data_table['Index1'] = unknown_data_table['Barcodes'].apply(lambda s: s.
 unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: "" if len(s.split("-")) == 1 else s.split("-")[1])
 
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
+
+# There's a memory spike on page load and Dashi gets Killed without some extra space
+del bcl2barcode_with_pinery
+del pinery_with_expanded_barcodes
+del barcode_expansions
+del bcl2barcode
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": PINERY_COL.SampleName},
@@ -90,7 +108,7 @@ def layout(qs):
         children=[
             core.Dropdown(
                 id=ids["run_select"],
-                #   Options is concantenated string versions of all_runs.
+                #   Options is concatenated string versions of all_runs.
                 options=[{"label": r, "value": r} for r in all_runs],
                 value=all_runs[0],
                 clearable=False,
