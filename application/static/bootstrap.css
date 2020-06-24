@@ -63,6 +63,10 @@ body {
   background-color: #fff;
 }
 
+.page-content {
+  margin-left: 5px;
+}
+
 [tabindex="-1"]:focus {
   outline: 0 !important;
 }
