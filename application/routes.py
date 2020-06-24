@@ -39,8 +39,7 @@ def index():
     return render_template('index.html',
     version=version,
     runs=latest_runs,
-    projects=project_json,
-    stylesheet=os.getcwd()+"/application/dash_application/assets/styles.css")
+    projects=project_json)
 
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
