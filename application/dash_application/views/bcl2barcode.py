@@ -2,16 +2,14 @@ import dash_html_components as html
 import dash_core_components as core
 import dash_table
 from dash.dependencies import Input, Output
+import numpy
 import pandas
 import os
-import math
 
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
 
-import gsiqcetl.bcl2barcode
 import gsiqcetl.column
-import pdb
 
 page_name = "bcl2barcode-index-qc"
 title = "Bcl2Barcode Index QC"
@@ -31,17 +29,12 @@ ids = init_ids(
     ]
 )
 
-def barcode_test(pinery, bcl2barcode):
-    pinery_seq = pinery['Sequence']
-    bcl_seq = bcl2barcode[bcl2barcode_col.Barcodes]
-    if(not isinstance(pinery_seq, str) or not isinstance(bcl_seq, str)):
-        if(math.isnan(pinery_seq) or math.isnan(bcl_seq)):
-            return False
-    seq_length = min(len(pinery_seq), len(bcl_seq))
-    return pinery_seq[0:seq_length] == bcl_seq[0:seq_length]
 
-def barcode_test_test(row):
-    return barcode_test(row, row)
+def trim(row, index_name, len_name):
+    if pandas.isna(row[index_name]) or pandas.isna(row[len_name]):
+        return numpy.nan
+
+    return row[index_name][:int(row[len_name])]
 
 DATAVERSION = util.cache.versions(["bcl2barcode"])
 bcl2barcode = util.get_bcl2barcode()
@@ -57,32 +50,83 @@ pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on
 # Where there is no 10X barcode, fill in with the iusTag
 pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 
-# Merge the expanded pinery with bcl2barcode to expand the bcl2barcode data the same way
-bcl2barcode_with_pinery = pandas.merge(bcl2barcode, pinery_with_expanded_barcodes, left_on=['Run Alias', 'Lane Number'], right_on=['sequencerRunName', 'laneNumber'], how='left', indicator=True)
-pdb.set_trace()
-bcl2barcode_with_pinery['Match'] = bcl2barcode_with_pinery.apply(lambda r: barcode_test_test(r), axis='columns')
+# Split up Index 1 and 2 into their own columns
+pinery_with_expanded_barcodes['Index1'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
+pinery_with_expanded_barcodes['Index2'] = pinery_with_expanded_barcodes['Index1'].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
+pinery_with_expanded_barcodes['Index1'] = pinery_with_expanded_barcodes['Index1'].apply(lambda s: s.split("-")[0])
+pinery_with_expanded_barcodes.loc[pinery_with_expanded_barcodes['Index1'] == 'NoIndex', 'Index1'] = numpy.nan
 
-# Failures to merge with the pinery data populate the 'Unknown' table
-unknown_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['Match'] == False].copy(deep=True)
+# Remove Pinery records that don't have Index 1 or Index 2
+pinery_with_expanded_barcodes = pinery_with_expanded_barcodes[~(pinery_with_expanded_barcodes['Index1'].isna() & pinery_with_expanded_barcodes['Index1'].isna())]
 
-# Rows which merged successfully are the 'Known' table
-known_data_table = bcl2barcode_with_pinery.loc[bcl2barcode_with_pinery['Match'] == True].copy(deep=True)
+# Calculate mininum index length per run/lane
+min_index1_length = pinery_with_expanded_barcodes.groupby(['sequencerRunName', 'laneNumber'])['Index1'].apply(lambda x: x.str.len().min()).reset_index().rename(columns={'Index1': 'Index1 min length'})
+min_index2_length = pinery_with_expanded_barcodes.groupby(['sequencerRunName', 'laneNumber'])['Index2'].apply(lambda x: x.str.len().min()).reset_index().rename(columns={'Index2': 'Index2 min length'})
+pinery_with_expanded_barcodes = pinery_with_expanded_barcodes.merge(min_index1_length, how='left')
+pinery_with_expanded_barcodes = pinery_with_expanded_barcodes.merge(min_index2_length, how='right')
 
-# Get Known indices from pinery, since it's been expanded properly
-known_data_table['Index1'] = known_data_table['Sequence'].apply(lambda s: s.split("-")[0])
-known_data_table['Index2'] = known_data_table['Sequence'].apply(lambda s: "" if len(s.split("-")) == 1 else s.split("-")[1])
+# Trim each index to the minimum length for that lane
+pinery_with_expanded_barcodes['Index1 Trimmed'] = pinery_with_expanded_barcodes.apply(lambda x: trim(x, 'Index1', 'Index1 min length'), axis=1)
+pinery_with_expanded_barcodes['Index2 Trimmed'] = pinery_with_expanded_barcodes.apply(lambda x: trim(x, 'Index2', 'Index2 min length'), axis=1)
 
-#Get Unknown indices from bcl2barcode, since there's no pinery data
-unknown_data_table['Index1'] = unknown_data_table['Barcodes'].apply(lambda s: s.split("-")[0])
-unknown_data_table['Index2'] = unknown_data_table['Barcodes'].apply(lambda s: "" if len(s.split("-")) == 1 else s.split("-")[1])
+# For bcl2barcode, split Index 1 and 2, add Pinery mininum index lengths, and trim
+bcl2barcode['Index1'] = bcl2barcode['Barcodes'].apply(lambda s: s.split("-")[0])
+bcl2barcode['Index2'] = bcl2barcode['Barcodes'].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
+bcl2barcode = bcl2barcode.merge(
+    min_index1_length,
+    how='left',
+    left_on=['Run Alias', 'Lane Number'],
+    right_on=['sequencerRunName', 'laneNumber']
+)
+bcl2barcode = bcl2barcode.merge(
+    min_index2_length,
+    how='left',
+    left_on=['Run Alias', 'Lane Number'],
+    right_on=['sequencerRunName', 'laneNumber'],
+    suffixes=['', '_del']
+)
+bcl2barcode = bcl2barcode.drop(['sequencerRunName_del', 'laneNumber_del'], axis=1)
 
+bcl2barcode['Index1 Trimmed'] = bcl2barcode.apply(lambda x: trim(x, 'Index1', 'Index1 min length'), axis=1)
+bcl2barcode['Index2 Trimmed'] = bcl2barcode.apply(lambda x: trim(x, 'Index2', 'Index2 min length'), axis=1)
+
+# Get single and dual index info using trimmed index
+pinery_single_index = pinery_with_expanded_barcodes[pinery_with_expanded_barcodes['Index2'].isna()]
+single_index = bcl2barcode.merge(
+    pinery_single_index, how='left',
+    right_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed'],
+    left_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed'],
+    suffixes=('', "_pinery")
+)
+
+# Unknown barcodes will have all Pinery columns NaN. Picked study title to check
+known = single_index[~single_index['studyTitle'].isna()]
+unknown = single_index[single_index['studyTitle'].isna()][bcl2barcode.columns]
+
+pinery_dual_index = pinery_with_expanded_barcodes[~pinery_with_expanded_barcodes['Index2'].isna()]
+dual_index = bcl2barcode.merge(
+    pinery_dual_index, how='left',
+    right_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed', 'Index2 Trimmed'],
+    left_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed', 'Index2 Trimmed'],
+    suffixes=('', "_pinery")
+)
+known_dual_index = dual_index[~dual_index['studyTitle'].isna()]
+
+dual_unknown = dual_index[dual_index['studyTitle'].isna()][bcl2barcode.columns]
+
+# Use inner merge to find barcode that are unknown in both single and dual index
+unknown_data_table = unknown.merge(
+    dual_unknown,
+    how="inner",
+    left_on=["Barcodes", "Lane Number", "Run Alias"],
+    right_on=["Barcodes", "Lane Number", "Run Alias"],
+    suffixes=("", "_y")
+)
+
+# TODO: This may contain duplicates (one from single the other from dual index)
+#  Have warning if one bcl2barcode is assigned to multiple libraries
+known_data_table = pandas.concat([known, known_dual_index])
 all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
-
-# There's a memory spike on page load and Dashi gets Killed without some extra space
-del bcl2barcode_with_pinery
-del pinery_with_expanded_barcodes
-del barcode_expansions
-del bcl2barcode
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": PINERY_COL.SampleName},
@@ -210,10 +254,12 @@ def create_known_index_bar(run):
               creates bar graph "known_index_bar"
        """
     data = []
-    for i, d in run.groupby(['Sequence', PINERY_COL.SampleName]):
+    # TODO: Show Barcodes from Pinery to avoid showing dual index if single index library
+    for i, d in run.groupby(['Barcodes', PINERY_COL.SampleName]):
         data.append({
             "x": list(d[PINERY_COL.SampleName].unique()),
-            "y": d[bcl2barcode_col.Count],
+            # One library can be run on multiple lanes. Sum them together.
+            "y": [d[bcl2barcode_col.Count].sum()],
             "type": "bar",
             "name": i[0],
             "marker": {"line": {"width": 2, "color": "rgb(255,255, 255)"}},
