@@ -12,7 +12,7 @@ from ..dash_id import init_ids
 import gsiqcetl.column
 
 page_name = "bcl2barcode-index-qc"
-title = "Bcl2Barcode Index QC"
+title = "Bcl2Barcode Index QC - 🚧 WIP"
 
 ids = init_ids(
     [
