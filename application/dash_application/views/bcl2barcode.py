@@ -163,11 +163,6 @@ def layout(qs):
                     html.Div(
                         [
                             core.Graph(id=ids["known_unknown_pie"]),
-                            core.Textarea(
-                                id=ids["known_fraction"],
-                                style={"width": "100%"},
-                                readOnly=True,
-                            ),
                         ],
                         style={"width": "25%", "display": "inline-block"},
                     ),
@@ -208,7 +203,6 @@ def init_callbacks(dash_app):
             Output(ids["known_index_bar"], "figure"),
             Output(ids["unknown_index_bar"], "figure"),
             Output(ids["known_unknown_pie"], "figure"),
-            Output(ids["known_fraction"], "value"),
             Output(ids["known_data_table"], "data"),
             Output(ids["unknown_data_table"], "data")
         ],
@@ -233,13 +227,10 @@ def init_callbacks(dash_app):
         unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
         # unknown_run = unknown_run[~unknown_run[PINERY_COL.SampleProvenanceID].isna()]
 
-        pie_data, textarea_fraction = create_pie_chart(known_run, unknown_run)
-
         return (
             create_known_index_bar(known_run),
             create_unknown_index_bar(unknown_run),
-            pie_data,
-            textarea_fraction,
+            create_pie_chart(known_run, unknown_run),
             known_run.to_dict("records"),
             unknown_run.to_dict("records")
         )
@@ -321,8 +312,6 @@ def create_pie_chart(known_run, unknown_run):
      """
     known_count = known_run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
     unknown_count = unknown_run[bcl2barcode_col.Count].sum()
-    fraction = 100 ## This needs a new count from ETL
-
     
     return (
         {
@@ -335,7 +324,6 @@ def create_pie_chart(known_run, unknown_run):
                 }
             ],
             "layout": {"title": "Flow Cell Composition of Known/Unknown Indices"},
-        },
-        ("Predicted clusters / produced clusters: {}%".format(str(round(fraction, 1)))),
+        }
     )
 
