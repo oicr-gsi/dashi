@@ -26,7 +26,7 @@ Create a `.env` file in the root directory of this repository:
 | `LOG_FILE_LOCATION` | **Yes** | File path where logs should be written | `~/logs/dashi.log` | `./dashi.log` |
 | `LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` | do not log |
 | `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` | use release version |
-
+| `BARCODES_STREXPAND` | **Yes** | Tab-separated file listing 10X barcodes and 4 sequences for each | `~/barcodes` | |
 
 ## Setup on bare metal
 

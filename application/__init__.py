@@ -2,12 +2,16 @@ from flask import Flask
 from flask_caching import Cache
 from prometheus_flask_exporter import PrometheusMetrics
 import pandas
+import sys
+import numpy
+
 
 ## Set up Flask application, attach extensions, and load configuration
 def create_app(debug=False):
     # pandas debug options
     pandas.set_option('display.max_rows', None)
     pandas.set_option('display.max_columns', None)
+    numpy.set_printoptions(threshold=sys.maxsize)
 
     # Construct new Flask core
     app = Flask(__name__,
