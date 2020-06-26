@@ -38,7 +38,9 @@ def trim(row, index_name, len_name):
 
 DATAVERSION = util.cache.versions(["bcl2barcode"])
 bcl2barcode = util.get_bcl2barcode()
+bcl2barcode_run_summary = util.get_bcl2barcode_run_summary()
 bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
+bcl2barcode_run_summary_col = gsiqcetl.column.Bcl2BarcodeRunSummaryColumn
 pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
 
@@ -230,7 +232,7 @@ def init_callbacks(dash_app):
         return (
             create_known_index_bar(known_run),
             create_unknown_index_bar(unknown_run),
-            create_pie_chart(known_run, unknown_run),
+            create_pie_chart(run_alias),
             known_run.to_dict("records"),
             unknown_run.to_dict("records")
         )
@@ -300,19 +302,10 @@ def create_unknown_index_bar(run):
     }
 
 
-def create_pie_chart(known_run, unknown_run):
-    """ Function to create pie chart and known fraction according to user selected run
-             Parameters:
-                  run: Dataframe filtered and cleaned by 'update_layout'
-                  pruned: Dataframe of unknown indices filtered and cleaned by 'update_layout'
-                  total_clusters: Denominator for known/unknown indices.
-             Returns:
-                  pie chart "known_unknown_pie" with known and unknown indices ratio over total cluster
-                  creates value of known_fraction
-     """
-    known_count = known_run[bcl2barcode_col.Count].sum() ##Is sum() needed now?
-    unknown_count = unknown_run[bcl2barcode_col.Count].sum()
-    
+def create_pie_chart(run_alias):
+    known_count = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias][bcl2barcode_col.Count].sum() 
+    # bcl2barcode data doesn't include long tail of low-count barcodes. Get total from run summary to restore
+    unknown_count = bcl2barcode_run_summary.loc[bcl2barcode_run_summary[bcl2barcode_run_summary_col.Run] == run_alias][bcl2barcode_run_summary_col.TotalClusters].sum() - known_count       
     return (
         {
             "data": [
