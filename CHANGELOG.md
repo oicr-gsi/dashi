@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200629-1329] - 2020-06-29
 ## Changed
   * Navbar now appears on front page, eliminates need for Reports list
   * Converted bcl2fastq report to bcl2barcode
