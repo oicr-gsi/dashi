@@ -7,6 +7,19 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 ## Changed
+  * Navbar now appears on front page, eliminates need for Reports list
+  * Converted bcl2fastq report to bcl2barcode
+
+## Upgrade Notes
+  * New required environment variable 'BARCODES_STREXPAND'
+
+## [200622-1532] - 2020-06-22
+## Changed
+  * Call ready pages use median coverage 
+
+## [200615-1633] - 2020-06-15
+## Changed
+  * Adjusted JIRA button behaviour and wording
   * Empty graphs start at 0
   * Sorting is independent of colour/shape by
   * First and second sort options are the same

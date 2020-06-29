@@ -1,16 +1,59 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='bootstrap.css') }}" />
     <title>Dashi</title>
   </head>
   <body>
-    <!-- TODO please give this poor page some CSS -->
+    <script type="text/javascript">
+      function dropdownFunction(){
+        document.getElementById("dropdown-menu").classList.toggle("show");
+      }
+
+      window.onclick = function(event){
+        if(!event.target.matches(".dropdown-toggle")){
+          let dropdowns = document.getElementsByClassName("dropdown-menu");
+          for(let i = 0; i < dropdowns.length; i++){
+            let openDropdown = dropdowns[i];
+            if(openDropdown.classList.contains("show")){
+              openDropdown.classList.remove("show");
+            }
+          }
+        }
+      }
+    </script>
+    <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
+      <div class="container">
+        <span class="navbar-brand" style="font-size: 14pt;">Dashi</span>
+        <div class="collapse navbar-collapse" aria-expanded="false">
+          <ul class="ml-auto navbar-nav">
+            <li class="dropdown nav-item" style="font-size: 12pt;">
+              <a onclick="dropdownFunction()" class="dropdown-toggle nav-link" aria-haspopup="true" href="javascript:void(0);" aria-expanded="false">
+                Graph Pages
+              </a>
+              <div id="dropdown-menu" class="dropdown-menu" tabindex="-1" role="menu" aria-hidden="true">
+                <a href="bcl2barcode-index-qc" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Bcl2Barcode Index QC - 🚧 WIP</a>
+                <a href="call-ready-ts-1" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready TS 1</a>
+                <a href="call-ready-ts-2" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready TS 2</a>
+                <a href="call-ready-rna" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready RNA-seq</a>
+                <a href="call-ready-wgs" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Call-Ready WGS</a>
+                <a href="single-lane-ts" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane Targeted Sequencing</a>
+                <a href="single-lane-rna" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane RNA-seq</a>
+                <a href="single-lane-wgs" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane WGS</a>
+                <a href="SARS-CoV-2" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">SARS-CoV-2</a>
+                <a href="single-lane-cfmedip" style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">Single-Lane cfMeDIP</a>
+              </div>
+            </li>
+          </ul>
+        </div> <!-- end navbar-collapse-->
+      </div>  <!-- end container-->
+    </nav>
+    <div class="page-content">
     <h1>Dashi QC</h1>
     <p>Jump:
       <ul>
         <li><a href="#runs">Runs (Last 3 Weeks)</a></li>
         <li><a href="#projects">Projects</a></li>
-        <li><a href="#reports">Reports</a></li>
       </ul>
     </p>
     <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
@@ -55,28 +98,8 @@
       {% endfor %}
     </table>
 
-    <!-- TODO: Import the header bar from the reports instead of having this list -->
-    <a id="reports"><h2><u>Reports</u></h2></a>
-    <h3><a href="/SARS-CoV-2">SARS-CoV-2</a></h3>
-
-    <h2>Single-Lane Sequencing Graphs</h2>
-    <h3><a href="/single-lane-cfmedip">Single-Lane cfMeDIP</a></h3>
-    <h3><a href="/single-lane-rna">Single-Lane RNA-seq</a></h3>
-    <h3><a href="/single-lane-ts">Single-Lane Targeted Sequencing</a></h3>
-    <h3><a href="/single-lane-wgs">Single-Lane WGS</a></h3>
-
-    <h2>Single Run Sequencing Graphs</h2>
-    <h3><a href="/bcl2fastq-index-qc">Bcl2fastq Index QC</a></h3>
-
-    <h2>Call-Ready Sequencing Graphs</h2>
-    <h3><a href="/call-ready-rna">Call-Ready RNA-seq</a></h3>
-    <h3><a href="/call-ready-ts-1">Call-Ready Targeted Sequencing
-      <b>1</b></a></h3>
-    <h3><a href="/call-ready-ts-2">Call-Ready Targeted Sequencing
-      <b>2</b></a></h3>
-    <h3><a href="/call-ready-wgs">Call-Ready WGS</a></h3>
-
     <hr />
     <footer id="footer">Dashi version {{version}}</footer>
+    </div>
   </body>
 </html>

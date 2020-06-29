@@ -5,7 +5,6 @@ import dash_core_components as core
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
-import gsiqcetl.column
 from ..dash_id import init_ids
 
 from ..utility.plot_builder import *
@@ -67,7 +66,7 @@ ids = init_ids([
     "data-table",
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQc3MergedColumn
+BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
@@ -224,8 +223,8 @@ SORT_BY = shape_colour.dropdown() + [
         "value": CALL_COL.Callability
     },
     {
-        "label": "Mean Insert Size",
-        "value": BAMQC_COL.InsertMean
+        "label": "Median Insert Size",
+        "value": BAMQC_COL.InsertMedian
     },
     {
         "label": "Duplication",
@@ -343,7 +342,7 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
             html.Div(className="row jira-buttons", children=[
-                sidebar_utils.jira_button("File a ticket",
+                sidebar_utils.jira_button("Open an issue",
                                           ids['jira-issue-button'],
                                           {"display": "inline-block"},
                                           sidebar_utils.construct_jira_link([],
@@ -471,12 +470,11 @@ def layout(query_string):
                                                   figure=generate_deduplicated_coverage_per_gb(
                                                       df, initial)
                                               ),
-                                              # TODO: https://jira.oicr.on.ca/browse/GR-1170 (how to calculate median coverage)
-                                              # core.Graph(
-                                              #     id=ids["median-coverage"],
-                                              #     figure=generate_median_coverage(
-                                              #         df, initial)
-                                              # ),
+                                              core.Graph(
+                                                  id=ids["median-coverage"],
+                                                  figure=generate_median_coverage(
+                                                      df, initial)
+                                              ),
                                               core.Graph(
                                                   id=ids["callability"],
                                                   figure=generate_callability(
@@ -585,6 +583,7 @@ def init_callbacks(dash_app):
             Output(ids["median-insert"], "figure"),
             Output(ids["duplicate-rate"], "figure"),
             Output(ids["unmapped-reads"], "figure"),
+            Output(ids["median-coverage"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -706,6 +705,7 @@ def init_callbacks(dash_app):
             generate_median_insert_size(df, graph_params),
             generate_duplicate_rate(df, graph_params),
             generate_unmapped_reads(df, graph_params),
+            generate_median_coverage(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
