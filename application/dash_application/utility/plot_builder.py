@@ -965,7 +965,10 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
     fig.update_xaxes(
         visible=False,
         rangemode="normal",
-        autorange=True
+        autorange=True,
+        # The x-axis is shared, so order all plots based on first one
+        categoryorder='array',
+        categoryarray=subplots[0].x_col(subplots[0].df),
     )
 
     for i, subplot in enumerate([subplot for subplot in subplots]):
