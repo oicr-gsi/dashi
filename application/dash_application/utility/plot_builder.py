@@ -1,7 +1,9 @@
-from typing import List, Tuple, Union, Dict
+from typing import List, Tuple, Union, Dict, Callable
 
 import pandas
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import dash_core_components as core
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
@@ -534,6 +536,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
 
     return figure
 
+
 def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=True, additional_hovertext=None):
     y_data = y_fn(data)
 
@@ -792,3 +795,206 @@ class ColourShapeCfMeDIP:
             PINERY_COL.TissuePreparation: self.tissue_materials,
             COMMON_COL.Reference: self.reference,
         }
+
+
+class Subplot:
+    def __init__(
+            self,
+            title,
+            df,
+            x_col,
+            y_col,
+            y_label,
+            colourby,
+            shapeby,
+            hovertext_cols,
+            cutoff_lines,
+            markermode,
+            bar_positive,
+            bar_negative,
+            log_y
+    ):
+        self.title = title
+        self.y_label = y_label
+        self.df = df
+        self.x_col = x_col
+        self.y_col = y_col
+        self.colourby = colourby
+        self.shapeby = shapeby
+        self.hovertext_cols = hovertext_cols
+        self.cutoff_lines = [] if cutoff_lines is None else cutoff_lines
+        self.markermode = markermode
+        self.bar_positive = bar_positive
+        self.bar_negative = bar_negative
+        self.log_y = log_y
+
+    def traces(self):
+        return _generate_traces(
+            self.df,
+            self.x_col,
+            self.y_col,
+            self.colourby,
+            self.shapeby,
+            self.hovertext_cols,
+            self.cutoff_lines,
+            self.markermode,
+            self.bar_positive,
+            self.bar_negative,
+        )
+
+
+class SingleLaneSubplot(Subplot):
+    def __init__(
+            self,
+            title,
+            df,
+            x_col,
+            y_col,
+            y_label,
+            colourby,
+            shapeby,
+            hovertext_cols,
+            cutoff_lines=None,
+            markermode="markers",
+            bar_positive=None,
+            bar_negative=None,
+            log_y=False
+    ):
+        super().__init__(
+            title,
+            df,
+            x_col,
+            y_col,
+            y_label,
+            colourby,
+            shapeby,
+            hovertext_cols,
+            cutoff_lines,
+            markermode,
+            bar_positive,
+            bar_negative,
+            log_y,
+        )
+
+
+class CallReadySubplot(Subplot):
+    def __init__(
+            self,
+            title,
+            df,
+            x_col,
+            y_col,
+            y_label,
+            colourby,
+            shapeby,
+            hovertext_cols,
+            cutoff_lines=None,
+            markermode="markers",
+            bar_positive=None,
+            bar_negative=None,
+            log_y=False,
+    ):
+        super().__init__(
+            title,
+            df,
+            x_col,
+            y_col,
+            y_label,
+            colourby,
+            shapeby,
+            hovertext_cols,
+            cutoff_lines,
+            markermode,
+            bar_positive,
+            bar_negative,
+            log_y,
+        )
+
+
+def generate_plot_with_subplots(subplots: List[Subplot]):
+    """
+    Generates a subplot using functions that take a DataFrame and graph paramaters,
+    returning a list of traces.
+    """
+    fig = make_subplots(
+        rows=len(subplots),
+        cols=1,
+        vertical_spacing=0.02,
+        shared_xaxes=True,
+        subplot_titles=[subplot.title for subplot in subplots]
+    )
+
+    for i, trace in enumerate([subplot.traces() for subplot in subplots]):
+        for t in trace:
+            fig.add_trace(t, row=i+1, col=1)
+
+    fig.update_xaxes(
+        visible=False,
+        rangemode="normal",
+        autorange=True,
+        # The x-axis is shared, so order all plots based on first one
+        categoryorder='array',
+        categoryarray=subplots[0].x_col(subplots[0].df),
+    )
+
+    for i, subplot in enumerate([subplot for subplot in subplots]):
+        y_type = "log" if subplot.log_y else "linear"
+        fig.update_yaxes(
+            title_text=subplot.y_label,
+            type=y_type,
+            row=i+1,
+            col=1
+        )
+
+        # All traces have the same legends
+        # Only show those of the first trace
+        if i != 0:
+            fig.update_traces(showlegend=False, row=i+1, col=1)
+
+        # if subplot.is_pct_graph():
+        #    fig.update_yaxes(range=[0, 100], row=i+1, col=1)
+
+    fig.update_yaxes(
+        showline=True,
+        linewidth=1,
+        linecolor='darkgrey',
+        zeroline=True,
+        zerolinewidth=1,
+        zerolinecolor='darkgrey',
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='lightgrey',
+        autorange=True,
+    )
+
+    fig.update_layout(
+        height=350 * len(subplots),
+        margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
+        legend=dict(tracegroupgap=0),
+    )
+
+    return fig
+
+
+def generate_subplot_from_func(
+        df: DataFrame,
+        graph_params: Dict[str, str],
+        graph_funcs: List[Callable[[DataFrame, Dict[str, str]], Subplot]]
+):
+    return generate_plot_with_subplots([func(df, graph_params) for func in graph_funcs])
+
+
+def create_graph_element_with_subplots(graph_id, df, graph_params, graph_funcs):
+    """
+    Subplots are necessary because of WebGL contexts limit (GR-932).
+    """
+    return core.Graph(
+        id=graph_id,
+        figure=generate_plot_with_subplots([func(df, graph_params) for func in graph_funcs]),
+        config={
+            "toImageButtonOptions": {
+                "width": None,
+                "height": None
+            }
+        }  # This makes the downloaded png behave properly: https://community.plot.ly/t/save-plot-as-png-sizing-and-positioning/10166/6
+    )
