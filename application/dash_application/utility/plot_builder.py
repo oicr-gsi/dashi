@@ -911,40 +911,6 @@ class CallReadySubplot(Subplot):
         )
 
 
-# TODO: Currently not in use. Big question: How to deal with titles in Dashi?
-class GraphTitles:
-    AT_DROPOUT = "AT Dropout (%)"
-    BASE_PAIRS = "Base Pairs"
-    CALLABILITY_14_8 = "Callability (14x/8x) (%)"
-    CODING = "Coding Bases (%)"
-    CORRECT_READ_STRAND = "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧"
-    DEDUPLICATED_COVERAGE = "Deduplicated Coverage (x)"
-    DUPLICATION = "Duplication (%)"
-    DV200 = "DV200"
-    EXCLUDED_DUE_TO_OVERLAP = "Excluded due to Overlap (%)"
-    FIVE_TO_THREE = "5 to 3 Prime Bias"
-    GC_DROPOUT = "GC Dropout (%)"
-    HS_LIBRARY_SIZE = "HS Library Size"
-    MEAN_INSERT_SIZE = "Mean Insert Size (bp)"
-    MEAN_TARGET_COVERAGE = "Mean Target Coverage"
-    NONE = ""
-    NON_PRIMARY_READS = "Non-Primary Reads (%)"
-    ON_TARGET_READS = "On-Target Reads (%)"
-    PCT = "%"
-    PLOIDY = "Ploidy"
-    PURITY = "Purity (%)"
-    RATIO = "Ratio"
-    READ_COUNTS = "Read Counts"
-    RIN = "RIN"
-    RRNA_CONTAM = "Ribosomal RNA Contamination (%)"
-    TOTAL_READS = "Total Reads (Passed Filter)"
-    TOTAL_READS_Y = "# PF Reads x 10e6"
-    UNIQUE_READS = "🚧 Unique Reads (Passed Filter) (%) -- DATA MAY BE SUSPECT 🚧"
-    UNMAPPED_READS = "Unmapped Reads (%)"
-    UNMAPPED_READS_COUNTS = "Unmapped Reads"
-    X = "x"
-
-
 def generate_plot_with_subplots(subplots: List[Subplot]):
     """
     Generates a subplot using functions that take a DataFrame and graph paramaters,
