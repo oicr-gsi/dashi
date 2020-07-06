@@ -1,10 +1,12 @@
+import os
+from typing import List
+
 import dash_html_components as html
 import dash_core_components as core
 import dash_table
 from dash.dependencies import Input, Output
 import numpy
 import pandas
-import os
 
 from ..utility import df_manipulation as util
 from ..dash_id import init_ids
@@ -30,11 +32,84 @@ ids = init_ids(
 )
 
 
-def trim(row, index_name, len_name):
-    if pandas.isna(row[index_name]) or pandas.isna(row[len_name]):
+def count_mismatches(s1: str, s2: str) -> int:
+    """
+    Count mismatches between two strings. If different lengths, use shortest.
+
+    Args:
+        s1: First string
+        s2: Second string
+
+    Returns:
+
+    """
+    if pandas.isna(s1) or pandas.isna(s2):
         return numpy.nan
 
-    return row[index_name][:int(row[len_name])]
+    return sum(x[0] != x[1] for x in zip(s1, s2))
+
+
+def find_matches(query: str, list_to_check: List[str], mismatches_allowed: int) -> List[str]:
+    """
+    Check for a match to a query string from a pool of strings. Allows for mismatches
+
+    Args:
+        query: The string to match against
+        list_to_check: List of strings to match against query
+        mismatches_allowed: How many mistmatches are allowed
+
+    Returns:
+
+    """
+    result = []
+    # Dealing with Pandas having NaN
+    if type(list_to_check) == float:
+        return result
+
+    for check in list_to_check:
+        if count_mismatches(query, check) <= mismatches_allowed:
+            result.append(check)
+
+    return result
+
+
+def classify(row: pandas.Series) -> str:
+    """
+    Takes the various custom columns and decides if a bcl2barcode row contains
+    known, unknown, or collision index.
+
+    Args:
+        row:
+
+    Returns:
+
+    """
+    if row['IndexStrategy'] == 'SingleIndexOnly':
+        if row['Index1MatchedCount'] == 0:
+            return "Unknown"
+        elif row['Index1MatchedCount'] == 1:
+            return "Known"
+        else:
+            return "Collision"
+    elif row['IndexStrategy'] == 'DualIndexOnly':
+        if row['Index1MatchedCount'] == 0 or row['Index2MatchedCount'] == 0:
+            return "Unknown"
+        elif row['Index1MatchedCount'] == 1 and row['Index2MatchedCount'] == 1:
+            return "Known"
+        else:
+            return "Collision"
+    elif row['IndexStrategy'] == 'MixedIndex':
+        if row['Index1MatchedCount'] == 1 and row['Index2MatchedCount'] == 0:
+            return "Known"
+        elif row['Index1MatchedCount'] == 1 and row['Index2MatchedCount'] == 1:
+            return "Known"
+        elif row['Index1MatchedCount'] == 0 and row['Index2MatchedCount'] == 0:
+            return "Unknown"
+        else:
+            return "Collision"
+    else:
+        raise ValueError('Unknown index strategy: {}'.format(row['IndexStrategy']))
+
 
 DATAVERSION = util.cache.versions(["bcl2barcode"])
 bcl2barcode = util.get_bcl2barcode()
@@ -43,9 +118,10 @@ bcl2barcode_col = gsiqcetl.column.Bcl2BarcodeColumn
 bcl2barcode_run_summary_col = gsiqcetl.column.Bcl2BarcodeRunSummaryColumn
 pinery = util.get_pinery_samples()
 PINERY_COL = util.PINERY_COL
+# This needs to match what is set during de-multiplexing
+BCL2FASTQ_MISMATCH = 1
 
 barcode_expansions = pandas.read_csv(os.getenv("BARCODES_STREXPAND"), sep="\t", header=None).melt(id_vars=0).drop(labels="variable", axis="columns").set_axis(['Index', 'Sequence'], axis="columns", inplace=False)
-
 # Expand pinery to include 4 rows for every 1 10X barcode
 pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
 
@@ -61,74 +137,119 @@ pinery_with_expanded_barcodes.loc[pinery_with_expanded_barcodes['Index1'] == 'No
 # Remove Pinery records that don't have Index 1 or Index 2
 pinery_with_expanded_barcodes = pinery_with_expanded_barcodes[~(pinery_with_expanded_barcodes['Index1'].isna() & pinery_with_expanded_barcodes['Index1'].isna())]
 
-# Calculate mininum index length per run/lane
-min_index1_length = pinery_with_expanded_barcodes.groupby(['sequencerRunName', 'laneNumber'])['Index1'].apply(lambda x: x.str.len().min()).reset_index().rename(columns={'Index1': 'Index1 min length'})
-min_index2_length = pinery_with_expanded_barcodes.groupby(['sequencerRunName', 'laneNumber'])['Index2'].apply(lambda x: x.str.len().min()).reset_index().rename(columns={'Index2': 'Index2 min length'})
-pinery_with_expanded_barcodes = pinery_with_expanded_barcodes.merge(min_index1_length, how='left')
-pinery_with_expanded_barcodes = pinery_with_expanded_barcodes.merge(min_index2_length, how='right')
+# Collect all expected Index1 and Index2 for each Run/Lane
+index1_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index1'].apply(lambda x: list(set(x))).reset_index()
+index2_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index2'].apply(lambda x: list(set(x))).reset_index()
 
-# Trim each index to the minimum length for that lane
-pinery_with_expanded_barcodes['Index1 Trimmed'] = pinery_with_expanded_barcodes.apply(lambda x: trim(x, 'Index1', 'Index1 min length'), axis=1)
-pinery_with_expanded_barcodes['Index2 Trimmed'] = pinery_with_expanded_barcodes.apply(lambda x: trim(x, 'Index2', 'Index2 min length'), axis=1)
+# Each Run/Lane can have one Index Strategy: Single Index, Dual Index, or Mixed
+index2_expected['IndexStrategy'] = numpy.nan
+index2_expected.loc[index2_expected['Index2'].apply(lambda x: all(pandas.isna(x))), 'IndexStrategy'] = 'SingleIndexOnly'
+index2_expected.loc[index2_expected['Index2'].apply(lambda x: all(~pandas.isna(x))), 'IndexStrategy'] = 'DualIndexOnly'
+index2_expected['IndexStrategy'] = index2_expected['IndexStrategy'].fillna('MixedIndex')
 
-# For bcl2barcode, split Index 1 and 2, add Pinery mininum index lengths, and trim
-bcl2barcode['Index1'] = bcl2barcode['Barcodes'].apply(lambda s: s.split("-")[0])
-bcl2barcode['Index2'] = bcl2barcode['Barcodes'].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
+# Split up Index 1 and 2 into their own columns
+bcl2barcode['Index1'] = bcl2barcode[bcl2barcode_col.Barcodes].apply(lambda s: s.split("-")[0])
+bcl2barcode['Index2'] = bcl2barcode[bcl2barcode_col.Barcodes].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
+
+# Assign the expected Pinery indices to bcl2barcode
+# If Pinery does not have that Run/Lane it will be excluded here
 bcl2barcode = bcl2barcode.merge(
-    min_index1_length,
-    how='left',
-    left_on=['Run Alias', 'Lane Number'],
-    right_on=['sequencerRunName', 'laneNumber']
+    index1_expected, how='inner',
+    left_on=[bcl2barcode_col.Run, bcl2barcode_col.Lane],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber],
+    suffixes=('', '_known')
 )
 bcl2barcode = bcl2barcode.merge(
-    min_index2_length,
+    index2_expected, how='inner',
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber],
+    suffixes=('', '_known')
+)
+
+# Expensive operation of matching bcl2barcode index to expected Pinery index
+bcl2barcode['Index1Matched'] = bcl2barcode.apply(lambda x: find_matches(x['Index1'], x['Index1_known'], BCL2FASTQ_MISMATCH), axis=1)
+bcl2barcode['Index2Matched'] = bcl2barcode.apply(lambda x: find_matches(x['Index2'], x['Index2_known'], BCL2FASTQ_MISMATCH), axis=1)
+
+# Count how many indices were matched and get their sequence
+bcl2barcode['Index1MatchedCount'] = bcl2barcode['Index1Matched'].apply(len)
+bcl2barcode['Index2MatchedCount'] = bcl2barcode['Index2Matched'].apply(len)
+bcl2barcode['Index1MatchedSequence'] = bcl2barcode['Index1Matched'].apply(lambda x: x[0] if len(x) else '')
+bcl2barcode['Index2MatchedSequence'] = bcl2barcode['Index2Matched'].apply(lambda x: x[0] if len(x) else '')
+
+bcl2barcode["Classify"] = bcl2barcode.apply(classify, axis=1)
+
+all_known = bcl2barcode[(bcl2barcode["Classify"] == "Known")]
+all_known = all_known.groupby(
+    [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence', 'IndexStrategy', 'Index1', 'Index2']
+)['count'].sum().reset_index()
+
+unknown_data_table = bcl2barcode[bcl2barcode["Classify"] == "Unknown"]
+
+known_data_table_single = all_known[all_known['IndexStrategy'] == 'SingleIndexOnly'].merge(
+    pinery_with_expanded_barcodes,
     how='left',
-    left_on=['Run Alias', 'Lane Number'],
-    right_on=['sequencerRunName', 'laneNumber'],
-    suffixes=['', '_del']
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence'],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1'],
+    suffixes=('', '_pinery'),
 )
-bcl2barcode = bcl2barcode.drop(['sequencerRunName_del', 'laneNumber_del'], axis=1)
+known_data_table = known_data_table_single[~known_data_table_single[PINERY_COL.StudyTitle].isna()]
+unknown_data_table = pandas.concat([
+    unknown_data_table,
+    known_data_table_single[known_data_table_single[PINERY_COL.StudyTitle].isna()],
+], join="inner")
 
-bcl2barcode['Index1 Trimmed'] = bcl2barcode.apply(lambda x: trim(x, 'Index1', 'Index1 min length'), axis=1)
-bcl2barcode['Index2 Trimmed'] = bcl2barcode.apply(lambda x: trim(x, 'Index2', 'Index2 min length'), axis=1)
+known_data_table_dual = all_known[all_known['IndexStrategy'] == 'DualIndexOnly'].merge(
+    pinery_with_expanded_barcodes,
+    how='left',
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence'],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1', 'Index2'],
+    suffixes=('', '_pinery'),
 
-# Get single and dual index info using trimmed index
-pinery_single_index = pinery_with_expanded_barcodes[pinery_with_expanded_barcodes['Index2'].isna()]
-single_index = bcl2barcode.merge(
-    pinery_single_index, how='left',
-    right_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed'],
-    left_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed'],
-    suffixes=('', "_pinery")
 )
+known_data_table = pandas.concat([
+    known_data_table,
+    known_data_table_dual[~known_data_table_dual['studyTitle'].isna()]
+])
+unknown_data_table = pandas.concat([
+    unknown_data_table,
+    known_data_table_dual[known_data_table_dual[PINERY_COL.StudyTitle].isna()],
+], join="inner")
 
-# Unknown barcodes will have all Pinery columns NaN. Picked study title to check
-known = single_index[~single_index['studyTitle'].isna()]
-unknown = single_index[single_index['studyTitle'].isna()][bcl2barcode.columns]
-
-pinery_dual_index = pinery_with_expanded_barcodes[~pinery_with_expanded_barcodes['Index2'].isna()]
-dual_index = bcl2barcode.merge(
-    pinery_dual_index, how='left',
-    right_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed', 'Index2 Trimmed'],
-    left_on=['sequencerRunName', 'laneNumber', 'Index1 Trimmed', 'Index2 Trimmed'],
-    suffixes=('', "_pinery")
+mixed_data_table = all_known[all_known['IndexStrategy'] == 'MixedIndex'].merge(
+    pinery_with_expanded_barcodes,
+    how='left',
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence'],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1', 'Index2'],
+    suffixes=('', '_pinery'),
 )
-known_dual_index = dual_index[~dual_index['studyTitle'].isna()]
+known_data_table = pandas.concat([
+    known_data_table,
+    mixed_data_table[~mixed_data_table[PINERY_COL.StudyTitle].isna()]
+])
 
-dual_unknown = dual_index[dual_index['studyTitle'].isna()][bcl2barcode.columns]
-
-# Use inner merge to find barcode that are unknown in both single and dual index
-unknown_data_table = unknown.merge(
-    dual_unknown,
-    how="inner",
-    left_on=["Barcodes", "Lane Number", "Run Alias"],
-    right_on=["Barcodes", "Lane Number", "Run Alias"],
-    suffixes=("", "_y")
+remaining_mixed = mixed_data_table[mixed_data_table[PINERY_COL.StudyTitle].isna()][unknown_data_table.columns]
+mixed_data_table_single = remaining_mixed.merge(
+    pinery_with_expanded_barcodes,
+    how='left',
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence'],
+    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1'],
+    suffixes=('', '_pinery'),
 )
+known_data_table = pandas.concat([
+    known_data_table,
+    mixed_data_table_single[~mixed_data_table_single[PINERY_COL.StudyTitle].isna() & mixed_data_table_single['Index2_pinery'].isna()]
+])
+unknown_data_table = pandas.concat([
+    unknown_data_table,
+    mixed_data_table_single[mixed_data_table_single[PINERY_COL.StudyTitle].isna() | ~mixed_data_table_single['Index2_pinery'].isna()]
+], join="inner")
 
-# TODO: This may contain duplicates (one from single the other from dual index)
-#  Have warning if one bcl2barcode is assigned to multiple libraries
-known_data_table = pandas.concat([known, known_dual_index])
-all_runs = known_data_table[bcl2barcode_col.Run].sort_values(ascending=False).unique()
+unknown_data_table.loc[unknown_data_table['IndexStrategy'] == "SingleIndexOnly", 'Index2'] = numpy.nan
+unknown_data_table['Sequence'] = unknown_data_table['Index1'].str.cat(unknown_data_table['Index2'], sep='-')
+unknown_data_table['Sequence'] = unknown_data_table['Sequence'].fillna(unknown_data_table['Index1'])
+
+all_runs = known_data_table[PINERY_COL.SequencerRunName].sort_values(ascending=False).unique()
+
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": PINERY_COL.SampleName},
@@ -223,10 +344,10 @@ def init_callbacks(dash_app):
             functions update_known_index_bar, update_unknown_index_bar,
             update_pie_chart's data value, and update_pie_chart's fraction value
         """
-        known_run = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias]
+        known_run = known_data_table[known_data_table[PINERY_COL.SequencerRunName] == run_alias]
         known_run = known_run[~known_run[PINERY_COL.SampleProvenanceID].isna()]
         
-        unknown_run = unknown_data_table[unknown_data_table[bcl2barcode_col.Run] == run_alias]
+        unknown_run = unknown_data_table[unknown_data_table[PINERY_COL.SequencerRunName] == run_alias]
         # unknown_run = unknown_run[~unknown_run[PINERY_COL.SampleProvenanceID].isna()]
 
         return (
@@ -248,7 +369,7 @@ def create_known_index_bar(run):
        """
     data = []
     # TODO: Show Barcodes from Pinery to avoid showing dual index if single index library
-    for i, d in run.groupby(['Barcodes', PINERY_COL.SampleName]):
+    for i, d in run.groupby(['Sequence', PINERY_COL.SampleName]):
         data.append({
             "x": list(d[PINERY_COL.SampleName].unique()),
             # One library can be run on multiple lanes. Sum them together.
@@ -282,9 +403,9 @@ def create_unknown_index_bar(run):
     run = run.head(30)
     data = []
 
-    for lane, d in run.groupby(bcl2barcode_col.Lane):
+    for lane, d in run.groupby(PINERY_COL.LaneNumber):
         data.append({
-            "x": list(d[bcl2barcode_col.Barcodes]),
+            "x": list(d['Sequence']),
             "y": list(d[bcl2barcode_col.Count]),
             "type": "bar",
             "name": lane
@@ -303,7 +424,7 @@ def create_unknown_index_bar(run):
 
 
 def create_pie_chart(run_alias):
-    known_count = known_data_table[known_data_table[bcl2barcode_col.Run] == run_alias][bcl2barcode_col.Count].sum() 
+    known_count = known_data_table[known_data_table[PINERY_COL.SequencerRunName] == run_alias][bcl2barcode_col.Count].sum()
     # bcl2barcode data doesn't include long tail of low-count barcodes. Get total from run summary to restore
     unknown_count = bcl2barcode_run_summary.loc[bcl2barcode_run_summary[bcl2barcode_run_summary_col.Run] == run_alias][bcl2barcode_run_summary_col.TotalClusters].sum() - known_count       
     return (

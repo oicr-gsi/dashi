@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import dash_html_components as html
-import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
 from ..dash_id import init_ids
