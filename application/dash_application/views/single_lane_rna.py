@@ -556,7 +556,7 @@ def init_callbacks(dash_app):
             generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict('records'),
-            df.drop(columns=[RnaColumn.InsertSD, RnaColumn.InsertMean]).to_dict("records", into=dd),
+            df[rnaseqqc_table_columns].to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,

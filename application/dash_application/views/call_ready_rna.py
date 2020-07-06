@@ -429,7 +429,7 @@ def init_callbacks(dash_app):
             generate_rrna_contam(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
-            df.drop(columns=[RNASEQQC2_COL.InsertSD, RNASEQQC2_COL.InsertMean]).to_dict("records", into=defaultdict(list)),
+            df[rna_table_columns].to_dict("records", into=defaultdict(list)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
         ]
