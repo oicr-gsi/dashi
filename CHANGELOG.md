@@ -7,6 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 ## Changed
+  * Removed Insert Size columns from raw data table on RNAseq reports
   * Updated Dash to 1.13 (supports subplot sorting)
 
 ## [200629-1329] - 2020-06-29
