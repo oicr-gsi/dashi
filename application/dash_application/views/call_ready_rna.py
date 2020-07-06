@@ -102,7 +102,9 @@ def get_merged_rna_data():
 
 
 (RNA_DF, DATAVERSION) = get_merged_rna_data()
-rna_table_columns = RNA_DF.columns
+rna_table_columns = list(RNA_DF.columns.values)
+rna_table_columns.remove(RNASEQQC2_COL.InsertMean)
+rna_table_columns.remove(RNASEQQC2_COL.InsertSD)
 
 initial = get_initial_call_ready_values()
 
@@ -427,7 +429,7 @@ def init_callbacks(dash_app):
             generate_rrna_contam(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
-            df.to_dict("records", into=defaultdict(list)),
+            df[rna_table_columns].to_dict("records", into=defaultdict(list)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
         ]

@@ -85,7 +85,8 @@ later_col_set = [
     PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
-
+rnaseqqc_table_columns.remove(RnaColumn.InsertMean)
+rnaseqqc_table_columns.remove(RnaColumn.InsertSD)
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
@@ -555,7 +556,7 @@ def init_callbacks(dash_app):
             generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict('records'),
-            df.to_dict("records", into=dd),
+            df[rnaseqqc_table_columns].to_dict("records", into=dd),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
