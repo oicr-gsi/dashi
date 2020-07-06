@@ -5,6 +5,12 @@ from version import __version__ as version
 import os
 import json
 import datetime
+from application.dash_application.pages import pages
+
+# {pagename: Full Text Page Title}
+page_info = {}
+for module in pages:
+    page_info[module.page_name] = module.title
 
 ## Use flask's server-side rendering to create a page from templates/index.html
 ## The @app.route decoration tells flask to return this content for both http://<root> and http://<root>/index
@@ -36,10 +42,13 @@ def index():
             project["last_updated"] = str_timestamp(project["last_updated"]/1000)
     project_json = sorted(project_json, key=lambda k: k["last_updated"], reverse=True)
 
+
+
     return render_template('index.html',
     version=version,
     runs=latest_runs,
-    projects=project_json)
+    projects=project_json,
+    page_info=page_info)
 
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
