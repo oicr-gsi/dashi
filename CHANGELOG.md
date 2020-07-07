@@ -7,9 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200707-0945] - 2020-07-07
+
 ## [200706-1605] - 2020-07-06
 ## Changed
-  * Navbar now features HOME button
   * Removed Insert Size columns from raw data table on RNAseq reports
   * Updated Dash to 1.13 (supports subplot sorting)
 
