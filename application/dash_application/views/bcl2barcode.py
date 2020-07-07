@@ -98,13 +98,12 @@ def classify(row: pandas.Series) -> str:
             return "Known"
         else:
             return "Collision"
+    # Treat like Single Index
     elif row['IndexStrategy'] == 'MixedIndex':
-        if row['Index1MatchedCount'] == 1 and row['Index2MatchedCount'] == 0:
-            return "Known"
-        elif row['Index1MatchedCount'] == 1 and row['Index2MatchedCount'] == 1:
-            return "Known"
-        elif row['Index1MatchedCount'] == 0 and row['Index2MatchedCount'] == 0:
+        if row['Index1MatchedCount'] == 0:
             return "Unknown"
+        elif row['Index1MatchedCount'] == 1:
+            return "Known"
         else:
             return "Collision"
     else:
@@ -141,7 +140,8 @@ pinery_with_expanded_barcodes = pinery_with_expanded_barcodes[~(pinery_with_expa
 index1_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index1'].apply(lambda x: list(set(x))).reset_index()
 index2_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index2'].apply(lambda x: list(set(x))).reset_index()
 
-# Each Run/Lane can have one Index Strategy: Single Index, Dual Index, or Mixed
+# Each Run/Lane can have one Index Strategy: Single Index, Dual Index
+# Mixed lanes will be treated as Single Index
 index2_expected['IndexStrategy'] = numpy.nan
 index2_expected.loc[index2_expected['Index2'].apply(lambda x: all(pandas.isna(x))), 'IndexStrategy'] = 'SingleIndexOnly'
 index2_expected.loc[index2_expected['Index2'].apply(lambda x: all(~pandas.isna(x))), 'IndexStrategy'] = 'DualIndexOnly'
@@ -178,17 +178,23 @@ bcl2barcode['Index2MatchedSequence'] = bcl2barcode['Index2Matched'].apply(lambda
 
 bcl2barcode["Classify"] = bcl2barcode.apply(classify, axis=1)
 
+# Sum all bcl2barcode counts that come from the same Pinery barcode
 all_known = bcl2barcode[(bcl2barcode["Classify"] == "Known")]
 all_known = all_known.groupby(
-    [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence', 'IndexStrategy', 'Index1', 'Index2']
+    [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence', 'IndexStrategy']
 )['count'].sum().reset_index()
+all_known = all_known.rename(columns={
+    'Index1MatchedSequence': 'Index1',
+    'Index2MatchedSequence': 'Index2',
+})
 
 unknown_data_table = bcl2barcode[bcl2barcode["Classify"] == "Unknown"]
 
-known_data_table_single = all_known[all_known['IndexStrategy'] == 'SingleIndexOnly'].merge(
+# Find known and unknown single index libraries
+known_data_table_single = all_known[(all_known['IndexStrategy'] == 'SingleIndexOnly') | (all_known['IndexStrategy'] == 'MixedIndex')].merge(
     pinery_with_expanded_barcodes,
     how='left',
-    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence'],
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1'],
     right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1'],
     suffixes=('', '_pinery'),
 )
@@ -201,7 +207,7 @@ unknown_data_table = pandas.concat([
 known_data_table_dual = all_known[all_known['IndexStrategy'] == 'DualIndexOnly'].merge(
     pinery_with_expanded_barcodes,
     how='left',
-    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence'],
+    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1', 'Index2'],
     right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1', 'Index2'],
     suffixes=('', '_pinery'),
 
@@ -215,35 +221,9 @@ unknown_data_table = pandas.concat([
     known_data_table_dual[known_data_table_dual[PINERY_COL.StudyTitle].isna()],
 ], join="inner")
 
-mixed_data_table = all_known[all_known['IndexStrategy'] == 'MixedIndex'].merge(
-    pinery_with_expanded_barcodes,
-    how='left',
-    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence'],
-    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1', 'Index2'],
-    suffixes=('', '_pinery'),
-)
-known_data_table = pandas.concat([
-    known_data_table,
-    mixed_data_table[~mixed_data_table[PINERY_COL.StudyTitle].isna()]
-])
+known_data_table.to_csv('del.csv')
 
-remaining_mixed = mixed_data_table[mixed_data_table[PINERY_COL.StudyTitle].isna()][unknown_data_table.columns]
-mixed_data_table_single = remaining_mixed.merge(
-    pinery_with_expanded_barcodes,
-    how='left',
-    left_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence'],
-    right_on=[PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1'],
-    suffixes=('', '_pinery'),
-)
-known_data_table = pandas.concat([
-    known_data_table,
-    mixed_data_table_single[~mixed_data_table_single[PINERY_COL.StudyTitle].isna() & mixed_data_table_single['Index2_pinery'].isna()]
-])
-unknown_data_table = pandas.concat([
-    unknown_data_table,
-    mixed_data_table_single[mixed_data_table_single[PINERY_COL.StudyTitle].isna() | ~mixed_data_table_single['Index2_pinery'].isna()]
-], join="inner")
-
+# Don't display second index if Single Index library
 unknown_data_table.loc[unknown_data_table['IndexStrategy'] == "SingleIndexOnly", 'Index2'] = numpy.nan
 unknown_data_table['Sequence'] = unknown_data_table['Index1'].str.cat(unknown_data_table['Index2'], sep='-')
 unknown_data_table['Sequence'] = unknown_data_table['Sequence'].fillna(unknown_data_table['Index1'])
