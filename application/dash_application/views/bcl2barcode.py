@@ -221,8 +221,6 @@ unknown_data_table = pandas.concat([
     known_data_table_dual[known_data_table_dual[PINERY_COL.StudyTitle].isna()],
 ], join="inner")
 
-known_data_table.to_csv('del.csv')
-
 # Don't display second index if Single Index library
 unknown_data_table.loc[unknown_data_table['IndexStrategy'] == "SingleIndexOnly", 'Index2'] = numpy.nan
 unknown_data_table['Sequence'] = unknown_data_table['Index1'].str.cat(unknown_data_table['Index2'], sep='-')
