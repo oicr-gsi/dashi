@@ -212,6 +212,9 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
+    df[PINERY_COL.SampleName] = df[PINERY_COL.SampleName].str.cat(
+        [str(x) for x in range(len(df))], sep="."
+    )
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
     df = fill_in_size_col(df, searchsample)
