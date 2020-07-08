@@ -1,3 +1,19 @@
+"""
+bcl2barcode detects and counts the indices of a run as soon as possible. To link the
+bcl2barcode indices to that of Pinery (in order to give the indices a name) the following
+points need to be addressed:
+
+* 10X index: Pinery stores the name of the group of indices (SI-GA-A1), whereas
+bcl2barcode has the nucleotide sequence
+* Index length: Pinery has the actual index. In case of pools with indices of different
+lengths, bcl2barcode will have truncated indices (to min length)
+* Single/dual index: Pinery has the full index sequence. In case of pools with single
+and dual indices, bcl2barcode will onto contain the first index
+* Mismatches: bcl2barcode does not correct index sequence if it differs slightly
+from Pinery known index sequence
+* Collisions: bcl2barcode index matching more than one Pinery index
+"""
+
 import os
 from typing import List
 
@@ -122,12 +138,14 @@ BCL2FASTQ_MISMATCH = 1
 
 barcode_expansions = pandas.read_csv(os.getenv("BARCODES_STREXPAND"), sep="\t", header=None).melt(id_vars=0).drop(labels="variable", axis="columns").set_axis(['Index', 'Sequence'], axis="columns", inplace=False)
 # Expand pinery to include 4 rows for every 1 10X barcode
+# This allows for merging with the nucleotide sequence in bcl2barcode
 pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
 
 # Where there is no 10X barcode, fill in with the iusTag
 pinery_with_expanded_barcodes['Sequence'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 
 # Split up Index 1 and 2 into their own columns
+# Allows for explicit merging on Index1 (single index) or Index1/2 (dual index)
 pinery_with_expanded_barcodes['Index1'] = pinery_with_expanded_barcodes['Sequence'].fillna(pinery_with_expanded_barcodes['iusTag'])
 pinery_with_expanded_barcodes['Index2'] = pinery_with_expanded_barcodes['Index1'].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
 pinery_with_expanded_barcodes['Index1'] = pinery_with_expanded_barcodes['Index1'].apply(lambda s: s.split("-")[0])
@@ -137,6 +155,7 @@ pinery_with_expanded_barcodes.loc[pinery_with_expanded_barcodes['Index1'] == 'No
 pinery_with_expanded_barcodes = pinery_with_expanded_barcodes[~(pinery_with_expanded_barcodes['Index1'].isna() & pinery_with_expanded_barcodes['Index1'].isna())]
 
 # Collect all expected Index1 and Index2 for each Run/Lane
+# These will be the ground truth against which bcl2barcode sequences will be compared
 index1_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index1'].apply(lambda x: list(set(x))).reset_index()
 index2_expected = pinery_with_expanded_barcodes.groupby([PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber])['Index2'].apply(lambda x: list(set(x))).reset_index()
 
@@ -148,6 +167,7 @@ index2_expected.loc[index2_expected['Index2'].apply(lambda x: all(~pandas.isna(x
 index2_expected['IndexStrategy'] = index2_expected['IndexStrategy'].fillna('MixedIndex')
 
 # Split up Index 1 and 2 into their own columns
+# Allows for explicit merging on Index1 (single index) or Index1/2 (dual index)
 bcl2barcode['Index1'] = bcl2barcode[bcl2barcode_col.Barcodes].apply(lambda s: s.split("-")[0])
 bcl2barcode['Index2'] = bcl2barcode[bcl2barcode_col.Barcodes].apply(lambda s: numpy.nan if len(s.split("-")) == 1 else s.split("-")[1])
 
@@ -167,6 +187,7 @@ bcl2barcode = bcl2barcode.merge(
 )
 
 # Expensive operation of matching bcl2barcode index to expected Pinery index
+# After this, each bcl2barcode will have 0 or more indices matched to known Pinery index
 bcl2barcode['Index1Matched'] = bcl2barcode.apply(lambda x: find_matches(x['Index1'], x['Index1_known'], BCL2FASTQ_MISMATCH), axis=1)
 bcl2barcode['Index2Matched'] = bcl2barcode.apply(lambda x: find_matches(x['Index2'], x['Index2_known'], BCL2FASTQ_MISMATCH), axis=1)
 
@@ -178,8 +199,10 @@ bcl2barcode['Index2MatchedSequence'] = bcl2barcode['Index2Matched'].apply(lambda
 
 bcl2barcode["Classify"] = bcl2barcode.apply(classify, axis=1)
 
-# Sum all bcl2barcode counts that come from the same Pinery barcode
+# bcl2barcode index is either unknown (no Pinery match), known (exactly one Pinery match), or collision (more than one Pinery match)
 all_known = bcl2barcode[(bcl2barcode["Classify"] == "Known")]
+# Sum all bcl2barcode counts that come from the same Pinery barcode
+# Count of indices that differed slightly (BCL2FASTQ_MISMATCH) are collapsed here
 all_known = all_known.groupby(
     [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber, 'Index1MatchedSequence', 'Index2MatchedSequence', 'IndexStrategy']
 )['count'].sum().reset_index()
