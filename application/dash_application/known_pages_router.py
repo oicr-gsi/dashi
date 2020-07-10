@@ -32,7 +32,7 @@ def navbar(current):
         id="navbar",
         children=[
             # Simple Navbar only lets you add content to the right side. This CSS forces the button out of the div 
-            html.A(html.Button("Home", style={"position": "fixed", "left": "0", "margin-left": "15px", "margin-top": "4px"}), href="/"),
+            html.A(html.Button("Home", style={"position": "absolute", "left": "0", "margin-left": "15px", "margin-top": "4px"}), href="/"),
             dbc.DropdownMenu(
                 children=[menu_item(v.title, k) for k, v in pages_info.items()],
                 nav=True,
