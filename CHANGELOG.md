@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200713-1430] - 2020-07-13
 ## Changed
-* Bumped to ETL v0.37.0 (bcl2barcode fix)
+  * Bumped to ETL v0.37.0 (bcl2barcode fix)
+
+## Added
+  * Home button on navbar
 
 ## [200707-0945] - 2020-07-07
 
