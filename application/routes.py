@@ -52,7 +52,7 @@ def index():
 
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
-    DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+    DATE_FORMAT = "%Y-%m-%d"
 
     return datetime.datetime.fromtimestamp(ts).strftime(DATE_FORMAT)
 
