@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Requires grouped_run_status and grouped_project_status files for front page
 
 ## [200713-1430] - 2020-07-13
 ## Changed

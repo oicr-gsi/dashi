@@ -55,19 +55,17 @@
       <tr>
         <th>Run</th>
         <th>Report</th>
-        <th>Last Updated</th>
-        <th>Run Completed</th>
         <th>Completed</th>
         <th>Processing</th>
       </tr>
       {% for run in runs %}
       <tr>
-        <td>{{ run["run"] }}</td>
-        <td><a href="{{ run["page"] }}?run={{ run["run"] }}">{{ run["page"] }}</a></td>
-        <td>{{ run["last_updated"] }}</td>
-        <td>{{ run["run_completed"] }}</td>
-        <td>{{ run["completed"] }}</td>
-        <td>{{ run["processing"] }}</td>
+        <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br />Completed: {{ run["run_completed"] }}</td>
+        {% for page in run["pages"] %}
+          <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
+          <td>{{ page["completed"] }}</td>
+          <td>{{ run["processing"] }}</td>
+        {% endfor %}
       </tr>
       {% endfor %}
     </table>
@@ -77,18 +75,22 @@
       <tr>
         <th>Project</th>
         <th>Report</th>
-        <th>Last Updated</th>
         <th>Completed</th>
         <th>Processing</th>
       </tr>
       {% for proj in projects %}
-      <tr>
-        <td>{{ proj["project"] }}</td>
-        <td><a href="{{ proj["page"] }}?project={{ proj["project"] }}">{{ proj["page"] }}</a></td>
-        <td>{{ proj["last_updated"] }}</td>
-        <td>{{ proj["completed"] }}</td>
-        <td>{{ proj["processing"] }}</td>
-      </tr>
+      {% set ns = namespace(first_row=true) %}
+        {% for page in proj["pages"] %}
+        <tr>
+          {% if ns.first_row is sameas true %}
+            <td rowspan={{ proj["pages"]|length }}>{{ proj["project"] }}</td>
+          {% endif %}
+          <td><a href="{{ page }}?project={{ proj["project"] }}">{{ page }}</a></td>
+          <td>{{ page["completed"] }}</td>
+          <td>{{ page["processing"] }}</td>
+          </tr>
+          {% set ns.first_row = false %}
+        {% endfor %}
       {% endfor %}
     </table>
 

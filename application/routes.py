@@ -25,22 +25,19 @@ def index():
     three_weeks_ago_ts = (datetime.datetime.today() - datetime.timedelta(days=21)).timestamp()
 
     latest_runs = []
-    with open(qc_etl_location + '/run_status.json', 'r') as run_status_file:
+    with open(qc_etl_location + '/grouped_run_status.json', 'r') as run_status_file:
         run_json = json.load(run_status_file)
         for run in run_json:
             if run["run_completed"] > three_weeks_ago_ts*1000: 
                 # Convert timestamps to string for display
-                run["last_updated"] = str_timestamp(run["last_updated"]/1000)
                 run["run_completed"] = str_timestamp(run["run_completed"]/1000)
 
                 latest_runs.append(run)
     latest_runs = sorted(latest_runs, key=lambda k: k["run_completed"], reverse=True)
 
-    with open(qc_etl_location + '/project_status.json', 'r') as project_status_file:
+    with open(qc_etl_location + '/grouped_project_status.json', 'r') as project_status_file:
         project_json = json.load(project_status_file)
-        for project in project_json:
-            project["last_updated"] = str_timestamp(project["last_updated"]/1000)
-    project_json = sorted(project_json, key=lambda k: k["last_updated"], reverse=True)
+    project_json = sorted(project_json, key=lambda k: k["project"])
 
 
 
