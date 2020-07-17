@@ -66,8 +66,8 @@
             <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br /><i>Completed: {{ run["run_completed"] }}</i></td>
           {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
-          <td>{{ page["completed"] }}</td>
-          <td>{{ run["processing"] }}</td>
+          <td>{{ run["pages"][page]["completed"] }}</td>
+          <td>{{ run["pages"][page]["processing"] }}</td>
         </tr>
         {% set ns.first_row = false %}
         {% endfor %}
@@ -90,8 +90,8 @@
             <td rowspan={{ proj["pages"]|length }}>{{ proj["project"] }}</td>
           {% endif %}
           <td><a href="{{ page }}?project={{ proj["project"] }}">{{ page }}</a></td>
-          <td>{{ page["completed"] }}</td>
-          <td>{{ page["processing"] }}</td>
+          <td>{{ proj["pages"][page]["completed"] }}</td>
+          <td>{{ proj["pages"][page]["processing"] }}</td>
           </tr>
           {% set ns.first_row = false %}
         {% endfor %}
