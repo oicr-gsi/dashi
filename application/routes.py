@@ -39,8 +39,6 @@ def index():
         project_json = json.load(project_status_file)
     project_json = sorted(project_json, key=lambda k: k["project"])
 
-
-
     return render_template('index.html',
     version=version,
     runs=latest_runs,
