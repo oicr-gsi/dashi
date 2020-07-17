@@ -59,14 +59,18 @@
         <th>Processing</th>
       </tr>
       {% for run in runs %}
-      <tr>
-        <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br />Completed: {{ run["run_completed"] }}</td>
+      {% set ns = namespace(first_row=true) %}
         {% for page in run["pages"] %}
+        <tr>
+          {% if ns.first_row is sameas true %}
+            <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br /><i>Completed: {{ run["run_completed"] }}</i></td>
+          {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
           <td>{{ page["completed"] }}</td>
           <td>{{ run["processing"] }}</td>
+        </tr>
+        {% set ns.first_row = false %}
         {% endfor %}
-      </tr>
       {% endfor %}
     </table>
 
