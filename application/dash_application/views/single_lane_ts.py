@@ -5,7 +5,7 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
+from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius, Mode
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
@@ -187,7 +187,8 @@ def generate_unmapped_reads(current_data, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        mode=Mode.IUS
     )
 
 

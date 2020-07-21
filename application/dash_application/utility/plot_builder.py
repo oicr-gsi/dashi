@@ -7,8 +7,9 @@ import dash_core_components as core
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
-from .df_manipulation import sample_type_col
+from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
+from .table_builder import Mode
 import re
 import pdb
 
@@ -270,7 +271,7 @@ def is_empty_plot(trace_list) -> bool:
 # writing a factory may be peak Java poisoning but it might help with all these parameters
 def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
              hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
-             markermode="markers", bar_positive=None, bar_negative=None):
+             markermode="markers", bar_positive=None, bar_negative=None, mode=None):
     margin = go.layout.Margin(
         l=50,
         r=50,
@@ -280,6 +281,11 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     )
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
+
+    if mode == Mode.IUS:
+        x_fn = lambda d: d["SampleNameExtra"]
+    elif mode == Mode.MERGED:
+        x_fn = lambda d: d[ml_col]
 
     traces = _generate_traces(
         sorted_data,
@@ -572,7 +578,9 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
         y=y_data,
         name=name_format(name),
         legendgroup=name_format(name),
-        hovertext=hovertext,
+        customdata=data["SampleNameExtra"],
+        hovertemplate = "%{x}, %{customdata}",
+        #hovertext=hovertext,
         showlegend=show_legend,
         mode=markermode,
         marker={
