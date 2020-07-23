@@ -9,7 +9,7 @@ import pinery
 import gsiqcetl.column
 from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
-from .table_builder import Mode
+from .Mode import Mode
 import re
 import pdb
 
@@ -123,7 +123,6 @@ def create_data_label(
         return []
     if cols is None:
         return df.apply(lambda r: "<br />"+additional_text, axis=1)
-
     no_order = [x for x in cols if x not in DATA_LABEL_ORDER]
     ordered = [x for x in cols if x in DATA_LABEL_ORDER]
     ordered = sorted(ordered, key=lambda x: DATA_LABEL_ORDER.index(x))
@@ -269,9 +268,9 @@ def is_empty_plot(trace_list) -> bool:
 
 
 # writing a factory may be peak Java poisoning but it might help with all these parameters
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
-             markermode="markers", bar_positive=None, bar_negative=None, mode=None):
+def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
+             hovertext_cols, mode, x_fn=None, cutoff_lines: List[Tuple[str, float]]=[],
+             markermode="markers", bar_positive=None, bar_negative=None):
     margin = go.layout.Margin(
         l=50,
         r=50,
@@ -279,21 +278,27 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
         t=50,
         pad=4
     )
-    # if axis_text == '%':
-    #     y_axis['range'] = [0, 100]
 
-    if mode == Mode.IUS:
-        x_fn = lambda d: d["SampleNameExtra"]
-    elif mode == Mode.MERGED:
-        x_fn = lambda d: d[ml_col]
+    display_x = None
+    if x_fn is None:
+        if mode == Mode.IUS:
+            x_fn = lambda d: d["SampleNameExtra"]
+            display_x = sorted_data[PINERY_COL.SampleName]
+        elif mode == Mode.MERGED:
+            x_fn = lambda d: d[ml_col]
+            display_x = sorted_data[ml_col]
+    else:
+        pdb.set_trace()
+        display_x = x_fn(sorted_data)
 
     traces = _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
         hovertext_cols,
+        display_x,
+        x_fn,
         cutoff_lines,
         markermode,
         bar_positive,
@@ -324,8 +329,8 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                    'rangemode': 'normal',
                    'autorange': True,
-                   'categoryorder': 'array',
-                   'categoryarray': x_fn(sorted_data)},
+                   'categoryorder': 'array',},
+                #    'categoryarray': x_fn(sorted_data)}, #TODO undo this comment
             yaxis=y_axis,
             legend = {
                 'tracegroupgap': 0,
@@ -336,11 +341,12 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
 
 def _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
         hovertext_cols,
+        display_x,
+        x_fn=None,
         cutoff_lines: List[Tuple[str, float]]=[],
         markermode="markers",
         bar_positive=None,
@@ -371,11 +377,11 @@ def _generate_traces(
         in_legend = {}
         for fn in y_fn:
             for name, data in grouped_data:
-                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
+                traces.append(_define_graph(data, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=x_fn, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
                 in_legend[name_format(name)] = True
     else: 
         for name, data in grouped_data:
-            traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
+            traces.append(_define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=x_fn))
     
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
@@ -547,7 +553,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
     return figure
 
 
-def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=True, additional_hovertext=None):
+def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=None, show_legend=True, additional_hovertext=None):
     y_data = y_fn(data)
 
     if bar_positive and bar_negative:
@@ -571,15 +577,14 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
         hovertext_display_cols = hovertext_cols
 
     hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
-
     return dict(
         type=graph_type,
         x=x_fn(data),
         y=y_data,
         name=name_format(name),
         legendgroup=name_format(name),
-        customdata=data["SampleNameExtra"],
-        hovertemplate = "%{x}, %{customdata}",
+        customdata=display_x,
+        hovertemplate = "%{customdata}, %{y}",
         #hovertext=hovertext,
         showlegend=show_legend,
         mode=markermode,
@@ -617,19 +622,19 @@ def _get_colours_for_values(colourby: List[str]):
 
 # Generators for graphs used on multiple pages
 def generate_total_reads(
-        df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
+        df: DataFrame, y_col: str, colour_by: str, shape_by: str, mode,
         show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
 ) -> go.Figure:
     return generate(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[x_col],
         lambda d: d[y_col],
         "# PF Reads X 10^6",
         colour_by,
         shape_by,
         show_names,
-        cutoff_lines,
+        mode,
+        cutoff_lines=cutoff_lines,
     )
 
 

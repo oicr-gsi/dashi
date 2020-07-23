@@ -5,10 +5,11 @@ import dash_core_components as core
 from dash.dependencies import Input, Output, State
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius, Mode
+from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
 title = "Single-Lane Targeted Sequencing"
+page_mode = Mode.IUS
 
 ids = init_ids([
     # Buttons
@@ -182,7 +184,6 @@ def generate_unmapped_reads(current_data, graph_params):
     return generate(
         "Unmapped Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads (%)"]],
         "%",
         graph_params["colour_by"],
@@ -196,12 +197,12 @@ def generate_nonprimary_reads(current_data, graph_params):
     return generate(
         "Non-Primary Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -209,12 +210,12 @@ def generate_on_target_reads(current_data, graph_params):
     return generate(
         "On Target Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On Target Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -222,13 +223,13 @@ def generate_median_insert_size(current_data, graph_params):
     return generate(
         "Median Insert Size with 10/90 Percentile",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        page_mode,
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -372,10 +373,10 @@ def layout(query_string):
                             core.Graph(id=ids['total-reads'],
                                 figure=generate_total_reads(
                                     df,
-                                    PINERY_COL.SampleName,
                                     special_cols["Total Reads (Passed Filter)"],
                                     initial["colour_by"],
                                     initial["shape_by"],
+                                    page_mode,
                                     initial["shownames_val"],
                                     [(cutoff_pf_reads_label, initial[cutoff_pf_reads])]
                                 )
@@ -513,9 +514,9 @@ def init_callbacks(dash_app):
             approve_run_href,
             approve_run_style,
             generate_total_reads(
-                df, PINERY_COL.SampleName,
+                df,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
+                shape_by, page_mode, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_unmapped_reads(df, graph_params),
             generate_nonprimary_reads(df, graph_params),
             generate_on_target_reads(df, graph_params),
