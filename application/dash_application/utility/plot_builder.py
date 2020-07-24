@@ -329,8 +329,8 @@ def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
             xaxis={'visible': False,
                    'rangemode': 'normal',
                    'autorange': True,
-                   'categoryorder': 'array',},
-                #    'categoryarray': x_fn(sorted_data)}, #TODO undo this comment
+                   'categoryorder': 'array',
+                   'categoryarray': x_fn(sorted_data)},
             yaxis=y_axis,
             legend = {
                 'tracegroupgap': 0,
