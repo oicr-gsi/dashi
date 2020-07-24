@@ -575,9 +575,11 @@ def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, marker
     else:
         error_y = None
         hovertext_display_cols = hovertext_cols
-    #pdb.set_trace()
     hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
-
+    
+    additional_str = ""
+    if isinstance(hovertext, pandas.Series) and not hovertext.empty:
+        additional_str = "<br />%{hovertext}"
     return dict(
         type=graph_type,
         x=x_fn(data),
@@ -586,7 +588,7 @@ def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, marker
         legendgroup=name_format(name),
         customdata=display_x(data),
         hovertext=hovertext,
-        hovertemplate = "%{customdata}, %{y}<br />%{hovertext}", #TODO: don't show if it's nothing
+        hovertemplate = "%{customdata}, %{y}" + additional_str, 
         showlegend=show_legend,
         mode=markermode,
         marker={
