@@ -283,7 +283,7 @@ def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
     if x_fn is None:
         if mode == Mode.IUS:
             x_fn = lambda d: d["SampleNameExtra"]
-            display_x = sorted_data[PINERY_COL.SampleName]
+            display_x = lambda d: d[PINERY_COL.SampleName]
         elif mode == Mode.MERGED:
             x_fn = lambda d: d[ml_col]
             display_x = sorted_data[ml_col]
@@ -575,17 +575,18 @@ def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, marker
     else:
         error_y = None
         hovertext_display_cols = hovertext_cols
-
+    #pdb.set_trace()
     hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
+
     return dict(
         type=graph_type,
         x=x_fn(data),
         y=y_data,
         name=name_format(name),
         legendgroup=name_format(name),
-        customdata=display_x,
-        hovertemplate = "%{customdata}, %{y}",
-        #hovertext=hovertext,
+        customdata=display_x(data),
+        hovertext=hovertext,
+        hovertemplate = "%{customdata}, %{y}<br />%{hovertext}", #TODO: don't show if it's nothing
         showlegend=show_legend,
         mode=markermode,
         marker={
