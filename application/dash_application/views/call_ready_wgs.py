@@ -11,12 +11,14 @@ from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils, log_utils
+from ..utility.Mode import Mode
 
 logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "call-ready-wgs"
 title = "Call-Ready WGS"
+page_mode = Mode.MERGED
 
 ids = init_ids([
     # Buttons
@@ -242,48 +244,57 @@ SORT_BY = shape_colour.dropdown() + [
 
 def generate_deduplicated_coverage(df, graph_params):
     return generate(
-        "Mean Coverage (Deduplicated)", df,
-        lambda d: d[util.ml_col],
+        "Mean Coverage (Deduplicated)", 
+        df,
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
+        page_mode,
+        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
          (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
     )
 
 
 def generate_deduplicated_coverage_per_gb(df, graph_params):
     return generate(
-        "Mean Coverage per Gb (Deduplicated)", df,
-        lambda d: d[util.ml_col],
+        "Mean Coverage per Gb (Deduplicated)", 
+        df,
         lambda d: d[special_cols["Coverage per Gb"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [], )
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"], 
+        page_mode
+    )
 
 
 def generate_median_coverage(df, graph_params):
     return generate(
         "Median Coverage with 10/90 Percentile",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageMedian],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [],
+        page_mode,
         bar_positive=BAMQC_COL.CoverageMedian90Percentile,
         bar_negative=BAMQC_COL.CoverageMedian10Percentile,
     )
 
 def generate_callability(df, graph_params):
     return generate(
-        "Callability (14x/8x) (%)", df,
-        lambda d: d[util.ml_col],
+        "Callability (14x/8x) (%)", 
+        df,
         lambda d: d[special_cols["Percent Callability"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_callability_label, graph_params[cutoff_callability])],
+        page_mode,
+        cutoff_lines=[(cutoff_callability_label, graph_params[cutoff_callability])],
     )
 
 
@@ -291,13 +302,13 @@ def generate_median_insert_size(df, graph_params):
     return generate(
         "Median Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        page_mode,
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -305,22 +316,28 @@ def generate_median_insert_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return generate(
-        "Duplication (%)", df,
-        lambda d: d[util.ml_col],
+        "Duplication (%)", 
+        df,
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
+        page_mode,
+        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
     )
 
 
 def generate_unmapped_reads(df, graph_params):
     return generate(
-        "Unmapped Reads (%)", df,
-        lambda d: d[util.ml_col],
+        "Unmapped Reads (%)", 
+        df,
         lambda d: d[special_cols["Unmapped Reads"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"], 
+        page_mode
     )
 
 
@@ -444,11 +461,12 @@ def layout(query_string):
                                               core.Graph(
                                                   id=ids["total-reads"],
                                                   figure=generate_total_reads(
-                                                      df, util.ml_col,
+                                                      df,
                                                       special_cols[
                                                           "Total Reads (Passed Filter)"],
                                                       initial["colour_by"],
                                                       initial["shape_by"],
+                                                      page_mode,
                                                       initial["shownames_val"],
                                                       [(
                                                        cutoff_pf_reads_tumour_label,
@@ -693,9 +711,9 @@ def init_callbacks(dash_app):
 
         return [
             generate_total_reads(
-                df, util.ml_col,
+                df,
                 special_cols["Total Reads (Passed Filter)"],
-                colour_by, shape_by, show_names,
+                colour_by, shape_by, page_mode, show_names,
                 [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
                  (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
             ),

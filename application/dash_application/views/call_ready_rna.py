@@ -11,11 +11,13 @@ from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_mer
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 
 logger = logging.getLogger(__name__)
 
 page_name = 'call-ready-rna'
 title = "Call-Ready RNA-seq"
+page_mode = Mode.MERGED
 
 ids = init_ids([
     # Buttons
@@ -159,12 +161,14 @@ SORT_BY = shape_colour.dropdown() + [
 
 def generate_five_to_three(df, graph_params):
     fig = generate(
-       "5 to 3 Prime Bias", df,
-       lambda d: d[util.ml_col],
+       "5 to 3 Prime Bias", 
+       df,
        lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
        "Log Ratio",
-       graph_params["colour_by"], graph_params["shape_by"],
-       graph_params["shownames_val"], [],
+       graph_params["colour_by"], 
+       graph_params["shape_by"],
+       graph_params["shownames_val"], 
+       page_mode,
     )
     fig.update_layout(yaxis_type="log")
     return fig
@@ -172,32 +176,41 @@ def generate_five_to_three(df, graph_params):
 
 def generate_correct_read_strand(df, graph_params):
     return generate(
-        "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[util.ml_col],
+        "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", 
+        df,
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
-        "%",graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%",
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"], 
+        page_mode,
     )
 
 
 def generate_coding(df, graph_params):
     return generate(
-        "Coding (%)", df,
-        lambda d: d[util.ml_col],
+        "Coding (%)", 
+        df,
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"], 
+        page_mode,
     )
 
 
 def generate_rrna_contam(df, graph_params):
     return generate(
-        "rRNA Contamination (%)", df,
-        lambda d: d[util.ml_col],
+        "rRNA Contamination (%)", 
+        df,
         lambda d: d[special_cols["% rRNA Contamination"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
+        page_mode,
+        cutoff_lines=[(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
     )
 
 
@@ -296,9 +309,9 @@ def layout(query_string):
                         children=[
                             core.Graph(
                                 id=ids["total-reads"],
-                                figure=generate_total_reads(df, util.ml_col,
+                                figure=generate_total_reads(df,
                                     special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"], initial["shape_by"], initial["shownames_val"],
+                                    initial["colour_by"], initial["shape_by"], page_mode, initial["shownames_val"],
                                     [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
 
                             core.Graph(
@@ -419,9 +432,9 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            generate_total_reads(df, util.ml_col,
+            generate_total_reads(df,
                 special_cols["Total Reads (Passed Filter)"],
-                colour_by, shape_by, show_names,
+                colour_by, shape_by, page_mode, show_names,
                 [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_five_to_three(df, graph_params),
             generate_correct_read_strand(df, graph_params),

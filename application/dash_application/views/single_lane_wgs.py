@@ -13,6 +13,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 """ Set up elements needed for page """
 page_name = "single-lane-wgs"
 title = "Single-Lane WGS"
+page_mode = Mode.IUS
 
 ids = init_ids([
     # Buttons
@@ -227,13 +229,13 @@ def generate_median_insert_size(df, graph_params):
     return generate(
         "Median Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        page_mode,
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -243,12 +245,12 @@ def generate_duplication(df, graph_params):
     return generate(
         "Duplication (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -256,12 +258,12 @@ def generate_unmapped_reads(df, graph_params):
     return generate(
         "Unmapped Reads (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -269,12 +271,12 @@ def generate_non_primary(df, graph_params):
     return generate(
         "Non-Primary Reads (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -282,12 +284,12 @@ def generate_on_target_reads(df, graph_params):
     return generate(
         "On Target Reads (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On-target Reads"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 def dataversion():
@@ -420,9 +422,8 @@ def layout(query_string):
                                 id=ids["total-reads"],
                                 figure=generate_total_reads(
                                     df,
-                                    PINERY_COL.SampleName,
                                     special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"], initial["shape_by"],
+                                    initial["colour_by"], initial["shape_by"], page_mode,
                                     initial["shownames_val"],
                                     [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])
                             ),
@@ -570,9 +571,9 @@ def init_callbacks(dash_app):
             approve_run_href,
             approve_run_style,
             generate_total_reads(
-                df, PINERY_COL.SampleName,
+                df,
                 special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
+                shape_by, page_mode, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
             generate_median_insert_size(df, graph_params),
             generate_duplication(df, graph_params),
             generate_unmapped_reads(df, graph_params),

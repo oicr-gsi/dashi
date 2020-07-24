@@ -9,6 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 from gsiqcetl.column import CfMeDipQcColumn
 import pinery
 import logging
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-cfmedip'
 title = "Single-Lane cfMeDIP"
+page_mode = Mode.IUS
 
 ids = init_ids([
     # Buttons
@@ -173,7 +175,6 @@ def generate_number_windows(current_data, graph_params):
     return generate(
         "Log10 # Windows at 1, 10, 50, 100x",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         [
             lambda d: d[CFMEDIP_COL.NumWindowsWith1Reads], 
             lambda d: d[CFMEDIP_COL.NumWindowsWith10Reads],
@@ -183,7 +184,8 @@ def generate_number_windows(current_data, graph_params):
         "Log10 Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -191,13 +193,13 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
     return generate(
         "PF Reads Aligned (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentPassedFilterAlignedReads] * 100,
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
+        page_mode,
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
     )
 
 
@@ -205,12 +207,12 @@ def generate_percent_duplcation(current_data, graph_params):
     return generate(
         "Duplication (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentDuplication],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -218,60 +220,60 @@ def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
     return generate(
         "Relative CpG Frequency Enrichment",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.RelativeCpGFrequencyEnrichment],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def generate_observed_to_expected_enrichment(current_data, graph_params):
     return generate(
         "Observed to Expected Enrichment",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.ObservedToExpectedEnrichment],
         "", 
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def generate_at_dropout(current_data, graph_params):
     return generate(
         "AT Dropout (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.ATDropout], 
         "%", 
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def generate_percent_thaliana(current_data, graph_params):
     return generate(
         "Thaliana (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentageAthaliana],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def generate_methylation_beta(current_data, graph_params):
     return generate(
         "Methylation Beta",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.MethylationBeta],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def dataversion():
@@ -640,6 +642,9 @@ def reshape_cfmedip_df(df, runs, instruments, projects, references, kits, instit
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
+    df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
+        [str(x) for x in range(len(df))], sep="."
+    )
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
     df = fill_in_size_col(df, searchsample)

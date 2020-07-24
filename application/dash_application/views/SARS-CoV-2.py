@@ -9,6 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 import pinery
 import logging
 from ..utility.df_manipulation import KRAKEN2_COL, BEDTOOLS_CALC_COL, BEDTOOLS_PERCENTILE_COL, SAMTOOLS_STATS_COV2_COL
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 page_name = 'SARS-CoV-2'
 title = "SARS-CoV-2"
+page_mode = Mode.IUS
 
 ids = init_ids([
     # Buttons
@@ -203,13 +205,13 @@ def generate_median_coverage_scatter(current_data, graph_params):
     return generate(
         "Median Coverage with 10/90 Percentile",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BEDTOOLS_CALC_COL.MedianCoverage],
         "Median Coverage",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])],
+        page_mode,
+        cutoff_lines=[(avg_coverage_cutoff_label, graph_params["avg_coverage_cutoff"])],
         bar_positive=BEDTOOLS_CALC_COL.Coverage90Percentile,
         bar_negative=BEDTOOLS_CALC_COL.Coverage10Percentile,
     )
@@ -219,13 +221,14 @@ def generate_on_target_reads_scatter(current_data, graph_params):
     return generate(
         "Kraken2 on human depleted BAM: SARS-CoV-2 (%)",
         current_data,
-        lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][PINERY_COL.SampleName],
         lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][KRAKEN2_COL.PercentAtClade],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(on_target_cutoff_label, graph_params["on_target_cutoff"])]
+        page_mode,
+        x_fn=lambda d: d[d[KRAKEN2_COL.Name] == "Severe acute respiratory syndrome coronavirus 2"][PINERY_COL.SampleName],
+        cutoff_lines=[(on_target_cutoff_label, graph_params["on_target_cutoff"])]
     )
 
 
@@ -245,12 +248,12 @@ def generate_coverage_uniformity_scatter(current_data, graph_params):
     return generate(
         "Uniformity of Coverage",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BEDTOOLS_CALC_COL.CoverageUniformity] * 100,
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -258,12 +261,12 @@ def generate_covid_mapped_host_depleted_percentage(current_data, graph_params):
     return generate(
         "Covid Mapped (% of host depleted reads)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d["covid_percent_mapped_host_depleted"],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 
@@ -271,12 +274,12 @@ def generate_covid_mapped_percentage_total(current_data, graph_params):
     return generate(
         "Covid Mapped (% of total reads)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d["covid_percent_mapped_total"],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        page_mode
     )
 
 def dataversion():

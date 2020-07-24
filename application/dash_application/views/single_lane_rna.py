@@ -9,6 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 from gsiqcetl.column import RnaSeqQc2Column as RnaColumn
 import pinery
 import logging
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 """ Set up elements needed for page """
 page_name = "single-lane-rna"
 title = "Single-Lane RNA-seq"
+page_mode = Mode.IUS
 
 ids = init_ids([
     # Buttons
@@ -186,7 +188,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-
+# TODO: Aww beans the subplots are gonna give me grief
 def generate_total_reads(df, graph_params):
     return SingleLaneSubplot(
         "Total Reads (Passed Filter)",

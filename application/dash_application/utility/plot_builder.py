@@ -288,8 +288,7 @@ def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
             x_fn = lambda d: d[ml_col]
             display_x = lambda d: d[ml_col]
     else:
-        pdb.set_trace()
-        display_x = x_fn(sorted_data)
+        display_x = lambda d: x_fn(d)
 
     traces = _generate_traces(
         sorted_data,
