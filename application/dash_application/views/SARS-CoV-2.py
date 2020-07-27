@@ -164,8 +164,22 @@ initial["on_target_cutoff"] = 20
 shape_colour = ColourShapeSARSCoV2(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
                                      ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS, ALL_SEQUENCING_CONTROL_TYPES)
 
-RAW_DATA_COLUMNS = [
-    BEDTOOLS_CALC_COL.Run,
+first_col_set = [
+    PINERY_COL.SampleName, 
+    PINERY_COL.StudyTitle,]
+
+later_col_set = [PINERY_COL.PrepKit, 
+    PINERY_COL.TissuePreparation,
+    PINERY_COL.LibrarySourceTemplateType, 
+    PINERY_COL.ExternalName,
+    PINERY_COL.GroupID, 
+    PINERY_COL.TissueOrigin, 
+    PINERY_COL.TissueType,
+    PINERY_COL.TargetedResequencing, 
+    PINERY_COL.Institute,
+    INSTRUMENT_COLS.ModelName,]
+
+sars_cov_2_cols = [BEDTOOLS_CALC_COL.Run,
     BEDTOOLS_CALC_COL.Lane,
     BEDTOOLS_CALC_COL.Barcodes,
     BEDTOOLS_CALC_COL.MeanCoverage,
@@ -176,6 +190,8 @@ RAW_DATA_COLUMNS = [
     "covid_percent_mapped_total",
     # Add columns produced by wide coverage percentage dataframe
 ] + [x for x in BEDTOOLS_COV_PERC_WIDE_DF if x.startswith('Coverage Above')]
+
+RAW_DATA_COLUMNS = [*first_col_set, *sars_cov_2_cols, *later_col_set]
 
 SORT_BY = [
     {"label": "Project",
