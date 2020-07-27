@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200727-1637] - 2020-07-27
+## Changed
+  * Added columns to SARS-CoV-2 raw data table
+
 ## [200720-1507] - 2020-07-20
 ## Changed
   * Requires grouped_run_status and grouped_project_status files for front page
