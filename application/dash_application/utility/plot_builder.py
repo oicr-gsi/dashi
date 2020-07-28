@@ -11,7 +11,6 @@ from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
 from .Mode import Mode
 import re
-import pdb
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
@@ -963,7 +962,6 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
     for i, trace in enumerate([subplot.traces() for subplot in subplots]):
         for t in trace:
             fig.add_trace(t, row=i+1, col=1)
-    #pdb.set_trace()
     fig.update_xaxes(
         visible=False,
         rangemode="normal",

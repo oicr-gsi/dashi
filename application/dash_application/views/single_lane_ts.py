@@ -13,7 +13,6 @@ from ..utility.Mode import Mode
 from gsiqcetl.column import BamQc3Column
 import pinery
 import logging
-import pdb
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +160,6 @@ shape_colour = ColourShapeSingleLane(
 )
 # Add shape, colour, and size cols to dataframe 
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
-#pdb.set_trace()
 bamqc = util.df_with_runs(bamqc)
 
 SORT_BY = sidebar_utils.default_first_sort + [
