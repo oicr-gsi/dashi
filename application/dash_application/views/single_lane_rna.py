@@ -193,13 +193,12 @@ def generate_total_reads(df, graph_params):
     return SingleLaneSubplot(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])],
+        cutoff_lines=[(cutoff_pf_reads_label, initial[cutoff_pf_reads])],
     )
 
 
@@ -207,7 +206,6 @@ def generate_unique_reads(df, graph_params):
     return SingleLaneSubplot(
         "Unique Reads (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Percent Uniq Reads"]],
         "%",
         graph_params["colour_by"],
@@ -220,7 +218,6 @@ def generate_five_to_three(df, graph_params):
     return SingleLaneSubplot(
         "5 to 3 Prime Bias",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.MetricsMedian5PrimeTo3PrimeBias],
         "Log Ratio",
         graph_params["colour_by"],
@@ -234,7 +231,6 @@ def generate_correct_read_strand(df, graph_params):
     return SingleLaneSubplot(
         "🚧 Correct Strand Reads (%) -- NOT ENABLED YET 🚧",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.MetricsPercentCorrectStrandReads],
         "%",
         graph_params["colour_by"],
@@ -247,7 +243,6 @@ def generate_coding(df, graph_params):
     return SingleLaneSubplot(
         "Coding (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[RNA_COL.MetricsPercentCodingBases],
         "%",
         graph_params["colour_by"],
@@ -260,13 +255,12 @@ def generate_rrna_contam(df, graph_params):
     return SingleLaneSubplot(
         "rRNA Contamination (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["rRNA Percent Contamination"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_rrna_label, graph_params[cutoff_rrna])]
+        cutoff_lines=[(cutoff_rrna_label, graph_params[cutoff_rrna])]
     )
 
 
@@ -274,7 +268,6 @@ def generate_dv200(df, graph_params):
     return SingleLaneSubplot(
         "DV200 (%)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.DV200],
         "%",
         graph_params["colour_by"],
@@ -287,7 +280,6 @@ def generate_rin(df, graph_params):
     return SingleLaneSubplot(
         "RIN",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[PINERY_COL.RIN],
         "",
         graph_params["colour_by"],

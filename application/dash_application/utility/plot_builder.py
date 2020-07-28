@@ -821,12 +821,13 @@ class Subplot:
             self,
             title,
             df,
-            x_col,
+            mode,
             y_col,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_col,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -846,15 +847,29 @@ class Subplot:
         self.bar_positive = bar_positive
         self.bar_negative = bar_negative
         self.log_y = log_y
+        self.mode = mode
 
     def traces(self):
+        self.display_x = None
+        self.x_fn = None
+        if self.x_col is None:
+            if self.mode == Mode.IUS:
+                self.x_fn = lambda d: d["SampleNameExtra"]
+                self.display_x = lambda d: d[PINERY_COL.SampleName]
+            elif mode == Mode.MERGED:
+                self.x_fn = lambda d: d[ml_col]
+                self.display_x = lambda d: d[ml_col]
+        else:
+            self.display_x = lambda d: x_fn(d)
+
         return _generate_traces(
             self.df,
-            self.x_col,
             self.y_col,
             self.colourby,
             self.shapeby,
             self.hovertext_cols,
+            self.display_x,
+            self.x_fn,
             self.cutoff_lines,
             self.markermode,
             self.bar_positive,
@@ -867,12 +882,12 @@ class SingleLaneSubplot(Subplot):
             self,
             title,
             df,
-            x_col,
             y_col,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_col=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -882,12 +897,13 @@ class SingleLaneSubplot(Subplot):
         super().__init__(
             title,
             df,
-            x_col,
+            Mode.IUS,
             y_col,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_col,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -901,12 +917,12 @@ class CallReadySubplot(Subplot):
             self,
             title,
             df,
-            x_col,
             y_col,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_col=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -916,12 +932,13 @@ class CallReadySubplot(Subplot):
         super().__init__(
             title,
             df,
-            x_col,
+            Mode.MERGED,
             y_col,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_col,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -946,14 +963,14 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
     for i, trace in enumerate([subplot.traces() for subplot in subplots]):
         for t in trace:
             fig.add_trace(t, row=i+1, col=1)
-
+    #pdb.set_trace()
     fig.update_xaxes(
         visible=False,
         rangemode="normal",
         autorange=True,
         # The x-axis is shared, so order all plots based on first one
         categoryorder='array',
-        categoryarray=subplots[0].x_col(subplots[0].df),
+        categoryarray=subplots[0].x_fn(subplots[0].df),
     )
 
     for i, subplot in enumerate([subplot for subplot in subplots]):
