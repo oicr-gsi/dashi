@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import dash_html_components as html
-import dash_core_components as core
 from dash.dependencies import Input, Output, State
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -51,14 +50,7 @@ ids = init_ids([
     "date-range",
 
     #Graphs
-    'number-windows',
-    'percent-pf-reads-aligned',
-    'percent-duplication',
-    'relative-cpg-freq-enrichment',
-    'observed-to-expected-enrichment',
-    'AT-dropout',
-    'percent-thaliana',
-    'methylation-beta',
+    "graphs",
 
     #Data table
     'failed-samples',
@@ -170,7 +162,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 def generate_number_windows(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Log10 # Windows at 1, 10, 50, 100x",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -188,7 +180,7 @@ def generate_number_windows(current_data, graph_params):
 
 
 def generate_percent_pf_reads_aligned(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "PF Reads Aligned (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -202,7 +194,7 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
 
 
 def generate_percent_duplcation(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Duplication (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -215,7 +207,7 @@ def generate_percent_duplcation(current_data, graph_params):
 
 
 def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Relative CpG Frequency Enrichment",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -227,7 +219,7 @@ def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
     )
 
 def generate_observed_to_expected_enrichment(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Observed to Expected Enrichment",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -239,7 +231,7 @@ def generate_observed_to_expected_enrichment(current_data, graph_params):
     )
 
 def generate_at_dropout(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "AT Dropout (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -251,7 +243,7 @@ def generate_at_dropout(current_data, graph_params):
     )
 
 def generate_percent_thaliana(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Thaliana (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -263,7 +255,7 @@ def generate_percent_thaliana(current_data, graph_params):
     )
 
 def generate_methylation_beta(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Methylation Beta",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -273,6 +265,18 @@ def generate_methylation_beta(current_data, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
+
+
+GRAPHS = [
+    generate_number_windows,
+    generate_percent_pf_reads_aligned,
+    generate_percent_duplcation,
+    generate_relative_cpg_frequency_enrichment,
+    generate_observed_to_expected_enrichment,
+    generate_at_dropout,
+    generate_percent_thaliana,
+    generate_methylation_beta,
+]
 
 def dataversion():
     return DATAVERSION
@@ -397,30 +401,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(id=ids['number-windows'],
-                                figure=generate_number_windows(df, initial)
-                            ),
-                            core.Graph(id=ids['percent-pf-reads-aligned'],
-                                figure=generate_percent_pf_reads_aligned(df, initial)
-                            ),
-                            core.Graph(id=ids['percent-duplication'],
-                                figure=generate_percent_duplcation(df,initial)
-                            ),
-                            core.Graph(id=ids['relative-cpg-freq-enrichment'],
-                                figure=generate_relative_cpg_frequency_enrichment(df, initial)
-                            ),
-                            core.Graph(id=ids['observed-to-expected-enrichment'],
-                                figure=generate_observed_to_expected_enrichment(df, initial)
-                            ),
-                            core.Graph(id=ids['AT-dropout'],
-                                figure=generate_at_dropout(df, initial)
-                            ),
-                            core.Graph(id=ids['percent-thaliana'],
-                                figure=generate_percent_thaliana(df, initial)
-                            ),
-                            core.Graph(id=ids['methylation-beta'],
-                                figure=generate_methylation_beta(df, initial)
-                            ),
+                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -449,14 +430,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['number-windows'], 'figure'),
-            Output(ids['percent-pf-reads-aligned'], 'figure'),
-            Output(ids['percent-duplication'], 'figure'),
-            Output(ids['relative-cpg-freq-enrichment'], 'figure'),
-            Output(ids['observed-to-expected-enrichment'], 'figure'),
-            Output(ids['AT-dropout'], 'figure'),
-            Output(ids['percent-thaliana'], 'figure'),
-            Output(ids['methylation-beta'], 'figure'),
+            Output(ids['graphs'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -540,14 +514,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_number_windows(df, graph_params),
-            generate_percent_pf_reads_aligned(df, graph_params),
-            generate_percent_duplcation(df, graph_params),
-            generate_relative_cpg_frequency_enrichment(df, graph_params),
-            generate_observed_to_expected_enrichment(df, graph_params),
-            generate_at_dropout(df, graph_params),
-            generate_percent_thaliana(df, graph_params),
-            generate_methylation_beta(df, graph_params),
+            generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),

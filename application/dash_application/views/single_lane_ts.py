@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import dash_html_components as html
-import dash_core_components as core
 from dash.dependencies import Input, Output, State
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -52,11 +51,7 @@ ids = init_ids([
     "date-range",
 
     #Graphs
-    'total-reads',
-    'unmapped-reads',
-    'non-primary-reads',
-    'on-target-reads',
-    'median-insert-size',
+    "graphs",
 
     #Data table
     'failed-samples',
@@ -175,8 +170,22 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 
+def generate_total_reads(df, graph_params):
+    return SingleLaneSubplot(
+        "Total Reads (Passed Filter)",
+        df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        "# PF Reads X 10^6",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [(cutoff_pf_reads_label, initial[cutoff_pf_reads])]
+    )
+
+
 def generate_unmapped_reads(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Unmapped Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -189,7 +198,7 @@ def generate_unmapped_reads(current_data, graph_params):
 
 
 def generate_nonprimary_reads(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Non-Primary Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -202,7 +211,7 @@ def generate_nonprimary_reads(current_data, graph_params):
 
 
 def generate_on_target_reads(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "On Target Reads (%)",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -215,7 +224,7 @@ def generate_on_target_reads(current_data, graph_params):
 
 
 def generate_median_insert_size(current_data, graph_params):
-    return generate(
+    return SingleLaneSubplot(
         "Median Insert Size with 10/90 Percentile",
         current_data,
         lambda d: d[PINERY_COL.SampleName],
@@ -229,6 +238,14 @@ def generate_median_insert_size(current_data, graph_params):
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
+
+GRAPHS = [
+    generate_total_reads,
+    generate_unmapped_reads,
+    generate_nonprimary_reads,
+    generate_on_target_reads,
+    generate_median_insert_size,
+]
 
 def dataversion():
     return DATAVERSION
@@ -355,29 +372,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(id=ids['total-reads'],
-                                figure=generate_total_reads(
-                                    df,
-                                    PINERY_COL.SampleName,
-                                    special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"],
-                                    initial["shape_by"],
-                                    initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])]
-                                )
-                            ),
-                            core.Graph(id=ids['unmapped-reads'],
-                                figure=generate_unmapped_reads(df, initial)
-                            ),
-                            core.Graph(id=ids['non-primary-reads'],
-                                figure=generate_nonprimary_reads(df, initial)
-                            ),
-                            core.Graph(id=ids['on-target-reads'],
-                                figure=generate_on_target_reads(df,initial)
-                            ),
-                            core.Graph(id=ids['median-insert-size'],
-                                figure=generate_median_insert_size(df, initial)
-                            )
+                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -408,11 +403,7 @@ def init_callbacks(dash_app):
         [
             Output(ids["approve-run-button"], "href"),
             Output(ids["approve-run-button"], "style"),
-            Output(ids['total-reads'], 'figure'),
-            Output(ids['unmapped-reads'], 'figure'),
-            Output(ids['non-primary-reads'], 'figure'),
-            Output(ids['on-target-reads'], 'figure'),
-            Output(ids['median-insert-size'], 'figure'),
+            Output(ids['graphs'], 'figure'),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['data-table'], 'data'),
@@ -498,14 +489,7 @@ def init_callbacks(dash_app):
         return [
             approve_run_href,
             approve_run_style,
-            generate_total_reads(
-                df, PINERY_COL.SampleName,
-                special_cols["Total Reads (Passed Filter)"], colour_by,
-                shape_by, show_names, [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_unmapped_reads(df, graph_params),
-            generate_nonprimary_reads(df, graph_params),
-            generate_on_target_reads(df, graph_params),
-            generate_median_insert_size(df, graph_params),
+            generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict('records'),
             df.to_dict('records', into=dd),
