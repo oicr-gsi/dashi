@@ -118,6 +118,8 @@ def get_bamqc_data():
 
 (bamqc, DATAVERSION) = get_bamqc_data()
 
+# TODO: Does 'Total Sequences' get subbed in at lines 93+ for TotalReads? The others aren't represented in fastqc
+fastqc = util.filter_by_library_design(util.df_with_instrument_model(util.df_with_pinery_samples_ius(get_fastqc(), pinery_samples, util.bamqc3_ius_columns), PINERY_COL.SequencerRunName), util.ex_lib_designs)
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
