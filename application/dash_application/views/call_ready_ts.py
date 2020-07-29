@@ -396,8 +396,6 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
-                html.A("Go to Call-Ready Targeted Sequencing Page 2",
-                       href="/call-ready-ts-2"),
                     html.Br(),
                     html.Button("Update", id=ids["update-button-top"], className="update-button"),
                     html.Br(),

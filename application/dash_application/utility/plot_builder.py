@@ -942,8 +942,9 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
         fig.update_yaxes(
             title_text=subplot.y_label,
             type=y_type,
+            rangemode='nonnegative' if len(subplot.df) == 0 else 'normal',
             row=i+1,
-            col=1
+            col=1,
         )
 
         # All traces have the same legends
@@ -972,6 +973,14 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
         margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
         legend=dict(tracegroupgap=0),
     )
+
+    # By default, subplot titles are center. Set to left alignment
+    # https://community.plotly.com/t/subplot-title-alignment/33210/2
+    for i in range(len(fig.layout.annotations)):
+        fig.layout.annotations[i].update(
+            x=-0,
+            xanchor='left',
+        )
 
     return fig
 
