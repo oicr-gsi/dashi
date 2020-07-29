@@ -188,7 +188,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-# TODO: Aww beans the subplots are gonna give me grief
 def generate_total_reads(df, graph_params):
     return SingleLaneSubplot(
         "Total Reads (Passed Filter)",
