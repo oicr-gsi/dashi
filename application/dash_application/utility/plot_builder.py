@@ -576,7 +576,7 @@ def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, marker
     hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
     
     additional_str = ""
-    if isinstance(hovertext, pandas.Series) and not hovertext.empty:
+    if len(hovertext) > 0:
         additional_str = "<br />%{hovertext}"
     return dict(
         type=graph_type,
