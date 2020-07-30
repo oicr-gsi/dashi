@@ -855,11 +855,11 @@ class Subplot:
             if self.mode == Mode.IUS:
                 self.x_fn = lambda d: d["SampleNameExtra"]
                 self.display_x = lambda d: d[PINERY_COL.SampleName]
-            elif mode == Mode.MERGED:
+            elif self.mode == Mode.MERGED:
                 self.x_fn = lambda d: d[ml_col]
                 self.display_x = lambda d: d[ml_col]
         else:
-            self.display_x = lambda d: x_fn(d)
+            self.display_x = lambda d: self.x_fn(d)
 
         return _generate_traces(
             self.df,
