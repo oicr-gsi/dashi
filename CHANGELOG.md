@@ -7,6 +7,11 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200804-0746] - 2020-08-04
+## Changed
+  * Call-Ready TS 1 and 2 combined into one report via subplots
+  * Single-lane pages converted to use subplots
+
 ## [200727-1637] - 2020-07-27
 ## Changed
   * Added columns to SARS-CoV-2 raw data table
