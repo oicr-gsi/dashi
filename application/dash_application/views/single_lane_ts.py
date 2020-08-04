@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc3Column
+from gsiqcetl.column import BamQc3Column, FastqcColumn
 import pinery
 import logging
 
@@ -61,9 +61,11 @@ ids = init_ids([
 ])
 
 BAMQC_COL = BamQc3Column
+FASTQC_COL = FastqcColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
+
 
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
@@ -88,16 +90,24 @@ initial[cutoff_insert_median] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc3_and_4()
+    bamqc_df = bamqc_df.merge(
+        util.get_fastqc(),
+        how="left",
+        left_on=[BAMQC_COL.Run, BAMQC_COL.Lane],
+        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane],
+        suffixes=('', '_q')
+    )
+
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc_df[special_cols["On Target Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.ReadsOnTarget, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Unmapped Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.UnmappedReads, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.NonPrimaryReads, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
@@ -117,9 +127,6 @@ def get_bamqc_data():
 
 
 (bamqc, DATAVERSION) = get_bamqc_data()
-
-# TODO: Does 'Total Sequences' get subbed in at lines 93+ for TotalReads? The others aren't represented in fastqc
-fastqc = util.filter_by_library_design(util.df_with_instrument_model(util.df_with_pinery_samples_ius(get_fastqc(), pinery_samples, util.bamqc3_ius_columns), PINERY_COL.SequencerRunName), util.ex_lib_designs)
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
