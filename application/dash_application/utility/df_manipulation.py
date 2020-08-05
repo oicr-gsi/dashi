@@ -368,6 +368,14 @@ def get_pinery_merged_samples(active_projects_only=True):
 def get_runs():
     return _runs_with_instruments.copy(deep=True)
 
+def df_with_fastqc_data(df, merge_cols):
+    return df.merge(
+        get_fastqc(),
+        how="left",
+        left_on=merge_cols,
+        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane],
+        suffixes=('', '_q')
+    )
 
 def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):

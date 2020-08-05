@@ -90,13 +90,7 @@ initial[cutoff_insert_median] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc3_and_4()
-    bamqc_df = bamqc_df.merge(
-        util.get_fastqc(),
-        how="left",
-        left_on=[BAMQC_COL.Run, BAMQC_COL.Lane],
-        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane],
-        suffixes=('', '_q')
-    )
+    bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane])
 
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
