@@ -1,7 +1,6 @@
 from collections import defaultdict
 import logging
 
-import dash_core_components as core
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 
@@ -52,14 +51,7 @@ ids = init_ids([
     "cutoff-duplicate-rate",
 
     # Graphs
-    "total-reads",
-    "mean-coverage",
-    "coverage-per-gb",
-    "median-coverage",
-    "callability",
-    "median-insert",
-    "duplicate-rate",
-    "unmapped-reads",
+    "graphs",
 
     # Tables
     "failed-samples",
@@ -240,8 +232,23 @@ SORT_BY = shape_colour.dropdown() + [
     }
 ]
 
+
+def generate_total_reads(df, graph_params):
+    return CallReadySubplot(
+        "Total Reads (Passed Filter)",
+        df,
+        lambda d: d[util.ml_col],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        "# PF Reads X 10^6",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
+         (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
+    )
+
 def generate_deduplicated_coverage(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Mean Coverage (Deduplicated)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
@@ -253,7 +260,7 @@ def generate_deduplicated_coverage(df, graph_params):
 
 
 def generate_deduplicated_coverage_per_gb(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Mean Coverage per Gb (Deduplicated)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Coverage per Gb"]],
@@ -262,7 +269,7 @@ def generate_deduplicated_coverage_per_gb(df, graph_params):
 
 
 def generate_median_coverage(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Median Coverage with 10/90 Percentile",
         df,
         lambda d: d[util.ml_col],
@@ -277,7 +284,7 @@ def generate_median_coverage(df, graph_params):
     )
 
 def generate_callability(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Callability (14x/8x) (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Percent Callability"]],
@@ -288,7 +295,7 @@ def generate_callability(df, graph_params):
 
 
 def generate_median_insert_size(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Median Insert Size with 10/90 Percentile",
         df,
         lambda d: d[util.ml_col],
@@ -304,7 +311,7 @@ def generate_median_insert_size(df, graph_params):
 
 
 def generate_duplicate_rate(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Duplication (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
@@ -315,7 +322,7 @@ def generate_duplicate_rate(df, graph_params):
 
 
 def generate_unmapped_reads(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Unmapped Reads (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Unmapped Reads"]],
@@ -324,6 +331,16 @@ def generate_unmapped_reads(df, graph_params):
     )
 
 
+GRAPHS = [
+    generate_total_reads,
+    generate_deduplicated_coverage,
+    generate_deduplicated_coverage_per_gb,
+    generate_median_coverage,
+    generate_callability,
+    generate_median_insert_size,
+    generate_duplicate_rate,
+    generate_unmapped_reads,
+]
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
@@ -441,60 +458,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              core.Graph(
-                                                  id=ids["total-reads"],
-                                                  figure=generate_total_reads(
-                                                      df, util.ml_col,
-                                                      special_cols[
-                                                          "Total Reads (Passed Filter)"],
-                                                      initial["colour_by"],
-                                                      initial["shape_by"],
-                                                      initial["shownames_val"],
-                                                      [(
-                                                       cutoff_pf_reads_tumour_label,
-                                                       initial[
-                                                           cutoff_pf_reads_tumour]),
-                                                       (
-                                                       cutoff_pf_reads_normal_label,
-                                                       initial[
-                                                           cutoff_pf_reads_normal])]
-                                                  )
-                                              ),
-                                              core.Graph(
-                                                  id=ids["mean-coverage"],
-                                                  figure=generate_deduplicated_coverage(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["coverage-per-gb"],
-                                                  figure=generate_deduplicated_coverage_per_gb(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["median-coverage"],
-                                                  figure=generate_median_coverage(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["callability"],
-                                                  figure=generate_callability(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["median-insert"],
-                                                  figure=generate_median_insert_size(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["duplicate-rate"],
-                                                  figure=generate_duplicate_rate(
-                                                      df, initial)
-                                              ),
-                                              core.Graph(
-                                                  id=ids["unmapped-reads"],
-                                                  figure=generate_unmapped_reads(
-                                                      df, initial)
-                                              )
+                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -576,14 +540,7 @@ def layout(query_string):
 def init_callbacks(dash_app):
     @dash_app.callback(
         [
-            Output(ids["total-reads"], "figure"),
-            Output(ids["mean-coverage"], "figure"),
-            Output(ids["coverage-per-gb"], "figure"),
-            Output(ids["callability"], "figure"),
-            Output(ids["median-insert"], "figure"),
-            Output(ids["duplicate-rate"], "figure"),
-            Output(ids["unmapped-reads"], "figure"),
-            Output(ids["median-coverage"], "figure"),
+            Output(ids["graphs"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -692,20 +649,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            generate_total_reads(
-                df, util.ml_col,
-                special_cols["Total Reads (Passed Filter)"],
-                colour_by, shape_by, show_names,
-                [(cutoff_pf_reads_normal_label, pf_reads_normal_cutoff),
-                 (cutoff_pf_reads_tumour_label, pf_reads_tumour_cutoff)]
-            ),
-            generate_deduplicated_coverage(df, graph_params),
-            generate_deduplicated_coverage_per_gb(df, graph_params),
-            generate_callability(df, graph_params),
-            generate_median_insert_size(df, graph_params),
-            generate_duplicate_rate(df, graph_params),
-            generate_unmapped_reads(df, graph_params),
-            generate_median_coverage(df, graph_params),
+            generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
