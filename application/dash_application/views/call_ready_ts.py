@@ -251,8 +251,8 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_normal_label, initial[cutoff_pf_reads_normal]),
-         (cutoff_pf_reads_tumour_label, initial[cutoff_pf_reads_tumour])]
+        [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
+         (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
     )
 
 

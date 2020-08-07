@@ -2,7 +2,6 @@ from collections import defaultdict
 import logging
 
 import dash_html_components as html
-import dash_core_components as core
 from dash.dependencies import Input, Output, State
 
 from ..dash_id import init_ids
@@ -44,11 +43,7 @@ ids = init_ids([
     'rrna-contam-cutoff',
 
     # Graphs
-    'total-reads',
-    'five-to-three-bias',
-    'correct-read-strand',
-    'coding',
-    'rrna-contam',
+    "graphs",
 
     # Tables
     'failed-samples',
@@ -157,21 +152,35 @@ SORT_BY = shape_colour.dropdown() + [
      "value": util.ml_col}
 ]
 
-def generate_five_to_three(df, graph_params):
-    fig = generate(
-       "5 to 3 Prime Bias", df,
-       lambda d: d[util.ml_col],
-       lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
-       "Log Ratio",
-       graph_params["colour_by"], graph_params["shape_by"],
-       graph_params["shownames_val"], [],
+
+def generate_total_reads(df, graph_params):
+    return CallReadySubplot(
+        "Total Reads (Passed Filter)",
+        df,
+        lambda d: d[util.ml_col],
+        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        "# PF Reads X 10^6",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])],
     )
-    fig.update_layout(yaxis_type="log")
-    return fig
+
+
+def generate_five_to_three(df, graph_params):
+    return CallReadySubplot(
+        "5 to 3 Prime Bias", df,
+        lambda d: d[util.ml_col],
+        lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
+        "Log Ratio",
+        graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"], [],
+        log_y=True
+    )
 
 
 def generate_correct_read_strand(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", df,
         lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
@@ -181,7 +190,7 @@ def generate_correct_read_strand(df, graph_params):
 
 
 def generate_coding(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "Coding (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
@@ -191,7 +200,7 @@ def generate_coding(df, graph_params):
 
 
 def generate_rrna_contam(df, graph_params):
-    return generate(
+    return CallReadySubplot(
         "rRNA Contamination (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["% rRNA Contamination"]],
@@ -199,6 +208,15 @@ def generate_rrna_contam(df, graph_params):
         graph_params["shownames_val"],
         [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
     )
+
+
+GRAPHS = [
+    generate_total_reads,
+    generate_five_to_three,
+    generate_correct_read_strand,
+    generate_coding,
+    generate_rrna_contam,
+]
 
 
 def layout(query_string):
@@ -294,28 +312,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            core.Graph(
-                                id=ids["total-reads"],
-                                figure=generate_total_reads(df, util.ml_col,
-                                    special_cols["Total Reads (Passed Filter)"],
-                                    initial["colour_by"], initial["shape_by"], initial["shownames_val"],
-                                    [(cutoff_pf_reads_label, initial[cutoff_pf_reads])])),
-
-                            core.Graph(
-                                id=ids["five-to-three-bias"],
-                                figure=generate_five_to_three(df, initial)),
-
-                            core.Graph(
-                                id=ids["correct-read-strand"],
-                                figure=generate_correct_read_strand(df, initial)),
-
-                            core.Graph(
-                                id=ids["coding"],
-                                figure=generate_coding(df, initial)),
-
-                            core.Graph(
-                                id=ids["rrna-contam"],
-                                figure=generate_rrna_contam(df, initial))
+                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -345,11 +342,7 @@ def layout(query_string):
 def init_callbacks(dash_app):
     @dash_app.callback(
         [
-            Output(ids["total-reads"], "figure"),
-            Output(ids["five-to-three-bias"], "figure"),
-            Output(ids["correct-read-strand"], "figure"),
-            Output(ids["coding"], "figure"),
-            Output(ids["rrna-contam"], "figure"),
+            Output(ids["graphs"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -419,14 +412,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            generate_total_reads(df, util.ml_col,
-                special_cols["Total Reads (Passed Filter)"],
-                colour_by, shape_by, show_names,
-                [(cutoff_pf_reads_label, total_reads_cutoff)]),
-            generate_five_to_three(df, graph_params),
-            generate_correct_read_strand(df, graph_params),
-            generate_coding(df, graph_params),
-            generate_rrna_contam(df, graph_params),
+            generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict("records"),
             df[rna_table_columns].to_dict("records", into=defaultdict(list)),
