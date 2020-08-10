@@ -7,6 +7,11 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200810-1533] - 2020-08-10
+## Changed
+  * Remaining Call-Ready reports converted to use subplots
+
+
 ## [200804-0746] - 2020-08-04
 ## Changed
   * Call-Ready TS 1 and 2 combined into one report via subplots
