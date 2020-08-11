@@ -70,7 +70,7 @@ def dataversion():
 special_cols = {
     "Total Reads (Passed Filter)": "Total reads passed filter",
     "Percent Unique Reads (PF)": "Percent unique reads",
-    "Callability (14x/8x)": "callability",
+    "Callability": "callability",
     "Purity": "Purity",
     "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID MutectCallability": "File SWID MutectCallability",
@@ -115,7 +115,7 @@ def get_merged_ts_data():
             BAMQC_COL.TotalReads], 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
-    callability_df[special_cols["Callability (14x/8x)"]] = round(
+    callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
     hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
@@ -270,12 +270,19 @@ def generate_median_target_coverage(df, graph_params):
 
 
 def generate_callability(df, graph_params):
+    extra_cols = [CALL_COL.NormalMinCoverage, CALL_COL.TumorMinCoverage]
+    if graph_params["shownames_val"] is None:
+        hover_text = extra_cols
+    else:
+        # 'graph_params object is shared and is not changed
+        hover_text = graph_params["shownames_val"] + extra_cols
+
     return CallReadySubplot(
-        "Callability (14x/8x) (%)", df,
+        "Callability", df,
         lambda d: d[util.ml_col],
-        lambda d: d[special_cols["Callability (14x/8x)"]],
+        lambda d: d[special_cols["Callability"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"],
+        hover_text,
         [(cutoff_callability_label, graph_params[cutoff_callability])],
     )
 
@@ -504,7 +511,7 @@ def layout(query_string):
                                     (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
                                     initial[cutoff_coverage_normal],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_callability_label, special_cols["Callability (14x/8x)"],
+                                    (cutoff_callability_label, special_cols["Callability"],
                                     initial[cutoff_callability],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial[cutoff_insert_median],
@@ -610,7 +617,7 @@ def init_callbacks(dash_app):
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
             (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage, normal_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            (cutoff_callability_label, special_cols["Callability (14x/8x)"], callability_cutoff,
+            (cutoff_callability_label, special_cols["Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_size_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),

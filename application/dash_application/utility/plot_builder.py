@@ -15,6 +15,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
 BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
 BAMQC_COL = gsiqcetl.column.BamQc4Column
+CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 
 """
 Avoid the following symbols, which fail to render correctly:
@@ -99,6 +100,8 @@ DATA_LABEL_NAME = {
     BAMQC_COL.CoverageMedian10Percentile: '10 Percentile Median Coverage: ',
     BAMQC_COL.Insert90Percentile: '90 Percentile Median Insert: ',
     BAMQC_COL.Insert10Percentile: '10 Percentile Median Insert: ',
+    CALL_COL.NormalMinCoverage: 'Normal coverage for callability >= ',
+    CALL_COL.TumorMinCoverage: 'Tumor coverage for callability >= ',
 }
 
 

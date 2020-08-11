@@ -140,8 +140,6 @@ def normalized_merged(df: DataFrame, merged_cols: List[str]):
 Open a single instance of each cache, and use copies for the reports.
 """
 cache = QCETLCache()
-_bcl2fastq_known = cache.bcl2fastq.known
-_bcl2fastq_unknown = cache.bcl2fastq.unknown
 _bcl2barcode = cache.bcl2barcode.bcl2barcode
 _bcl2barcode_run_summary = cache.bcl2barcode.run_summary
 _rnaseqqc2 = normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
@@ -277,13 +275,6 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
     right_on=[INSTRUMENTS_COL.InstrumentID]
 )
 
-
-def get_bcl2fastq_known():
-    return _bcl2fastq_known.copy(deep=True)
-
-
-def get_bcl2fastq_unknown():
-    return _bcl2fastq_unknown.copy(deep=True)
 
 def get_bcl2barcode():
     return _bcl2barcode.copy(deep=True)

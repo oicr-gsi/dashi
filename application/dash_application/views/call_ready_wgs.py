@@ -284,12 +284,19 @@ def generate_median_coverage(df, graph_params):
     )
 
 def generate_callability(df, graph_params):
+    extra_cols = [CALL_COL.NormalMinCoverage, CALL_COL.TumorMinCoverage]
+    if graph_params["shownames_val"] is None:
+        hover_text = extra_cols
+    else:
+        # 'graph_params object is shared and is not changed
+        hover_text = graph_params["shownames_val"] + extra_cols
+
     return CallReadySubplot(
-        "Callability (14x/8x) (%)", df,
+        "Callability (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Percent Callability"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"],
+        hover_text,
         [(cutoff_callability_label, graph_params[cutoff_callability])],
     )
 
