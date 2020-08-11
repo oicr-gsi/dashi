@@ -278,7 +278,7 @@ def generate_callability(df, graph_params):
         hover_text = graph_params["shownames_val"] + extra_cols
 
     return CallReadySubplot(
-        "Callability", df,
+        "Callability (%)", df,
         lambda d: d[util.ml_col],
         lambda d: d[special_cols["Callability"]],
         "%", graph_params["colour_by"], graph_params["shape_by"],
