@@ -57,7 +57,7 @@ ids = init_ids([
     "data-table",
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQc3Column
+BAMQC_COL = gsiqcetl.column.BamQc4Column
 ICHOR_COL = gsiqcetl.column.IchorCnaColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
@@ -69,6 +69,7 @@ special_cols = {
     "Non-Primary Reads": "percent non-primary reads",
     "On-target Reads": "percent on-target reads",
     "Purity": "percent purity",
+    "Coverage per Gb": "coverage per gb",
 }
 
 # Specify which columns to display in the DataTable
@@ -78,7 +79,8 @@ first_col_set = [
     special_cols["Unmapped Reads"],
     special_cols["Non-Primary Reads"],
     special_cols["On-target Reads"],
-    special_cols["Purity"]
+    special_cols["Purity"],
+    special_cols["Coverage per Gb"]
 ]
 later_col_set = [
     PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
@@ -136,6 +138,11 @@ def get_wgs_data():
     bamqc_df[special_cols["On-target Reads"]] = round(
         bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
         bamqc_df[BAMQC_COL.TotalReads], 3)
+    bamqc_df[special_cols["Coverage per Gb"]] = round(
+        bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
+                bamqc_df[BAMQC_COL.TotalReads] *
+                bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
+        , 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
 
@@ -229,6 +236,26 @@ def generate_total_reads(df, graph_params):
     )
 
 
+def generate_deduplicated_coverage(df, graph_params):
+    return SingleLaneSubplot(
+        "Mean Coverage (Deduplicated)", df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[BAMQC_COL.CoverageDeduplicated],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [],
+    )
+
+
+def generate_deduplicated_coverage_per_gb(df, graph_params):
+    return SingleLaneSubplot(
+        "Mean Coverage per Gb (Deduplicated)", df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Coverage per Gb"]],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"], [], )
+
+
 def generate_median_insert_size(df, graph_params):
     return SingleLaneSubplot(
         "Median Insert Size with 10/90 Percentile",
@@ -299,6 +326,8 @@ def generate_on_target_reads(df, graph_params):
 
 GRAPHS = [
     generate_total_reads,
+    generate_deduplicated_coverage,
+    generate_deduplicated_coverage_per_gb,
     generate_median_insert_size,
     generate_duplication,
     generate_unmapped_reads,

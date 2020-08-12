@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Bumped ETL version to 0.38.0
+  
+## Added
+  * Callability graphs show normal and tumor coverage cutoffs
+  * Coverage graphs added to Single Lane WG and TS
 
 ## [200810-1533] - 2020-08-10
 ## Changed
