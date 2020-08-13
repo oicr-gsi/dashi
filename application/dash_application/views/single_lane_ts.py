@@ -68,6 +68,7 @@ special_cols = {
     "On Target Reads (%)": "On Target Reads (%)",
     "Unmapped Reads (%)": "Unmapped Reads (%)",
     "Non-Primary Reads (%)": "Non-Primary Reads (%)",
+    "Coverage per Gb": "coverage per gb",
 }
 
 initial = get_initial_single_lane_values()
@@ -96,6 +97,11 @@ def get_bamqc_data():
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = sidebar_utils.percentage_of(
         bamqc_df, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads
     )
+    bamqc_df[special_cols["Coverage per Gb"]] = round(
+        bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
+                bamqc_df[BAMQC_COL.TotalReads] *
+                bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
+        , 3)
 
     pinery_samples = util.get_pinery_samples()
 
@@ -184,6 +190,26 @@ def generate_total_reads(df, graph_params):
     )
 
 
+def generate_deduplicated_coverage(df, graph_params):
+    return SingleLaneSubplot(
+        "Mean Coverage (Deduplicated)", df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[BAMQC_COL.CoverageDeduplicated],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"],
+        [],
+    )
+
+
+def generate_deduplicated_coverage_per_gb(df, graph_params):
+    return SingleLaneSubplot(
+        "Mean Coverage per Gb (Deduplicated)", df,
+        lambda d: d[PINERY_COL.SampleName],
+        lambda d: d[special_cols["Coverage per Gb"]],
+        "", graph_params["colour_by"], graph_params["shape_by"],
+        graph_params["shownames_val"], [], )
+
+
 def generate_unmapped_reads(current_data, graph_params):
     return SingleLaneSubplot(
         "Unmapped Reads (%)",
@@ -241,6 +267,8 @@ def generate_median_insert_size(current_data, graph_params):
 
 GRAPHS = [
     generate_total_reads,
+    generate_deduplicated_coverage,
+    generate_deduplicated_coverage_per_gb,
     generate_unmapped_reads,
     generate_nonprimary_reads,
     generate_on_target_reads,
