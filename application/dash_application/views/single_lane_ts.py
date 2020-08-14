@@ -105,13 +105,13 @@ def get_bamqc_data():
 
     pinery_samples = util.get_pinery_samples()
 
-    bamqc_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples, util.bamqc_ius_columns)
+    bamqc_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples, util.bamqc4_ius_columns)
 
     bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
 
     bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 
-    return bamqc_df, util.cache.versions(["bamqc"])
+    return bamqc_df, util.cache.versions(["bamqc4"])
 
 
 (bamqc, DATAVERSION) = get_bamqc_data()

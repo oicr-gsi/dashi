@@ -9,6 +9,9 @@ and as of version 1.0.0, follows semantic versioning.
 ## Changed
   * Bumped ETL version to 0.38.0
   
+## Removed
+  * `bamqc` cache dependency
+  
 ## Added
   * Callability graphs show normal and tumor coverage cutoffs
   * Coverage graphs added to Single Lane WG and TS

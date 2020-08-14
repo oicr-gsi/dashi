@@ -149,14 +149,14 @@ def get_wgs_data():
     # Join ichorCNA and BamQC data
     wgs_df = bamqc_df.merge(
         ichorcna_df, how="outer",
-        left_on=util.bamqc_ius_columns,
+        left_on=util.bamqc4_ius_columns,
         right_on=util.ichorcna_ius_columns,
         suffixes=['', '_ichorcn']
     )
 
     # Join BamQC+ichorCNA and Pinery data
     wgs_df = util.df_with_pinery_samples_ius(wgs_df, pinery_samples,
-                                         util.bamqc_ius_columns)
+                                         util.bamqc4_ius_columns)
 
     # Join df and instrument model
     wgs_df = util.df_with_instrument_model(wgs_df, PINERY_COL.SequencerRunName)
@@ -165,7 +165,7 @@ def get_wgs_data():
     illumina_models = util.get_illumina_instruments(wgs_df)
     wgs_df = wgs_df[wgs_df[INSTRUMENT_COLS.ModelName].isin(illumina_models)]
 
-    return wgs_df, util.cache.versions(["bamqc", "ichorcna"])
+    return wgs_df, util.cache.versions(["bamqc4", "ichorcna"])
 
 
 # Make the WGS dataframe
