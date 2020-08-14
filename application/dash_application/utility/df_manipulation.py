@@ -13,7 +13,6 @@ rna_lib_designs = ["MR", "SM", "TR", "WT"]
 wgs_lib_designs = ["AS", "CH", "NN", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-BAMQC_COL = gsiqcetl.column.BamQcColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
@@ -39,7 +38,6 @@ ml_col = "Merged Library"
 pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
                       PINERY_COL.IUSTag]
 
-bamqc_ius_columns = [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes]
 bamqc3_ius_columns = [BAMQC3_COL.Run, BAMQC3_COL.Lane, BAMQC3_COL.Barcodes]
 bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
@@ -143,7 +141,6 @@ cache = QCETLCache()
 _bcl2barcode = cache.bcl2barcode.bcl2barcode
 _bcl2barcode_run_summary = cache.bcl2barcode.run_summary
 _rnaseqqc2 = normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
-_bamqc = normalized_ius(cache.bamqc.bamqc, bamqc_ius_columns)
 _bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 _bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
 _bamqc4 = normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns)
@@ -281,9 +278,6 @@ def get_bcl2barcode():
 
 def get_bcl2barcode_run_summary():
     return _bcl2barcode_run_summary.copy(deep=True)
-
-def get_bamqc():
-    return _bamqc.copy(deep=True)
 
 
 def get_bamqc3():
