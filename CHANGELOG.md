@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200817-1538] - 2020-08-17
 ## Changed
   * Bumped ETL version to 0.38.0
   
