@@ -57,6 +57,8 @@ ids = init_ids([
 
     "failed-samples",
     "data-table",
+    "failed-count",
+    "data-count",
 ])
 
 RNA_COL = RnaColumn
@@ -440,6 +442,8 @@ def layout(query_string):
                             table_tabs_single_lane(
                                 ids["failed-samples"],
                                 ids["data-table"],
+                                ids["failed-count"],
+                                ids["data-count"],
                                 df,
                                 rnaseqqc_table_columns,
                                 [
@@ -468,6 +472,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
+            Output(ids["failed-count"], "children"),
+            Output(ids["data-count"], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids['search-sample-ext'], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
@@ -556,6 +562,8 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict('records'),
             df[rnaseqqc_table_columns].to_dict("records", into=dd),
+            "Rows: {0}".format(len(failure_df.index)),
+            "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
