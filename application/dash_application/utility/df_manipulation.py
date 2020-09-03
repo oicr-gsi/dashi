@@ -411,6 +411,8 @@ def df_with_instrument_model(df: DataFrame, run_col: str):
         right_on=[RUN_COL.Name]
     )
 
+def df_with_runs(df):
+    return pandas.merge(df, get_runs(), left_on=PINERY_COL.SequencerRunName, right_on='name')
 
 def filter_by_library_design(df: DataFrame, library_designs: List[str],
                              ld_col=PINERY_COL.LibrarySourceTemplateType):

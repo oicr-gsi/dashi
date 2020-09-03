@@ -182,41 +182,42 @@ def generate_total_reads(df, graph_params):
     return SingleLaneSubplot(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
     )
 
 
 def generate_deduplicated_coverage(df, graph_params):
     return SingleLaneSubplot(
-        "Mean Coverage (Deduplicated)", df,
-        lambda d: d[PINERY_COL.SampleName],
+        "Mean Coverage (Deduplicated)", 
+        df,
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [],
     )
 
 
 def generate_deduplicated_coverage_per_gb(df, graph_params):
     return SingleLaneSubplot(
-        "Mean Coverage per Gb (Deduplicated)", df,
-        lambda d: d[PINERY_COL.SampleName],
+        "Mean Coverage per Gb (Deduplicated)", 
+        df,
         lambda d: d[special_cols["Coverage per Gb"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [], )
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"], )
 
 
 def generate_unmapped_reads(current_data, graph_params):
     return SingleLaneSubplot(
         "Unmapped Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Unmapped Reads (%)"]],
         "%",
         graph_params["colour_by"],
@@ -229,7 +230,6 @@ def generate_nonprimary_reads(current_data, graph_params):
     return SingleLaneSubplot(
         "Non-Primary Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["Non-Primary Reads (%)"]],
         "%",
         graph_params["colour_by"],
@@ -242,7 +242,6 @@ def generate_on_target_reads(current_data, graph_params):
     return SingleLaneSubplot(
         "On Target Reads (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[special_cols["On Target Reads (%)"]],
         "%",
         graph_params["colour_by"],
@@ -255,13 +254,12 @@ def generate_median_insert_size(current_data, graph_params):
     return SingleLaneSubplot(
         "Median Insert Size with 10/90 Percentile",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )

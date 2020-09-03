@@ -167,7 +167,6 @@ def generate_number_windows(current_data, graph_params):
     return SingleLaneSubplot(
         "Log10 # Windows at 1, 10, 50, 100x",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         [
             lambda d: d[CFMEDIP_COL.NumWindowsWith1Reads], 
             lambda d: d[CFMEDIP_COL.NumWindowsWith10Reads],
@@ -185,13 +184,12 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
     return SingleLaneSubplot(
         "PF Reads Aligned (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentPassedFilterAlignedReads] * 100,
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
     )
 
 
@@ -199,7 +197,6 @@ def generate_percent_duplcation(current_data, graph_params):
     return SingleLaneSubplot(
         "Duplication (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentDuplication],
         "%",
         graph_params["colour_by"],
@@ -212,7 +209,6 @@ def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
     return SingleLaneSubplot(
         "Relative CpG Frequency Enrichment",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.RelativeCpGFrequencyEnrichment],
         "",
         graph_params["colour_by"],
@@ -224,7 +220,6 @@ def generate_observed_to_expected_enrichment(current_data, graph_params):
     return SingleLaneSubplot(
         "Observed to Expected Enrichment",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.ObservedToExpectedEnrichment],
         "", 
         graph_params["colour_by"],
@@ -236,7 +231,6 @@ def generate_at_dropout(current_data, graph_params):
     return SingleLaneSubplot(
         "AT Dropout (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.ATDropout], 
         "%", 
         graph_params["colour_by"],
@@ -248,7 +242,6 @@ def generate_percent_thaliana(current_data, graph_params):
     return SingleLaneSubplot(
         "Thaliana (%)",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.PercentageAthaliana],
         "%",
         graph_params["colour_by"],
@@ -260,7 +253,6 @@ def generate_methylation_beta(current_data, graph_params):
     return SingleLaneSubplot(
         "Methylation Beta",
         current_data,
-        lambda d: d[PINERY_COL.SampleName],
         lambda d: d[CFMEDIP_COL.MethylationBeta],
         "",
         graph_params["colour_by"],
