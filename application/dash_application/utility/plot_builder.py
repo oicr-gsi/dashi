@@ -807,12 +807,12 @@ class Subplot:
             title,
             df,
             mode,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
-            x_col,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -822,8 +822,8 @@ class Subplot:
         self.title = title
         self.y_label = y_label
         self.df = df
-        self.x_col = x_col
-        self.y_col = y_col
+        self.x_fn = x_fn
+        self.y_fn = y_fn
         self.colourby = colourby
         self.shapeby = shapeby
         self.hovertext_cols = hovertext_cols
@@ -836,8 +836,7 @@ class Subplot:
 
     def traces(self):
         self.display_x = None
-        self.x_fn = None
-        if self.x_col is None:
+        if self.x_fn is None:
             if self.mode == Mode.IUS:
                 self.x_fn = lambda d: d["SampleNameExtra"]
                 self.display_x = lambda d: d[PINERY_COL.SampleName]
@@ -845,11 +844,11 @@ class Subplot:
                 self.x_fn = lambda d: d[ml_col]
                 self.display_x = lambda d: d[ml_col]
         else:
-            self.display_x = lambda d: self.x_fn(d)
+            self.display_x = x_fn
 
         return _generate_traces(
             self.df,
-            self.y_col,
+            self.y_fn,
             self.colourby,
             self.shapeby,
             self.hovertext_cols,
@@ -867,12 +866,12 @@ class SingleLaneSubplot(Subplot):
             self,
             title,
             df,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
-            x_col=None,
+            x_fn=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -883,12 +882,12 @@ class SingleLaneSubplot(Subplot):
             title,
             df,
             Mode.IUS,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
-            x_col,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -902,12 +901,12 @@ class CallReadySubplot(Subplot):
             self,
             title,
             df,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols=[],
-            x_col=None,
+            x_fn=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -918,12 +917,12 @@ class CallReadySubplot(Subplot):
             title,
             df,
             Mode.MERGED,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
-            x_col,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
