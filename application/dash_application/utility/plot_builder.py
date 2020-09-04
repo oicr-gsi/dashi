@@ -215,8 +215,8 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-        df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
-        [str(x) for x in range(len(df))], sep="."
+    df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
+        [str(x) for x in range(len(df))], sep=".")
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
     df = fill_in_size_col(df, searchsample)
@@ -269,10 +269,9 @@ def is_empty_plot(trace_list) -> bool:
     return True
 
 
-# todo: delete me?
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
-             markermode="markers", bar_positive=None, bar_negative=None):
+def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
+             hovertext_cols, page_mode, cutoff_lines: List[Tuple[str, float]]=[],
+             x_fn=None, markermode="markers", bar_positive=None, bar_negative=None):
     margin = go.layout.Margin(
         l=50,
         r=50,
@@ -283,13 +282,24 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
 
+    if x_fn is None:
+        if page_mode == Mode.IUS:
+            x_fn = lambda d: d["SampleNameExtra"]
+            display_x = lambda d: d[PINERY_COL.SampleName]
+        elif mode == Mode.MERGED:
+            x_fn = lambda d: d[ml_col]
+            display_x = lambda d: d[ml_col]
+    else:
+        display_x = x_fn
+
     traces = _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
         hovertext_cols,
+        display_x,
+        x_fn,
         cutoff_lines,
         markermode,
         bar_positive,
@@ -332,7 +342,6 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
 
 def _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
@@ -544,7 +553,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
     return figure
 
 
-def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=None, show_legend=True, additional_hovertext=None):
+def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=None, show_legend=True, additional_hovertext=None):
     y_data = y_fn(data)
 
     if bar_positive and bar_negative:

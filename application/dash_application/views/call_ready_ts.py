@@ -305,42 +305,50 @@ def generate_median_insert_size(df, graph_params):
 
 def generate_hs_library_size(df, graph_params):
     return CallReadySubplot(
-        "HS Library Size", df,
-        lambda d: d[util.ml_col],
+        "HS Library Size", 
+        df,
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_duplicate_rate(df, graph_params):
     return CallReadySubplot(
-        "Duplication (%)", df,
-        lambda d: d[util.ml_col],
+        "Duplication (%)", 
+        df,
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
+        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
     )
 
 
 def generate_fraction_excluded(df, graph_params):
     return CallReadySubplot(
-        "Excluded due to Overlap (%)", df,
-        lambda d: d[util.ml_col],
+        "Excluded due to Overlap (%)", 
+        df,
         lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_at_dropout(df, graph_params):
     return CallReadySubplot(
-        "AT Dropout (%)", df,
-        lambda d: d[util.ml_col],
+        "AT Dropout (%)", 
+        df,
         lambda d: d[HSMETRICS_COL.AtDropout],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 

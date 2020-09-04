@@ -244,8 +244,7 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        hovertext_cols=[(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
-         (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
+        cutoff_lines=[(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]), (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
     )
 
 def generate_deduplicated_coverage(df, graph_params):
@@ -257,8 +256,7 @@ def generate_deduplicated_coverage(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
-         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
+        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]), (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
     )
 
 
