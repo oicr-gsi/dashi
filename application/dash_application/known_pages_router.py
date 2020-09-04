@@ -38,7 +38,7 @@ def navbar(current):
                 nav=True,
                 in_navbar=True,
                 style={"fontSize": "12pt"},
-                label="Graph Pages",
+                label="Reports",
             ),
         ],
         brand=current,
