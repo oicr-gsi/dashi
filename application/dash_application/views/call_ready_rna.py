@@ -10,11 +10,13 @@ from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_mer
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.Mode import Mode
 
 logger = logging.getLogger(__name__)
 
 page_name = 'call-ready-rna'
 title = "Call-Ready RNA-seq"
+page_mode = Mode.MERGED 
 
 ids = init_ids([
     # Buttons
@@ -159,56 +161,62 @@ def generate_total_reads(df, graph_params):
     return CallReadySubplot(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])],
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])],
     )
 
 
 def generate_five_to_three(df, graph_params):
     return CallReadySubplot(
-        "5 to 3 Prime Bias", df,
-        lambda d: d[util.ml_col],
+        "5 to 3 Prime Bias", 
+        df,
         lambda d: d[RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias],
         "Log Ratio",
-        graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
         log_y=True
     )
 
 
 def generate_correct_read_strand(df, graph_params):
     return CallReadySubplot(
-        "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", df,
-        lambda d: d[util.ml_col],
+        "🚧 Correct Read Strand (%) -- DATA MAY BE SUSPECT 🚧", 
+        df,
         lambda d: d[RNASEQQC2_COL.MetricsPercentCorrectStrandReads],
-        "%",graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%",
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_coding(df, graph_params):
     return CallReadySubplot(
-        "Coding (%)", df,
-        lambda d: d[util.ml_col],
+        "Coding (%)", 
+        df,
         lambda d: d[RNASEQQC2_COL.MetricsPercentCodingBases],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_rrna_contam(df, graph_params):
     return CallReadySubplot(
-        "rRNA Contamination (%)", df,
-        lambda d: d[util.ml_col],
+        "rRNA Contamination (%)", 
+        df,
         lambda d: d[special_cols["% rRNA Contamination"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
+        cutoff_lines=[(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
     )
 
 

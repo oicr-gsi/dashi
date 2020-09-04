@@ -7,14 +7,10 @@ import numpy
 import pandas
 from pandas import DataFrame
 import pinery
-from enum import Enum
+from .Mode import Mode
 import logging
 
 logger = logging.getLogger(__name__)
-
-class Mode(Enum):
-    IUS = 0
-    MERGED = 1
 
 def build_table(table_id: str, columns: List[str], df: DataFrame):
     return tabl.DataTable(

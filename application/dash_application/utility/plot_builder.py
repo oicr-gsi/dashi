@@ -7,8 +7,9 @@ import dash_core_components as core
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column
-from .df_manipulation import sample_type_col
+from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
+from .Mode import Mode
 import re
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
@@ -214,6 +215,8 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df[df[pinery.column.SampleProvenanceColumn.SequencerRunName].isin(runs_in_range(start_date, end_date))]
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
+    df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
+        [str(x) for x in range(len(df))], sep=".")
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
     df = fill_in_size_col(df, searchsample)
@@ -266,10 +269,9 @@ def is_empty_plot(trace_list) -> bool:
     return True
 
 
-# writing a factory may be peak Java poisoning but it might help with all these parameters
-def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
-             hovertext_cols, cutoff_lines: List[Tuple[str, float]]=[],
-             markermode="markers", bar_positive=None, bar_negative=None):
+def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
+             hovertext_cols, page_mode, cutoff_lines: List[Tuple[str, float]]=[],
+             x_fn=None, markermode="markers", bar_positive=None, bar_negative=None):
     margin = go.layout.Margin(
         l=50,
         r=50,
@@ -280,13 +282,24 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
     # if axis_text == '%':
     #     y_axis['range'] = [0, 100]
 
+    if x_fn is None:
+        if page_mode == Mode.IUS:
+            x_fn = lambda d: d["SampleNameExtra"]
+            display_x = lambda d: d[PINERY_COL.SampleName]
+        elif mode == Mode.MERGED:
+            x_fn = lambda d: d[ml_col]
+            display_x = lambda d: d[ml_col]
+    else:
+        display_x = x_fn
+
     traces = _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
         hovertext_cols,
+        display_x,
+        x_fn,
         cutoff_lines,
         markermode,
         bar_positive,
@@ -329,11 +342,12 @@ def generate(title_text, sorted_data, x_fn, y_fn, axis_text, colourby, shapeby,
 
 def _generate_traces(
         sorted_data,
-        x_fn,
         y_fn,
         colourby,
         shapeby,
         hovertext_cols,
+        display_x,
+        x_fn=None,
         cutoff_lines: List[Tuple[str, float]]=[],
         markermode="markers",
         bar_positive=None,
@@ -364,12 +378,11 @@ def _generate_traces(
         in_legend = {}
         for fn in y_fn:
             for name, data in grouped_data:
-                traces.append(_define_graph(data, x_fn, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
+                traces.append(_define_graph(data, fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=x_fn, show_legend=(name_format(name) not in in_legend), additional_hovertext=fn(data).name))
                 in_legend[name_format(name)] = True
     else: 
         for name, data in grouped_data:
-            traces.append(_define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type))
-    
+            traces.append(_define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=x_fn))    
     for index, (cutoff_label, cutoff_value) in enumerate(cutoff_lines):
         traces.append(dict( # Cutoff line
             type=graph_type,
@@ -540,7 +553,7 @@ def generate_line(df, criteria, x_fn, y_fn, title_text, yaxis_text, xaxis_text=N
     return figure
 
 
-def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, show_legend=True, additional_hovertext=None):
+def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, markermode, name, name_format, graph_type, display_x, x_fn=None, show_legend=True, additional_hovertext=None):
     y_data = y_fn(data)
 
     if bar_positive and bar_negative:
@@ -565,13 +578,19 @@ def _define_graph(data, x_fn, y_fn, bar_positive, bar_negative, hovertext_cols, 
 
     hovertext = create_data_label(data, hovertext_display_cols, additional_hovertext)
 
+    additional_str = ""
+    if len(hovertext) > 0:
+        additional_str = "<br />%{hovertext}"
+
     return dict(
         type=graph_type,
         x=x_fn(data),
         y=y_data,
         name=name_format(name),
         legendgroup=name_format(name),
+        customdata=display_x(data),
         hovertext=hovertext,
+        hovertemplate = "%{customdata}, %{y}" + additional_str, 
         showlegend=show_legend,
         mode=markermode,
         marker={
@@ -604,24 +623,6 @@ def _get_shapes_for_values(shapeby: List[str]):
 
 def _get_colours_for_values(colourby: List[str]):
     return _get_dict_wrapped(colourby, COLOURS)
-
-
-# Generators for graphs used on multiple pages
-def generate_total_reads(
-        df: DataFrame, x_col: str, y_col: str, colour_by: str, shape_by: str,
-        show_names: Union[None, str], cutoff_lines: List[Tuple[str, float]]=[]
-) -> go.Figure:
-    return generate(
-        "Total Reads (Passed Filter)",
-        df,
-        lambda d: d[x_col],
-        lambda d: d[y_col],
-        "# PF Reads X 10^6",
-        colour_by,
-        shape_by,
-        show_names,
-        cutoff_lines,
-    )
 
 
 def get_initial_single_lane_values():
@@ -805,12 +806,13 @@ class Subplot:
             self,
             title,
             df,
-            x_col,
-            y_col,
+            mode,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -820,8 +822,8 @@ class Subplot:
         self.title = title
         self.y_label = y_label
         self.df = df
-        self.x_col = x_col
-        self.y_col = y_col
+        self.x_fn = x_fn
+        self.y_fn = y_fn
         self.colourby = colourby
         self.shapeby = shapeby
         self.hovertext_cols = hovertext_cols
@@ -830,15 +832,28 @@ class Subplot:
         self.bar_positive = bar_positive
         self.bar_negative = bar_negative
         self.log_y = log_y
+        self.mode = mode
 
     def traces(self):
+        self.display_x = None
+        if self.x_fn is None:
+            if self.mode == Mode.IUS:
+                self.x_fn = lambda d: d["SampleNameExtra"]
+                self.display_x = lambda d: d[PINERY_COL.SampleName]
+            elif self.mode == Mode.MERGED:
+                self.x_fn = lambda d: d[ml_col]
+                self.display_x = lambda d: d[ml_col]
+        else:
+            self.display_x = x_fn
+
         return _generate_traces(
             self.df,
-            self.x_col,
-            self.y_col,
+            self.y_fn,
             self.colourby,
             self.shapeby,
             self.hovertext_cols,
+            self.display_x,
+            self.x_fn,
             self.cutoff_lines,
             self.markermode,
             self.bar_positive,
@@ -851,12 +866,12 @@ class SingleLaneSubplot(Subplot):
             self,
             title,
             df,
-            x_col,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_fn=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -866,12 +881,13 @@ class SingleLaneSubplot(Subplot):
         super().__init__(
             title,
             df,
-            x_col,
-            y_col,
+            Mode.IUS,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -885,12 +901,12 @@ class CallReadySubplot(Subplot):
             self,
             title,
             df,
-            x_col,
-            y_col,
+            y_fn,
             y_label,
             colourby,
             shapeby,
-            hovertext_cols,
+            hovertext_cols=[],
+            x_fn=None,
             cutoff_lines=None,
             markermode="markers",
             bar_positive=None,
@@ -900,12 +916,13 @@ class CallReadySubplot(Subplot):
         super().__init__(
             title,
             df,
-            x_col,
-            y_col,
+            Mode.MERGED,
+            y_fn,
             y_label,
             colourby,
             shapeby,
             hovertext_cols,
+            x_fn,
             cutoff_lines,
             markermode,
             bar_positive,
@@ -937,7 +954,7 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
         autorange=True,
         # The x-axis is shared, so order all plots based on first one
         categoryorder='array',
-        categoryarray=subplots[0].x_col(subplots[0].df),
+        categoryarray=subplots[0].x_fn(subplots[0].df),
     )
 
     for i, subplot in enumerate([subplot for subplot in subplots]):

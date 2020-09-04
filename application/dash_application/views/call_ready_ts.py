@@ -247,27 +247,25 @@ def generate_total_reads(df, graph_params):
     return CallReadySubplot(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
+        cutoff_lines=[(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
          (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
     )
 
 
 def generate_median_target_coverage(df, graph_params):
     return CallReadySubplot(
-        "Median Target Coverage", df,
-        lambda d: d[util.ml_col],
+        "Median Target Coverage", 
+        df,
         lambda d: d[HSMETRICS_COL.MedianTargetCoverage],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [],
     )
 
 
@@ -280,25 +278,26 @@ def generate_callability(df, graph_params):
         hover_text = graph_params["shownames_val"] + extra_cols
 
     return CallReadySubplot(
-        "Callability (%)", df,
-        lambda d: d[util.ml_col],
+        "Callability (%)", 
+        df,
         lambda d: d[special_cols["Callability"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        hover_text,
-        [(cutoff_callability_label, graph_params[cutoff_callability])],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        hovertext_cols=hover_text,
+        cutoff_lines=[(cutoff_callability_label, graph_params[cutoff_callability])],
     )
 
 def generate_median_insert_size(df, graph_params):
     return CallReadySubplot(
         "Median Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -306,52 +305,62 @@ def generate_median_insert_size(df, graph_params):
 
 def generate_hs_library_size(df, graph_params):
     return CallReadySubplot(
-        "HS Library Size", df,
-        lambda d: d[util.ml_col],
+        "HS Library Size", 
+        df,
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_duplicate_rate(df, graph_params):
     return CallReadySubplot(
-        "Duplication (%)", df,
-        lambda d: d[util.ml_col],
+        "Duplication (%)", 
+        df,
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
+        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
     )
 
 
 def generate_fraction_excluded(df, graph_params):
     return CallReadySubplot(
-        "Excluded due to Overlap (%)", df,
-        lambda d: d[util.ml_col],
+        "Excluded due to Overlap (%)", 
+        df,
         lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_at_dropout(df, graph_params):
     return CallReadySubplot(
-        "AT Dropout (%)", df,
-        lambda d: d[util.ml_col],
+        "AT Dropout (%)", 
+        df,
         lambda d: d[HSMETRICS_COL.AtDropout],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
 def generate_gc_dropout(df, graph_params):
     return CallReadySubplot(
-        "GC Dropout (%)", df,
-        lambda d: d[util.ml_col],
+        "GC Dropout (%)", 
+        df,
         lambda d: d[HSMETRICS_COL.GCDropout],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 

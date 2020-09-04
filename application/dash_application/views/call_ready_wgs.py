@@ -239,48 +239,47 @@ def generate_total_reads(df, graph_params):
     return CallReadySubplot(
         "Total Reads (Passed Filter)",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[special_cols["Total Reads (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]),
-         (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
+        cutoff_lines=[(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]), (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
     )
 
 def generate_deduplicated_coverage(df, graph_params):
     return CallReadySubplot(
-        "Mean Coverage (Deduplicated)", df,
-        lambda d: d[util.ml_col],
+        "Mean Coverage (Deduplicated)", 
+        df,
         lambda d: d[BAMQC_COL.CoverageDeduplicated],
-        "", graph_params["colour_by"], graph_params["shape_by"],
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]),
-         (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
+        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]), (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
     )
 
 
 def generate_deduplicated_coverage_per_gb(df, graph_params):
     return CallReadySubplot(
-        "Mean Coverage per Gb (Deduplicated)", df,
-        lambda d: d[util.ml_col],
+        "Mean Coverage per Gb (Deduplicated)", 
+        df,
         lambda d: d[special_cols["Coverage per Gb"]],
-        "", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [], )
+        "", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],)
 
 
 def generate_median_coverage(df, graph_params):
     return CallReadySubplot(
         "Median Coverage with 10/90 Percentile",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.CoverageMedian],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [],
         bar_positive=BAMQC_COL.CoverageMedian90Percentile,
         bar_negative=BAMQC_COL.CoverageMedian10Percentile,
     )
@@ -294,12 +293,14 @@ def generate_callability(df, graph_params):
         hover_text = graph_params["shownames_val"] + extra_cols
 
     return CallReadySubplot(
-        "Callability (%)", df,
-        lambda d: d[util.ml_col],
+        "Callability (%)", 
+        df,
         lambda d: d[special_cols["Percent Callability"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        hover_text,
-        [(cutoff_callability_label, graph_params[cutoff_callability])],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        hovertext_cols=hover_text,
+        cutoff_lines=[(cutoff_callability_label, graph_params[cutoff_callability])],
     )
 
 
@@ -307,13 +308,12 @@ def generate_median_insert_size(df, graph_params):
     return CallReadySubplot(
         "Median Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[util.ml_col],
         lambda d: d[BAMQC_COL.InsertMedian],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -321,22 +321,26 @@ def generate_median_insert_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return CallReadySubplot(
-        "Duplication (%)", df,
-        lambda d: d[util.ml_col],
+        "Duplication (%)", 
+        df,
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
         graph_params["shownames_val"],
-        [(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
+        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
     )
 
 
 def generate_unmapped_reads(df, graph_params):
     return CallReadySubplot(
-        "Unmapped Reads (%)", df,
-        lambda d: d[util.ml_col],
+        "Unmapped Reads (%)", 
+        df,
         lambda d: d[special_cols["Unmapped Reads"]],
-        "%", graph_params["colour_by"], graph_params["shape_by"],
-        graph_params["shownames_val"], [],
+        "%", 
+        graph_params["colour_by"], 
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
