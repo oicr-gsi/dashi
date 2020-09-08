@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200908-0809] - 2020-09-08
 ## Changed
   * Every data point now has a unique x-axis value, no longer stack vertically
 
