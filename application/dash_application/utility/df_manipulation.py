@@ -369,8 +369,10 @@ def get_runs():
     return _runs_with_instruments.copy(deep=True)
 
 def df_with_fastqc_data(df, merge_cols):
+    fastqc = get_fastqc()
+    fastqc = fastqc.loc[fastqc[FASTQC_COL.ReadNumber] == 1]
     return df.merge(
-        get_fastqc(),
+        fastqc,
         how="left",
         left_on=merge_cols,
         right_on=[FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes],
