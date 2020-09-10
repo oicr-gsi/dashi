@@ -373,7 +373,7 @@ def df_with_fastqc_data(df, merge_cols):
         get_fastqc(),
         how="left",
         left_on=merge_cols,
-        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane],
+        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes],
         suffixes=('', '_q')
     )
 
