@@ -370,14 +370,15 @@ def get_runs():
 
 def df_with_fastqc_data(df, merge_cols):
     fastqc = get_fastqc()
-    fastqc = fastqc.loc[fastqc[FASTQC_COL.ReadNumber] == 1]
-    return df.merge(
+    df_with_fastqc = df.merge(
         fastqc,
         how="left",
         left_on=merge_cols,
         right_on=[FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes],
         suffixes=('', '_q')
     )
+    df_with_fastqc.groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])[FASTQC_COL.TotalSequences].sum().reset_index()
+    return df_with_fastqc
 
 def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
