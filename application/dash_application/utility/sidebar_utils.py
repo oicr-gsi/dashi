@@ -88,7 +88,7 @@ def runs_in_range(start_date: str, end_date: str) -> Series:
 
 
 def approve_run_button(approve_run_id: str) -> html.A:
-    return html.A("Approve this run in MISO",
+    return html.A("View Run in MISO",
                   id=approve_run_id,
                   className="button approve-run",
                   target="_blank",
