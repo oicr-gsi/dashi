@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200914-1449] - 2020-09-14
+## Changed
+  * Renamed 'Approve this run in MISO' button to 'View run in MISO' for clarity
+
 ## [200908-0809] - 2020-09-08
 ## Changed
   * Every data point now has a unique x-axis value, no longer stack vertically
