@@ -9,6 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from gsiqcetl.column import FastqcColumn
 import logging
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ ids = init_ids([
 ])
 
 BAMQC_COL = gsiqcetl.column.BamQc4Column
+FASTQC_COL = FastqcColumn
 ICHOR_COL = gsiqcetl.column.IchorCnaColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
@@ -94,7 +96,7 @@ wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *ICHOR_COL.values(), *
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = FASTQC_COL.TotalSequences
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_label = "Total PF Reads minimum"
 cutoff_pf_reads = "cutoff_pf_reads"
@@ -127,22 +129,23 @@ def get_wgs_data():
                                ICHOR_COL.TumorFraction]]
 
     bamqc_df = util.get_bamqc3_and_4()
+    bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
     # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+        bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
     bamqc_df[special_cols["Unmapped Reads"]] = round(
         bamqc_df[BAMQC_COL.UnmappedReads] * 100.0 /
-        bamqc_df[BAMQC_COL.TotalReads], 3)
+        bamqc_df[FASTQC_COL.TotalSequences], 3)
     bamqc_df[special_cols["Non-Primary Reads"]] = round(
         bamqc_df[BAMQC_COL.NonPrimaryReads] * 100.0 /
-        bamqc_df[BAMQC_COL.TotalReads], 3)
+        bamqc_df[FASTQC_COL.TotalSequences], 3)
     bamqc_df[special_cols["On-target Reads"]] = round(
         bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
-        bamqc_df[BAMQC_COL.TotalReads], 3)
+        bamqc_df[FASTQC_COL.TotalSequences], 3)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
-                bamqc_df[BAMQC_COL.TotalReads] *
+                bamqc_df[FASTQC_COL.TotalSequences] *
                 bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
         , 3)
     ichorcna_df[special_cols["Purity"]] = round(
@@ -204,7 +207,7 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Reads",
-     "value": BAMQC_COL.TotalReads},
+     "value": FASTQC_COL.TotalSequences},
     {"label": "Duplication",
      "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
     {"label": "Unmapped Reads",
