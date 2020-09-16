@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc3Column
+from gsiqcetl.column import BamQc3Column, FastqcColumn
 import pinery
 import logging
 
@@ -61,9 +61,11 @@ ids = init_ids([
 ])
 
 BAMQC_COL = BamQc3Column
+FASTQC_COL = FastqcColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
+
 
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
@@ -76,7 +78,7 @@ special_cols = {
 initial = get_initial_single_lane_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = FASTQC_COL.TotalSequences
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_label = "Total PF Reads minimum"
 cutoff_pf_reads = "cutoff_pf_reads"
@@ -88,20 +90,22 @@ initial[cutoff_insert_median] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_bamqc3_and_4()
+    bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
+
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc_df[BAMQC_COL.TotalReads] / 1e6, 3)
+        bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
     bamqc_df[special_cols["On Target Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.ReadsOnTarget, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.ReadsOnTarget, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Unmapped Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.UnmappedReads, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.UnmappedReads, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.NonPrimaryReads, BAMQC_COL.TotalReads
+        bamqc_df, BAMQC_COL.NonPrimaryReads, FASTQC_COL.TotalSequences
     )
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
-                bamqc_df[BAMQC_COL.TotalReads] *
+                bamqc_df[FASTQC_COL.TotalSequences] *
                 bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
         , 3)
 
@@ -117,7 +121,6 @@ def get_bamqc_data():
 
 
 (bamqc, DATAVERSION) = get_bamqc_data()
-
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
@@ -164,7 +167,7 @@ bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Reads",
-     "value": BAMQC_COL.TotalReads},
+     "value": FASTQC_COL.TotalSequences},
     {"label": "Unmapped Reads",
      "value": special_cols["Unmapped Reads (%)"]},
     {"label": "Non-primary Reads",

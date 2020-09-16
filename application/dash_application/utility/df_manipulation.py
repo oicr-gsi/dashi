@@ -368,6 +368,17 @@ def get_pinery_merged_samples(active_projects_only=True):
 def get_runs():
     return _runs_with_instruments.copy(deep=True)
 
+def df_with_fastqc_data(df, merge_cols):
+    fastqc = get_fastqc()
+    fastqc = fastqc.groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])[FASTQC_COL.TotalSequences].sum().reset_index()
+    df_with_fastqc = df.merge(
+        fastqc,
+        how="left",
+        left_on=merge_cols,
+        right_on=[FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes],
+        suffixes=('', '_q')
+    )
+    return df_with_fastqc
 
 def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_cols:
                            List[str]):
