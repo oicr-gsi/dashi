@@ -49,6 +49,7 @@ ids = init_ids([
     "cutoff-callability",
     "cutoff-median-insert",
     "cutoff-duplicate-rate",
+    "cutoff-tumor-purity",
 
     # Graphs
     "graphs",
@@ -63,6 +64,7 @@ ids = init_ids([
 BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
+ICHOR_COL = gsiqcetl.column.IchorCnaMergedColumn
 
 
 def dataversion():
@@ -77,6 +79,7 @@ special_cols = {
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
+    "Tumor Purity (%)": "tumor purity percentage"
 }
 
 
@@ -99,6 +102,14 @@ def get_merged_wgs_data():
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
     bamqc3_df = util.get_bamqc3_and_4_merged()
+
+    ichorcna_df = util.get_ichorcna_merged()
+    ichorcna_df = ichorcna_df[
+        util.ichorcna_merged_columns + [ICHOR_COL.TumorFraction]
+    ]
+    ichorcna_df[special_cols["Tumor Purity (%)"]] = round(
+        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3
+    )
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
@@ -134,10 +145,18 @@ def get_merged_wgs_data():
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples,
                                                 util.bamqc3_merged_columns)
 
-    wgs_df = util.remove_suffixed_columns(wgs_df,
-                                          '_q')  # Pinery duplicate columns
-    wgs_df = util.remove_suffixed_columns(wgs_df,
-                                          '_x')  # Callability duplicate columns
+    # Join in ichorcna data
+    wgs_df = wgs_df.merge(
+        ichorcna_df,
+        how="left",
+        left_on=util.bamqc3_merged_columns,
+        right_on=util.ichorcna_merged_columns,
+        suffixes=('', '_i')
+    )
+
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
+    wgs_df = util.remove_suffixed_columns(wgs_df, '_i')  # Ichorcna duplicate columns
 
     return wgs_df, util.cache.versions(
         ["mutectcallability", "bamqc3merged"])
@@ -173,6 +192,9 @@ initial[cutoff_coverage_tumour] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 cutoff_coverage_normal = "cutoff_coverage_normal"
 initial[cutoff_coverage_normal] = 30
+cutoff_tumor_purity_label = "Tumor Purity (%) minimum"
+cutoff_tumor_purity = "cutoff_tumor_purity"
+initial[cutoff_tumor_purity] = 30
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(WGS_DF, PINERY_COL.StudyTitle)
@@ -227,6 +249,10 @@ SORT_BY = shape_colour.dropdown() + [
     {
         "label": "Unmapped Reads",
         "value": special_cols["Unmapped Reads"]
+    },
+    {
+        "label": "Tumor Purity",
+        "value": special_cols["Tumor Purity (%)"]
     },
     {
         "label": "Merged Lane",
@@ -332,6 +358,19 @@ def generate_duplicate_rate(df, graph_params):
     )
 
 
+def generate_tumor_purity(df, graph_params):
+    return CallReadySubplot(
+        "Tumor Purity (%)",
+        df,
+        lambda d: d[special_cols["Tumor Purity (%)"]],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_tumor_purity_label, graph_params[cutoff_tumor_purity])],
+    )
+
+
 def generate_unmapped_reads(df, graph_params):
     return CallReadySubplot(
         "Unmapped Reads (%)", 
@@ -353,6 +392,7 @@ GRAPHS = [
     generate_median_insert_size,
     generate_duplicate_rate,
     generate_unmapped_reads,
+    generate_tumor_purity,
 ]
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
@@ -415,7 +455,7 @@ def layout(query_string):
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
-                                                   initial["colour_by"], True),
+                                                   initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   shape_colour.dropdown(),
@@ -459,6 +499,9 @@ def layout(query_string):
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
                                                initial[cutoff_duplicate_rate]),
+                    sidebar_utils.cutoff_input(cutoff_tumor_purity_label,
+                                               ids["cutoff-tumor-purity"],
+                                               initial[cutoff_tumor_purity]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
@@ -542,6 +585,13 @@ def layout(query_string):
                                                           cutoff_duplicate_rate],
                                                       (lambda row, col, cutoff:
                                                        row[col] > cutoff)),
+                                                      (
+                                                          cutoff_tumor_purity_label,
+                                                          special_cols["Tumor Purity (%)"],
+                                                          initial[
+                                                              cutoff_tumor_purity],
+                                                          (lambda row, col, cutoff:
+                                                           row[col] <= cutoff)),
                                                   ]
                                               )
                                           ])
@@ -585,6 +635,7 @@ def init_callbacks(dash_app):
             State(ids["cutoff-callability"], "value"),
             State(ids["cutoff-median-insert"], "value"),
             State(ids["cutoff-duplicate-rate"], "value"),
+            State(ids["cutoff-tumor-purity"], "value"),
             State('url', 'search'),
         ]
     )
@@ -608,6 +659,7 @@ def init_callbacks(dash_app):
                        callability_cutoff,
                        insert_median_cutoff,
                        duplicate_rate_cutoff,
+                       tumor_purity_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if search_sample and searchsampleext:
@@ -630,6 +682,7 @@ def init_callbacks(dash_app):
             cutoff_callability: callability_cutoff,
             cutoff_insert_median: insert_median_cutoff,
             cutoff_duplicate_rate: duplicate_rate_cutoff,
+            cutoff_tumor_purity: tumor_purity_cutoff,
         }
 
         dd = defaultdict(list)
@@ -661,6 +714,10 @@ def init_callbacks(dash_app):
              BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
              duplicate_rate_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
+            (cutoff_tumor_purity_label,
+             special_cols["Tumor Purity (%)"],
+             tumor_purity_cutoff,
+             (lambda row, col, cutoff: row[col] <= cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
