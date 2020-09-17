@@ -42,8 +42,6 @@ ids = init_ids([
     "search-sample-ext",
     "show-data-labels",
     "show-all-data-labels",
-    "cutoff-pf-tumour",
-    "cutoff-pf-normal",
     "cutoff-coverage-tumour",
     "cutoff-coverage-normal",
     "cutoff-callability",
@@ -171,12 +169,6 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = BAMQC_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_tumour_label = "Total PF Reads (Tumour) minimum"
-cutoff_pf_reads_tumour = "cutoff_pf_reads_tumour"
-initial[cutoff_pf_reads_tumour] = 148
-cutoff_pf_reads_normal_label = "Total PF Reads (Normal) minimum"
-cutoff_pf_reads_normal = "cutoff_pf_reads_normal"
-initial[cutoff_pf_reads_normal] = 44
 cutoff_callability_label = "Callability minimum"
 cutoff_callability = "cutoff_callability"
 initial[cutoff_callability] = 50
@@ -270,7 +262,6 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_normal_label, graph_params[cutoff_pf_reads_normal]), (cutoff_pf_reads_tumour_label, graph_params[cutoff_pf_reads_tumour])]
     )
 
 def generate_deduplicated_coverage(df, graph_params):
@@ -476,14 +467,6 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input(
-                        "{} (*10^6)".format(cutoff_pf_reads_tumour_label),
-                        ids["cutoff-pf-tumour"],
-                        initial[cutoff_pf_reads_tumour]),
-                    sidebar_utils.cutoff_input(
-                        "{} (*10^6)".format(cutoff_pf_reads_normal_label),
-                        ids["cutoff-pf-normal"],
-                        initial[cutoff_pf_reads_normal]),
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["cutoff-coverage-tumour"],
                                                initial[cutoff_coverage_tumour]),
@@ -527,26 +510,6 @@ def layout(query_string):
                                                   df,
                                                   wgs_table_columns,
                                                   [
-                                                      (
-                                                      cutoff_pf_reads_tumour_label,
-                                                      special_cols[
-                                                          "Total Reads (Passed Filter)"],
-                                                      initial[
-                                                          cutoff_pf_reads_tumour],
-                                                      (lambda row, col, cutoff:
-                                                       row[
-                                                           col] < cutoff and util.is_tumour(
-                                                           row))),
-                                                      (
-                                                      cutoff_pf_reads_normal_label,
-                                                      special_cols[
-                                                          "Total Reads (Passed Filter)"],
-                                                      initial[
-                                                          cutoff_pf_reads_normal],
-                                                      (lambda row, col, cutoff:
-                                                       row[
-                                                           col] < cutoff and util.is_normal(
-                                                           row))),
                                                       (
                                                       cutoff_coverage_tumour_label,
                                                       BAMQC_COL.CoverageDeduplicated,
@@ -628,8 +591,6 @@ def init_callbacks(dash_app):
             State(ids["show-data-labels"], "value"),
             State(ids["search-sample"], "value"),
             State(ids['search-sample-ext'], 'value'),
-            State(ids["cutoff-pf-tumour"], "value"),
-            State(ids["cutoff-pf-normal"], "value"),
             State(ids["cutoff-coverage-tumour"], "value"),
             State(ids["cutoff-coverage-normal"], "value"),
             State(ids["cutoff-callability"], "value"),
@@ -652,8 +613,6 @@ def init_callbacks(dash_app):
                        show_names,
                        search_sample,
                        searchsampleext,
-                       pf_reads_tumour_cutoff,
-                       pf_reads_normal_cutoff,
                        coverage_tumour_cutoff,
                        coverage_normal_cutoff,
                        callability_cutoff,
@@ -675,8 +634,6 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads_tumour: pf_reads_tumour_cutoff,
-            cutoff_pf_reads_normal: pf_reads_normal_cutoff,
             cutoff_coverage_tumour: coverage_tumour_cutoff,
             cutoff_coverage_normal: coverage_normal_cutoff,
             cutoff_callability: callability_cutoff,
@@ -687,16 +644,6 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            (cutoff_pf_reads_tumour_label,
-             special_cols["Total Reads (Passed Filter)"],
-             pf_reads_tumour_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(
-                 row) else None)),
-            (cutoff_pf_reads_normal_label,
-             special_cols["Total Reads (Passed Filter)"],
-             pf_reads_normal_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(
-                 row) else None)),
             (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
              coverage_tumour_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(

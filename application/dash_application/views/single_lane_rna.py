@@ -49,7 +49,6 @@ ids = init_ids([
     "show-data-labels",
     "show-all-data-labels",
     "rrna-contamination-cutoff",
-    "passed-filter-reads-cutoff",
     "date-range",
 
     # Graphs
@@ -93,9 +92,6 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNA_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = "Total PF Reads minimum"
-cutoff_pf_reads = "cutoff_pf_reads"
-initial[cutoff_pf_reads] = 0.01
 cutoff_rrna_label = "% rRNA contamination maximum"
 cutoff_rrna = "cutoff_rrna"
 initial[cutoff_rrna] = 35
@@ -198,7 +194,6 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])],
     )
 
 
@@ -409,8 +404,6 @@ def layout(query_string):
                 sidebar_utils.hr(),
 
                 # Cutoffs
-                sidebar_utils.total_reads_cutoff_input(
-                    ids["passed-filter-reads-cutoff"], initial[cutoff_pf_reads]),
                 sidebar_utils.cutoff_input(
                     cutoff_rrna_label,
                     ids["rrna-contamination-cutoff"], initial[cutoff_rrna]),
@@ -439,9 +432,6 @@ def layout(query_string):
                                 df,
                                 rnaseqqc_table_columns,
                                 [
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_label,
                                     special_cols["rRNA Percent Contamination"], initial[cutoff_rrna],
                                     (lambda row, col, cutoff: row[col] > cutoff))
@@ -489,7 +479,6 @@ def init_callbacks(dash_app):
             State(ids['search-sample'], 'value'),
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
-            State(ids['passed-filter-reads-cutoff'], 'value'),
             State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -511,7 +500,6 @@ def init_callbacks(dash_app):
                        searchsample,
                        searchsampleext,
                        show_names,
-                       total_reads_cutoff,
                        rrna_cutoff,
                        start_date,
                        end_date,
@@ -532,13 +520,10 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             cutoff_rrna: rrna_cutoff,
-            cutoff_pf_reads: total_reads_cutoff 
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_rrna_label, special_cols["rRNA Percent Contamination"], rrna_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
         ])

@@ -41,7 +41,6 @@ ids = init_ids([
     'search-sample-ext',
     'show-data-labels',
     'show-all-data-labels',
-    'pf-cutoff',
     'rrna-contam-cutoff',
 
     # Graphs
@@ -110,9 +109,6 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNASEQQC2_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = "Total PF Reads minimum"
-cutoff_pf_reads = "cutoff_pf_reads"
-initial[cutoff_pf_reads] = 160
 cutoff_rrna_contam_label = "rRNA Contamination maximum"
 cutoff_rrna_contam = "cutoff_rrna_contam"
 initial[cutoff_rrna_contam] = 35
@@ -166,7 +162,6 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])],
     )
 
 
@@ -306,8 +301,6 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_label),
-                                               ids["pf-cutoff"], initial[cutoff_pf_reads]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
                                                initial[cutoff_rrna_contam]),
 
@@ -335,9 +328,6 @@ def layout(query_string):
                                 df,
                                 rna_table_columns,
                                 [
-                                    (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial[cutoff_pf_reads],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
                                     initial[cutoff_rrna_contam],
                                     (lambda row, col, cutoff: row[col] > cutoff)),
@@ -377,7 +367,6 @@ def init_callbacks(dash_app):
             State(ids["show-data-labels"], "value"),
             State(ids["search-sample"], "value"),
             State(ids["search-sample-ext"], "value"),
-            State(ids["pf-cutoff"], "value"),
             State(ids["rrna-contam-cutoff"], "value"),
             State('url', 'search'),
         ]
@@ -395,7 +384,6 @@ def init_callbacks(dash_app):
                        show_names,
                        search_sample,
                        searchsampleext,
-                       total_reads_cutoff,
                        rrna_contam_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
@@ -412,13 +400,10 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads: total_reads_cutoff,
             cutoff_rrna_contam: rrna_contam_cutoff
         }
 
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            (cutoff_pf_reads_label, special_cols["Total Reads (Passed Filter)"], total_reads_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
         ])
