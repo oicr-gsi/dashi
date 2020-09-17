@@ -115,7 +115,7 @@ cutoff_pf_reads = "cutoff_pf_reads"
 initial[cutoff_pf_reads] = 160
 cutoff_rrna_contam_label = "rRNA Contamination maximum"
 cutoff_rrna_contam = "cutoff_rrna_contam"
-initial[cutoff_rrna_contam] = 50
+initial[cutoff_rrna_contam] = 35
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)

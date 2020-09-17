@@ -98,7 +98,7 @@ cutoff_pf_reads = "cutoff_pf_reads"
 initial[cutoff_pf_reads] = 0.01
 cutoff_rrna_label = "% rRNA contamination maximum"
 cutoff_rrna = "cutoff_rrna"
-initial[cutoff_rrna] = 50
+initial[cutoff_rrna] = 35
 
 
 def get_rna_data():
