@@ -41,6 +41,9 @@ ids = init_ids([
     'search-sample-ext',
     'show-data-labels',
     'show-all-data-labels',
+    'insert-mean-cutoff',
+    'clusters-per-sample-cutoff',
+    'percent-mapped-to-coding-cutoff',
     'rrna-contam-cutoff',
 
     # Graphs
@@ -109,9 +112,14 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNASEQQC2_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_rrna_contam_label = "rRNA Contamination maximum"
-cutoff_rrna_contam = "cutoff_rrna_contam"
-initial[cutoff_rrna_contam] = 35
+cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label,
+initial["cutoff_rrna_contam"] = 35
+cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
+initial["cutoff_clusters_per_sample"] = 80000000
+cutoff_percent_mapped_to_coding_label = "% Mapped to Coding"
+initial["cutoff_percent_mapped_to_coding"] = 5
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+initial["cutoff_insert_mean"] = 150
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)
@@ -152,7 +160,6 @@ SORT_BY = shape_colour.dropdown() + [
      "value": util.ml_col}
 ]
 
-
 def generate_total_reads(df, graph_params):
     return CallReadySubplot(
         "Total Reads (Passed Filter)",
@@ -164,6 +171,17 @@ def generate_total_reads(df, graph_params):
         graph_params["shownames_val"],
     )
 
+def generate_mean_insert_size(df, graph_params):
+    return CallReadySubplot(
+        "Mean Insert Size",
+        df,
+        lambda d: d[RNASEQQC2_COL.InsertMean],
+        "Mean Insert Size",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])]
+    )
 
 def generate_five_to_three(df, graph_params):
     return CallReadySubplot(
@@ -199,6 +217,7 @@ def generate_coding(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_percent_mapped_to_coding_label, graph_params["cutoff_percent_mapped_to_coding"])],
     )
 
 
@@ -211,12 +230,13 @@ def generate_rrna_contam(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_rrna_contam_label, graph_params[cutoff_rrna_contam])],
+        cutoff_lines=[(cutoff_rrna_contam_label, graph_params["cutoff_rrna_contam"])],
     )
 
 
 GRAPHS = [
     generate_total_reads,
+    generate_mean_insert_size,
     generate_five_to_three,
     generate_correct_read_strand,
     generate_coding,
@@ -301,8 +321,14 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
+                    sidebar_utils.cutoff_input(cutoff_insert_mean_label, ids["insert-mean-cutoff"],
+                        initial["cutoff_insert_mean"]),
+                    sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
+                        initial["cutoff_clusters_per_sample"]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
-                                               initial[cutoff_rrna_contam]),
+                        initial["cutoff_rrna_contam"]),
+                    sidebar_utils.cutoff_input(cutoff_percent_mapped_to_coding_label,
+                        ids["percent-mapped-to-coding-cutoff"], initial["cutoff_percent_mapped_to_coding"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button")
@@ -367,7 +393,10 @@ def init_callbacks(dash_app):
             State(ids["show-data-labels"], "value"),
             State(ids["search-sample"], "value"),
             State(ids["search-sample-ext"], "value"),
+            State(ids["insert-mean-cutoff"], "value"),
+            State(ids["clusters-per-sample-cutoff"], "value"),
             State(ids["rrna-contam-cutoff"], "value"),
+            State(ids["percent-mapped-to-coding-cutoff"], "value"),
             State('url', 'search'),
         ]
     )
@@ -384,7 +413,10 @@ def init_callbacks(dash_app):
                        show_names,
                        search_sample,
                        searchsampleext,
+                       insert_mean_cutoff,
+                       clusters_per_sample_cutoff,
                        rrna_contam_cutoff,
+                       percent_mapped_to_coding_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if search_sample and searchsampleext:
@@ -400,12 +432,21 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_rrna_contam: rrna_contam_cutoff
+            "cutoff_insert_mean": insert_mean_cutoff,
+            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            "cutoff_rrna_contam": rrna_contam_cutoff,
+            "cutoff_percent_mapped_to_coding": percent_mapped_to_coding_cutoff,
         }
 
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
+            (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean, insert_mean_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            # (cutoff_clusters_per_sample_label, ???, clusters_per_sample_cutoff,
+            #  (lambda row, col, cutoff: row[col] > cutoff)),
             (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
+            (cutoff_percent_mapped_to_coding_label, RNASEQQC2_COL.MetricsPercentCodingBases, percent_mapped_to_coding_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
