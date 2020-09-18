@@ -92,9 +92,12 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNA_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_rrna_label = "% rRNA contamination maximum"
-cutoff_rrna = "cutoff_rrna"
-initial[cutoff_rrna] = 35
+cutoff_rrna_label = sidebar_utils.rrna_contamination_cutoff_label
+initial["cutoff_rrna"] = 35
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+initial["cutoff_insert_mean"] = 150
+cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
+initial["cutoff_clusters_per_sample"] = 10000
 
 
 def get_rna_data():
@@ -196,6 +199,17 @@ def generate_total_reads(df, graph_params):
         graph_params["shownames_val"],
     )
 
+def generate_insert_mean(df, graph_params):
+    return SingleLaneSubplot{
+        "Mean Insert Size",
+        df,
+        lambda d: d[RNA_COL.InsertMean],
+        "Mean Insert Size",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])]
+    }
 
 def generate_unique_reads(df, graph_params):
     return SingleLaneSubplot(
@@ -255,7 +269,7 @@ def generate_rrna_contam(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_rrna_label, graph_params[cutoff_rrna])]
+        cutoff_lines=[(cutoff_rrna_label, graph_params["cutoff_rrna"])]
     )
 
 
@@ -289,6 +303,7 @@ def dataversion():
 
 GRAPHS = [
     generate_total_reads,
+    generate_insert_mean,
     generate_unique_reads,
     generate_five_to_three,
     generate_correct_read_strand,
@@ -404,9 +419,12 @@ def layout(query_string):
                 sidebar_utils.hr(),
 
                 # Cutoffs
-                sidebar_utils.cutoff_input(
-                    cutoff_rrna_label,
-                    ids["rrna-contamination-cutoff"], initial[cutoff_rrna]),
+                sidebar_utils.cutoff_input(cutoff_insert_mean_label,
+                    ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
+                sidebar_utils.cutoff_input(cutoff_rrna_label,
+                    ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
+                sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
+                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -479,6 +497,8 @@ def init_callbacks(dash_app):
             State(ids['search-sample'], 'value'),
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
+            State(ids['insert-mean-cutoff'], 'value'),
+            State(ids['clusters-per-sample-cutoff'], 'value'),
             State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -500,6 +520,8 @@ def init_callbacks(dash_app):
                        searchsample,
                        searchsampleext,
                        show_names,
+                       insert_mean_cutoff,
+                       clusters_per_sample_cutoff,
                        rrna_cutoff,
                        start_date,
                        end_date,
@@ -519,11 +541,17 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_rrna: rrna_cutoff,
+            "cutoff_insert_mean": insert_mean_cutoff,
+            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            "cutoff_rrna": rrna_cutoff,
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
+            (cutoff_insert_mean_label, RNA_COL.InsertMean, insert_mean_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
+            # (cutoff_clusters_per_sample_label, ???, clusters_per_sample_cutoff,
+            #  (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_rrna_label, special_cols["rRNA Percent Contamination"], rrna_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
         ])
