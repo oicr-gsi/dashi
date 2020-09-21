@@ -80,12 +80,10 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = FASTQC_COL.TotalSequences
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = "Total PF Reads minimum"
-cutoff_pf_reads = "cutoff_pf_reads"
-initial[cutoff_pf_reads] = 0.01
-cutoff_insert_median_label = "Insert Median minimum"
-cutoff_insert_median = "cutoff_insert_median"
-initial[cutoff_insert_median] = 150
+cutoff_pf_reads_label = sidebar_utils.total_reads_cutoff_label
+initial["cutoff_pf_reads"] = 0.01
+cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
+initial["cutoff_insert_median"] = 150
 
 
 def get_bamqc_data():
@@ -190,7 +188,7 @@ def generate_total_reads(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params["cutoff_pf_reads"])]
     )
 
 
@@ -262,7 +260,7 @@ def generate_median_insert_size(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        cutoff_lines=[(cutoff_insert_median_label, graph_params["cutoff_insert_median"])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -387,10 +385,10 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.total_reads_cutoff_input(
-                        ids['passed-filter-reads-cutoff'], initial[cutoff_pf_reads]),
-                    sidebar_utils.insert_median_cutoff(
-                        ids['insert-size-median-cutoff'], initial[cutoff_insert_median]),
+                    sidebar_utils.cutoff_input(cutoff_pf_reads_label,
+                        ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
+                    sidebar_utils.cutoff_input(cutoff_insert_median_label,
+                        ids['insert-size-median-cutoff'], initial["cutoff_insert_median"]),
                     
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
@@ -416,10 +414,10 @@ def layout(query_string):
                                 df,
                                 ex_table_columns,
                                 [
-                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial[cutoff_insert_median],
+                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    special_cols["Total Reads (Passed Filter)"], initial["cutoff_pf_reads"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             ),
@@ -505,8 +503,8 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads: total_reads_cutoff,
-            cutoff_insert_median: insert_median_cutoff
+            "cutoff_pf_reads": total_reads_cutoff,
+            "cutoff_insert_median": insert_median_cutoff
         }
 
         dd = defaultdict(list)

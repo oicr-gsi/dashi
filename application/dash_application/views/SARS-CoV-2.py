@@ -406,10 +406,10 @@ def layout(query_string):
                                                         'ALL LABELS',
                                                         ids['show-all-data-labels']),
                     
-                    sidebar_utils.cutoff_input("Median Coverage minimum",
+                    sidebar_utils.cutoff_input(avg_coverage_cutoff_label,
                         ids['median-coverage-cutoff'], initial['avg_coverage_cutoff']),
 
-                    sidebar_utils.cutoff_input("On-Target minimum",
+                    sidebar_utils.cutoff_input(on_target_cutoff_label,
                         ids['on-target-cutoff'], initial['on_target_cutoff']),
 
                     sidebar_utils.hr(),

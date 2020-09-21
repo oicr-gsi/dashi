@@ -74,9 +74,8 @@ initial = get_initial_cfmedip_values()
 initial["second_sort"] = CFMEDIP_COL.RelativeCpGFrequencyEnrichment
 initial["institutes"] = []
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = "Total PF Reads minimum"
-cutoff_pf_reads = "cutoff_pf_reads"
-initial[cutoff_pf_reads] = 0.01
+cutoff_pf_reads_label = sidebar_utils.total_reads_cutoff_label
+initial["cutoff_pf_reads"] = 0.01
 
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
@@ -189,7 +188,7 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params[cutoff_pf_reads])]
+        cutoff_lines=[(cutoff_pf_reads_label, graph_params["cutoff_pf_reads"])]
     )
 
 
@@ -381,8 +380,8 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.total_reads_cutoff_input(
-                        ids['passed-filter-reads-cutoff'], initial[cutoff_pf_reads]),
+                    sidebar_utils.cutoff_input(cutoff_pf_reads_label,
+                        ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
                         
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
@@ -409,7 +408,7 @@ def layout(query_string):
                                 cfmedip_table_columns,
                                 [
                                     (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    special_cols["Total Reads (Passed Filter)"], initial["cutoff_pf_reads"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -495,7 +494,7 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_pf_reads: total_reads_cutoff
+            "cutoff_pf_reads": total_reads_cutoff
         }
 
         dd = defaultdict(list)

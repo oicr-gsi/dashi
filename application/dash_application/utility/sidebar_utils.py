@@ -12,6 +12,12 @@ import pinery.column
 import gsiqcetl.column
 from . import df_manipulation as df_tools
 
+total_reads_cutoff_label = "Passed Filter Reads (* 10^6) minimum"
+insert_mean_cutoff_label = "Mean Insert Size minimum"
+insert_median_cutoff_label = "Median Insert Size minimum"
+percent_duplication_cutoff_label = "% Duplication maximum"
+clusters_per_sample_cutoff_label = "Clusters per Sample minimum"
+rrna_contamination_cutoff_label = "rRNA Contamination maximum"
 
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
@@ -310,18 +316,6 @@ def cutoff_input(cutoff_label: str, cutoff_id: str, cutoff_value) -> \
                    min=0,
                    value=cutoff_value)
     ])
-
-
-def total_reads_cutoff_input(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Passed Filter Reads (* 10^6) minimum",
-                        cutoff_id, cutoff_value)
-
-
-def insert_mean_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Mean Insert Size minimum", cutoff_id, cutoff_value)
-
-def insert_median_cutoff(cutoff_id: str, cutoff_value) -> html.Label:
-    return cutoff_input("Median Insert Size minimum", cutoff_id, cutoff_value)
 
 def hr() -> html.Hr:
     # Horizontal rule
