@@ -147,6 +147,7 @@ ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(RNA_DF, PINERY_COL.PrepKit)
 ILLUMINA_INSTRUMENT_MODELS = list(util.get_illumina_instruments(RNA_DF))
 ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
+ALL_TISSUE_ORIGIN = util.unique_set(RNA_DF, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(RNA_DF, PINERY_COL.SequencerRunName, True)  # reverse the list
 ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
@@ -163,9 +164,10 @@ collapsing_functions = {
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
-shape_colour = ColourShapeSingleLane(ALL_PROJECTS, ALL_RUNS, ALL_KITS,
-                                     ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
-                                     ALL_REFERENCES)
+shape_colour = ColourShapeSingleLane(
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
+    ALL_LIBRARY_DESIGNS, ALL_REFERENCES
+)
 
 # Add shape, colour, and size cols to RNA dataframe
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())

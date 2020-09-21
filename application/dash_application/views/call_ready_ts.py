@@ -192,6 +192,7 @@ ALL_PROJECTS = util.unique_set(TS_DF, PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(TS_DF, PINERY_COL.PrepKit)
 ALL_INSTITUTES = util.unique_set(TS_DF, PINERY_COL.Institute)
 ALL_TISSUE_MATERIALS = util.unique_set(TS_DF, PINERY_COL.TissuePreparation)
+ALL_TISSUE_ORIGIN = util.unique_set(TS_DF, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(TS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(TS_DF, util.sample_type_col)
 ALL_REFERENCES = util.unique_set(TS_DF, ICHOR_COL.Reference)
@@ -206,7 +207,7 @@ collapsing_functions = {
 
 shape_colour = ColourShapeCallReady(
     ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS, ALL_REFERENCES
+    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_REFERENCES
 )
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
@@ -445,7 +446,7 @@ def layout(query_string):
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
-                                                   initial["colour_by"], True),
+                                                   initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   shape_colour.dropdown(),

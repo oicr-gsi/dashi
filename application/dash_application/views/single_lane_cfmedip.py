@@ -100,6 +100,7 @@ ALL_PROJECTS = util.unique_set(cfmedip, PINERY_COL.StudyTitle)
 ALL_RUNS = util.unique_set(cfmedip, PINERY_COL.SequencerRunName, True) # reverse order
 ALL_KITS = util.unique_set(cfmedip, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(cfmedip, PINERY_COL.TissuePreparation)
+ALL_TISSUE_ORIGIN = util.unique_set(cfmedip, PINERY_COL.TissueOrigin)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(cfmedip)
 ALL_SAMPLE_TYPES = util.unique_set(cfmedip, util.sample_type_col)
 ALL_REFERENCES = util.unique_set(cfmedip, CFMEDIP_COL.Reference)
@@ -135,7 +136,8 @@ shape_colour = ColourShapeCfMeDIP(
     ALL_RUNS,
     ALL_INSTITUTES, 
     ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS, 
+    ALL_TISSUE_MATERIALS,
+    ALL_TISSUE_ORIGIN,
     ALL_REFERENCES
 )
 # Add shape, colour, and size cols to dataframe 
