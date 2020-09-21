@@ -181,6 +181,7 @@ ALL_PROJECTS = util.unique_set(WGS_DF,PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(WGS_DF, PINERY_COL.PrepKit)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
 ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
+ALL_TISSUE_ORIGIN = util.unique_set(WGS_DF, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_RUNS = util.unique_set(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
 ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
@@ -198,8 +199,8 @@ collapsing_functions = {
 }
 
 shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
-    ALL_REFERENCES,
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
+    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
 )
 
 # Add shape col to WG dataframe

@@ -286,7 +286,7 @@ def generate(title_text, sorted_data, y_fn, axis_text, colourby, shapeby,
         if page_mode == Mode.IUS:
             x_fn = lambda d: d["SampleNameExtra"]
             display_x = lambda d: d[PINERY_COL.SampleName]
-        elif mode == Mode.MERGED:
+        elif page_mode == Mode.MERGED:
             x_fn = lambda d: d[ml_col]
             display_x = lambda d: d[ml_col]
     else:
@@ -710,11 +710,12 @@ class ColourShapeSARSCoV2:
         }
 
 class ColourShapeSingleLane:
-    def __init__(self, projects, runs, kits, tissue_materials, library_designs, reference):
+    def __init__(self, projects, runs, kits, tissue_materials, tissue_origin, library_designs, reference):
         self.projects = projects
         self.runs = runs
         self.kits = kits
         self.tissue_materials = tissue_materials
+        self.tissue_origin = tissue_origin
         self.library_designs = library_designs
         self.reference = reference
 
@@ -725,6 +726,7 @@ class ColourShapeSingleLane:
             {"label": "Run", "value": PINERY_COL.SequencerRunName},
             {"label": "Kit", "value": PINERY_COL.PrepKit},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Tissue Origin", "value": PINERY_COL.TissueOrigin},
             {"label": "Library Design", "value": PINERY_COL.LibrarySourceTemplateType},
             {"label": "Reference", "value": COMMON_COL.Reference},
         ]
@@ -735,18 +737,20 @@ class ColourShapeSingleLane:
             PINERY_COL.SequencerRunName: self.runs,
             PINERY_COL.PrepKit: self.kits,
             PINERY_COL.TissuePreparation: self.tissue_materials,
+            PINERY_COL.TissueOrigin: self.tissue_origin,
             PINERY_COL.LibrarySourceTemplateType: self.library_designs,
             COMMON_COL.Reference: self.reference,
         }
 
 
 class ColourShapeCallReady:
-    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials, reference):
+    def __init__(self, projects, library_designs, institutes, sample_types, tissue_materials, tissue_origin, reference):
         self.projects = projects
         self.library_designs = library_designs
         self.institutes = institutes
         self.sample_types = sample_types
         self.tissue_materials = tissue_materials
+        self.tissue_origin = tissue_origin
         self.reference = reference
 
     @staticmethod
@@ -757,6 +761,7 @@ class ColourShapeCallReady:
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Tissue Origin", "value": PINERY_COL.TissueOrigin},
             {"label": "Reference", "value": COMMON_COL.Reference},
         ]
 
@@ -767,16 +772,18 @@ class ColourShapeCallReady:
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
             PINERY_COL.TissuePreparation: self.tissue_materials,
+            PINERY_COL.TissueOrigin: self.tissue_origin,
             COMMON_COL.Reference: self.reference,
         }
 
 class ColourShapeCfMeDIP:
-    def __init__(self, projects, runs, institutes, sample_types, tissue_materials, reference):
+    def __init__(self, projects, runs, institutes, sample_types, tissue_materials, tissue_origin, reference):
         self.projects = projects
         self.runs = runs
         self.institutes = institutes
         self.sample_types = sample_types
         self.tissue_materials = tissue_materials
+        self.tissue_origin = tissue_origin
         self.reference = reference
 
     @staticmethod
@@ -787,6 +794,7 @@ class ColourShapeCfMeDIP:
             {"label": "Institute", "value": PINERY_COL.Institute},
             {"label": "Sample Type", "value": sample_type_col},
             {"label": "Tissue Material", "value": PINERY_COL.TissuePreparation},
+            {"label": "Tissue Origin", "value": PINERY_COL.TissueOrigin},
             {"label": "Reference", "value": COMMON_COL.Reference},
         ]
 
@@ -797,6 +805,7 @@ class ColourShapeCfMeDIP:
             PINERY_COL.Institute: self.institutes,
             sample_type_col: self.sample_types,
             PINERY_COL.TissuePreparation: self.tissue_materials,
+            PINERY_COL.TissueOrigin: self.tissue_origin,
             COMMON_COL.Reference: self.reference,
         }
 
@@ -844,7 +853,7 @@ class Subplot:
                 self.x_fn = lambda d: d[ml_col]
                 self.display_x = lambda d: d[ml_col]
         else:
-            self.display_x = x_fn
+            self.display_x = self.x_fn
 
         return _generate_traces(
             self.df,

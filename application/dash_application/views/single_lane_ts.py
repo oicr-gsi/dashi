@@ -127,6 +127,7 @@ ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
 ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
 ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
+ALL_TISSUE_ORIGIN = util.unique_set(bamqc, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
 ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
@@ -159,8 +160,8 @@ ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
 
 
 shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_LIBRARY_DESIGNS,
-    ALL_REFERENCES,
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
+    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
 )
 # Add shape, colour, and size cols to dataframe 
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
