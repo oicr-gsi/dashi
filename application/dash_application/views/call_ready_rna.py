@@ -322,8 +322,8 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label, ids["insert-mean-cutoff"],
                         initial["cutoff_insert_mean"]),
-                    sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
-                        initial["cutoff_clusters_per_sample"]),
+                    # sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
+                    #     initial["cutoff_clusters_per_sample"]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
                         initial["cutoff_rrna_contam"]),
                     sidebar_utils.cutoff_input(cutoff_percent_mapped_to_coding_label,
@@ -402,7 +402,7 @@ def init_callbacks(dash_app):
             State(ids["search-sample"], "value"),
             State(ids["search-sample-ext"], "value"),
             State(ids["insert-mean-cutoff"], "value"),
-            State(ids["clusters-per-sample-cutoff"], "value"),
+            # State(ids["clusters-per-sample-cutoff"], "value"),
             State(ids["rrna-contam-cutoff"], "value"),
             State(ids["percent-mapped-to-coding-cutoff"], "value"),
             State('url', 'search'),
@@ -422,7 +422,7 @@ def init_callbacks(dash_app):
                        search_sample,
                        searchsampleext,
                        insert_mean_cutoff,
-                       clusters_per_sample_cutoff,
+                    #    clusters_per_sample_cutoff,
                        rrna_contam_cutoff,
                        percent_mapped_to_coding_cutoff,
                        search_query):
@@ -441,7 +441,7 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             "cutoff_insert_mean": insert_mean_cutoff,
-            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            # "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
             "cutoff_rrna_contam": rrna_contam_cutoff,
             "cutoff_percent_mapped_to_coding": percent_mapped_to_coding_cutoff,
         }

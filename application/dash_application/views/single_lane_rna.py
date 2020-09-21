@@ -426,8 +426,8 @@ def layout(query_string):
                     ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
                 sidebar_utils.cutoff_input(cutoff_rrna_label,
                     ids["rrna-contamination-cutoff"], initial["cutoff_rrna"]),
-                sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
-                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
+                # sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
+                #     ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -507,7 +507,7 @@ def init_callbacks(dash_app):
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
             State(ids['insert-mean-cutoff'], 'value'),
-            State(ids['clusters-per-sample-cutoff'], 'value'),
+            # State(ids['clusters-per-sample-cutoff'], 'value'),
             State(ids['rrna-contamination-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -530,7 +530,7 @@ def init_callbacks(dash_app):
                        searchsampleext,
                        show_names,
                        insert_mean_cutoff,
-                       clusters_per_sample_cutoff,
+                    #    clusters_per_sample_cutoff,
                        rrna_cutoff,
                        start_date,
                        end_date,
@@ -551,7 +551,7 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             "cutoff_insert_mean": insert_mean_cutoff,
-            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            # "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
             "cutoff_rrna": rrna_cutoff,
         }
 

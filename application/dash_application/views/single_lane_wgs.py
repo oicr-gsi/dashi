@@ -452,8 +452,8 @@ def layout(query_string):
                     ids["insert-median-cutoff"], initial["cutoff_insert_median"]),
                 sidebar_utils.cutoff_input(cutoff_percent_duplication_label, 
                     ids["percent-duplication-cutoff"], initial["cutoff_percent_duplication"]),
-                sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
-                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
+                # sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
+                #     ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -532,7 +532,7 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["insert-median-cutoff"], 'value'),
             State(ids["percent-duplication-cutoff"], 'value'),
-            State(ids["clusters-per-sample-cutoff"], 'value'),
+            # State(ids["clusters-per-sample-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
             State('url', 'search'),
@@ -555,7 +555,7 @@ def init_callbacks(dash_app):
                        show_names,
                        insert_median_cutoff,
                        percent_duplication_cutoff,
-                       clusters_per_sample_cutoff,
+                    #    clusters_per_sample_cutoff,
                        start_date,
                        end_date,
                        search_query):
@@ -576,7 +576,7 @@ def init_callbacks(dash_app):
             "shownames_val": show_names,
             "cutoff_insert_median": insert_median_cutoff,
             "cutoff_percent_duplication": percent_duplication_cutoff,
-            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            # "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
         }
 
         dd = defaultdict(list)
