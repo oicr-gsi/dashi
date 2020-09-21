@@ -169,24 +169,19 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = BAMQC_COL.TotalReads
 # Set initial values for graph cutoff lines
+# TODO: This is supposed to depend on Coverage being 80x/30x?
 cutoff_callability_label = "Callability minimum"
-cutoff_callability = "cutoff_callability"
-initial[cutoff_callability] = 50
-cutoff_insert_median_label = "Insert Median minimum"
-cutoff_insert_median = "cutoff_insert_median"
-initial[cutoff_insert_median] = 150
-cutoff_duplicate_rate_label = "Duplication (%) maximum"
-cutoff_duplicate_rate = "cutoff_duplicate_rate"
-initial[cutoff_duplicate_rate] = 50
+initial["cutoff_callability"] = 50
+cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
+initial["cutoff_insert_median"] = 150
+cutoff_duplicate_rate_label = sidebar_utils.percent_duplication_cutoff_label
+initial["cutoff_duplicate_rate"] = 50
 cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
-cutoff_coverage_tumour = "cutoff_coverage_tumour"
-initial[cutoff_coverage_tumour] = 80
+initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
-cutoff_coverage_normal = "cutoff_coverage_normal"
-initial[cutoff_coverage_normal] = 30
+initial["cutoff_coverage_normal"] = 30
 cutoff_tumor_purity_label = "Tumor Purity (%) minimum"
-cutoff_tumor_purity = "cutoff_tumor_purity"
-initial[cutoff_tumor_purity] = 30
+initial["cutoff_tumor_purity"] = 30
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(WGS_DF, PINERY_COL.StudyTitle)
@@ -273,7 +268,8 @@ def generate_deduplicated_coverage(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params[cutoff_coverage_tumour]), (cutoff_coverage_normal_label, graph_params[cutoff_coverage_normal])],
+        #TODO: Should these move to the CoverageMedian graph? 
+        cutoff_lines=[(cutoff_coverage_tumour_label, graph_params["cutoff_coverage_tumour"]), (cutoff_coverage_normal_label, graph_params["cutoff_coverage_normal"])],
     )
 
 
@@ -317,7 +313,7 @@ def generate_callability(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         hovertext_cols=hover_text,
-        cutoff_lines=[(cutoff_callability_label, graph_params[cutoff_callability])],
+        cutoff_lines=[(cutoff_callability_label, graph_params["cutoff_callability"])],
     )
 
 
@@ -330,7 +326,7 @@ def generate_median_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_insert_median_label, graph_params[cutoff_insert_median])],
+        cutoff_lines=[(cutoff_insert_median_label, graph_params["cutoff_insert_median"])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -345,9 +341,8 @@ def generate_duplicate_rate(df, graph_params):
         graph_params["colour_by"], 
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params[cutoff_duplicate_rate])],
+        cutoff_lines=[(cutoff_duplicate_rate_label, graph_params["cutoff_duplicate_rate"])],
     )
-
 
 def generate_tumor_purity(df, graph_params):
     return CallReadySubplot(
@@ -358,7 +353,7 @@ def generate_tumor_purity(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_tumor_purity_label, graph_params[cutoff_tumor_purity])],
+        cutoff_lines=[(cutoff_tumor_purity_label, graph_params["cutoff_tumor_purity"])],
     )
 
 
@@ -469,22 +464,22 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["cutoff-coverage-tumour"],
-                                               initial[cutoff_coverage_tumour]),
+                                               initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
                                                ids["cutoff-coverage-normal"],
-                                               initial[cutoff_coverage_normal]),
+                                               initial["cutoff_coverage_normal"]),
                     sidebar_utils.cutoff_input(cutoff_callability_label,
                                                ids["cutoff-callability"],
-                                               initial[cutoff_callability]),
+                                               initial["cutoff_callability"]),
                     sidebar_utils.cutoff_input(cutoff_insert_median_label,
                                                ids["cutoff-median-insert"],
-                                               initial[cutoff_insert_median]),
+                                               initial["cutoff_insert_median"]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
-                                               initial[cutoff_duplicate_rate]),
+                                               initial["cutoff_duplicate_rate"]),
                     sidebar_utils.cutoff_input(cutoff_tumor_purity_label,
                                                ids["cutoff-tumor-purity"],
-                                               initial[cutoff_tumor_purity]),
+                                               initial["cutoff_tumor_purity"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
@@ -514,7 +509,7 @@ def layout(query_string):
                                                       cutoff_coverage_tumour_label,
                                                       BAMQC_COL.CoverageDeduplicated,
                                                       initial[
-                                                          cutoff_coverage_tumour],
+                                                          "cutoff_coverage_tumour"],
                                                       (lambda row, col, cutoff:
                                                        row[
                                                            col] < cutoff and util.is_tumour(
@@ -523,7 +518,7 @@ def layout(query_string):
                                                       cutoff_coverage_normal_label,
                                                       BAMQC_COL.CoverageDeduplicated,
                                                       initial[
-                                                          cutoff_coverage_normal],
+                                                          "cutoff_coverage_normal"],
                                                       (lambda row, col, cutoff:
                                                        row[
                                                            col] < cutoff and util.is_normal(
@@ -532,27 +527,27 @@ def layout(query_string):
                                                        special_cols[
                                                            "Percent Callability"],
                                                        initial[
-                                                           cutoff_callability],
+                                                           "cutoff_callability"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (cutoff_insert_median_label,
                                                        BAMQC_COL.InsertMedian,
                                                        initial[
-                                                           cutoff_insert_median],
+                                                           "cutoff_insert_median"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (
                                                       cutoff_duplicate_rate_label,
                                                       BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
                                                       initial[
-                                                          cutoff_duplicate_rate],
+                                                          "cutoff_duplicate_rate"],
                                                       (lambda row, col, cutoff:
                                                        row[col] > cutoff)),
                                                       (
                                                           cutoff_tumor_purity_label,
                                                           special_cols["Tumor Purity (%)"],
                                                           initial[
-                                                              cutoff_tumor_purity],
+                                                              "cutoff_tumor_purity"],
                                                           (lambda row, col, cutoff:
                                                            row[col] <= cutoff)),
                                                   ]
@@ -634,12 +629,12 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            cutoff_coverage_tumour: coverage_tumour_cutoff,
-            cutoff_coverage_normal: coverage_normal_cutoff,
-            cutoff_callability: callability_cutoff,
-            cutoff_insert_median: insert_median_cutoff,
-            cutoff_duplicate_rate: duplicate_rate_cutoff,
-            cutoff_tumor_purity: tumor_purity_cutoff,
+            "cutoff_coverage_tumour": coverage_tumour_cutoff,
+            "cutoff_coverage_normal": coverage_normal_cutoff,
+            "cutoff_callability": callability_cutoff,
+            "cutoff_insert_median": insert_median_cutoff,
+            "cutoff_duplicate_rate": duplicate_rate_cutoff,
+            "cutoff_tumor_purity": tumor_purity_cutoff,
         }
 
         dd = defaultdict(list)
