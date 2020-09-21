@@ -95,6 +95,7 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNA_COL.TotalReads
 # Set initial values for graph cutoff lines
+# Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_label = sidebar_utils.rrna_contamination_cutoff_label
 initial["cutoff_rrna"] = 35
 cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label

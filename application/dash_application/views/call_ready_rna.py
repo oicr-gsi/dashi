@@ -10,7 +10,6 @@ from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_mer
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from ..utility.Mode import Mode
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +110,7 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNASEQQC2_COL.TotalReads
 # Set initial values for graph cutoff lines
+# Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label
 initial["cutoff_rrna_contam"] = 35
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label

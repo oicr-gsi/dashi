@@ -169,6 +169,7 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = BAMQC_COL.TotalReads
 # Set initial values for graph cutoff lines
+# Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 # TODO: This is supposed to depend on Coverage being 80x/30x?
 cutoff_callability_label = "Callability minimum"
 initial["cutoff_callability"] = 50

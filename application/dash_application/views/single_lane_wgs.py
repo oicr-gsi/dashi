@@ -99,6 +99,7 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = FASTQC_COL.TotalSequences
 # Set initial values for graph cutoff lines
+# Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
 initial["cutoff_insert_median"] = 150
 cutoff_percent_duplication_label = sidebar_utils.percent_duplication_cutoff_label
