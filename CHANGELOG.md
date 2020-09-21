@@ -7,6 +7,13 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [200921-1501] - 2020-09-21
+## Changed
+  * Added Tissue Origin as colour-by criteria
+  * Updated thresholds in preparation for QC Handoff feature
+  * Tumor purity graph for Call Ready WGS
+  * Replace BamQC's TotalReads with FastQC's TotalSequences in applicable reports
+
 ## [200914-1449] - 2020-09-14
 ## Changed
   * Renamed 'Approve this run in MISO' button to 'View run in MISO' for clarity
