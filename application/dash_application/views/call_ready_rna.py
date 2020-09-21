@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 page_name = 'call-ready-rna'
 title = "Call-Ready RNA-seq"
-page_mode = Mode.MERGED 
 
 ids = init_ids([
     # Buttons
@@ -112,7 +111,7 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = RNASEQQC2_COL.TotalReads
 # Set initial values for graph cutoff lines
-cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label,
+cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label
 initial["cutoff_rrna_contam"] = 35
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
 initial["cutoff_clusters_per_sample"] = 80000000
