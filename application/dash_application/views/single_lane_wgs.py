@@ -286,7 +286,7 @@ def generate_duplication(df, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
         cutoff_lines=[(cutoff_percent_duplication_label, graph_params["cutoff_percent_duplication"])],
     )
 
@@ -453,7 +453,7 @@ def layout(query_string):
                 sidebar_utils.cutoff_input(cutoff_percent_duplication_label, 
                     ids["percent-duplication-cutoff"], initial["cutoff_percent_duplication"]),
                 sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
-                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"])
+                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -480,8 +480,12 @@ def layout(query_string):
                                 df,
                                 wgs_table_columns,
                                 [
-                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial[cutoff_insert_median],
+                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, initial["cutoff_percent_duplication"],
+                                    (lambda row, col, cutoff: row[col] >= cutoff)),
+                                    # (cutoff_clusters_per_sample_label, ???, initial["cutoff_clusters_per_sample"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )                    
                         ])

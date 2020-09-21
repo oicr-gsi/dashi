@@ -48,7 +48,10 @@ ids = init_ids([
     "search-sample-ext",
     "show-data-labels",
     "show-all-data-labels",
+    "clusters-per-sample-cutoff",
+    "percent-mapped-to-coding-cutoff",
     "rrna-contamination-cutoff",
+    "insert-mean-cutoff",
     "date-range",
 
     # Graphs
@@ -200,7 +203,7 @@ def generate_total_reads(df, graph_params):
     )
 
 def generate_insert_mean(df, graph_params):
-    return SingleLaneSubplot{
+    return SingleLaneSubplot(
         "Mean Insert Size",
         df,
         lambda d: d[RNA_COL.InsertMean],
@@ -209,7 +212,7 @@ def generate_insert_mean(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])]
-    }
+    )
 
 def generate_unique_reads(df, graph_params):
     return SingleLaneSubplot(
@@ -450,9 +453,15 @@ def layout(query_string):
                                 df,
                                 rnaseqqc_table_columns,
                                 [
+                                    (cutoff_insert_mean_label,
+                                    RNA_COL.InsertMean, initial["cutoff_insert_mean"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_label,
-                                    special_cols["rRNA Percent Contamination"], initial[cutoff_rrna],
-                                    (lambda row, col, cutoff: row[col] > cutoff))
+                                    special_cols["rRNA Percent Contamination"], initial["cutoff_rrna"],
+                                    (lambda row, col, cutoff: row[col] > cutoff)),
+                                    # (cutoff_clusters_per_sample_label,
+                                    # ???, initial["cutoff_clusters_per_sample"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
                         ])

@@ -354,9 +354,18 @@ def layout(query_string):
                                 df,
                                 rna_table_columns,
                                 [
+                                    (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean,
+                                    initial["cutoff_insert_mean"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
+                                    # (cutoff_clusters_per_sample_label, ???,
+                                    # initial["cutoff_clusters_per_sample"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
-                                    initial[cutoff_rrna_contam],
+                                    initial["cutoff_rrna_contam"],
                                     (lambda row, col, cutoff: row[col] > cutoff)),
+                                    (cutoff_percent_mapped_to_coding_label, RNASEQQC2_COL.MetricsPercentCodingBases,
+                                    initial["cutoff_percent_mapped_to_coding"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
                         ])
@@ -452,6 +461,7 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
+            #TODO: why this broken :(
             generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict("records"),

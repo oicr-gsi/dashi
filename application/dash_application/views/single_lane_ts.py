@@ -414,10 +414,10 @@ def layout(query_string):
                                 df,
                                 ex_table_columns,
                                 [
-                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial[cutoff_insert_median],
+                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial[cutoff_pf_reads],
+                                    special_cols["Total Reads (Passed Filter)"], initial["cutoff_pf_reads"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             ),
