@@ -460,7 +460,6 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
 
         return [
-            #TODO: why this broken :(
             generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict("records"),
