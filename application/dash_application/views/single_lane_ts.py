@@ -73,12 +73,14 @@ special_cols = {
     "Unmapped Reads (%)": "Unmapped Reads (%)",
     "Non-Primary Reads (%)": "Non-Primary Reads (%)",
     "Coverage per Gb": "coverage per gb",
+    # Column comes from `df_with_fastqc_data` call
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 initial = get_initial_single_lane_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = FASTQC_COL.TotalSequences
+initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 cutoff_pf_reads_label = sidebar_utils.total_reads_cutoff_label
 initial["cutoff_pf_reads"] = 0.01
@@ -92,6 +94,8 @@ def get_bamqc_data():
 
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
+    bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        bamqc_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3)
     bamqc_df[special_cols["On Target Reads (%)"]] = sidebar_utils.percentage_of(
         bamqc_df, BAMQC_COL.ReadsOnTarget, FASTQC_COL.TotalSequences
     )
@@ -165,8 +169,8 @@ shape_colour = ColourShapeSingleLane(
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
-    {"label": "Total Reads",
-     "value": FASTQC_COL.TotalSequences},
+    {"label": "Total Clusters",
+     "value": special_cols["Total Clusters (Passed Filter)"]},
     {"label": "Unmapped Reads",
      "value": special_cols["Unmapped Reads (%)"]},
     {"label": "Non-primary Reads",
@@ -180,12 +184,12 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -268,7 +272,7 @@ def generate_median_insert_size(current_data, graph_params):
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_deduplicated_coverage,
     generate_deduplicated_coverage_per_gb,
     generate_unmapped_reads,

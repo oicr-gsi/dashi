@@ -75,12 +75,15 @@ special_cols = {
     "On-target Reads": "percent on-target reads",
     "Purity": "percent purity",
     "Coverage per Gb": "coverage per gb",
+    # Column comes from `df_with_fastqc_data` call
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 # Specify which columns to display in the DataTable
 first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
     special_cols["Total Reads (Passed Filter)"],
+    special_cols["Total Clusters (Passed Filter)"],
     special_cols["Unmapped Reads"],
     special_cols["Non-Primary Reads"],
     special_cols["On-target Reads"],
@@ -97,7 +100,7 @@ wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *ICHOR_COL.values(), *
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
-initial["second_sort"] = FASTQC_COL.TotalSequences
+initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
@@ -133,9 +136,10 @@ def get_wgs_data():
     bamqc_df = util.get_bamqc3_and_4()
     bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
-    # Calculate percent uniq reads column
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
+    bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        bamqc_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3)
     bamqc_df[special_cols["Unmapped Reads"]] = round(
         bamqc_df[BAMQC_COL.UnmappedReads] * 100.0 /
         bamqc_df[FASTQC_COL.TotalSequences], 3)
@@ -209,8 +213,8 @@ shape_colour = ColourShapeSingleLane(
 WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
-    {"label": "Total Reads",
-     "value": FASTQC_COL.TotalSequences},
+    {"label": "Total Clusters",
+     "value": special_cols["Total Clusters (Passed Filter)"]},
     {"label": "Duplication",
      "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION},
     {"label": "Unmapped Reads",
@@ -230,12 +234,12 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -330,7 +334,7 @@ def generate_on_target_reads(df, graph_params):
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_deduplicated_coverage,
     generate_deduplicated_coverage_per_gb,
     generate_median_insert_size,
