@@ -369,8 +369,11 @@ def get_runs():
     return _runs_with_instruments.copy(deep=True)
 
 def df_with_fastqc_data(df, merge_cols):
-    fastqc = get_fastqc()
-    fastqc = fastqc.groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])[FASTQC_COL.TotalSequences].sum().reset_index()
+    group = get_fastqc().groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])
+    total_reads = group[FASTQC_COL.TotalSequences].sum()
+    # Pick any read (1 or 2) and its total sequences are the clusters
+    total_clusters = group[FASTQC_COL.TotalSequences].first().rename("Total Clusters")
+    fastqc = pandas.concat([total_reads, total_clusters], axis=1).reset_index()
     df_with_fastqc = df.merge(
         fastqc,
         how="left",

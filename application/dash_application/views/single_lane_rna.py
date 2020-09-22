@@ -71,13 +71,16 @@ RUN_COLS = pinery.column.RunsColumn
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
     "Percent Uniq Reads": "Percent Unique Reads",
-    "rRNA Percent Contamination": "rRNA Percent Contamination"
+    "rRNA Percent Contamination": "rRNA Percent Contamination",
+    # Column comes from `df_with_fastqc_data` call
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 # Specify which columns to display in the DataTable
 first_col_set = [
     PINERY_COL.SampleName, PINERY_COL.StudyTitle,
     special_cols["Total Reads (Passed Filter)"],
+    special_cols["Total Clusters (Passed Filter)"],
     special_cols["Percent Uniq Reads"],
     special_cols["rRNA Percent Contamination"]
 ]
@@ -93,7 +96,7 @@ rnaseqqc_table_columns.remove(RnaColumn.InsertSD)
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
-initial["second_sort"] = RNA_COL.TotalReads
+initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_label = sidebar_utils.rrna_contamination_cutoff_label
@@ -113,12 +116,17 @@ def get_rna_data():
       * Runs (needed to join Pinery to Instruments)
     """
     rna_df = util.get_rnaseqqc2()
+    rna_df = util.df_with_fastqc_data(
+        rna_df, [RNA_COL.Run, RNA_COL.Lane, RNA_COL.Barcodes]
+    )
 
     # Calculate percent uniq reads column
     rna_df[special_cols["Percent Uniq Reads"]] = round(
         rna_df[RNA_COL.UniqueReads] / (rna_df[RNA_COL.NonPrimaryReads] + rna_df[RNA_COL.UniqueReads]) * 100, 1)
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNA_COL.TotalReads] / 1e6, 3)
+    rna_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        rna_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3)
     rna_df[special_cols["rRNA Percent Contamination"]] = round(
         rna_df[RNA_COL.RRnaContaminationProperlyPaired] / rna_df[RNA_COL.RRnaContaminationInTotal] * 100, 3
     )
@@ -173,8 +181,8 @@ shape_colour = ColourShapeSingleLane(
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
-    {"label": "Total Reads",
-     "value": RNA_COL.TotalReads},
+    {"label": "Total Clusters",
+     "value": special_cols["Total Clusters (Passed Filter)"]},
     {"label": "Unique Reads",
      "value": special_cols["Percent Uniq Reads"]},
     {"label": "5Prime to 3Prime Bias",
@@ -194,12 +202,12 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
@@ -308,7 +316,7 @@ def dataversion():
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_insert_mean,
     generate_unique_reads,
     generate_five_to_three,
