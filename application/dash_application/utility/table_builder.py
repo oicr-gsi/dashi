@@ -88,8 +88,9 @@ def _calculate_cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, C
                                                     ) in limits)])
 
 
-def printable_cutoff(cutoff: float) -> str:
-    if cutoff:
+def printable_cutoff(cutoff) -> str:
+    # Previously this tested 'if cutoff', however a cutoff of 0 would fail the test
+    if type(cutoff) == float or type(cutoff) == int:
         return "{:.3f}".format(cutoff)
     else:
         return "No valid cutoff given"
