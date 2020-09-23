@@ -243,6 +243,7 @@ def generate_total_clusters(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_clusters_per_sample_label, graph_params["cutoff_clusters_per_sample"])],
     )
 
 
@@ -458,8 +459,8 @@ def layout(query_string):
                     ids["insert-median-cutoff"], initial["cutoff_insert_median"]),
                 sidebar_utils.cutoff_input(cutoff_percent_duplication_label, 
                     ids["percent-duplication-cutoff"], initial["cutoff_percent_duplication"]),
-                # sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
-                #     ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
+                sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
+                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -490,8 +491,8 @@ def layout(query_string):
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, initial["cutoff_percent_duplication"],
                                     (lambda row, col, cutoff: row[col] >= cutoff)),
-                                    # (cutoff_clusters_per_sample_label, ???, initial["cutoff_clusters_per_sample"],
-                                    # (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], initial["cutoff_clusters_per_sample"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )                    
                         ])
@@ -538,7 +539,7 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["insert-median-cutoff"], 'value'),
             State(ids["percent-duplication-cutoff"], 'value'),
-            # State(ids["clusters-per-sample-cutoff"], 'value'),
+            State(ids["clusters-per-sample-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
             State('url', 'search'),
@@ -561,7 +562,7 @@ def init_callbacks(dash_app):
                        show_names,
                        insert_median_cutoff,
                        percent_duplication_cutoff,
-                    #    clusters_per_sample_cutoff,
+                       clusters_per_sample_cutoff,
                        start_date,
                        end_date,
                        search_query):
@@ -582,7 +583,7 @@ def init_callbacks(dash_app):
             "shownames_val": show_names,
             "cutoff_insert_median": insert_median_cutoff,
             "cutoff_percent_duplication": percent_duplication_cutoff,
-            # "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
         }
 
         dd = defaultdict(list)
@@ -591,8 +592,8 @@ def init_callbacks(dash_app):
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, percent_duplication_cutoff,
              (lambda row, col, cutoff: row[col] >= cutoff)),
-            # (cutoff_clusters_per_sample_label, ???, clusters_per_sample_cutoff,
-            #  (lambda row, col, cutoff: row[col] < cutoff)),
+            (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], clusters_per_sample_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
