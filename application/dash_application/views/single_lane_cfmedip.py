@@ -78,8 +78,7 @@ initial = get_initial_cfmedip_values()
 initial["second_sort"] = CFMEDIP_COL.RelativeCpGFrequencyEnrichment
 initial["institutes"] = []
 # Set initial values for graph cutoff lines
-# TODO: is this just clusters-per-sample worded differently?
-cutoff_minimum_clusters_label = "Clusters minimum"
+cutoff_minimum_clusters_label = sidebar_utils.clusters_per_sample_cutoff_label
 initial["cutoff_minimum_clusters"] = 0
 cutoff_relative_cpg_enrichment_label = "Relative CpG Enrichment 🚧 NO EFFECT"
 initial["cutoff_relative_cpg_enrichmnet"] = 0
