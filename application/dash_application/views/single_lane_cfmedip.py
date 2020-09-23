@@ -46,7 +46,11 @@ ids = init_ids([
     'search-sample-ext',
     'show-data-labels',
     'show-all-data-labels',
-    'passed-filter-reads-cutoff',
+    'minimum-clusters-cutoff',
+    'relative-cpg-enrichment-cutoff',
+    'at-dropout-cutoff',
+    'percent-thaliana-cutoff',
+    'methylation-beta-cutoff',
     "date-range",
 
     #Graphs
@@ -74,8 +78,16 @@ initial = get_initial_cfmedip_values()
 initial["second_sort"] = CFMEDIP_COL.RelativeCpGFrequencyEnrichment
 initial["institutes"] = []
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = sidebar_utils.total_reads_cutoff_label
-initial["cutoff_pf_reads"] = 0.01
+cutoff_minimum_clusters_label = sidebar_utils.clusters_per_sample_cutoff_label
+initial["cutoff_minimum_clusters"] = 0
+cutoff_relative_cpg_enrichment_label = "Relative CpG Enrichment 🚧 NO EFFECT"
+initial["cutoff_relative_cpg_enrichmnet"] = 0
+cutoff_at_dropout_label = "AT Dropout 🚧 NO EFFECT"
+initial["cutoff_at_dropout"] = 0
+cutoff_percent_thaliana_label = "% Thaliana minimum"
+initial["cutoff_percent_thaliana"] = 0
+cutoff_methylation_beta_label = "Methylation Beta 🚧 NO EFFECT"
+initial["cutoff_methylation_beta"] = 0
 
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
@@ -190,7 +202,6 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params["cutoff_pf_reads"])]
     )
 
 
@@ -215,6 +226,7 @@ def generate_relative_cpg_frequency_enrichment(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        # cutoff_lines=[(cutoff_relative_cpg_label, graph_params["cutoff_relative_cpg_enrichment"])]
     )
 
 def generate_observed_to_expected_enrichment(current_data, graph_params):
@@ -237,6 +249,7 @@ def generate_at_dropout(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        # cutoff_lines=[(cutoff_at_dropout_label, graph_params["cutoff_at_dropout"])]
     )
 
 def generate_percent_thaliana(current_data, graph_params):
@@ -248,6 +261,7 @@ def generate_percent_thaliana(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_percent_thaliana_label, graph_params["cutoff_percent_thaliana"])]
     )
 
 def generate_methylation_beta(current_data, graph_params):
@@ -259,6 +273,7 @@ def generate_methylation_beta(current_data, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        # cutoff_lines=[(cutoff_methylation_beta_label, graph_params["cutoff_methylation_beta"])]
     )
 
 
@@ -382,9 +397,17 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input(cutoff_pf_reads_label,
-                        ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
-                        
+                    # sidebar_utils.cutoff_input(cutoff_minimum_clusters_label,
+                    #     ids['minimum-clusters-cutoff'], initial["cutoff_minimum_clusters"]),
+                    # sidebar_utils.cutoff_input(cutoff_relative_cpg_enrichment_label,
+                    #     ids['relative-cpg-enrichment-cutoff'], initial["cutoff_relative_cpg_enrichment"]),
+                    # sidebar_utils.cutoff_input(cutoff_at_dropout_label,
+                    #     ids['at-dropout-cutoff'], initial["cutoff_at_dropout"]),
+                    sidebar_utils.cutoff_input(cutoff_percent_thaliana_label,
+                        ids['percent-thaliana-cutoff'], initial["cutoff_percent_thaliana"]),
+                    # sidebar_utils.cutoff_input(cutoff_methylation_beta_label,
+                    #     ids['methylation-beta-cutoff'], initial["cutoff_methylation_beta"]),
+                    
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
@@ -409,9 +432,21 @@ def layout(query_string):
                                 df,
                                 cfmedip_table_columns,
                                 [
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial["cutoff_pf_reads"],
+                                    # (cutoff_minimum_clusters_label,
+                                    # ???, initial["cutoff_minimum_clusters"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
+                                    # (cutoff_relative_cpg_enrichment_label,
+                                    # CFMEDIP_COL.RelativeCpGFrequencyEnrichment, initial["cutoff_relative_cpg_enrichment"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
+                                    # (cutoff_at_dropout_label,
+                                    # CFMEDIP_COL.ATDropout, initial["cutoff_at_dropout"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_percent_thaliana_label,
+                                    CFMEDIP_COL.PercentageAthaliana, initial["cutoff_percent_thaliana"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
+                                    # (cutoff_methylation_beta_label,
+                                    # CFMEDIP_COL.MethylationBeta, initial["cutoff_methylation_beta"],
+                                    # (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
                         ])
@@ -454,7 +489,11 @@ def init_callbacks(dash_app):
             State(ids['search-sample'], 'value'), 
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
-            State(ids['passed-filter-reads-cutoff'], 'value'),
+            # State(ids['minimum-clusters-cutoff'], 'value'),
+            # State(ids['relative-cpg-enrichment-cutoff'], 'value'),
+            # State(ids['at-dropout-cutoff'], 'value'),
+            State(ids['percent-thaliana-cutoff'], 'value'),
+            # State(ids['methylation-beta-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
             State('url', 'search'),
@@ -475,12 +514,14 @@ def init_callbacks(dash_app):
             searchsample,
             searchsampleext,
             show_names,
-            total_reads_cutoff,
+            # minimum_clusters_cutoff,
+            # relative_cpg_enrichment_cutoff,
+            # at_dropout_cutoff,
+            percent_thaliana_cutoff,
+            # methylation_beta_cutoff,
             start_date,
             end_date,
             search_query):
-        # sidebar_utils.update_only_if_clicked(click)
-        # sidebar_utils.update_only_if_clicked(click2)
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if searchsample and searchsampleext:
             searchsample += searchsampleext
@@ -496,14 +537,30 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "cutoff_pf_reads": total_reads_cutoff
+            # "cutoff_minimum_clusters": minimum_clusters_cutoff,
+            # "cutoff_relative_cpg_enrichment": relative_cpg_enrichment_cutoff,
+            # "cutoff_at_dropout": at_dropout_cutoff,
+            "cutoff_percent_thaliana": percent_thaliana_cutoff,
+            # "cutoff_methylation_beta": methylation_beta_cutoff,
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
-                                                    "Filter)"], total_reads_cutoff,
-                 (lambda row, col, cutoff: row[col] < cutoff)),
+                # (cutoff_minimum_clusters_label,
+                #     ???, minimum_clusters_cutoff,
+                #     (lambda row, col, cutoff: row[col] < cutoff)),
+                # (cutoff_relative_cpg_enrichment_label,
+                #     CFMEDIP_COL.RelativeCpGFrequencyEnrichment, relative_cpg_enrichment_cutoff,
+                #     (lambda row, col, cutoff: row[col] < cutoff)),
+                # (cutoff_at_dropout_label,
+                #     CFMEDIP_COL.ATDropout, at_dropout_cutoff,
+                #     (lambda row, col, cutoff: row[col] < cutoff)),
+                (cutoff_percent_thaliana_label,
+                    CFMEDIP_COL.PercentageAthaliana, percent_thaliana_cutoff,
+                    (lambda row, col, cutoff: row[col] < cutoff)),
+                # (cutoff_methylation_beta_label,
+                #     CFMEDIP_COL.MethylationBeta, methylation_beta_cutoff,
+                #     (lambda row, col, cutoff: row[col] < cutoff)),
             ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
