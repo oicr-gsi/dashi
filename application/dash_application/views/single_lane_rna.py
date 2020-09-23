@@ -211,7 +211,7 @@ def generate_total_clusters(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[{cutoff_clusters_per_sample_label, graph_params["cutoff_clusters_per_sample"]}]
+        cutoff_lines=[(cutoff_clusters_per_sample_label, graph_params["cutoff_clusters_per_sample"])]
     )
 
 def generate_insert_mean(df, graph_params):
