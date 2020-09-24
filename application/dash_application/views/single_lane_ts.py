@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
@@ -308,6 +309,7 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
+            html.Button("Test Button! Don't mind me!", id="miso-button"),
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
@@ -601,5 +603,14 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x['value'] for x in avail_options]
+
+    @dash_app.callback(
+        Output("miso-button", 'value'),
+        [Input("miso-button", 'n_clicks')]
+    )
+    def miso_button_pressed(click):
+        sidebar_utils.update_only_if_clicked(click)
+        print(miso_request)
+        raise PreventUpdate
 
     
