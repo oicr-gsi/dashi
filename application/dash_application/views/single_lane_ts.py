@@ -183,7 +183,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-miso_request = {}
+miso_request = {'report': page_name}
 
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
@@ -525,7 +525,10 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
-        #TODO: build the miso_request dictionary
+        #TODO: rewrite this more idiomatically for speed purposes
+        for index, row in df.iterrows():
+            thresholds_dict = {cutoff_pf_reads_label: {'threshold': total_reads_cutoff, 'actual': row[special_cols["Total Reads (Passed Filter)"]]}}
+            miso_request[row[PINERY_COL.SampleName]] = thresholds_dict
 
         return [
             approve_run_href,
