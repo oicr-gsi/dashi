@@ -183,6 +183,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
+miso_request = {}
 
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
@@ -523,6 +524,8 @@ def init_callbacks(dash_app):
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
+
+        #TODO: build the miso_request dictionary
 
         return [
             approve_run_href,
