@@ -108,7 +108,8 @@ initial["cutoff_insert_median"] = 150
 cutoff_percent_duplication_label = sidebar_utils.percent_duplication_cutoff_label
 initial["cutoff_percent_duplication"] = 50
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
-initial["cutoff_clusters_per_sample"] = 10000
+# This is 10 000, but the stat is / 10^6
+initial["cutoff_clusters_per_sample"] = 0.01
 
 
 def get_wgs_data():

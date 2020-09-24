@@ -104,7 +104,8 @@ initial["cutoff_rrna"] = 35
 cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
 initial["cutoff_insert_mean"] = 150
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
-initial["cutoff_clusters_per_sample"] = 10000
+# This is 10 000, but the stat is / 10^6
+initial["cutoff_clusters_per_sample"] = 0.01
 
 
 def get_rna_data():
