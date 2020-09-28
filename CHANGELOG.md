@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [200928-1530] - 2020-09-28
 ## Changed
   * Use Total Clusters instead of Total Reads in single lane views
+  * New thresholds for cfMeDIP report
 
 ## [200921-1501] - 2020-09-21
 ## Changed
