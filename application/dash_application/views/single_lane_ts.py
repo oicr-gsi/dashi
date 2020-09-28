@@ -12,6 +12,8 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column, FastqcColumn
 import pinery
 import logging
+import requests
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -610,7 +612,20 @@ def init_callbacks(dash_app):
     )
     def miso_button_pressed(click):
         sidebar_utils.update_only_if_clicked(click)
-        print(miso_request)
+        #TODO: not 'fake_endpoint'
+        endpoint = os.getenv("MISO_URL")+"fake_endpoint"
+        logger.info("Sending request {0} to endpoint {1}".format(
+            miso_request,
+            endpoint
+        ))
+        response = requests.post(endpoint, miso_request)
+        logger.info("We got response code {0} back".format(response.status_code))
+        if not response.status_code == 200:
+            logger.error("MISO Endpoint at {0} returned code {1}, response.text: {2}".format(
+                endpoint,
+                response.status_code,
+                response.text
+            ))
         raise PreventUpdate
 
     
