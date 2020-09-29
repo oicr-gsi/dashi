@@ -62,9 +62,6 @@ def _calculate_cutoff_table_data(data: DataFrame, limits: List[Tuple[str, str, C
         for (name, column, cutoff, fail_fn) in limits:
             if fail_fn is None:
                 failures[name] = "Passed ({:.3f})".format(row[column])
-            elif numpy.isnan(row[column]):
-                failures[name] = "Missing"
-                has_failures = True
             else:
                 maybe_failed = fail_fn(row, column, cutoff)
                 if maybe_failed is None:

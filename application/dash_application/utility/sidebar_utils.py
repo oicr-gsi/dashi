@@ -16,7 +16,7 @@ total_reads_cutoff_label = "Passed Filter Reads (* 10^6) minimum"
 insert_mean_cutoff_label = "Mean Insert Size minimum"
 insert_median_cutoff_label = "Median Insert Size minimum"
 percent_duplication_cutoff_label = "% Duplication maximum"
-clusters_per_sample_cutoff_label = "Clusters per Sample minimum"
+clusters_per_sample_cutoff_label = "Clusters per Sample (* 10^6) minimum"
 rrna_contamination_cutoff_label = "rRNA Contamination maximum"
 
 
