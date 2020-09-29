@@ -311,7 +311,10 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
-            html.Button("Test Button! Don't mind me!", id="miso-button"),
+            html.Form(id="the-form", children=[
+                core.Input(id="hidden-info", type="hidden", value=miso_request),
+                html.Button("Test Button! Don't mind me!", id="miso-button", type="submit"),
+            ], method="POST", action=os.getenv("MISO_URL")+"fake_endpoint"),
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
@@ -606,26 +609,26 @@ def init_callbacks(dash_app):
         sidebar_utils.update_only_if_clicked(click)
         return [x['value'] for x in avail_options]
 
-    @dash_app.callback(
-        Output("miso-button", 'value'),
-        [Input("miso-button", 'n_clicks')]
-    )
-    def miso_button_pressed(click):
-        sidebar_utils.update_only_if_clicked(click)
-        #TODO: not 'fake_endpoint'
-        endpoint = os.getenv("MISO_URL")+"fake_endpoint"
-        logger.info("Sending request {0} to endpoint {1}".format(
-            miso_request,
-            endpoint
-        ))
-        response = requests.post(endpoint, miso_request)
-        logger.info("We got response code {0} back".format(response.status_code))
-        if not response.status_code == 200:
-            logger.error("MISO Endpoint at {0} returned code {1}, response.text: {2}".format(
-                endpoint,
-                response.status_code,
-                response.text
-            ))
-        raise PreventUpdate
+    # @dash_app.callback(
+    #     Output("miso-button", 'value'),
+    #     [Input("miso-button", 'n_clicks')]
+    # )
+    # def miso_button_pressed(click):
+    #     sidebar_utils.update_only_if_clicked(click)
+    #     #TODO: not 'fake_endpoint'
+    #     endpoint = os.getenv("MISO_URL")+"fake_endpoint"
+    #     logger.info("Sending request {0} to endpoint {1}".format(
+    #         miso_request,
+    #         endpoint
+    #     ))
+    #     response = requests.post(endpoint, miso_request)
+    #     logger.info("We got response code {0} back".format(response.status_code))
+    #     if not response.status_code == 200:
+    #         logger.error("MISO Endpoint at {0} returned code {1}, response.text: {2}".format(
+    #             endpoint,
+    #             response.status_code,
+    #             response.text
+    #         ))
+    #     raise PreventUpdate
 
     
