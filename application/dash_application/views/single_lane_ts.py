@@ -14,7 +14,7 @@ import pinery
 import logging
 import requests
 import os
-
+import pdb
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
@@ -186,7 +186,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-miso_request = {'report': page_name}
+miso_request = {'report': title, 'library_aliquots': []}
 
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
@@ -534,9 +534,17 @@ def init_callbacks(dash_app):
 
         #TODO: rewrite this more idiomatically for speed purposes
         for index, row in df.iterrows():
-            thresholds_dict = {cutoff_pf_reads_label: {'threshold': total_reads_cutoff, 'actual': row[special_cols["Total Reads (Passed Filter)"]]}}
-            miso_request[row[PINERY_COL.SampleName]] = thresholds_dict
-
+            miso_request['library_aliquots'].append({
+                'name': row[PINERY_COL.SampleName], #TODO: Change to ID
+                'metrics': [{
+                    'title': 'Passed Filter Reads (*10^6)',
+                    'threshold_type': 'minimum',
+                    'threshold': total_reads_cutoff,
+                    'value': row[special_cols["Total Reads (Passed Filter)"]]
+                }],
+                'run': row[PINERY_COL.SequencerRunName]
+            })
+        logger.info(miso_request)
         return [
             approve_run_href,
             approve_run_style,
