@@ -535,7 +535,7 @@ def init_callbacks(dash_app):
         #TODO: rewrite this more idiomatically for speed purposes
         for index, row in df.iterrows():
             miso_request['library_aliquots'].append({
-                'name': row[PINERY_COL.SampleName], #TODO: Change to ID
+                'name': row[PINERY_COL.SampleProvenanceID].split('_')[2],
                 'metrics': [{
                     'title': 'Passed Filter Reads (*10^6)',
                     'threshold_type': 'minimum',
