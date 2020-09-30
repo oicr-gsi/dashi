@@ -545,7 +545,7 @@ def init_callbacks(dash_app):
                 }],
                 'run': row[PINERY_COL.SequencerRunName]
             })
-        logger.info(miso_request)
+            
         return [
             approve_run_href,
             approve_run_style,
