@@ -14,7 +14,7 @@ import pinery
 import logging
 import requests
 import os
-import pdb
+import json
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
@@ -312,9 +312,9 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Form(id="the-form", children=[
-                core.Input(id="hidden-info", type="hidden", value=miso_request),
-                html.Button("Test Button! Don't mind me!", id="miso-button", type="submit"),
-            ], method="POST", action=os.getenv("MISO_URL")+"fake_endpoint"),
+                core.Input(id="hidden-info", type="hidden", name="data", value=json.dumps(miso_request)),
+                core.Input(id="miso-button", value="Test Button! Don't mind me!", type="submit"),
+            ], method="POST", action=os.getenv("MISO_URL")+"fake_endpoint"), #TODO: once you've demonstrated this works, add target="_blank"
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
@@ -457,6 +457,7 @@ def init_callbacks(dash_app):
             Output(ids["search-sample-ext"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
+            Output("hidden-info", "value"),
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -532,7 +533,7 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
-        #TODO: rewrite this more idiomatically for speed purposes
+        #TODO: rewrite this more idiomatically for speed purposes? is that possible?
         for index, row in df.iterrows():
             miso_request['library_aliquots'].append({
                 'name': row[PINERY_COL.SampleProvenanceID].split('_')[2],
@@ -557,7 +558,8 @@ def init_callbacks(dash_app):
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
-            jira_style
+            jira_style,
+            json.dumps(miso_request)
         ]
 
     @dash_app.callback(
