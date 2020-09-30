@@ -14,7 +14,7 @@ from ..utility import log_utils
 logger = logging.getLogger(__name__)
 
 page_name = 'call-ready-ts'
-title = "Call-Ready TS"
+title = "Call-Ready Targeted Sequencing"
 
 ids = init_ids([
     # Buttons
