@@ -477,6 +477,16 @@ def remove_suffixed_columns(df: DataFrame, suffix: str) -> DataFrame:
     return df.drop(to_drop, axis=1)
 
 def build_miso_http_body(df, page_title, metrics):
+    """
+    Builds the JSON for the http body for the request to MISO.
+    Expects an array of dicts in the format:
+    [{
+        'title': threshold name minus the 'maximum' or 'minimum', 
+        'threshold_type': gt, ge, lt, le
+        'threshold': the current threshold setting from the sidebar,
+        'value': the column to check in the dataframe for this threshold
+    }]
+    """
     miso_request = {'report': page_title, 'library_aliquots': []}
     for index, row in df.iterrows():
         split_provenance_id = row[PINERY_COL.SampleProvenanceID].split('_')
