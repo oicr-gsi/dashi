@@ -318,7 +318,7 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
-                    sidebar_utils.miso_qc_button("hidden-info"),
+                    sidebar_utils.miso_qc_button("hidden-info", "miso-button"),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -451,6 +451,7 @@ def init_callbacks(dash_app):
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
             Output("hidden-info", "value"),
+            Output("miso-button", "style")
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -526,7 +527,7 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
-        miso_request = util.build_miso_http_body(df, title, 
+        (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
                 'title': 'Passed Filter Reads (*10^6)',
                 'threshold_type': 'minimum',
@@ -534,6 +535,7 @@ def init_callbacks(dash_app):
                 'value': special_cols["Total Reads (Passed Filter)"]
             }]
         )
+
         return [
             approve_run_href,
             approve_run_style,
@@ -547,7 +549,8 @@ def init_callbacks(dash_app):
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
             jira_style,
-            miso_request
+            miso_request,
+            miso_button_style
         ]
 
     @dash_app.callback(
