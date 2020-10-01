@@ -532,7 +532,7 @@ def init_callbacks(dash_app):
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
                 'title': 'Passed Filter Reads (*10^6)',
-                'threshold_type': 'minimum',
+                'threshold_type': 'gt',
                 'threshold': total_reads_cutoff,
                 'value': special_cols["Total Reads (Passed Filter)"]
             }]
