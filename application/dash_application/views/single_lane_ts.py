@@ -11,8 +11,6 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column, FastqcColumn
 import pinery
 import logging
-import os
-import json
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
