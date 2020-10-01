@@ -1,6 +1,8 @@
 import datetime
 import re
 import urllib.parse
+import json
+import os
 from typing import List, Dict, Tuple, Union
 
 import dash_core_components as core
@@ -401,3 +403,13 @@ def update_only_if_clicked(click):
     to cancel further action in this callback. """
     if click is None: raise PreventUpdate
 
+def miso_qc_button(id, initial_request):
+    return html.Form(children=[
+        core.Input(id=id, type="hidden", name="data", value=json.dumps(initial_request)),
+        
+        # button text subject to change
+        core.Input(value="QC in MISO", type="submit")
+    ],
+    method="POST",
+    action=os.getenv("MISO_URL")+"fake_endpoint",
+    target="_blank")

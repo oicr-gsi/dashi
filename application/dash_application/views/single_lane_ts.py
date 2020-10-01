@@ -309,10 +309,7 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
-            html.Form(children=[
-                core.Input(id="hidden-info", type="hidden", name="data", value=json.dumps(miso_request)),
-                core.Input(value="Test Button! Don't mind me!", type="submit"),
-            ], method="POST", action=os.getenv("MISO_URL")+"fake_endpoint"), #TODO: once you've demonstrated this works, add target="_blank"
+            sidebar_utils.miso_qc_button("miso-button", miso_request),
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
