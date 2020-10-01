@@ -6,7 +6,7 @@ from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import gsiqcetl.common.utility
 import pinery
-
+import json
 
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
@@ -475,3 +475,22 @@ def remove_suffixed_columns(df: DataFrame, suffix: str) -> DataFrame:
     """
     to_drop = [col_name for col_name in df if col_name.endswith(suffix)]
     return df.drop(to_drop, axis=1)
+
+def build_miso_http_body(df, page_title, metrics):
+    miso_request = {'report': page_title, 'library_aliquots': []}
+    for index, row in df.iterrows():
+        split_provenance_id = row[PINERY_COL.SampleProvenanceID].split('_')
+        metrics_this_row = []
+        for metric in metrics:
+            metrics_this_row.append({
+                'title': metric['title'],
+                'threshold_type': metric['threshold_type'],
+                'threshold': metric['threshold'],
+                'value': row[metric['value']]
+            })
+        miso_request['library_aliquots'].append({
+            'name': split_provenance_id[2],
+            'metrics': metrics_this_row,
+            'run': split_provenance_id[0]
+        })
+    return json.dumps(miso_request)

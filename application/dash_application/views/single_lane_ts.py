@@ -184,8 +184,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-miso_request = {'report': title, 'library_aliquots': []}
-
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
         "Total Clusters (Passed Filter)",
@@ -309,7 +307,7 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
-            sidebar_utils.miso_qc_button("miso-button", miso_request),
+            sidebar_utils.miso_qc_button("hidden-info"),
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
@@ -528,19 +526,14 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
-        #TODO: rewrite this more idiomatically for speed purposes? is that possible?
-        for index, row in df.iterrows():
-            miso_request['library_aliquots'].append({
-                'name': row[PINERY_COL.SampleProvenanceID].split('_')[2],
-                'metrics': [{
-                    'title': 'Passed Filter Reads (*10^6)',
-                    'threshold_type': 'minimum',
-                    'threshold': total_reads_cutoff,
-                    'value': row[special_cols["Total Reads (Passed Filter)"]]
-                }],
-                'run': row[PINERY_COL.SequencerRunName]
-            })
-            
+        miso_request = util.build_miso_http_body(df, title, 
+            [{
+                'title': 'Passed Filter Reads (*10^6)',
+                'threshold_type': 'minimum',
+                'threshold': total_reads_cutoff,
+                'value': special_cols["Total Reads (Passed Filter)"]
+            }]
+        )
         return [
             approve_run_href,
             approve_run_style,
@@ -554,7 +547,7 @@ def init_callbacks(dash_app):
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
             jira_style,
-            json.dumps(miso_request)
+            miso_request
         ]
 
     @dash_app.callback(

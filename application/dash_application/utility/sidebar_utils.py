@@ -403,13 +403,14 @@ def update_only_if_clicked(click):
     to cancel further action in this callback. """
     if click is None: raise PreventUpdate
 
-def miso_qc_button(id, initial_request):
+def miso_qc_button(id):
     return html.Form(children=[
-        core.Input(id=id, type="hidden", name="data", value=json.dumps(initial_request)),
+        core.Input(id=id, type="hidden", name="data", value=json.dumps("{}")),
         
         # button text subject to change
         core.Input(value="QC in MISO", type="submit")
     ],
     method="POST",
     action=os.getenv("MISO_URL")+"fake_endpoint",
-    target="_blank")
+    #target="_blank"
+    )
