@@ -25,6 +25,8 @@ ids = init_ids([
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
+    'miso-request-body',
+    'miso-button',
 
     # Sidebar controls
     'all-runs',
@@ -318,7 +320,7 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
-                    sidebar_utils.miso_qc_button("hidden-info", "miso-button"),
+                    sidebar_utils.miso_qc_button(ids["miso-request-body"], ids["miso-button"]),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -450,8 +452,8 @@ def init_callbacks(dash_app):
             Output(ids["search-sample-ext"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
-            Output("hidden-info", "value"),
-            Output("miso-button", "style")
+            Output(ids["miso-request-body"], "value"),
+            Output(ids["miso-button"], "style")
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
