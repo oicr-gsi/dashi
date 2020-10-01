@@ -62,11 +62,9 @@ footer {
 }
 
 .sidebar .approve-run {
-    float: right;
-    width: 60%;
+    float: left;
+    width: 30%;
     overflow: hidden;
-    padding-left: 8%;
-    padding-right: 8%;
 }
 
 .sidebar .update-button {
@@ -74,8 +72,6 @@ footer {
     width: 30%;
     float: left;
     overflow: hidden;
-    padding-left: 8%;
-    padding-right: 8%;
 }
 
 .data-table .dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner table {
@@ -377,6 +373,13 @@ input[type="button"] {
     box-sizing: border-box;
 }
 
+.sidebar .miso-qc-button {
+    float: left;
+    width: 30%;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+}
+
 .button:hover,
 button:hover,
 input[type="submit"]:hover,
@@ -580,6 +583,7 @@ figure,
 table,
 form {
     margin-bottom: 0rem;
+    float: none;
 }
 
 p,

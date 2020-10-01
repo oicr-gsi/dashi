@@ -408,7 +408,7 @@ def miso_qc_button(id):
         core.Input(id=id, type="hidden", name="data", value=json.dumps("{}")),
         
         # button text subject to change
-        core.Input(value="QC in MISO", type="submit")
+        core.Input(value="QC in MISO", type="submit", className="miso-qc-button")
     ],
     method="POST",
     action=os.getenv("MISO_URL")+"fake_endpoint",

@@ -307,7 +307,6 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
-            sidebar_utils.miso_qc_button("hidden-info"),
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
@@ -319,6 +318,7 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
+                    sidebar_utils.miso_qc_button("hidden-info"),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
