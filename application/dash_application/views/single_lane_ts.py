@@ -82,7 +82,7 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
-cutoff_pf_clusters_label = sidebar_utils.total_clusters_cutoff_label
+cutoff_pf_clusters_label = sidebar_utils.clusters_per_sample_cutoff_label
 initial["cutoff_pf_clusters"] = 0.01
 cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
 initial["cutoff_insert_median"] = 150
