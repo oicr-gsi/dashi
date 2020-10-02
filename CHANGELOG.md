@@ -9,6 +9,9 @@ and as of version 1.0.0, follows semantic versioning.
 ## Changed
   * Add clusters-per-sample thresholds
   * 'Missing' info no longer appears in Failed Samples table
+  * Bumped gsi-qc-etl to 0.41.0
+  * Call ready graphs new use clusters instead of reads
+  * Single lane TS cutoffs were switched to clusters
 
 ## [200928-1530] - 2020-09-28
 ## Changed
