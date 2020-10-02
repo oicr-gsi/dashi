@@ -81,6 +81,7 @@ special_cols = {
     "Total Bait Bases": "Total bait bases",
     "On Bait Percentage": "On Bait Percentage",
     "Near Bait Percentage": "Near Bait Percentage",
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 
@@ -112,6 +113,8 @@ def get_merged_ts_data():
 
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
     bamqc3_df[special_cols["Percent Unique Reads (PF)"]] = round(
         bamqc3_df[BAMQC_COL.NonPrimaryReads] / bamqc3_df[
             BAMQC_COL.TotalReads], 3)
@@ -169,12 +172,12 @@ ts_table_columns = TS_DF.columns
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = BAMQC_COL.TotalClusters
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_tumour_label = "Total PF Reads (Tumour) minimum"
-initial["cutoff_pf_reads_tumour"] = 148
-cutoff_pf_reads_normal_label = "Total PF Reads (Normal) minimum"
-initial["cutoff_pf_reads_normal"] = 44
+cutoff_pf_clusters_tumour_label = "Total PF Reads (Tumour) minimum"
+initial["cutoff_pf_clusters_tumour"] = 74
+cutoff_pf_clusters_normal_label = "Total PF Reads (Normal) minimum"
+initial["cutoff_pf_clusters_normal"] = 22
 cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
 initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
@@ -212,8 +215,8 @@ shape_colour = ColourShapeCallReady(
 TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
 
 SORT_BY = shape_colour.dropdown() + [
-    {"label": "Total Reads",
-     "value": BAMQC_COL.TotalReads},
+    {"label": "Total Clusters",
+     "value": BAMQC_COL.TotalClusters},
     {"label": "Median Target Coverage",
      "value": HSMETRICS_COL.MedianTargetCoverage},
     {"label": "Callability",
@@ -238,17 +241,17 @@ SORT_BY = shape_colour.dropdown() + [
      "value": util.ml_col}
 ]
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_normal_label, graph_params["cutoff_pf_reads_normal"]),
-         (cutoff_pf_reads_tumour_label, graph_params["cutoff_pf_reads_tumour"])]
+        cutoff_lines=[(cutoff_pf_clusters_normal_label, graph_params["cutoff_pf_clusters_normal"]),
+         (cutoff_pf_clusters_tumour_label, graph_params["cutoff_pf_clusters_tumour"])]
     )
 
 
@@ -375,7 +378,7 @@ def generate_bait(df):
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_median_target_coverage,
     generate_callability,
     generate_median_insert_size,
@@ -464,10 +467,10 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_tumour_label),
-                                               ids["pf-tumour-cutoff"], initial["cutoff_pf_reads_tumour"]),
-                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_reads_normal_label),
-                                               ids["pf-normal-cutoff"], initial["cutoff_pf_reads_normal"]),
+                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_tumour_label),
+                                               ids["pf-tumour-cutoff"], initial["cutoff_pf_clusters_tumour"]),
+                    sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_normal_label),
+                                               ids["pf-normal-cutoff"], initial["cutoff_pf_clusters_normal"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["tumour-coverage-cutoff"], initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
@@ -507,11 +510,11 @@ def layout(query_string):
                                 df,
                                 ts_table_columns,
                                 [
-                                    (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial["cutoff_pf_reads_tumour"],
+                                    (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
+                                    initial["cutoff_pf_clusters_tumour"],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
-                                    initial["cutoff_pf_reads_normal"],
+                                    (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
+                                    initial["cutoff_pf_clusters_normal"],
                                     (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                     (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
                                     initial["cutoff_coverage_tumour"],
@@ -611,16 +614,16 @@ def init_callbacks(dash_app):
             "cutoff_duplicate_rate": duplicate_rate_max,
             "cutoff_callability": callability_cutoff,
             "cutoff_insert_median": insert_size_cutoff,
-            "cutoff_pf_reads_tumour": pf_tumour_cutoff,
-            "cutoff_pf_reads_normal": pf_normal_cutoff
+            "cutoff_pf_clusters_tumour": pf_tumour_cutoff,
+            "cutoff_pf_clusters_normal": pf_normal_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            (cutoff_pf_reads_tumour_label, special_cols["Total Reads (Passed Filter)"],
+            (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
              pf_tumour_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_pf_reads_normal_label, special_cols["Total Reads (Passed Filter)"],
+            (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage, tumour_coverage_cutoff,

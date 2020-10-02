@@ -77,7 +77,8 @@ special_cols = {
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
-    "Tumor Purity (%)": "tumor purity percentage"
+    "Tumor Purity (%)": "tumor purity percentage",
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 
@@ -113,6 +114,8 @@ def get_merged_wgs_data():
         callability_df[CALL_COL.Callability] * 100.0, 3)
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
     bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (
                 bamqc3_df[BAMQC_COL.NonPrimaryReads] /
                 bamqc3_df[BAMQC_COL.TotalReads])) * 100
@@ -167,7 +170,7 @@ wgs_table_columns = WGS_DF.columns
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = BAMQC_COL.TotalReads
+initial["second_sort"] = BAMQC_COL.TotalClusters
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 # TODO: This is supposed to depend on Coverage being 80x/30x?
@@ -222,8 +225,8 @@ WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
 
 SORT_BY = shape_colour.dropdown() + [
     {
-        "label": "Total Reads (Passed Filter)",
-        "value": BAMQC_COL.TotalReads
+        "label": "Total Clusters (Passed Filter)",
+        "value": BAMQC_COL.TotalClusters
     },
     {
         "label": "Coverage (Deduplicated)",
@@ -256,11 +259,11 @@ SORT_BY = shape_colour.dropdown() + [
 ]
 
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
         "# PF Reads X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -378,7 +381,7 @@ def generate_unmapped_reads(df, graph_params):
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_deduplicated_coverage,
     generate_deduplicated_coverage_per_gb,
     generate_median_coverage,

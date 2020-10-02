@@ -66,7 +66,8 @@ special_cols = {
     "Total Reads (Passed Filter)": "Total reads passed filter",
     "Unique Reads (PF)": "Unique reads",
     "File SWID RNAseqQC": "File SWID RNAseqQC",
-    "% rRNA Contamination": "Percent rRNA Contamination"
+    "% rRNA Contamination": "Percent rRNA Contamination",
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 def get_merged_rna_data():
@@ -83,6 +84,8 @@ def get_merged_rna_data():
 
     rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
         rna_df[RNASEQQC2_COL.TotalReads] / 1e6, 3)
+    rna_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        rna_df[RNASEQQC2_COL.TotalClusters] / 1e6, 3)
     rna_df[special_cols["Unique Reads (PF)"]] = round(
         rna_df[RNASEQQC2_COL.UniqueReads] / rna_df[RNASEQQC2_COL.TotalReads], 3)
     rna_df[special_cols["% rRNA Contamination"]] = round(
@@ -108,13 +111,13 @@ rna_table_columns.remove(RNASEQQC2_COL.InsertSD)
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = RNASEQQC2_COL.TotalReads
+initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label
 initial["cutoff_rrna_contam"] = 35
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
-initial["cutoff_clusters_per_sample"] = 80000000
+initial["cutoff_clusters_per_sample"] = 80
 cutoff_percent_mapped_to_coding_label = "% Mapped to Coding"
 initial["cutoff_percent_mapped_to_coding"] = 5
 cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
@@ -146,8 +149,8 @@ shape_colour = ColourShapeCallReady(
 RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df(), None, True)
 
 SORT_BY = shape_colour.dropdown() + [
-    {"label":"Total Reads",
-     "value": RNASEQQC2_COL.TotalReads},
+    {"label":"Total Clusters",
+     "value": special_cols["Total Clusters (Passed Filter)"]},
     {"label": "5 to 3 Prime Bias",
      "value": RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias},
     {"label": "% Correct Read Strand",
@@ -160,15 +163,16 @@ SORT_BY = shape_colour.dropdown() + [
      "value": util.ml_col}
 ]
 
-def generate_total_reads(df, graph_params):
+def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Reads (Passed Filter)",
+        "Total Clusters (Passed Filter)",
         df,
-        lambda d: d[special_cols["Total Reads (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_clusters_per_sample_label, graph_params["cutoff_clusters_per_sample"])],
     )
 
 def generate_mean_insert_size(df, graph_params):
@@ -235,7 +239,7 @@ def generate_rrna_contam(df, graph_params):
 
 
 GRAPHS = [
-    generate_total_reads,
+    generate_total_clusters,
     generate_mean_insert_size,
     generate_five_to_three,
     generate_correct_read_strand,
@@ -323,8 +327,8 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label, ids["insert-mean-cutoff"],
                         initial["cutoff_insert_mean"]),
-                    # sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
-                    #     initial["cutoff_clusters_per_sample"]),
+                    sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
+                        initial["cutoff_clusters_per_sample"]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
                         initial["cutoff_rrna_contam"]),
                     sidebar_utils.cutoff_input(cutoff_percent_mapped_to_coding_label,
@@ -357,9 +361,9 @@ def layout(query_string):
                                     (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean,
                                     initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    # (cutoff_clusters_per_sample_label, ???,
-                                    # initial["cutoff_clusters_per_sample"],
-                                    # (lambda row, col, cutoff: row[col] < cutoff)),
+                                    (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"],
+                                    initial["cutoff_clusters_per_sample"],
+                                    (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
                                     initial["cutoff_rrna_contam"],
                                     (lambda row, col, cutoff: row[col] > cutoff)),
@@ -403,7 +407,7 @@ def init_callbacks(dash_app):
             State(ids["search-sample"], "value"),
             State(ids["search-sample-ext"], "value"),
             State(ids["insert-mean-cutoff"], "value"),
-            # State(ids["clusters-per-sample-cutoff"], "value"),
+            State(ids["clusters-per-sample-cutoff"], "value"),
             State(ids["rrna-contam-cutoff"], "value"),
             State(ids["percent-mapped-to-coding-cutoff"], "value"),
             State('url', 'search'),
@@ -423,7 +427,7 @@ def init_callbacks(dash_app):
                        search_sample,
                        searchsampleext,
                        insert_mean_cutoff,
-                    #    clusters_per_sample_cutoff,
+                       clusters_per_sample_cutoff,
                        rrna_contam_cutoff,
                        percent_mapped_to_coding_cutoff,
                        search_query):
@@ -442,7 +446,7 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             "cutoff_insert_mean": insert_mean_cutoff,
-            # "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
+            "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
             "cutoff_rrna_contam": rrna_contam_cutoff,
             "cutoff_percent_mapped_to_coding": percent_mapped_to_coding_cutoff,
         }
@@ -450,8 +454,8 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
             (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean, insert_mean_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            # (cutoff_clusters_per_sample_label, ???, clusters_per_sample_cutoff,
-            #  (lambda row, col, cutoff: row[col] > cutoff)),
+            (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], clusters_per_sample_cutoff,
+             (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
             (cutoff_percent_mapped_to_coding_label, RNASEQQC2_COL.MetricsPercentCodingBases, percent_mapped_to_coding_cutoff,

@@ -47,7 +47,7 @@ ids = init_ids([
     'show-data-labels',
     'show-all-data-labels',
     'insert-size-median-cutoff',
-    'passed-filter-reads-cutoff',
+    'passed-filter-clusters-cutoff',
     "date-range",
 
     #Graphs
@@ -82,8 +82,8 @@ initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
-cutoff_pf_reads_label = sidebar_utils.total_reads_cutoff_label
-initial["cutoff_pf_reads"] = 0.01
+cutoff_pf_clusters_label = sidebar_utils.total_clusters_cutoff_label
+initial["cutoff_pf_clusters"] = 0.01
 cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
 initial["cutoff_insert_median"] = 150
 
@@ -193,7 +193,7 @@ def generate_total_clusters(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_pf_reads_label, graph_params["cutoff_pf_reads"])]
+        cutoff_lines=[(cutoff_pf_clusters_label, graph_params["cutoff_pf_clusters"])]
     )
 
 
@@ -390,8 +390,8 @@ def layout(query_string):
                     sidebar_utils.hr(),
 
                     # Cutoffs
-                    sidebar_utils.cutoff_input(cutoff_pf_reads_label,
-                        ids['passed-filter-reads-cutoff'], initial["cutoff_pf_reads"]),
+                    sidebar_utils.cutoff_input(cutoff_pf_clusters_label,
+                        ids['passed-filter-clusters-cutoff'], initial["cutoff_pf_clusters"]),
                     sidebar_utils.cutoff_input(cutoff_insert_median_label,
                         ids['insert-size-median-cutoff'], initial["cutoff_insert_median"]),
                     
@@ -421,8 +421,8 @@ def layout(query_string):
                                 [
                                     (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_pf_reads_label,
-                                    special_cols["Total Reads (Passed Filter)"], initial["cutoff_pf_reads"],
+                                    (cutoff_pf_clusters_label,
+                                    special_cols["Total Clusters (Passed Filter)"], initial["cutoff_pf_clusters"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             ),
@@ -467,7 +467,7 @@ def init_callbacks(dash_app):
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
             State(ids['insert-size-median-cutoff'], 'value'),
-            State(ids['passed-filter-reads-cutoff'], 'value'),
+            State(ids['passed-filter-clusters-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
             State('url', 'search'),
@@ -489,7 +489,7 @@ def init_callbacks(dash_app):
             searchsampleext,
             show_names,
             insert_median_cutoff,
-            total_reads_cutoff,
+            total_clusters_cutoff,
             start_date,
             end_date,
             search_query):
@@ -508,7 +508,7 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "cutoff_pf_reads": total_reads_cutoff,
+            "cutoff_pf_clusters": total_clusters_cutoff,
             "cutoff_insert_median": insert_median_cutoff
         }
 
@@ -516,8 +516,8 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
                 (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_median_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
-                (cutoff_pf_reads_label, special_cols["Total Reads (Passed "
-                                                    "Filter)"], total_reads_cutoff,
+                (cutoff_pf_clusters_label, special_cols["Total Clusters (Passed "
+                                                    "Filter)"], total_clusters_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
             ])
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)

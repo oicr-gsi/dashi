@@ -12,7 +12,7 @@ import pinery.column
 import gsiqcetl.column
 from . import df_manipulation as df_tools
 
-total_reads_cutoff_label = "Passed Filter Reads (* 10^6) minimum"
+total_clusters_cutoff_label = "Passed Filter Clusters (* 10^6) minimum"
 insert_mean_cutoff_label = "Mean Insert Size minimum"
 insert_median_cutoff_label = "Median Insert Size minimum"
 percent_duplication_cutoff_label = "% Duplication maximum"
