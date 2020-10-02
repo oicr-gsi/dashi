@@ -23,6 +23,7 @@ Create a `.env` file in the root directory of this repository:
 | `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes** | Directory where the QC-ETL caches are located | `/qcetl` | |
 | `MONGO_URL` | **Yes** | URL to location of MongoDB which holds Pinery data | `mongodb://user:password@mongo_web_url:27017/db_name` | |
 | `PINERY_URL` | **Yes** | URL to location of Pinery web service root | `http://pinery-url:8080/pinery-ws-miso` | 
+| `MISO_URL` | **Yes** | URL to location of MISO web service root | `http://miso.your.domain/` |
 | `LOG_FILE_LOCATION` | **Yes** | File path where logs should be written | `~/logs/dashi.log` | `./dashi.log` |
 | `LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` | do not log |
 | `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` | use release version |
