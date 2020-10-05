@@ -174,9 +174,9 @@ initial = get_initial_call_ready_values()
 # Set additional initial values for dropdown menus
 initial["second_sort"] = BAMQC_COL.TotalClusters
 # Set initial values for graph cutoff lines
-cutoff_pf_clusters_tumour_label = "Total PF Reads (Tumour) minimum"
+cutoff_pf_clusters_tumour_label = "Total PF Clusters (Tumour) minimum"
 initial["cutoff_pf_clusters_tumour"] = 74
-cutoff_pf_clusters_normal_label = "Total PF Reads (Normal) minimum"
+cutoff_pf_clusters_normal_label = "Total PF Clusters (Normal) minimum"
 initial["cutoff_pf_clusters_normal"] = 22
 cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
 initial["cutoff_coverage_tumour"] = 80
@@ -246,7 +246,7 @@ def generate_total_clusters(df, graph_params):
         "Total Clusters (Passed Filter)",
         df,
         lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
