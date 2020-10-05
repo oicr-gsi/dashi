@@ -264,7 +264,7 @@ def generate_total_clusters(df, graph_params):
         "Total Clusters (Passed Filter)",
         df,
         lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
-        "# PF Reads X 10^6",
+        "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],

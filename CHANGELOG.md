@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [201005-1627] - 2020-10-05
 ## Changed
   * Add clusters-per-sample thresholds
   * 'Missing' info no longer appears in Failed Samples table
