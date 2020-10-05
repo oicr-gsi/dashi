@@ -504,7 +504,8 @@ def build_miso_info(df, page_title, metrics):
             miso_request['library_aliquots'].append({
                 'name': split_provenance_id[2],
                 'metrics': metrics_this_row,
-                'run': split_provenance_id[0]
+                'run': split_provenance_id[0],
+                'lane': row[PINERY_COL.LaneNumber]
             })
         return [json.dumps(miso_request), miso_button_style]
     else:
