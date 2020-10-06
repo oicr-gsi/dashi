@@ -415,5 +415,5 @@ def miso_qc_button(body_id, button_id):
     ],
     method="POST",
     action=os.getenv("MISO_URL")+"miso/runlibraries/metrics",
-    #target="_blank"
+    target="_blank"
     )
