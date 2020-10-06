@@ -24,6 +24,8 @@ ids = init_ids([
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
+    'miso-request-body',
+    'miso-button',
 
     # Sidebar controls
     'all-runs',
@@ -325,6 +327,7 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
+                    sidebar_utils.miso_qc_button(ids['miso-request-body'], ids['miso-button']),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -472,6 +475,8 @@ def init_callbacks(dash_app):
             Output(ids["search-sample-ext"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
+            Output(ids['miso-request-body'], 'value'),
+            Output(ids['miso-button'], 'style')
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -567,6 +572,15 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
+        (miso_request, miso_button_style) = util.build_miso_info(df, title,
+            [{
+                'title': "% Thaliana", 
+                'threshold_type': 'gt',
+                'threshold': percent_thaliana_cutoff,
+                'value': CFMEDIP_COL.PercentageAthaliana
+            }] #TODO: Add the rest when they're not a mystery
+        )
+
         return [
             approve_run_href,
             approve_run_style,
@@ -579,7 +593,9 @@ def init_callbacks(dash_app):
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
-            jira_style
+            jira_style,
+            miso_request,
+            miso_button_style
         ]
 
     @dash_app.callback(

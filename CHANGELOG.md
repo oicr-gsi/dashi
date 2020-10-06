@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Added 'QC in MISO' button
+
+## Configuration Changes
+  * MISO_URL in .env required
 
 ## [201005-1627] - 2020-10-05
 ## Changed

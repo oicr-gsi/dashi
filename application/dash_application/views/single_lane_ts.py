@@ -11,7 +11,6 @@ from ..utility import log_utils
 from gsiqcetl.column import BamQc3Column, FastqcColumn
 import pinery
 import logging
-
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-ts'
@@ -24,6 +23,8 @@ ids = init_ids([
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
+    'miso-request-body',
+    'miso-button',
 
     # Sidebar controls
     'all-runs',
@@ -183,7 +184,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName}
 ]
 
-
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
         "Total Clusters (Passed Filter)",
@@ -318,6 +318,7 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
+                    sidebar_utils.miso_qc_button(ids["miso-request-body"], ids["miso-button"]),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -449,6 +450,8 @@ def init_callbacks(dash_app):
             Output(ids["search-sample-ext"], "options"),
             Output(ids["jira-issue-with-runs-button"], "href"),
             Output(ids["jira-issue-with-runs-button"], "style"),
+            Output(ids["miso-request-body"], "value"),
+            Output(ids["miso-button"], "style")
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -524,6 +527,15 @@ def init_callbacks(dash_app):
 
         (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
 
+        (miso_request, miso_button_style) = util.build_miso_info(df, title, 
+            [{
+                'title': 'Clusters per Sample (* 10^6)',
+                'threshold_type': 'gt',
+                'threshold': total_clusters_cutoff,
+                'value': special_cols["Total Clusters (Passed Filter)"]
+            }]
+        )
+
         return [
             approve_run_href,
             approve_run_style,
@@ -536,7 +548,9 @@ def init_callbacks(dash_app):
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
-            jira_style
+            jira_style,
+            miso_request,
+            miso_button_style
         ]
 
     @dash_app.callback(
@@ -595,5 +609,3 @@ def init_callbacks(dash_app):
     def all_data_labels_requested(click, avail_options):
         sidebar_utils.update_only_if_clicked(click)
         return [x['value'] for x in avail_options]
-
-    
