@@ -590,17 +590,17 @@ def init_callbacks(dash_app):
         (miso_request, miso_button_style) = util.build_miso_info(df, title,
             [{
                 'title': 'Mean Insert Size',
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': insert_mean_cutoff,
                 'value': RNA_COL.InsertMean
             }, {
                 'title': 'Clusters per Sample (* 10^6)',
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': clusters_per_sample_cutoff,
                 'value': special_cols["Total Clusters (Passed Filter)"],
             }, {
                 'title': "rRNA Contamination",
-                'threshold_type': 'lt',
+                'threshold_type': 'le',
                 'threshold': rrna_cutoff,
                 'value': special_cols["rRNA Percent Contamination"]
             }]

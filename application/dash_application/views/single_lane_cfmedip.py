@@ -575,7 +575,7 @@ def init_callbacks(dash_app):
         (miso_request, miso_button_style) = util.build_miso_info(df, title,
             [{
                 'title': "% Thaliana", 
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': percent_thaliana_cutoff,
                 'value': CFMEDIP_COL.PercentageAthaliana
             }] #TODO: Add the rest when they're not a mystery

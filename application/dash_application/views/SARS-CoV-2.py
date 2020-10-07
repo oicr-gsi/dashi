@@ -572,12 +572,12 @@ def init_callbacks(dash_app):
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
                 'title': "Average Coverage",
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': avg_coverage_cutoff,
                 'value': BEDTOOLS_CALC_COL.MeanCoverage
             }, {
                 'title': "On-Target Percentage",
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': on_target_cutoff,
                 'value': KRAKEN2_COL.PercentAtClade
             }]
