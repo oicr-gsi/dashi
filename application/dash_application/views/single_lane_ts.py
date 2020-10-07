@@ -529,8 +529,13 @@ def init_callbacks(dash_app):
 
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
+                'title': 'Median Insert Size',
+                'threshold_type': 'ge',
+                'threshold': insert_median_cutoff,
+                'value': BAMQC_COL.InsertMedian
+            }, {
                 'title': 'Clusters per Sample (* 10^6)',
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': total_clusters_cutoff,
                 'value': special_cols["Total Clusters (Passed Filter)"]
             }]

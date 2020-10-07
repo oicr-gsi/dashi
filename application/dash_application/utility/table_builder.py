@@ -34,6 +34,9 @@ def build_table(table_id: str, columns: List[str], df: DataFrame):
 
 def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, bool
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+    '''
+    `limits` lambdas are used to calculate what is INCLUDED in the table, ie what has FAILED, not what has passed.
+    '''
     ius_cols = [
         pinery.column.SampleProvenanceColumn.SampleName,
         pinery.column.SampleProvenanceColumn.SequencerRunName,
@@ -44,6 +47,9 @@ def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, b
 
 def cutoff_table_data_merged(data: DataFrame, limits: List[Tuple[str, str, Callable
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
+    '''
+    `limits` lambdas are used to calculate what is INCLUDED in the table, ie what has FAILED, not what has passed.
+    '''
     merged_cols = [
         pinery.column.SampleProvenanceColumn.StudyTitle,
         pinery.column.SampleProvenanceColumn.RootSampleName,

@@ -609,17 +609,17 @@ def init_callbacks(dash_app):
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
                 'title': "Median Insert Size",
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': insert_median_cutoff,
                 'value': BAMQC_COL.InsertMedian
             }, {
                 'title': "% Duplication",
-                'threshold_type': 'le',
+                'threshold_type': 'lt',
                 'threshold': percent_duplication_cutoff,
                 'value': BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
             }, {
                 'title': "Clusters per Sample (* 10^6)",
-                'threshold_type': 'gt',
+                'threshold_type': 'ge',
                 'threshold': clusters_per_sample_cutoff,
                 'value': special_cols["Total Clusters (Passed Filter)"]
             }]

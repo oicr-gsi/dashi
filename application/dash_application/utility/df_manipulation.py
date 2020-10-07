@@ -486,6 +486,7 @@ def build_miso_info(df, page_title, metrics):
         'threshold': the current threshold setting from the sidebar,
         'value': the column to check in the dataframe for this threshold
     }]
+    Note that the threshold_type rule is for what PASSES the threshold, ie what ISN'T in the Failed Samples table
     Returns [json string dump of http body, button style]
     """
     if (len(df.index) > 0):
