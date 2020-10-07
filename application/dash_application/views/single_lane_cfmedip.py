@@ -562,7 +562,7 @@ def init_callbacks(dash_app):
                 #     (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_percent_thaliana_label,
                     CFMEDIP_COL.PercentageAthaliana, percent_thaliana_cutoff,
-                    (lambda row, col, cutoff: row[col] < cutoff)),
+                    (lambda row, col, cutoff: row[col] <= cutoff)),
                 # (cutoff_methylation_beta_label,
                 #     CFMEDIP_COL.MethylationBeta, methylation_beta_cutoff,
                 #     (lambda row, col, cutoff: row[col] < cutoff)),
