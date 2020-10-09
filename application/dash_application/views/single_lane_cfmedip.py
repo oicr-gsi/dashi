@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import CfMeDipQcColumn
+from gsiqcetl.column import CfMeDipQcColumn, InsertSizeMetricsColumn
 import pinery
 import logging
 
@@ -69,6 +69,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 CFMEDIP_COL = CfMeDipQcColumn
+INSERT_COL = InsertSizeMetricsColumn
 
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
@@ -93,9 +94,16 @@ initial["cutoff_methylation_beta"] = 0
 
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
+    cfmedip_insert_df = util.get_cfmedip_insert_metrics()
     cfmedip_df[special_cols["Total Reads (Passed Filter)"]] = round(
         cfmedip_df[CFMEDIP_COL.TotalReads] / 1e6, 3
     )
+    cfmedip_df = cfmedip_df.merge(
+        cfmedip_insert_df,
+        on=[CFMEDIP_COL.Barcodes, CFMEDIP_COL.Lane, CFMEDIP_COL.Run],
+        suffixes=('', '_x')
+    )
+    cfmedip_df = util.remove_suffixed_columns(cfmedip_df, '_x')
 
     pinery_samples = util.get_pinery_samples()
 
@@ -207,6 +215,20 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
     )
 
 
+def generate_median_insert_size(df, graph_params):
+    return SingleLaneSubplot(
+        "Median Insert Size with 10/90 Percentile",
+        df,
+        lambda d: d[INSERT_COL.MedianInsertSize],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        bar_positive=INSERT_COL.WidthOf90Percent,
+        bar_negative=INSERT_COL.WidthOf10Percent,
+    )
+
+
 def generate_percent_duplcation(current_data, graph_params):
     return SingleLaneSubplot(
         "Duplication (%)",
@@ -282,6 +304,7 @@ def generate_methylation_beta(current_data, graph_params):
 GRAPHS = [
     generate_number_windows,
     generate_percent_pf_reads_aligned,
+    generate_median_insert_size,
     generate_percent_duplcation,
     generate_relative_cpg_frequency_enrichment,
     generate_observed_to_expected_enrichment,

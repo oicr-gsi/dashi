@@ -148,6 +148,7 @@ _bamqc4_merged = normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merge
 _bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns)
 _bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
 _cfmedip = cache.cfmedipqc.cfmedipqc
+_cfmedip_insert_metirics = cache.cfmedipqc.insert_metrics
 _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
 _fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
@@ -298,6 +299,9 @@ def get_bedtools_cov_perc():
 
 def get_cfmedip():
     return _cfmedip.copy(deep=True)
+
+def get_cfmedip_insert_metrics():
+    return _cfmedip_insert_metirics.copy(deep=True)
 
 def get_fastqc():
     return _fastqc.copy(deep=True)
