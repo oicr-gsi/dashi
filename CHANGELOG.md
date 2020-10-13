@@ -7,6 +7,11 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [201013-1418] - 2020-10-13
+## Changed
+  * 'QC in MISO' button now points to MISO Prod
+
+
 ## [201013-0744] - 2020-10-13
 ## Changed
   * Added insert size graph to cfmedip
