@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [201013-0744] - 2020-10-13
 ## Changed
   * Added insert size graph to cfmedip
   * Bumped gsi-qc-etl to 0.42.0
