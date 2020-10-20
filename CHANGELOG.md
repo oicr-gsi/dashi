@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [201020-0811] - 2020-10-20
+## Changed
+  * MISO URLs now stored in config repo
+
 ## [201013-1418] - 2020-10-13
 ## Changed
   * 'QC in MISO' button now points to MISO Prod
