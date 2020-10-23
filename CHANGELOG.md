@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Bumped gsi-qc-etl to 0.43.2 (has correct median calculations)
+  * Switched cfmedip insert size median percentile to correct columns
 
 ## [201020-0811] - 2020-10-20
 ## Changed
