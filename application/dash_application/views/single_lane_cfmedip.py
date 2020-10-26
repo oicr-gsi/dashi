@@ -224,8 +224,8 @@ def generate_median_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        bar_positive=INSERT_COL.WidthOf90Percent,
-        bar_negative=INSERT_COL.WidthOf10Percent,
+        bar_positive=INSERT_COL.InsertMedian90Percentile,
+        bar_negative=INSERT_COL.InsertMedian10Percentile,
     )
 
 
