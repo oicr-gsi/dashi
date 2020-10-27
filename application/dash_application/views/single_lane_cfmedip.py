@@ -72,7 +72,7 @@ CFMEDIP_COL = CfMeDipQcColumn
 INSERT_COL = InsertSizeMetricsColumn
 
 special_cols = {
-    "Total Reads (Passed Filter)": "Total Reads PassedFilter",
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 initial = get_initial_cfmedip_values()
@@ -95,8 +95,9 @@ initial["cutoff_methylation_beta"] = 0
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
     cfmedip_insert_df = util.get_cfmedip_insert_metrics()
-    cfmedip_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        cfmedip_df[CFMEDIP_COL.TotalReads] / 1e6, 3
+    # Assumes that all cfmedip runs are paired reads (divide by 2 to get clusters)
+    cfmedip_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        cfmedip_df[CFMEDIP_COL.TotalReads] / 1e6 / 2, 3
     )
     cfmedip_df = cfmedip_df.merge(
         cfmedip_insert_df,
@@ -176,6 +177,8 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.TissueType},
     {"label": "Run",
      "value": PINERY_COL.SequencerRunName},
+    {"label": "Total Clusters",
+     "value": special_cols["Total Clusters (Passed Filter)"]},
     {"label": "Relative CpG Frequency Enrichment",
      "value": CFMEDIP_COL.RelativeCpGFrequencyEnrichment},
     {"label": "Observed to Expected Enrichment",
@@ -185,6 +188,19 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName}
 ]
+
+
+def generate_total_clusters(df, graph_params):
+    return SingleLaneSubplot(
+        "Total Clusters (Passed Filter)",
+        df,
+        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        "# PF Clusters X 10^6",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+    )
+
 
 def generate_number_windows(current_data, graph_params):
     return SingleLaneSubplot(
@@ -302,6 +318,7 @@ def generate_methylation_beta(current_data, graph_params):
 
 
 GRAPHS = [
+    generate_total_clusters,
     generate_number_windows,
     generate_percent_pf_reads_aligned,
     generate_median_insert_size,
