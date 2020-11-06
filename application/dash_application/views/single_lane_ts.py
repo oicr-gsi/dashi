@@ -116,7 +116,7 @@ def get_bamqc_data():
 
     bamqc_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples, util.bamqc4_ius_columns)
 
-    bamqc_df = util.df_with_instrument_model(bamqc_df, PINERY_COL.SequencerRunName)
+    bamqc_df = util.df_with_run_info(bamqc_df, PINERY_COL.SequencerRunName)
 
     bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 
@@ -181,7 +181,11 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Median Insert Size",
      "value": BAMQC_COL.InsertMedian},
     {"label": "Sample Name",
-     "value": PINERY_COL.SampleName}
+     "value": PINERY_COL.SampleName},
+    {"label": "Run Start Date",
+     "value": RUN_COLS.StartDate},
+    {"label": "Run End Date",
+     "value": RUN_COLS.CompletionDate},
 ]
 
 def generate_total_clusters(df, graph_params):

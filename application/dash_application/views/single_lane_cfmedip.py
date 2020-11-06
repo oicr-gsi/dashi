@@ -110,7 +110,7 @@ def get_cfmedip_data():
 
     cfmedip_df = util.df_with_pinery_samples_ius(cfmedip_df, pinery_samples, util.cfmedip_ius_columns)
 
-    cfmedip_df = util.df_with_instrument_model(cfmedip_df, PINERY_COL.SequencerRunName)
+    cfmedip_df = util.df_with_run_info(cfmedip_df, PINERY_COL.SequencerRunName)
 
     return cfmedip_df, util.cache.versions(["cfmedipqc"])
 
@@ -186,7 +186,11 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "PERCENT_DUPLICATION",
      "value": CFMEDIP_COL.PercentDuplication},
     {"label": "Sample Name",
-     "value": PINERY_COL.SampleName}
+     "value": PINERY_COL.SampleName},
+    {"label": "Run Start Date",
+     "value": RUN_COLS.StartDate},
+    {"label": "Run End Date",
+     "value": RUN_COLS.CompletionDate},
 ]
 
 

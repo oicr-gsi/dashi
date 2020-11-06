@@ -3,12 +3,12 @@ import re
 import urllib.parse
 import json
 import os
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Union
 
 import dash_core_components as core
 import dash_html_components as html
 from dash.exceptions import PreventUpdate
-from pandas import DataFrame, Series, Timestamp
+from pandas import Series, Timestamp
 
 import pinery.column
 import gsiqcetl.column
@@ -22,6 +22,7 @@ rrna_contamination_cutoff_label = "rRNA Contamination maximum"
 
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
+RUNS_COL = pinery.column.RunsColumn
 COMMON_COL = gsiqcetl.column.ColumnNames
 ALL_RUNS = df_tools.get_runs()
 
@@ -286,8 +287,8 @@ def show_data_labels_input_single_lane(
             {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
             {'label': 'Tissue Preparation', 'value': PINERY_COL.TissuePreparation},
             {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
-            {'label': 'Run start date', 'value': 'start_date'},
-            {'label': 'Run end date', 'value': 'completion_date'},
+            {'label': 'Run Start Date', 'value': RUNS_COL.StartDate},
+            {'label': 'Run End Date', 'value': RUNS_COL.CompletionDate},
         ])
 
 
