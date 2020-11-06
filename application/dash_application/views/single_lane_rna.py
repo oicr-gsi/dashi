@@ -145,7 +145,7 @@ def get_rna_data():
                                          util.rnaseqqc2_ius_columns)
 
     # Join RNAseqQc and instrument model
-    rna_df = util.df_with_instrument_model(rna_df, PINERY_COL.SequencerRunName)
+    rna_df = util.df_with_run_info(rna_df, PINERY_COL.SequencerRunName)
 
     return rna_df, util.cache.versions(["rnaseqqc2"])
 
@@ -201,7 +201,11 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "RIN",
      "value": PINERY_COL.RIN},
     {"label": "Sample Name",
-     "value": PINERY_COL.SampleName}
+     "value": PINERY_COL.SampleName},
+    {"label": "Run Start Date",
+     "value": RUN_COLS.StartDate},
+    {"label": "Run End Date",
+     "value": RUN_COLS.CompletionDate},
 ]
 
 

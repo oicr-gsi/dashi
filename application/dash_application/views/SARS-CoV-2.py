@@ -79,6 +79,7 @@ ids = init_ids([
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
+RUN_COLS = pinery.column.RunsColumn
 
 pinery_samples = util.get_pinery_samples()
 SAMTOOLS_STATS_COV2_HUMAN_DF = util.get_samtools_stats_cov2_human()
@@ -134,11 +135,11 @@ BEDTOOLS_DF = util.df_with_pinery_samples_ius(BEDTOOLS_DF, pinery_samples, util.
 ALL_PROJECTS = util.unique_set(BEDTOOLS_DF, PINERY_COL.StudyTitle)
 ALL_KITS = util.unique_set(BEDTOOLS_DF, PINERY_COL.PrepKit)
 
-BEDTOOLS_DF = util.df_with_instrument_model(BEDTOOLS_DF, PINERY_COL.SequencerRunName)
+BEDTOOLS_DF = util.df_with_run_info(BEDTOOLS_DF, PINERY_COL.SequencerRunName)
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(BEDTOOLS_DF)
 BEDTOOLS_DF = BEDTOOLS_DF[BEDTOOLS_DF[INSTRUMENT_COLS.ModelName].isin(ILLUMINA_INSTRUMENT_MODELS)]
 
-BEDTOOLS_PERCENTILE_DF = util.df_with_instrument_model(BEDTOOLS_PERCENTILE_DF, PINERY_COL.SequencerRunName)
+BEDTOOLS_PERCENTILE_DF = util.df_with_run_info(BEDTOOLS_PERCENTILE_DF, PINERY_COL.SequencerRunName)
 BEDTOOLS_PERCENTILE_DF = BEDTOOLS_PERCENTILE_DF[BEDTOOLS_PERCENTILE_DF[INSTRUMENT_COLS.ModelName].isin(ILLUMINA_INSTRUMENT_MODELS)]
 
 
@@ -217,7 +218,11 @@ SORT_BY = [
     {"label": "Covid Mapped (% of total reads)",
      "value": "covid_percent_mapped_total"},
     {"label": "Sample Name",
-     "value": PINERY_COL.SampleName}
+     "value": PINERY_COL.SampleName},
+    {"label": "Run Start Date",
+     "value": RUN_COLS.StartDate},
+    {"label": "Run End Date",
+     "value": RUN_COLS.CompletionDate},
 ]
 
 

@@ -173,7 +173,7 @@ def get_wgs_data():
                                          util.bamqc4_ius_columns)
 
     # Join df and instrument model
-    wgs_df = util.df_with_instrument_model(wgs_df, PINERY_COL.SequencerRunName)
+    wgs_df = util.df_with_run_info(wgs_df, PINERY_COL.SequencerRunName)
 
     # Filter the dataframe to only include Illumina data
     illumina_models = util.get_illumina_instruments(wgs_df)
@@ -233,7 +233,11 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Median Insert Size",
      "value": BAMQC_COL.InsertMedian},
     {"label": "Sample Name",
-     "value": PINERY_COL.SampleName}
+     "value": PINERY_COL.SampleName},
+    {"label": "Run Start Date",
+     "value": RUN_COLS.StartDate},
+    {"label": "Run End Dat",
+     "value": RUN_COLS.CompletionDate},
 ]
 
 

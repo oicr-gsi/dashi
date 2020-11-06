@@ -418,19 +418,22 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
     return df
 
 
-def df_with_instrument_model(df: DataFrame, run_col: str):
+def df_with_run_info(df: DataFrame, run_col: str):
     """Add the instrument model column to a DataFrame."""
     r_i = _runs_with_instruments.copy(deep=True)
     return df.merge(
-        r_i[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
-             RUN_COL.Name]],
+        r_i[[
+            INSTRUMENTS_COL.ModelName,
+            INSTRUMENTS_COL.Platform,
+            RUN_COL.Name,
+            pinery.column.RunsColumn.StartDate,
+            pinery.column.RunsColumn.CompletionDate,
+        ]],
         how="left",
         left_on=run_col,
         right_on=[RUN_COL.Name]
     )
 
-def df_with_runs(df):
-    return pandas.merge(df, get_runs(), left_on=PINERY_COL.SequencerRunName, right_on='name')
 
 def filter_by_library_design(df: DataFrame, library_designs: List[str],
                              ld_col=PINERY_COL.LibrarySourceTemplateType):
