@@ -1001,6 +1001,7 @@ def generate_plot_with_subplots(subplots: List[Subplot]):
         height=350 * len(subplots),
         margin=go.layout.Margin(l=50, r=50, b=50, t=50, pad=4),
         legend=dict(tracegroupgap=0),
+        template="plotly_white",
     )
 
     # By default, subplot titles are center. Set to left alignment
