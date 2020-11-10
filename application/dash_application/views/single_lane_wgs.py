@@ -236,7 +236,7 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
      "value": RUN_COLS.StartDate},
-    {"label": "Run End Dat",
+    {"label": "Run End Date",
      "value": RUN_COLS.CompletionDate},
 ]
 
