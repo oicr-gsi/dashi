@@ -72,6 +72,7 @@ CFMEDIP_COL = CfMeDipQcColumn
 INSERT_COL = InsertSizeMetricsColumn
 
 special_cols = {
+    # Column comes from `df_with_fastqc_data` call
     "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
@@ -95,16 +96,19 @@ initial["cutoff_methylation_beta"] = 0
 def get_cfmedip_data():
     cfmedip_df = util.get_cfmedip()
     cfmedip_insert_df = util.get_cfmedip_insert_metrics()
-    # Assumes that all cfmedip runs are paired reads (divide by 2 to get clusters)
-    cfmedip_df[special_cols["Total Clusters (Passed Filter)"]] = round(
-        cfmedip_df[CFMEDIP_COL.TotalReads] / 1e6 / 2, 3
-    )
     cfmedip_df = cfmedip_df.merge(
         cfmedip_insert_df,
         on=[CFMEDIP_COL.Barcodes, CFMEDIP_COL.Lane, CFMEDIP_COL.Run],
         suffixes=('', '_x')
     )
+    cfmedip_df = util.df_with_fastqc_data(
+        cfmedip_df, [CFMEDIP_COL.Run, CFMEDIP_COL.Lane, CFMEDIP_COL.Barcodes]
+    )
     cfmedip_df = util.remove_suffixed_columns(cfmedip_df, '_x')
+
+    cfmedip_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        cfmedip_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3
+    )
 
     pinery_samples = util.get_pinery_samples()
 
