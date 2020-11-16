@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [201116-1508] - 2020-11-16
 ## Changed
   * Total PF Clusters in cfmedip come from fastqc
+  * Spelling fixes
 
 ## [201109-1507] - 2020-11-09
 ## Changed
