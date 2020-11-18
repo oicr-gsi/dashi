@@ -1,4 +1,5 @@
 from collections import namedtuple
+import random
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as core
@@ -20,6 +21,19 @@ pages_info = {}
 PageInfo = namedtuple('PageInfo', 'layout title dataversion')
 for p in pages.pages:
     pages_info[p.page_name] = PageInfo(p.layout, p.title, p.dataversion)
+
+positivity = [
+    "Thank you for looking at the QC data.",
+    "Your hard work is appreciated.",
+    "You put the quality in quality control.",
+    "We're all in this together.",
+    ":)",
+    '“Quality is never an accident; it is always the result of high intention, sincere effort, intelligent direction and skillful execution; it represents the wise choice of many alternatives.” - William A. Foster',
+    '“Quality is not act.  It is a habit.” - Aristotle',
+    '“Quality means doing it right when no one is looking.” - Henry Ford',
+    '“Quality begins on the inside; then works its way out.” - Bob Moawad',
+    '“Success is the sum of small efforts, repeated day-in and day-out.” - Robert Collier',
+]
 
 def navbar(current):
     def menu_item(label, link):
@@ -54,7 +68,12 @@ layout = html.Div([
     core.Location(id='url', refresh=False),
     navbar(default_title),
     core.Loading(id='page-content', type='dot'),
-    html.Footer(id='footer', children=[html.Hr(), "Dashi version {0} | Data version ".format(version), html.Span(id='data-version')])
+    html.Footer(id='footer', children=[
+        html.Hr(), 
+        "Dashi version {0} | Data version ".format(version), 
+        html.Span(id='data-version'),
+        html.Br(),
+        random.choice(positivity)])
 ])
 
 
