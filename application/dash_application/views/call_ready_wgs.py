@@ -70,9 +70,9 @@ def dataversion():
 
 
 special_cols = {
+    # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
+    # merging. Do not include any graphs based on those metrics
     "Total Reads (Passed Filter)": "total reads passed filter",
-    "Unique Reads (Passed Filter)": "percent unique reads",
-    "Unmapped Reads": "percent unmapped reads",
     "Coverage per Gb": "coverage per gb",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
@@ -116,12 +116,6 @@ def get_merged_wgs_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
-    bamqc3_df[special_cols["Unique Reads (Passed Filter)"]] = (1 - (
-                bamqc3_df[BAMQC_COL.NonPrimaryReads] /
-                bamqc3_df[BAMQC_COL.TotalReads])) * 100
-    bamqc3_df[special_cols["Unmapped Reads"]] = round(
-        bamqc3_df[BAMQC_COL.UnmappedReads] / bamqc3_df[BAMQC_COL.TotalReads]
-        * 100.0, 3)
     bamqc3_df[special_cols["Coverage per Gb"]] = round(
         bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (bamqc3_df[
                  BAMQC_COL.TotalReads] *  bamqc3_df[
@@ -245,10 +239,6 @@ SORT_BY = shape_colour.dropdown() + [
         "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
     },
     {
-        "label": "Unmapped Reads",
-        "value": special_cols["Unmapped Reads"]
-    },
-    {
         "label": "Tumor Purity",
         "value": special_cols["Tumor Purity (%)"]
     },
@@ -368,18 +358,6 @@ def generate_tumor_purity(df, graph_params):
     )
 
 
-def generate_unmapped_reads(df, graph_params):
-    return CallReadySubplot(
-        "Unmapped Reads (%)", 
-        df,
-        lambda d: d[special_cols["Unmapped Reads"]],
-        "%", 
-        graph_params["colour_by"], 
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
-    )
-
-
 GRAPHS = [
     generate_total_clusters,
     generate_deduplicated_coverage,
@@ -388,7 +366,6 @@ GRAPHS = [
     generate_callability,
     generate_median_insert_size,
     generate_duplicate_rate,
-    generate_unmapped_reads,
     generate_tumor_purity,
 ]
 def layout(query_string):

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Removed
+  * Any Call-Ready graphs or variables based on unmapped or non-primary reads. These
+  are filtered out during BAM merging.
+  
+## Changed
+  * Unmapped and non-primary read percentages are calculated using the BamQC `meta` 
+  columns (https://github.com/oicr-gsi/bam-qc-metrics/blob/master/metrics.md#summary-of-fields).
+  `non primary reads` column will always be 0, with `non primary reads meta` having
+  the actual number
+  * Use BamQC Total Reads as denominator for On Target Percentage rather than FastQC. 
+  This is because BamQC On Target Reads calculations cannot be directly compared to 
+  the actual total (FastQC) machine reads (due to BamQC filtering and non-primary reads)
 
 ## [201116-1508] - 2020-11-16
 ## Changed

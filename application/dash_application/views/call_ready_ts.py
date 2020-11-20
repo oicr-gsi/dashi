@@ -70,8 +70,9 @@ def dataversion():
 
 
 special_cols = {
+    # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
+    # merging. Do not include any graphs based on those metrics
     "Total Reads (Passed Filter)": "Total reads passed filter",
-    "Percent Unique Reads (PF)": "Percent unique reads",
     "Callability": "callability",
     "Purity": "Purity",
     "File SWID ichorCNA": "File SWID ichorCNA",
@@ -115,9 +116,6 @@ def get_merged_ts_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
-    bamqc3_df[special_cols["Percent Unique Reads (PF)"]] = round(
-        bamqc3_df[BAMQC_COL.NonPrimaryReads] / bamqc3_df[
-            BAMQC_COL.TotalReads], 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
