@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc3Column, FastqcColumn
+from gsiqcetl.column import BamQc4Column, FastqcColumn
 import pinery
 import logging
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ ids = init_ids([
     'data-count'
 ])
 
-BAMQC_COL = BamQc3Column
+BAMQC_COL = BamQc4Column
 FASTQC_COL = FastqcColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
@@ -97,15 +97,15 @@ def get_bamqc_data():
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
     bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         bamqc_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3)
-    bamqc_df[special_cols["On Target Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.ReadsOnTarget, FASTQC_COL.TotalSequences
-    )
-    bamqc_df[special_cols["Unmapped Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.UnmappedReads, FASTQC_COL.TotalSequences
-    )
-    bamqc_df[special_cols["Non-Primary Reads (%)"]] = sidebar_utils.percentage_of(
-        bamqc_df, BAMQC_COL.NonPrimaryReads, FASTQC_COL.TotalSequences
-    )
+    bamqc_df[special_cols["Unmapped Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.UnmappedReadsMeta] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
+    bamqc_df[special_cols["Non-Primary Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
+    bamqc_df[special_cols["On Target Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalReads], 3)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc_df[FASTQC_COL.TotalSequences] *

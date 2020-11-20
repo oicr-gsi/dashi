@@ -144,14 +144,14 @@ def get_wgs_data():
     bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         bamqc_df[special_cols["Total Clusters (Passed Filter)"]] / 1e6, 3)
     bamqc_df[special_cols["Unmapped Reads"]] = round(
-        bamqc_df[BAMQC_COL.UnmappedReads] * 100.0 /
-        bamqc_df[FASTQC_COL.TotalSequences], 3)
+        bamqc_df[BAMQC_COL.UnmappedReadsMeta] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
     bamqc_df[special_cols["Non-Primary Reads"]] = round(
-        bamqc_df[BAMQC_COL.NonPrimaryReads] * 100.0 /
-        bamqc_df[FASTQC_COL.TotalSequences], 3)
+        bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
     bamqc_df[special_cols["On-target Reads"]] = round(
         bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
-        bamqc_df[FASTQC_COL.TotalSequences], 3)
+        bamqc_df[BAMQC_COL.TotalReads], 3)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc_df[FASTQC_COL.TotalSequences] *

@@ -63,8 +63,9 @@ def dataversion():
 
 
 special_cols = {
+    # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
+    # merging. Do not include any graphs based on those metrics
     "Total Reads (Passed Filter)": "Total reads passed filter",
-    "Unique Reads (PF)": "Unique reads",
     "File SWID RNAseqQC": "File SWID RNAseqQC",
     "% rRNA Contamination": "Percent rRNA Contamination",
     "Total Clusters (Passed Filter)": "Total Clusters",
@@ -86,8 +87,6 @@ def get_merged_rna_data():
         rna_df[RNASEQQC2_COL.TotalReads] / 1e6, 3)
     rna_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         rna_df[RNASEQQC2_COL.TotalClusters] / 1e6, 3)
-    rna_df[special_cols["Unique Reads (PF)"]] = round(
-        rna_df[RNASEQQC2_COL.UniqueReads] / rna_df[RNASEQQC2_COL.TotalReads], 3)
     rna_df[special_cols["% rRNA Contamination"]] = round(
         (rna_df[RNASEQQC2_COL.RRnaContaminationMapped] / rna_df[
             RNASEQQC2_COL.TotalReads]) * 100, 2)
