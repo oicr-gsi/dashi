@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [201123-0749] - 2020-11-23
 ## Removed
   * Any Call-Ready graphs or variables based on unmapped or non-primary reads. These
   are filtered out during BAM merging.
