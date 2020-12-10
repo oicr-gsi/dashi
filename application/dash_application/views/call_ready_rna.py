@@ -104,8 +104,6 @@ def get_merged_rna_data():
 
 (RNA_DF, DATAVERSION) = get_merged_rna_data()
 rna_table_columns = list(RNA_DF.columns.values)
-rna_table_columns.remove(RNASEQQC2_COL.InsertMean)
-rna_table_columns.remove(RNASEQQC2_COL.InsertSD)
 
 initial = get_initial_call_ready_values()
 

@@ -93,8 +93,6 @@ later_col_set = [
     PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
-rnaseqqc_table_columns.remove(RnaColumn.InsertMean)
-rnaseqqc_table_columns.remove(RnaColumn.InsertSD)
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
