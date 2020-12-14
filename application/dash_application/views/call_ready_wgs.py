@@ -629,12 +629,10 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
             (cutoff_coverage_tumour_label, BAMQC_COL.CoverageDeduplicated,
              coverage_tumour_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(
-                 row))),
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
             (cutoff_coverage_normal_label, BAMQC_COL.CoverageDeduplicated,
              coverage_normal_cutoff,
-             (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(
-                 row))),
+             (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_callability_label, special_cols["Percent Callability"],
              callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
