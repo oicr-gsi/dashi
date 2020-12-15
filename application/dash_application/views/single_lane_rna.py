@@ -93,8 +93,6 @@ later_col_set = [
     PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
-rnaseqqc_table_columns.remove(RnaColumn.InsertMean)
-rnaseqqc_table_columns.remove(RnaColumn.InsertSD)
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
@@ -103,7 +101,7 @@ initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_label = sidebar_utils.rrna_contamination_cutoff_label
 initial["cutoff_rrna"] = 35
-cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+cutoff_insert_mean_label = "Insert Size Mean + Intron"
 initial["cutoff_insert_mean"] = 150
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
 # This is 10 000, but the stat is / 10^6
@@ -223,10 +221,10 @@ def generate_total_clusters(df, graph_params):
 
 def generate_insert_mean(df, graph_params):
     return SingleLaneSubplot(
-        "Mean Insert Size",
+        "Mean Insert Size + Intron",
         df,
         lambda d: d[RNA_COL.InsertMean],
-        "Mean Insert Size",
+        "Mean Insert Size + Intron",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],

@@ -104,8 +104,6 @@ def get_merged_rna_data():
 
 (RNA_DF, DATAVERSION) = get_merged_rna_data()
 rna_table_columns = list(RNA_DF.columns.values)
-rna_table_columns.remove(RNASEQQC2_COL.InsertMean)
-rna_table_columns.remove(RNASEQQC2_COL.InsertSD)
 
 initial = get_initial_call_ready_values()
 
@@ -119,7 +117,7 @@ cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_labe
 initial["cutoff_clusters_per_sample"] = 80
 cutoff_percent_mapped_to_coding_label = "% Mapped to Coding"
 initial["cutoff_percent_mapped_to_coding"] = 5
-cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+cutoff_insert_mean_label = "Insert Size Mean + Intron"
 initial["cutoff_insert_mean"] = 150
 
 # Build lists of attributes for sorting, shaping, and filtering on
@@ -176,10 +174,10 @@ def generate_total_clusters(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return CallReadySubplot(
-        "Mean Insert Size",
+        "Mean Insert Size + Intron",
         df,
         lambda d: d[RNASEQQC2_COL.InsertMean],
-        "Mean Insert Size",
+        "Mean Insert Size + Intron",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
