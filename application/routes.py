@@ -57,8 +57,8 @@ def run_list():
             # Convert timestamps to string for display
             run["run_completed"] = str_timestamp(run["run_completed"]/1000)
 
-            latest_runs.append(run)
-    latest_runs = sorted(latest_runs, key=lambda k: k["run_completed"], reverse=True)
+            all_runs.append(run)
+    all_runs = sorted(all_runs, key=lambda k: k["run_completed"], reverse=True)
 
     return render_template('runs.html',
     version=version,
