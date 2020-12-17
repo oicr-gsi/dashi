@@ -55,9 +55,9 @@
       {% for run in runs %}
       {% set ns = namespace(first_row=true) %}
         {% for page in run["pages"] %}
-        <tr>
+       <tr>
           {% if ns.first_row is sameas true %}
-            <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br /><i>Completed: {{ run["run_completed"] }}</i></td>
+            <td rowspan={{ run["pages"]|length }}> <a id="{{ run["run"] }}">{{ run["run"] }}</a><br /><i>Completed: {{ run["run_completed"] }}</i></td>
           {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
           <td>{{ run["pages"][page]["completed"] }}</td>
