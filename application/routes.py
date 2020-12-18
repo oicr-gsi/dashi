@@ -45,6 +45,26 @@ def index():
     projects=project_json,
     page_info=page_info)
 
+
+@app.route('/runs')
+def run_list():
+    qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+
+    all_runs = []
+    with open(qc_etl_location + '/grouped_run_status.json', 'r') as run_status_file:
+        run_json = json.load(run_status_file)
+        for run in run_json:
+            # Convert timestamps to string for display
+            run["run_completed"] = str_timestamp(run["run_completed"]/1000)
+
+            all_runs.append(run)
+    all_runs = sorted(all_runs, key=lambda k: k["run_completed"], reverse=True)
+
+    return render_template('runs.html',
+    version=version,
+    runs=all_runs,
+    page_info=page_info)
+
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
     DATE_FORMAT = "%Y-%m-%d"

@@ -44,14 +44,7 @@
     </nav>
     <div class="page-content">
     <h1>Dashi QC</h1>
-    <p>Jump:
-      <ul>
-        <li><a href="#runs">Runs (Last 3 Weeks)</a></li>
-        <li><a href="#projects">Projects</a></li>
-      </ul>
-    </p>
-    <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
-    <a href="runs">View All</a><br />
+    <h2><u>All Runs</u></h2>
     <table border=1>
       <tr>
         <th>Run</th>
@@ -62,9 +55,9 @@
       {% for run in runs %}
       {% set ns = namespace(first_row=true) %}
         {% for page in run["pages"] %}
-        <tr>
+       <tr>
           {% if ns.first_row is sameas true %}
-            <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br /><i>Completed: {{ run["run_completed"] }}</i></td>
+            <td rowspan={{ run["pages"]|length }}> <a id="{{ run["run"] }}">{{ run["run"] }}</a><br /><i>Completed: {{ run["run_completed"] }}</i></td>
           {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
           <td>{{ run["pages"][page]["completed"] }}</td>
@@ -74,32 +67,6 @@
         {% endfor %}
       {% endfor %}
     </table>
-    <a href="runs">View All</a><br /><br />
-
-    <a id="projects"><h2><u>Projects</u></h2></a>
-    <table border=1>
-      <tr>
-        <th>Project</th>
-        <th>Report</th>
-        <th>Completed</th>
-        <th>Processing</th>
-      </tr>
-      {% for proj in projects %}
-      {% set ns = namespace(first_row=true) %}
-        {% for page in proj["pages"] %}
-        <tr>
-          {% if ns.first_row is sameas true %}
-            <td rowspan={{ proj["pages"]|length }}>{{ proj["project"] }}</td>
-          {% endif %}
-          <td><a href="{{ page }}?project={{ proj["project"] }}">{{ page }}</a></td>
-          <td>{{ proj["pages"][page]["completed"] }}</td>
-          <td>{{ proj["pages"][page]["processing"] }}</td>
-          </tr>
-          {% set ns.first_row = false %}
-        {% endfor %}
-      {% endfor %}
-    </table>
-
     <hr />
     <footer id="footer">Dashi version {{version}}</footer>
     </div>
