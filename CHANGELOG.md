@@ -7,6 +7,14 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [210104-1505] - 2021-01-04
+## Changed
+  * Fix calculation of tumour/normal coverage cutoff values for Call Ready WGS
+  * Add " + Intron" to Mean Insert Size fields on RNA reports
+
+## Added
+  * 'view all' link leading to page listing all runs on front page 
+
 ## [201123-0749] - 2020-11-23
 ## Removed
   * Any Call-Ready graphs or variables based on unmapped or non-primary reads. These
