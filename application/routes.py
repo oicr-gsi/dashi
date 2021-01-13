@@ -77,7 +77,10 @@ def status_page():
         if os.path.exists(error_path):
             with open(error_path, "r") as f:
                 j = json.load(f)
-                errors[cache.name] = json.dumps(j, indent=2)
+                if len(j) > 0:
+                    errors[cache.name] = json.dumps(j, indent=2)
+                else:
+                    errors[cache.name] = "Ok"
         cache_path = os.path.join(qc_etl_location, cache.name, "lastinput.json")
         if os.path.exists(cache_path):
             lastinputdate[cache.name] = datetime.datetime.fromtimestamp(
