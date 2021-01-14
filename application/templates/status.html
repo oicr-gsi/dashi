@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- Most data processing happens in routes.py, look there if you're confused -->
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='bootstrap.css') }}" />
+    <title>Dashi</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      function dropdownFunction(){
+        document.getElementById("dropdown-menu").classList.toggle("show");
+      }
+
+      window.onclick = function(event){
+        if(!event.target.matches(".dropdown-toggle")){
+          let dropdowns = document.getElementsByClassName("dropdown-menu");
+          for(let i = 0; i < dropdowns.length; i++){
+            let openDropdown = dropdowns[i];
+            if(openDropdown.classList.contains("show")){
+              openDropdown.classList.remove("show");
+            }
+          }
+        }
+      }
+    </script>
+    <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
+      <div class="container">
+        <span class="navbar-brand" style="font-size: 14pt;">Dashi</span>
+        <div class="collapse navbar-collapse" aria-expanded="false">
+          <ul class="ml-auto navbar-nav">
+            <li class="dropdown nav-item" style="font-size: 12pt;">
+              <a onclick="dropdownFunction()" class="dropdown-toggle nav-link" aria-haspopup="true" href="javascript:void(0);" aria-expanded="false">
+                Reports
+              </a>
+              <div id="dropdown-menu" class="dropdown-menu" tabindex="-1" role="menu" aria-hidden="true">
+                {% for page in page_info.keys() %}
+                  <a href={{ page }} style="font-size: 12pt;" n_clicks="0" n_clicks_timestamp="-1" tabindex="0" role="menuitem" class="dropdown-item">{{ page_info[page] }}</a>
+                {% endfor %}
+              </div>
+            </li>
+          </ul>
+        </div> <!-- end navbar-collapse-->
+      </div>  <!-- end container-->
+    </nav>
+    <div class="page-content">
+    <h1>Status</h1>
+    <h2>ETL Status</h2>
+      <table border=1>
+        <tr>
+          <th>Cache</th>
+          <th>Last Modified</th>
+          <th>Errors</th>
+        </tr>
+        {% for key, value in errors.items() %}
+          <tr>
+            <td>{{key}}</td>
+            <td>{{lastinputdate[key]}}</td>
+            <td><pre><code>{{value}}</code></pre></td>
+          </tr>
+        {% endfor %}
+      </table>
+    <footer id="footer">Dashi version {{version}}</footer>
+    </div>
+  </body>
+</html>

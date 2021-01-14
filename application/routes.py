@@ -1,11 +1,11 @@
 from flask import current_app as app
 from flask import render_template
-import random
 from version import __version__ as version
 import os
 import json
 import datetime
 from application.dash_application.pages import pages
+import gsiqcetl
 
 # {pagename: Full Text Page Title}
 page_info = {}
@@ -64,6 +64,35 @@ def run_list():
     version=version,
     runs=all_runs,
     page_info=page_info)
+
+
+@app.route('/status')
+def status_page():
+    qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+    errors = {c.name: "Missing error file" for c in gsiqcetl.formats}
+    lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.formats}
+
+    for cache in gsiqcetl.formats:
+        error_path = os.path.join(qc_etl_location, cache.name, "failedinputs.json")
+        if os.path.exists(error_path):
+            with open(error_path, "r") as f:
+                j = json.load(f)
+                if len(j) > 0:
+                    errors[cache.name] = json.dumps(j, indent=2)
+                else:
+                    errors[cache.name] = "Ok"
+        cache_path = os.path.join(qc_etl_location, cache.name, "lastinput.json")
+        if os.path.exists(cache_path):
+            lastinputdate[cache.name] = datetime.datetime.fromtimestamp(
+                os.stat(cache_path).st_mtime)
+
+    return render_template(
+        'status.html',
+        version=version,
+        page_info=page_info,
+        errors=errors,
+        lastinputdate=lastinputdate,
+    )
 
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
