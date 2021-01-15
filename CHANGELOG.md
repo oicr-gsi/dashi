@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Added
   * `/status` page showing date of the latest cache and cache errors
+  * Alert pop up when run requested via URL query does not exist
 
 ## [210104-1505] - 2021-01-04
 ## Changed
