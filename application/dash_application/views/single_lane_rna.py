@@ -365,7 +365,7 @@ def layout(query_string):
     html.Div(className="body", children=[
         html.Div(className="row jira-buttons", children=[
             dbc.Alert(
-                "Requested run does not exist: {}".format(unknown_runs),
+                "No data for requested run(s): {}".format(unknown_runs),
                 ids['alerts-unknown-run'],
                 color="danger",
                 dismissable=True,
