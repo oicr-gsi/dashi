@@ -435,7 +435,7 @@ def unknown_run_alert(alert_id: str, picked_runs: List[str], all_runs: List[str]
     """
     unknown_runs = [x for x in picked_runs if x not in all_runs]
     return dbc.Alert(
-        "No data for requested run(s): {}".format(unknown_runs),
+        "No data for requested run(s): {}".format(', '.join(unknown_runs)),
         alert_id,
         color="danger",
         dismissable=True,

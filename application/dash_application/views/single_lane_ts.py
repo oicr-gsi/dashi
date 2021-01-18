@@ -315,18 +315,19 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className="row jira-buttons", children=[
-                sidebar_utils.unknown_run_alert(
-                    ids['alerts-unknown-run'],
-                    initial["runs"],
-                    ALL_RUNS
-                ),
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
                                           {"display": "inline-block"},
                                           sidebar_utils.construct_jira_link([], title)),
                 sidebar_utils.jira_button("Open an issue about these runs",
                                           ids['jira-issue-with-runs-button'],
-                                          {"display": "none"}, "")]),
+                                          {"display": "none"}, ""),
+                sidebar_utils.unknown_run_alert(
+                    ids['alerts-unknown-run'],
+                    initial["runs"],
+                    ALL_RUNS
+                ),
+            ]),
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
