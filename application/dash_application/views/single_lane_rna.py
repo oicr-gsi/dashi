@@ -2,7 +2,6 @@ from collections import defaultdict
 
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
-import dash_bootstrap_components as dbc
 
 from ..dash_id import init_ids
 from ..utility.plot_builder import *
@@ -340,14 +339,12 @@ GRAPHS = [
 # Layout elements
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
-    unknown_runs = []  # Runs from the query string that do not exist
     # intial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters
     #    will be applied
     if "req_runs" in query and query["req_runs"]:
         initial["runs"] = query["req_runs"]
-        unknown_runs = [x for x in initial["runs"] if x not in ALL_RUNS]
     elif "req_start" in query and query["req_start"]:
         initial["runs"] = ALL_RUNS
         query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
@@ -364,12 +361,10 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
         html.Div(className="row jira-buttons", children=[
-            dbc.Alert(
-                "No data for requested run(s): {}".format(unknown_runs),
+            sidebar_utils.unknown_run_alert(
                 ids['alerts-unknown-run'],
-                color="danger",
-                dismissable=True,
-                is_open=len(unknown_runs) > 0
+                initial["runs"],
+                ALL_RUNS
             ),
             sidebar_utils.jira_button("Open an issue",
                                       ids['general-jira-issue-button'],

@@ -30,6 +30,9 @@ ids = init_ids([
     'miso-request-body',
     'miso-button',
 
+    # Alerts
+    "alerts-unknown-run",
+
     # Sidebar controls
     'all-runs',
     'run-id-list',
@@ -339,6 +342,11 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className="row jira-buttons", children=[
+                sidebar_utils.unknown_run_alert(
+                    ids['alerts-unknown-run'],
+                    initial["runs"],
+                    ALL_RUNS
+                ),
                 sidebar_utils.jira_button("Open an issue",
                                           ids['general-jira-issue-button'],
                                           {"display": "inline-block"},
