@@ -7,6 +7,7 @@ from typing import List, Dict, Union
 
 import dash_core_components as core
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from pandas import Series, Timestamp
 
@@ -417,4 +418,26 @@ def miso_qc_button(body_id, button_id):
     method="POST",
     action=os.getenv("MISO_URL")+"miso/runlibraries/metrics",
     target="_blank"
+    )
+
+
+def unknown_run_alert(alert_id: str, picked_runs: List[str], all_runs: List[str]):
+    """
+    Generate Alert HTML element if at least one user supplied run does not exist
+
+    Args:
+        alert_id: ID of Dash object
+        picked_runs: The runs the user picked
+        all_runs: All the available runs
+
+    Returns:
+
+    """
+    unknown_runs = [x for x in picked_runs if x not in all_runs]
+    return dbc.Alert(
+        "No data for requested run(s): {}".format(', '.join(unknown_runs)),
+        alert_id,
+        color="danger",
+        dismissable=True,
+        is_open=len(unknown_runs) > 0
     )

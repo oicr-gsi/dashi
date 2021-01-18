@@ -27,6 +27,9 @@ ids = init_ids([
     'miso-request-body',
     'miso-button',
 
+    # Alerts
+    "alerts-unknown-run",
+
     # Sidebar controls
     'all-runs',
     'run-id-list',
@@ -371,7 +374,13 @@ def layout(query_string):
                                           sidebar_utils.construct_jira_link([], title)),
                 sidebar_utils.jira_button("Open an issue about these runs",
                                           ids['jira-issue-with-runs-button'],
-                                          {"display": "none"}, "")]),
+                                          {"display": "none"}, ""),
+                sidebar_utils.unknown_run_alert(
+                    ids['alerts-unknown-run'],
+                    initial["runs"],
+                    ALL_RUNS
+                ),
+            ]),
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
