@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [210118-1517] - 2021-01-18
 ## Added
   * `/status` page showing date of the latest cache and cache errors
   * Alert pop up when run requested via URL query does not exist
