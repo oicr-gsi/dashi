@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [210315-1515] - 2021-03-15
+## Changed
+  * Bumped QC-ETL to 0.51.0
+
 ## [210118-1517] - 2021-01-18
 ## Added
   * `/status` page showing date of the latest cache and cache errors
