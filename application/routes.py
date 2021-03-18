@@ -5,7 +5,7 @@ import os
 import json
 import datetime
 from application.dash_application.pages import pages
-import gsiqcetl
+import gsiqcetl.api
 
 # {pagename: Full Text Page Title}
 page_info = {}
@@ -69,10 +69,10 @@ def run_list():
 @app.route('/status')
 def status_page():
     qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
-    errors = {c.name: "Missing error file" for c in gsiqcetl.formats}
-    lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.formats}
+    errors = {c.name: "Missing error file" for c in gsiqcetl.api.formats}
+    lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.api.formats}
 
-    for cache in gsiqcetl.formats:
+    for cache in gsiqcetl.api.formats:
         error_path = os.path.join(qc_etl_location, cache.name, "failedinputs.json")
         if os.path.exists(error_path):
             with open(error_path, "r") as f:
