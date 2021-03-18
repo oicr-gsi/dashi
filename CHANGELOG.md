@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Fixed broken status page
 
 ## [210315-1515] - 2021-03-15
 ## Changed
