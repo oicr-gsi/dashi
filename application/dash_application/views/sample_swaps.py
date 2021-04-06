@@ -84,7 +84,7 @@ COLUMNS_TO_SHOW = [
 # Pair-wise comparison is done within project (for now), so left project is sufficient
 ALL_PROJECTS = df_manipulation.unique_set(swap, PINERY_COL.StudyTitle)
 
-INITITIAL = {
+INITIAL = {
     "projects": ALL_PROJECTS,
 }
 
@@ -97,7 +97,7 @@ def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
 
     if len(query["req_projects"]) > 0:
-        INITITIAL["projects"] = query["req_projects"]
+        INITIAL["projects"] = query["req_projects"]
 
     return core.Loading( fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -110,7 +110,7 @@ def layout(query_string):
                         ids["all-projects"],
                         ids["projects-list"],
                         ALL_PROJECTS,
-                        INITITIAL["projects"]
+                        INITIAL["projects"]
                     ),
                 ]),
                 html.Div(className="seven columns", children=[
