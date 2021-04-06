@@ -3,7 +3,7 @@ import re
 import urllib.parse
 import json
 import os
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Any
 
 import dash_core_components as core
 import dash_html_components as html
@@ -340,7 +340,7 @@ def get_requested_run_date_range(last_string) -> List[str]:
         return [None, None]
 
 
-def parse_query(query) -> List[str]:
+def parse_query(query) -> Dict[str, Any]:
     query_dict = parse_query_string(query[1:])  # slice off the leading question mark
     queries = {
         "req_start": None,

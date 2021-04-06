@@ -12,6 +12,7 @@ pagenames = [
     "call_ready_rna",
     "call_ready_wgs",
     # "poolqc",
+    "sample_swaps",
     "single_lane_ts",
     "single_lane_rna",
     "single_lane_wgs",

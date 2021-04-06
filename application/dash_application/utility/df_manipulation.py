@@ -15,6 +15,7 @@ wgs_lib_designs = ["AS", "CH", "NN", "WG"]
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
+CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
@@ -149,6 +150,7 @@ _bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations,
 _bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
 _cfmedip = cache.cfmedipqc.cfmedipqc
 _cfmedip_insert_metirics = cache.cfmedipqc.insert_metrics
+_crosscheckfingerprints = cache.crosscheckfingerprints.crosscheckfingerprints
 _ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
 _ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
 _fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
@@ -303,6 +305,9 @@ def get_cfmedip():
 def get_cfmedip_insert_metrics():
     return _cfmedip_insert_metirics.copy(deep=True)
 
+def get_crosscheckfingerprints():
+    return _crosscheckfingerprints.copy(deep=True)
+
 def get_fastqc():
     return _fastqc.copy(deep=True)
 
@@ -388,7 +393,7 @@ def df_with_fastqc_data(df, merge_cols):
     return df_with_fastqc
 
 def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_cols:
-                           List[str]):
+                           List[str], right_suffix='_q'):
     """Do a left merge between the DataFrame and modern Pinery samples
     data. Only samples in QC DataFrame will be kept."""
     df = df.merge(
@@ -396,7 +401,7 @@ def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_col
         how="left",
         left_on=ius_cols,
         right_on=pinery_ius_columns,
-        suffixes=('', '_q')
+        suffixes=('', right_suffix)
     )
     # Drop metrics with no corresponding Pinery data. This should only happen
     # if data is very old or stale
@@ -418,7 +423,7 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
     return df
 
 
-def df_with_run_info(df: DataFrame, run_col: str):
+def df_with_run_info(df: DataFrame, run_col: str, right_suffix='_q'):
     """Add the instrument model column to a DataFrame."""
     r_i = _runs_with_instruments.copy(deep=True)
     return df.merge(
@@ -431,7 +436,8 @@ def df_with_run_info(df: DataFrame, run_col: str):
         ]],
         how="left",
         left_on=run_col,
-        right_on=[RUN_COL.Name]
+        right_on=[RUN_COL.Name],
+        suffixes=('', right_suffix)
     )
 
 
