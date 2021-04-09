@@ -136,32 +136,9 @@ def normalized_merged(df: DataFrame, merged_cols: List[str]):
 
 
 """
-Open a single instance of each cache, and use copies for the reports.
+qc-etl API keeps loaded caches in memory for fast reloading
 """
 cache = QCETLCache()
-_bcl2barcode = cache.bcl2barcode.bcl2barcode
-_bcl2barcode_run_summary = cache.bcl2barcode.run_summary
-_rnaseqqc2 = normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
-_bamqc3 = normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
-_bamqc3_merged = normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
-_bamqc4 = normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns)
-_bamqc4_merged = normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns)
-_bedtools_calc = normalized_ius(cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns)
-_bedtools_cov_perc = normalized_ius(cache.bedtools_sars_cov2.genomecov_coverage_percentile, bedtools_percentile_ius_columns)
-_cfmedip = cache.cfmedipqc.cfmedipqc
-_cfmedip_insert_metirics = cache.cfmedipqc.insert_metrics
-_crosscheckfingerprints = cache.crosscheckfingerprints.crosscheckfingerprints
-_ichorcna = normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
-_ichorcna_merged = normalized_merged(cache.ichorcnamerged.ichorcnamerged, ichorcna_merged_columns)
-_fastqc = normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
-_hsmetrics_merged = normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
-_kraken2 = normalized_ius(cache.kraken2.kraken2, kraken2_ius_columns)
-_mutect_callability = normalized_merged(cache.mutectcallability.mutectcallability, callability_merged_columns)
-_rnaseqqc2_merged = normalized_merged(cache.rnaseqqc2merged.rnaseqqc2merged,
-                                     rnaseqqc2_merged_columns)
-_samtools_stats_cov2_human = cache.samtools_stats_sars_cov2.human
-_samtools_stats_cov2_depleted = cache.samtools_stats_sars_cov2.depleted
-
 
 _pinery_client = pinery.PineryClient()
 _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
@@ -277,83 +254,112 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 
 
 def get_bcl2barcode():
-    return _bcl2barcode.copy(deep=True)
+    return cache.bcl2barcode.bcl2barcode.copy(deep=True)
+
 
 def get_bcl2barcode_run_summary():
-    return _bcl2barcode_run_summary.copy(deep=True)
+    return cache.bcl2barcode.run_summary.copy(deep=True)
 
 
 def get_bamqc3():
-    return _bamqc3.copy(deep=True)
+    return normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
 
 
 def get_bamqc3_and_4():
     # Utility function creates new DataFrame, so no need to copy again
     return gsiqcetl.common.utility.concat_workflow_versions(
-        [_bamqc4, _bamqc3], bamqc4_ius_columns,
+        [normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns), get_bamqc3()],
+        bamqc4_ius_columns,
     )
 
+
 def get_bedtools_calc():
-    return _bedtools_calc.copy(deep=True)
+    return normalized_ius(
+        cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns
+    )
+
 
 def get_bedtools_cov_perc():
-    return _bedtools_cov_perc.copy(deep=True)
+    return normalized_ius(
+        cache.bedtools_sars_cov2.genomecov_coverage_percentile,
+        bedtools_percentile_ius_columns
+    )
+
 
 def get_cfmedip():
-    return _cfmedip.copy(deep=True)
+    return cache.cfmedipqc.cfmedipqc.copy(deep=True)
+
 
 def get_cfmedip_insert_metrics():
-    return _cfmedip_insert_metirics.copy(deep=True)
+    return cache.cfmedipqc.insert_metrics.copy(deep=True)
+
 
 def get_crosscheckfingerprints():
-    return _crosscheckfingerprints.copy(deep=True)
+    return cache.crosscheckfingerprints.crosscheckfingerprints.copy(deep=True)
+
 
 def get_fastqc():
-    return _fastqc.copy(deep=True)
+    return normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
 
 
 def get_ichorcna():
-    return _ichorcna.copy(deep=True)
+    return normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
+
 
 def get_kraken2():
-    return _kraken2.copy(deep=True)
+    return normalized_ius(cache.kraken2.kraken2, kraken2_ius_columns)
+
 
 def get_samtools_stats_cov2_human():
-    return _samtools_stats_cov2_human.copy(deep=True)
+    return cache.samtools_stats_sars_cov2.human.copy(deep=True)
+
 
 def get_samtools_stats_cov2_depleted():
-    return _samtools_stats_cov2_depleted.copy(deep=True)
+    return cache.samtools_stats_sars_cov2.depleted.copy(deep=True)
 
 
 def get_rnaseqqc2():
-    return _rnaseqqc2.copy(deep=True)
+    return normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
 
 
 def get_bamqc3_merged():
-    return _bamqc3_merged.copy(deep=True)
+    return normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
 
 
 def get_bamqc3_and_4_merged():
     # Utility function creates new DataFrame, so no need to copy again
     return gsiqcetl.common.utility.concat_workflow_versions(
-        [_bamqc4_merged, _bamqc3_merged], bamqc4_merged_columns,
+        [
+            normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns),
+            get_bamqc3_merged()
+        ],
+        bamqc4_merged_columns,
     )
 
 
 def get_ichorcna_merged():
-    return _ichorcna_merged.copy(deep=True)
+    return normalized_merged(
+        cache.ichorcnamerged.ichorcnamerged,
+        ichorcna_merged_columns
+    )
 
 
 def get_mutect_callability():
-    return _mutect_callability.copy(deep=True)
+    return normalized_merged(
+        cache.mutectcallability.mutectcallability,
+        callability_merged_columns
+    )
 
 
 def get_hsmetrics_merged():
-    return _hsmetrics_merged.copy(deep=True)
+    return normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
 
 
 def get_rnaseqqc2_merged():
-    return _rnaseqqc2_merged.copy(deep=True)
+    return normalized_merged(
+        cache.rnaseqqc2merged.rnaseqqc2merged,
+        rnaseqqc2_merged_columns
+    )
 
 
 def get_pinery_samples(active_projects_only=True):

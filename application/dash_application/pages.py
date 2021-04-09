@@ -1,4 +1,9 @@
+from collections import namedtuple
 import importlib
+import sys
+import traceback
+
+import dash_html_components as html
 
 prefix = "application.dash_application.views."
 
@@ -29,6 +34,17 @@ pages = []
 
 # Please do not edit this loop
 for name in pagenames:
-    pages.append(importlib.import_module(prefix + name))
+    try:
+        pages.append(importlib.import_module(prefix + name))
+    except (IOError, OSError):
+        print(traceback.format_exc(), file=sys.stderr)
+        ErrorPage = namedtuple('ErrorPage', 'layout title dataversion page_name init_callbacks')
+        pages.append(ErrorPage(
+            lambda x: html.H3("Unexpected Error: Failed to load cache"),
+            name,
+            lambda: "Unknown version",
+            name,
+            lambda x: None,
+        ))
 
 # TODO: Maybe move the user-defined array to another file and import it into a scarier-sounding file
