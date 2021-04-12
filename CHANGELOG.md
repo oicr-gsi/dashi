@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * QC-ETL caches are now loaded in functions. Failure to load a cache will only 
+impact views that call function. Previously, failure to load cache crashed all views.
+
 ## Added
   * Sample swap view
+  * Gracefully dealing with caches that fail to load. Affected view shows error.
 
 ## [210406-0858] - 2021-04-06
 ## Changed

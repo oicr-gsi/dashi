@@ -366,27 +366,32 @@ def jira_button(button_text: str, button_id: str, style: Dict, href: str) -> htm
                   href=href)
 
 
-def construct_jira_link(runs, page_name) -> str:
+def construct_jira_link_general(description, summary="") -> str:
     # JIRA requires a login, so we make all JIRA URLs a login with a self-redirect
     parameters = {
-      "summary": "",
-      "issuetype": 3,
-      "pid": 11684,
-      "priority": 10000,
-      "labels": "dashi",
-      "description": "Report: " + page_name + "\n"
+        "summary": summary,
+        "issuetype": 3,
+        "pid": 11684,
+        "priority": 10000,
+        "labels": "dashi",
+        "description": description
     }
-
-    if runs:
-        parameters["description"] += "Runs: " + ", ".join(str(run) for run in runs)
 
     root_parameters = {
-      "permissionViolation": "true",
-      "page_caps": "",
-      "user_role": "",
-      "os_destination": "/secure/CreateIssueDetails!init.jspa?" + urllib.parse.urlencode(parameters)
+        "permissionViolation": "true",
+        "page_caps": "",
+        "user_role": "",
+        "os_destination": "/secure/CreateIssueDetails!init.jspa?" + urllib.parse.urlencode(parameters)
     }
     return "https://jira.oicr.on.ca/login.jsp?" + urllib.parse.urlencode(root_parameters)
+
+
+def construct_jira_link(runs, page_name) -> str:
+    description = "Report: " + page_name + "\n"
+    if runs:
+        description += "Runs: " + ", ".join(str(run) for run in runs)
+
+    return construct_jira_link_general(description)
 
 
 def jira_display_button(runs: List[str], page_title: str):
