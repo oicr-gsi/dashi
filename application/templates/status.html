@@ -50,12 +50,14 @@
           <th>Cache</th>
           <th>Last Modified</th>
           <th>Errors</th>
+          <th>Shesmu Input</th>
         </tr>
         {% for key, value in errors.items() %}
           <tr>
             <td>{{key}}</td>
             <td>{{lastinputdate[key]}}</td>
             <td><pre><code>{{value}}</code></pre></td>
+            <td><a href="shesmu_input/{{key}}">{{shesmu_input[key]}}</a></td>
           </tr>
         {% endfor %}
       </table>

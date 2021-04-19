@@ -1,5 +1,5 @@
 from flask import current_app as app
-from flask import render_template
+from flask import render_template, abort
 from version import __version__ as version
 import os
 import json
@@ -68,12 +68,13 @@ def run_list():
 
 @app.route('/status')
 def status_page():
-    qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+    qcetlapi = gsiqcetl.api.QCETLCache()
     errors = {c.name: "Missing error file" for c in gsiqcetl.api.formats}
     lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.api.formats}
+    shesmu_input = {c.name: "" for c in gsiqcetl.api.formats}
 
     for cache in gsiqcetl.api.formats:
-        error_path = os.path.join(qc_etl_location, cache.name, "failedinputs.json")
+        error_path = qcetlapi.path_failed_input(cache)
         if os.path.exists(error_path):
             with open(error_path, "r") as f:
                 j = json.load(f)
@@ -81,18 +82,40 @@ def status_page():
                     errors[cache.name] = json.dumps(j, indent=2)
                 else:
                     errors[cache.name] = "Ok"
-        cache_path = os.path.join(qc_etl_location, cache.name, "lastinput.json")
+        cache_path = qcetlapi.path_latest_input(cache)
         if os.path.exists(cache_path):
             lastinputdate[cache.name] = datetime.datetime.fromtimestamp(
                 os.stat(cache_path).st_mtime)
+            shesmu_input[cache.name] = "Link"
 
     return render_template(
         'status.html',
         version=version,
         page_info=page_info,
+        shesmu_input=shesmu_input,
         errors=errors,
         lastinputdate=lastinputdate,
     )
+
+@app.route('/shesmu_input/<cache_name>')
+def shesmu_input(cache_name):
+    qcetlapi = gsiqcetl.api.QCETLCache()
+
+    for cache in gsiqcetl.api.formats:
+        if cache.name == cache_name:
+            shesmu_path = qcetlapi.path_latest_input(cache)
+            if not os.path.exists(shesmu_path):
+                abort(404)
+            with open(shesmu_path, "r") as f:
+                shesmu_data = f.read()
+            response = app.response_class(
+                response=shesmu_data,
+                status=200,
+                mimetype='application/json'
+            )
+            return response
+
+    abort(404)
 
 def str_timestamp(ts):
     # To decode: https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
