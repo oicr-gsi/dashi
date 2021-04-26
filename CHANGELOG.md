@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [210426-1510] - 2021-04-26
 ## Added
   * Shesmu input link to the `status` page to view JSON that's passed to ETL
 
