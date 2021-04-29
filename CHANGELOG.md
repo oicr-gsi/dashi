@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Sample Swap algorithm. The original approach used LOD cutoff, which produced too
+many false positives (especially with WG/WT comparisons). New algorithm looks for the
+most similar libraries and tags a swap if those are not from the same patient.
 
 ## [210426-1510] - 2021-04-26
 ## Added
