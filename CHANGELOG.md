@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [210503-1501] - 2021-05-03
+## Added
+  * Dashi license
+
 ## Changed
   * Sample Swap algorithm. The original approach used LOD cutoff, which produced too
 many false positives (especially with WG/WT comparisons). New algorithm looks for the
