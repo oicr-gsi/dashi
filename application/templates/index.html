@@ -21,6 +21,20 @@
             }
           }
         }
+
+        if(event.target.classList.contains("toggle_processing")) {
+          let td = event.target.parentNode;
+          let uls = td.getElementsByTagName('ul')
+          for (let i = 0;  i < uls.length; i++) {
+            let x = uls[i];
+            if (x.style.display === "none") {
+              x.style.display = "block";
+            } else {
+              x.style.display = "none";
+            }
+          }
+        }
+
       }
     </script>
     <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
@@ -68,7 +82,15 @@
           {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
           <td>{{ run["pages"][page]["completed"] }}</td>
-          <td>{{ run["pages"][page]["processing"] }}</td>
+          <td>
+            <a href="javascript:void(0);" class="toggle_processing"> {{run["pages"][page]["processing"]}} </a>
+            {% set processing_libraries = run["pages"][page]["processing_libraries"] %}
+            <ul style="display: none;">
+            {% for proc_lib in processing_libraries %}
+              <li><a href="https://jira.oicr.on.ca/issues/?jql=text%20~%20%22{{proc_lib}}%22">{{proc_lib}}</a></li>
+            {% endfor %}
+            </ul>
+          </td>
         </tr>
         {% set ns.first_row = false %}
         {% endfor %}
@@ -93,7 +115,15 @@
           {% endif %}
           <td><a href="{{ page }}?project={{ proj["project"] }}">{{ page }}</a></td>
           <td>{{ proj["pages"][page]["completed"] }}</td>
-          <td>{{ proj["pages"][page]["processing"] }}</td>
+          <td>
+            <a href="javascript:void(0);" class="toggle_processing"> {{proj["pages"][page]["processing"]}} </a>
+            {% set processing_libraries = proj["pages"][page]["processing_libraries"] %}
+            <ul style="display: none;">
+              {% for proc_lib in processing_libraries %}
+              <li><a href="https://jira.oicr.on.ca/issues/?jql=text%20~%20%22{{proc_lib}}%22">{{proc_lib}}</a></li>
+              {% endfor %}
+            </ul>
+          </td>
           </tr>
           {% set ns.first_row = false %}
         {% endfor %}
