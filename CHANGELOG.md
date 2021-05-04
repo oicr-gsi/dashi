@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Sample Swap view shows LOD scores of closet libraries + better column formatting
 
 ## [210503-1501] - 2021-05-03
 ## Added
