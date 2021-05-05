@@ -2,6 +2,7 @@ import dash_core_components as core
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
 import dash_table
+import dash_table.Format
 import pinery
 import numpy
 import pandas
@@ -55,10 +56,10 @@ swap = df_manipulation.df_with_pinery_samples_ius(
 swap = df_manipulation.df_with_run_info(swap, COL.RunLeft)
 swap = df_manipulation.df_with_run_info(swap, COL.RunRight, "_RIGHT")
 
-# Get the latest run of the pair for sorting purposes
+# Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
 swap[special_cols["latest_run"]] = swap[
     [RUN_COLS.StartDate, RUN_COLS.StartDate + "_RIGHT"]
-].max(1)
+].max(1).dt.date
 swap[special_cols["same_identity"]] = (
     swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_RIGHT"]
 )
@@ -86,7 +87,13 @@ def closest_lib(input_df):
     # Get libraries up to and including the first that came from the same patient
     closest_df = lib_df.iloc[:same_ident_df.index[0] + 1]
     return_df[special_cols["closest_libraries_count"]] = len(closest_df)
-    return_df[special_cols["closest_libraries"]] = ",".join(closest_df["RIGHT_LIBRARY"])
+    closest_lib = (
+            closest_df["RIGHT_LIBRARY"] +
+            " (" +
+            closest_df[COL.LODScore].round().astype(int).astype(str) +
+            ")"
+    )
+    return_df[special_cols["closest_libraries"]] = ",".join(closest_lib)
     return return_df
 
 
@@ -109,6 +116,15 @@ COLUMNS_TO_SHOW = [
     special_cols["latest_run"],
     special_cols["closest_libraries"],
 ]
+
+TABLE_COLUMNS = [{"name": i, "id": i} for i in COLUMNS_TO_SHOW]
+for d in TABLE_COLUMNS:
+    if d["name"] == COL.LODScore:
+        d["format"] = dash_table.Format.Format(
+            scheme=dash_table.Format.Scheme.decimal_integer,
+        )
+        d["type"] = "numeric"
+
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
 ALL_PROJECTS = df_manipulation.unique_set(swap, PINERY_COL.StudyTitle)
@@ -145,7 +161,7 @@ def layout(query_string):
                 html.Div(className="seven columns", children=[
                     dash_table.DataTable(
                         id=ids['table'],
-                        columns=[{"name": i, "id": i} for i in COLUMNS_TO_SHOW],
+                        columns=TABLE_COLUMNS,
                         data=swap.to_dict('records'),
                         sort_action="native",
                         sort_by=[{"column_id": "LATEST_RUN", "direction": "desc"}],
