@@ -1,3 +1,5 @@
+{% from 'macro.html' import processing_macro %}
+
 <!DOCTYPE html>
 <!-- Most data processing happens in routes.py, look there if you're confused -->
 <html>
@@ -18,6 +20,19 @@
             let openDropdown = dropdowns[i];
             if(openDropdown.classList.contains("show")){
               openDropdown.classList.remove("show");
+            }
+          }
+        }
+
+        if(event.target.classList.contains("toggle_processing")) {
+          let td = event.target.parentNode;
+          let uls = td.getElementsByTagName('ul')
+          for (let i = 0;  i < uls.length; i++) {
+            let x = uls[i];
+            if (x.style.display === "none") {
+              x.style.display = "block";
+            } else {
+              x.style.display = "none";
             }
           }
         }
@@ -61,7 +76,9 @@
           {% endif %}
           <td><a href="{{ page }}?run={{ run["run"] }}">{{ page }}</a></td>
           <td>{{ run["pages"][page]["completed"] }}</td>
-          <td>{{ run["pages"][page]["processing"] }}</td>
+          <td>
+              {{processing_macro(run, page)}}
+          </td>
         </tr>
         {% set ns.first_row = false %}
         {% endfor %}

@@ -1,0 +1,15 @@
+{% macro processing_macro(run, page) %}
+    {% set processing_count = run["pages"][page]["processing"] %}
+    {% if processing_count > 0 %}
+        <a href="javascript:void(0);" class="toggle_processing"> {{processing_count}} </a>
+    {% else %}
+        {{processing_count}}
+    {% endif %}
+    {% set processing_libraries = run["pages"][page]["processing_libraries"] %}
+    <ul style="display: none;">
+        {% for proc_lib in processing_libraries %}
+            <li><a href="https://jira.oicr.on.ca/issues/?jql=text%20~%20%22{{proc_lib}}%22">{{proc_lib}}</a></li>
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
