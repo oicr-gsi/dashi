@@ -30,7 +30,7 @@ from ..dash_id import init_ids
 import gsiqcetl.column
 
 page_name = "bcl2barcode-index-qc"
-title = "Bcl2Barcode Index QC - 🚧 WIP"
+title = "Bcl2Barcode Index QC"
 
 ids = init_ids(
     [
@@ -385,9 +385,12 @@ def create_known_index_bar(run):
         "layout": {
             "barmode": "stack",
             "title": "Sample Indices",
-            "xaxis": {"title": "Library", "automargin": True},
+            # dtick ensures tick mark labels aren't elided
+            # https://stackoverflow.com/questions/42187139/plotly-horizontal-bar-display-all-y-axis-labels
+            "xaxis": {"title": "Library", "automargin": True, "dtick": 1},
             "yaxis": {"title": "Clusters"},
-            "showlegend": True
+            "showlegend": True,
+            "height": 600,
         },
     }
 
@@ -417,7 +420,7 @@ def create_unknown_index_bar(run):
         "layout": {
             "barmode": "stack",
             "title": "Unknown Indices",
-            "xaxis": {"title": "Index"},
+            "xaxis": {"title": "Index", "automargin": True},
             "yaxis": {"title": "Clusters"},
             "showlegend": True
         },
