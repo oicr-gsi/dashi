@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [210531-1427] - 2021-05-31
   * Remove bcl2barcode WIP and fix x-axis being cut off/missing tick labels
 
 ## [210511-0903] - 2021-05-11
