@@ -17,6 +17,8 @@ COMMON_COL = gsiqcetl.column.ColumnNames
 BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
 BAMQC_COL = gsiqcetl.column.BamQc4Column
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
+INSTRUMENT_COL = pinery.column.InstrumentWithModelColumn
+RUN_COL = gsiqcetl.column.RunScannerFlowcellColumn
 
 """
 Avoid the following symbols, which fail to render correctly:
@@ -164,7 +166,22 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
 
 
 def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict, highlight_samples: List[str]=None, call_ready: bool=False):
+        dict, highlight_samples: List[str]=None, call_ready: Union[bool, str]=False):
+    """
+    
+    Args:
+        df: 
+        colour_col: 
+        shape_or_colour_values: 
+        highlight_samples: 
+        call_ready: Originally, this was True (single lane) or False (call ready) and
+            specified which column to use for highlighted samples. For backwards
+            compatibility, bool is allowed, but a str specifying the highlighted column 
+            is also allowed to select arbitrary columns
+
+    Returns:
+
+    """
     if df.empty:
         df['colour'] = pandas.Series
     else:
@@ -175,17 +192,67 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
                              axis=1)
         df = df.assign(colour=colour_col.values)
         if highlight_samples:
-            sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+            if type(call_ready) is bool:
+                sample_name_col = (
+                    PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+                )
+            else:
+                sample_name_col = call_ready
             df.loc[df[sample_name_col].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
 
 def fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
-        call_ready: bool=False):
+        call_ready: Union[bool, str]=False):
+    """
+
+    Args:
+        df:
+        highlight_samples:
+        call_ready: Originally, this was True (single lane) or False (call ready) and
+            specified which column to use for highlighted samples. For backwards
+            compatibility, bool is allowed, but a str specifying the highlighted column
+            is also allowed to select arbitrary columns
+
+    Returns:
+
+    """
     df['markersize'] = 12
     if highlight_samples:
-        sample_name_col = PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+        if type(call_ready) is bool:
+            sample_name_col = (
+                PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
+            )
+        else:
+            sample_name_col = call_ready
         df.loc[df[sample_name_col].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
+    return df
+
+
+def reshape_runscanner_df(
+        df,
+        instruments,
+        first_sort,
+        second_sort,
+        colour_by,
+        shape_by,
+        shape_or_colour_values,
+        searchsample,
+):
+    if not instruments:
+        return DataFrame(columns=df.columns)
+
+    if instruments:
+        df = df[df[INSTRUMENT_COL.ModelName].isin(instruments)]
+
+    sort_by = [first_sort, second_sort]
+    df = df.sort_values(by=sort_by)
+    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_colour_col(
+        df, colour_by, shape_or_colour_values, searchsample, RUN_COL.Run
+    )
+    df = fill_in_size_col(df, searchsample, RUN_COL.Run)
+
     return df
 
 
@@ -807,6 +874,29 @@ class ColourShapeCfMeDIP:
             PINERY_COL.TissuePreparation: self.tissue_materials,
             PINERY_COL.TissueOrigin: self.tissue_origin,
             COMMON_COL.Reference: self.reference,
+        }
+
+
+class ColourShapeRunscanner:
+    def __init__(self, instrument, workflow_type):
+        self.instrument = instrument
+        self.workflow_type = workflow_type
+
+    @staticmethod
+    def dropdown():
+        return [
+            {"label": "Instrument", "value": INSTRUMENT_COL.ModelName},
+            # TODO: QCETL has wrong column name. Use commented version once fixed
+            # {"label": "Workflow Type", "value": RUN_COL.WorkflowType}
+            {"label": "Workflow Type", "value": "workflowType"}
+        ]
+
+    def items_for_df(self):
+        return {
+            INSTRUMENT_COL.ModelName: self.instrument,
+            # TODO: QCETL has wrong column name. Use commented version once fixed
+            # RUN_COL.WorkflowType: self.workflow_type,
+            "workflowType": self.workflow_type,
         }
 
 

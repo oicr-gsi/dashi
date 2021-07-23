@@ -256,6 +256,17 @@ def highlight_samples_by_ext_name_input_single_lane(search_samples_ext_id: str, 
     ])
 
 
+def highlight_run(run_dropdown_id: str, all_runs: List[str]) -> html.Label:
+    return html.Label([
+        "Highlight Runs:",
+        core.Dropdown(
+            id=run_dropdown_id,
+            options=[{'label': x, 'value': x} for x in all_runs],
+            multi=True
+        )
+    ])
+
+
 def _show_data_labels_input(show_names_id: str, selected_value: Union[None, str],
         select_all_text: str, select_all_id: str, options: List[dict]
 ) -> core.Loading:

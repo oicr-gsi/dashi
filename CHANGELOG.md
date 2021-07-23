@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * `fill_in_color_col` and `fill_in_shape_col` take an arbitrary column for color/shape
+
+## Added
+  * Added Runscanner Illumina Flow Cell view
 
 ## [210531-1427] - 2021-05-31
   * Remove bcl2barcode WIP and fix x-axis being cut off/missing tick labels
