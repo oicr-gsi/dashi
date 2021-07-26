@@ -214,8 +214,9 @@ shape_colour = ColourShapeCallReady(
     ALL_TISSUE_ORIGIN,
     ALL_REFERENCES
 )
-WGS_DF = add_graphable_cols(WGS_DF, initial, shape_colour.items_for_df(), None,
-                            True)
+WGS_DF = add_graphable_cols(
+    WGS_DF, initial, shape_colour.items_for_df(), None, REPORT_TYPE["Call-Ready"]
+)
 
 SORT_BY = shape_colour.dropdown() + [
     {

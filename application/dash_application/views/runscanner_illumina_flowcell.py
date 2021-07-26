@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 """ Set up elements needed for page """
 page_name = "illumina_flowcell"
-title = "Runscanner Illumina Flow Cell"
+title = "Run Scanner Illumina Flow Cell"
 
 ids = init_ids([
     # Buttons

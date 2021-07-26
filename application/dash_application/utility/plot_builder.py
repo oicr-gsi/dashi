@@ -107,6 +107,12 @@ DATA_LABEL_NAME = {
     CALL_COL.TumorMinCoverage: 'Tumor coverage for callability >= ',
 }
 
+REPORT_TYPE = {
+    "RunScanner": RUN_COL.Run,
+    "Single-Lane": PINERY_COL.SampleName,
+    "Call-Ready": PINERY_COL.RootSampleName
+}
+
 
 def create_data_label(
         df: pandas.DataFrame, cols: Union[None, List[str]], additional_text=None) -> List[str]:
@@ -143,12 +149,17 @@ def create_data_label(
     return df.apply(apply_label, axis=1)
 
 
-def add_graphable_cols(df: DataFrame, graph_params: dict, shape_or_colour: dict,
-        highlight_samples: List[str]=None, call_ready: bool=False) -> DataFrame:
+def add_graphable_cols(
+        df: DataFrame,
+        graph_params: dict,
+        shape_or_colour: dict,
+        highlight_samples: List[str] = None,
+        highlight_col: str = REPORT_TYPE["Single-Lane"]
+) -> DataFrame:
     df = fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
     df = fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
-                             highlight_samples, call_ready)
-    df = fill_in_size_col(df, highlight_samples, call_ready)
+                            highlight_samples, highlight_col)
+    df = fill_in_size_col(df, highlight_samples, highlight_col)
     return df
 
 
@@ -165,19 +176,23 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     return df
 
 
-def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
-        dict, highlight_samples: List[str]=None, call_ready: Union[bool, str]=False):
+def fill_in_colour_col(
+        df: DataFrame,
+        colour_col: str,
+        shape_or_colour_values: dict,
+        highlight_samples: List[str] = None,
+        highlight_col: str = REPORT_TYPE["Single-Lane"]
+):
     """
+    Add a colour column that determines data point colour in plot
     
     Args:
-        df: 
-        colour_col: 
-        shape_or_colour_values: 
-        highlight_samples: 
-        call_ready: Originally, this was True (single lane) or False (call ready) and
-            specified which column to use for highlighted samples. For backwards
-            compatibility, bool is allowed, but a str specifying the highlighted column 
-            is also allowed to select arbitrary columns
+        df: Input DataFrame
+        colour_col: Which column to use to assign colours
+        shape_or_colour_values: For each column that can be used in `colour_col`,
+            provides a list of possible unique values
+        highlight_samples: Which data points to highlight
+        highlight_col: Which column to use for highlighting samples
 
     Returns:
 
@@ -185,47 +200,36 @@ def fill_in_colour_col(df: DataFrame, colour_col: str, shape_or_colour_values:
     if df.empty:
         df['colour'] = pandas.Series
     else:
-        all_colours = _get_colours_for_values(shape_or_colour_values[
-                                            colour_col])
+        all_colours = _get_colours_for_values(shape_or_colour_values[colour_col])
         # for each row, apply the colour according the colour col's value
-        colour_col = df.apply(lambda row: all_colours.get(row[colour_col]),
-                             axis=1)
+        colour_col = df.apply(
+            lambda row: all_colours.get(row[colour_col]), axis=1
+        )
         df = df.assign(colour=colour_col.values)
         if highlight_samples:
-            if type(call_ready) is bool:
-                sample_name_col = (
-                    PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
-                )
-            else:
-                sample_name_col = call_ready
-            df.loc[df[sample_name_col].isin(highlight_samples), 'colour'] = '#F00'
+            df.loc[df[highlight_col].isin(highlight_samples), 'colour'] = '#F00'
     return df
 
 
-def fill_in_size_col(df: DataFrame, highlight_samples: List[str] = None,
-        call_ready: Union[bool, str]=False):
+def fill_in_size_col(
+        df: DataFrame,
+        highlight_samples: List[str] = None,
+        highlight_col: str = REPORT_TYPE["Single-Lane"]
+):
     """
+    Set the size column that will determine the of size data points
 
     Args:
-        df:
-        highlight_samples:
-        call_ready: Originally, this was True (single lane) or False (call ready) and
-            specified which column to use for highlighted samples. For backwards
-            compatibility, bool is allowed, but a str specifying the highlighted column
-            is also allowed to select arbitrary columns
+        df: Input DataFrame
+        highlight_samples: Which data points to highlight (make bigger)
+        highlight_col: Which column to use for highlighting
 
     Returns:
 
     """
     df['markersize'] = 12
     if highlight_samples:
-        if type(call_ready) is bool:
-            sample_name_col = (
-                PINERY_COL.RootSampleName if call_ready else PINERY_COL.SampleName
-            )
-        else:
-            sample_name_col = call_ready
-        df.loc[df[sample_name_col].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
+        df.loc[df[highlight_col].isin(highlight_samples), 'markersize'] = BIG_MARKER_SIZE
     return df
 
 
@@ -251,7 +255,7 @@ def reshape_runscanner_df(
     df = fill_in_colour_col(
         df, colour_by, shape_or_colour_values, searchsample, RUN_COL.Run
     )
-    df = fill_in_size_col(df, searchsample, RUN_COL.Run)
+    df = fill_in_size_col(df, searchsample, REPORT_TYPE["RunScanner"])
 
     return df
 
@@ -312,8 +316,10 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample, True)
-    df = fill_in_size_col(df, searchsample, True)
+    df = fill_in_colour_col(
+        df, colour_by, shape_or_colour_values, searchsample, REPORT_TYPE["Call-Ready"]
+    )
+    df = fill_in_size_col(df, searchsample, REPORT_TYPE["Call-Ready"])
     return df
 
 

@@ -210,7 +210,9 @@ shape_colour = ColourShapeCallReady(
     ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES,
     ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_REFERENCES
 )
-TS_DF = add_graphable_cols(TS_DF, initial, shape_colour.items_for_df(), None, True)
+TS_DF = add_graphable_cols(
+    TS_DF, initial, shape_colour.items_for_df(), None, REPORT_TYPE["Call-Ready"]
+)
 
 SORT_BY = shape_colour.dropdown() + [
     {"label": "Total Clusters",
