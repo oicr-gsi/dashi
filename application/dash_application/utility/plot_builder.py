@@ -886,17 +886,13 @@ class ColourShapeRunscanner:
     def dropdown():
         return [
             {"label": "Instrument", "value": INSTRUMENT_COL.ModelName},
-            # TODO: QCETL has wrong column name. Use commented version once fixed
-            # {"label": "Workflow Type", "value": RUN_COL.WorkflowType}
-            {"label": "Workflow Type", "value": "workflowType"}
+            {"label": "Workflow Type", "value": RUN_COL.WorkflowType}
         ]
 
     def items_for_df(self):
         return {
             INSTRUMENT_COL.ModelName: self.instrument,
-            # TODO: QCETL has wrong column name. Use commented version once fixed
-            # RUN_COL.WorkflowType: self.workflow_type,
-            "workflowType": self.workflow_type,
+            RUN_COL.WorkflowType: self.workflow_type,
         }
 
 

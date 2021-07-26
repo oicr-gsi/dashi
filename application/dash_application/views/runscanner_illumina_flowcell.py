@@ -47,16 +47,12 @@ INSTRUMENT_COL = util.INSTRUMENTS_COL
 
 DF = util.get_runscanner_flowcell()
 DF = DF.drop(columns=COL.Platform)  # Conflicts with column added by `df_with_run_info`
-# TODO: QCETL has wrong column name. Use commented version once fixed
-# DF = DF.fillna(value={COL.WorkflowType: "Unspecified"})
-DF = DF.fillna(value={"workflowType": "Unspecified"})
+DF = DF.fillna(value={COL.WorkflowType: "Unspecified"})
 DF = DF[DF[COL.MISOHealthType] == "Completed"]
 DF = util.df_with_run_info(DF, COL.Run)
 
 ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(DF)
-# TODO: QCETL has wrong column name. Use commented version once fixed
-# ALL_WORKFLOW_TYPES = util.unique_set(DF, COL.WorkflowType)
-ALL_WORKFLOW_TYPES = util.unique_set(DF, "workflowType")
+ALL_WORKFLOW_TYPES = util.unique_set(DF, COL.WorkflowType)
 
 shape_colour = plot_builder.ColourShapeRunscanner(
     ILLUMINA_INSTRUMENT_MODELS,
@@ -68,9 +64,7 @@ INITIAL = {
     "first_sort": COL.StartDate,
     "second_sort": INSTRUMENT_COL.ModelName,
     "colour_by": INSTRUMENT_COL.ModelName,
-    # TODO: QCETL has wrong column name. Use commented version once fixed
-    # "shape_by": COL.WorkflowType
-    "shape_by": "workflowType",
+    "shape_by": COL.WorkflowType,
     "shownames_val": None,
 }
 
