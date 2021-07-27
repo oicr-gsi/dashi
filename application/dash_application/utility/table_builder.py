@@ -3,8 +3,6 @@ from typing import Callable, Dict, List, Tuple
 import dash_core_components as core
 import dash_html_components as html
 import dash_table as tabl
-import numpy
-import pandas
 from pandas import DataFrame
 import pinery
 from .Mode import Mode

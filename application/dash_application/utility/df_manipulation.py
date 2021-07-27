@@ -26,6 +26,7 @@ HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
 RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
+RUNSCANNER_FLOWCELL_COL = gsiqcetl.column.RunScannerFlowcellColumn
 PROJECT_COL = pinery.column.ProjectsColumn
 FASTQC_COL = gsiqcetl.column.FastqcColumn
 KRAKEN2_COL = gsiqcetl.column.Kraken2Column
@@ -320,6 +321,10 @@ def get_samtools_stats_cov2_depleted():
 
 def get_rnaseqqc2():
     return normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
+
+
+def get_runscanner_flowcell():
+    return cache.runscannerillumina.flowcell.copy(deep=True)
 
 
 def get_bamqc3_merged():
