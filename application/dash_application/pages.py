@@ -15,7 +15,8 @@ pagenames = [
     "call_ready_ts",
     "call_ready_rna",
     "call_ready_wgs",
-    "runscanner_illumina_flowcell",
+    # Turn on once GDI-2080 is resoved
+    # "runscanner_illumina_flowcell",
     "sample_swaps",
     "single_lane_ts",
     "single_lane_rna",

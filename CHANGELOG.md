@@ -10,7 +10,7 @@ and as of version 1.0.0, follows semantic versioning.
   * `fill_in_color_col` and `fill_in_shape_col` take an arbitrary column for color/shape
 
 ## Added
-  * Added Runscanner Illumina Flow Cell view
+  * Added Runscanner Illumina Flow Cell view (not turned on until GDI-2080 is solved)
 
 ## [210531-1427] - 2021-05-31
   * Remove bcl2barcode WIP and fix x-axis being cut off/missing tick labels
