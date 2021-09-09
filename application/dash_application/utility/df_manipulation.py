@@ -1,3 +1,4 @@
+import os
 import pandas
 from pandas import DataFrame, Series
 from typing import List
@@ -370,11 +371,12 @@ def get_rnaseqqc2_merged():
 def get_pinery_samples(active_projects_only=True):
     """Get Pinery Sample Provenance DataFrame"""
     samples = _pinery_samples.copy(deep=True)
-    if (active_projects_only):
+    # Serve samples for active projects unless ALL projects are requested
+    if (not active_projects_only or os.getenv("SAMPLES_FOR_PROJECTS", 'ACTIVE').lower() in ('all')):
+        return samples
+    else:
         return samples.loc[samples[PINERY_COL.StudyTitle].isin(
             _active_projects)]
-    else:
-        return samples
 
 
 def get_pinery_merged_samples(active_projects_only=True):
