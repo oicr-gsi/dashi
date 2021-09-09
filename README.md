@@ -25,9 +25,10 @@ Create a `.env` file in the root directory of this repository:
 | `PINERY_URL` | **Yes** | URL to location of Pinery web service root | `http://pinery-url:8080/pinery-ws-miso` | 
 | `MISO_URL` | **Yes** | URL to location of MISO web service root | `http://miso.your.domain/` |
 | `LOG_FILE_LOCATION` | **Yes** | File path where logs should be written | `~/logs/dashi.log` | `./dashi.log` |
+| `BARCODES_STREXPAND` | **Yes** | Tab-separated file listing 10X barcodes and 4 sequences for each | `~/barcodes` | |
 | `LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` | do not log |
 | `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` | use release version |
-| `BARCODES_STREXPAND` | **Yes** | Tab-separated file listing 10X barcodes and 4 sequences for each | `~/barcodes` | |
+| `EXCLUDE_SWAP_LIBS` | No | File path to TSV file of library pairs to be excluded for swap view | `/exclude_swap_lib.tsv` | |
 
 ## Setup on bare metal
 

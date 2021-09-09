@@ -6,10 +6,14 @@ import dash_table.Format
 import pinery
 import numpy
 import pandas
+import os
+import logging
 
 from ..dash_id import init_ids
 from ..utility import df_manipulation, sidebar_utils
 from ..utility.df_manipulation import CROSSCHECKFINGERPRINTS_COL as COL
+
+logger = logging.getLogger(__name__)
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 RUN_COLS = pinery.column.RunsColumn
@@ -97,6 +101,38 @@ def closest_lib(input_df):
     return return_df
 
 
+def exclude_false_positives(swap_df):
+    """
+    Excludes specific library pair swaps defined in an external file.
+
+    Current workflow setup prevents this from being done by Shesmu.
+
+    Args:
+        swap_df: The swaps called by Dashi
+
+    Returns: The input table minus the library pairs in the file
+
+    """
+    excl_file = os.getenv("EXCLUDE_SWAP_LIBS")
+    if excl_file is None:
+        return swap_df
+
+    if not os.path.isfile(excl_file):
+        logger.warning("False positive swap file does not exist")
+        return swap_df
+
+    false_pos = pandas.read_csv(excl_file, sep="\t", comment="#")
+    # Merge will preserve all rows of swap_df. If a row is a false positive, it will
+    # have non-NA values in the false_pol columns
+    matches = swap_df.merge(
+        false_pos,
+        how="left",
+        left_on=["LEFT_LIBRARY", "RIGHT_LIBRARY"],
+        right_on=["LEFT_LIBRARY", "RIGHT_LIBRARY"],
+    )
+    true_pos = matches["JIRA_ISSUE"].isna()
+    return swap_df[list(true_pos)].copy()
+
 result = []
 # Two for loops (blah) go through each swap workflow and then check each library
 # Will try to vectorize this if this approach proves superior to previous hard LOD cutoff
@@ -108,6 +144,7 @@ for _, top in swap.groupby(COL.FileSWID):
 swap = pandas.concat(result)
 swap = swap[swap[COL.LODScore].abs() > AMBIGUOUS_ZONE]
 swap = swap[swap[special_cols["closest_libraries_count"]] > 1]
+swap = exclude_false_positives(swap)
 
 COLUMNS_TO_SHOW = [
     COL.LibraryLeft,
