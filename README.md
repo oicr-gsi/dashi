@@ -29,6 +29,7 @@ Create a `.env` file in the root directory of this repository:
 | `LOG_TO_CONSOLE` | No | Set to log to console as well as to log file specified above | `True` | do not log |
 | `USE_BLEEDING_EDGE_ETL` | No | Set to install `gsi-qc-etl@master` instead of the release version of `gsi-qc-etl` in `requirements.txt` (Docker only) | `1` | use release version |
 | `EXCLUDE_SWAP_LIBS` | No | File path to TSV file of library pairs to be excluded for swap view | `./exclude_swap_lib.tsv` | |
+| `SAMPLES_FOR_PROJECTS` | No | Indicate whether samples from ALL projects should be used, or only samples from ACTIVE projects. | `ALL` | `ACTIVE` |
 
 ## Setup on bare metal
 
