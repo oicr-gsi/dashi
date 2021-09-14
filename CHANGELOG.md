@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [210914-1010] - 2021-09-14
 ## Changed
   * `fill_in_color_col` and `fill_in_shape_col` take an arbitrary column for color/shape
 
