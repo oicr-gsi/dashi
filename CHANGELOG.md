@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Added status to swap view that workflow is paused.
 
 ## [210914-1010] - 2021-09-14
 ## Changed

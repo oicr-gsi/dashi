@@ -196,6 +196,15 @@ def layout(query_string):
                     ),
                 ]),
                 html.Div(className="seven columns", children=[
+                    html.P(
+                        ["Swap detection is paused as of 2021-09-29. It will resume when ",
+                         html.A(
+                             "GC-8958 ",
+                             href="https://jira.oicr.on.ca/browse/GC-8958",
+                             target="_blank",
+                         ),
+                         "is fixed."]
+                    ),
                     dash_table.DataTable(
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
