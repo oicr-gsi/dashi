@@ -9,6 +9,8 @@ and as of version 1.0.0, follows semantic versioning.
 ## Changed
   * Added sample hierarchy information to swap view (hidden by default to avoid clutter)
   * Made swap view more compact to see all columns on the screen
+  * Fixed swap view bug where libraries from patients with only a single library were
+ignored
 
 ## [210914-1010] - 2021-09-14
 ## Changed
