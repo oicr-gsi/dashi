@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Added sample hierarchy information to swap view (hidden by default to avoid clutter)
+  * Made swap view more compact to see all columns on the screen
 
 ## [210914-1010] - 2021-09-14
 ## Changed
