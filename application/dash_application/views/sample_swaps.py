@@ -83,9 +83,18 @@ def closest_lib(input_df):
     return_df = lib_df.head(1).copy()
     # Libraries that came from the same patient
     same_ident_df = lib_df[lib_df[special_cols["same_identity"]]]
+    # Patient has only one library sequenced
+    # Get the next closest library (should not match, as it is from different patient)
     if same_ident_df.empty:
+        closest_other_patient = lib_df.iloc[1]
+        # As there are no expected close libraries, this is always 0
         return_df[special_cols["closest_libraries_count"]] = 0
-        return_df[special_cols["closest_libraries"]] = numpy.nan
+        return_df[special_cols["closest_libraries"]] = (
+            closest_other_patient["RIGHT_LIBRARY"] +
+            " (" +
+            closest_other_patient[COL.LODScore].round().astype(int).astype(str) +
+            ")"
+        )
         return return_df
 
     # Get libraries up to and including the first that came from the same patient
@@ -142,8 +151,18 @@ for _, top in swap.groupby(COL.FileSWID):
         result.append(closest_lib(d))
 
 swap = pandas.concat(result)
-swap = swap[swap[COL.LODScore].abs() > AMBIGUOUS_ZONE]
-swap = swap[swap[special_cols["closest_libraries_count"]] > 1]
+
+# Libraries from patients with more than one library
+# Check for both positive and negative LOD values
+multi_lib = swap[swap[special_cols["closest_libraries_count"]] > 1]
+multi_lib = multi_lib[multi_lib[COL.LODScore].abs() > AMBIGUOUS_ZONE]
+
+# Libraries from patients with only one library
+# Negative LOD scores are expected, so only check for positive ones
+single_lib = swap[swap[special_cols["closest_libraries_count"]] == 0]
+single_lib = single_lib[single_lib[COL.LODScore] > AMBIGUOUS_ZONE]
+
+swap = pandas.concat([multi_lib, single_lib])
 swap = exclude_false_positives(swap)
 
 COLUMNS_TO_SHOW = [
