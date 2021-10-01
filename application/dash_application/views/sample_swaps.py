@@ -97,7 +97,7 @@ def closest_lib(input_df):
             closest_df[COL.LODScore].round().astype(int).astype(str) +
             ")"
     )
-    return_df[special_cols["closest_libraries"]] = ",".join(closest_lib)
+    return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
     return return_df
 
 
@@ -146,21 +146,31 @@ swap = swap[swap[COL.LODScore].abs() > AMBIGUOUS_ZONE]
 swap = swap[swap[special_cols["closest_libraries_count"]] > 1]
 swap = exclude_false_positives(swap)
 
-COLUMNS_TO_SHOW = [
+DATA_COLUMN = [
     COL.LibraryLeft,
     COL.LibraryRight,
     COL.LODScore,
     special_cols["latest_run"],
     special_cols["closest_libraries"],
+    PINERY_COL.ParentSampleName,
+    PINERY_COL.ParentSampleName + "_RIGHT",
 ]
 
-TABLE_COLUMNS = [{"name": i, "id": i} for i in COLUMNS_TO_SHOW]
+# These columns will be in the downloaded csv, but not displayed by default in Dashi
+DOWNLOAD_ONLY_COLUMNS = [
+    PINERY_COL.ParentSampleName,
+    PINERY_COL.ParentSampleName + "_RIGHT",
+]
+
+TABLE_COLUMNS = [{"name": i, "id": i} for i in DATA_COLUMN]
 for d in TABLE_COLUMNS:
-    if d["name"] == COL.LODScore:
+    if d["id"] == COL.LODScore:
         d["format"] = dash_table.Format.Format(
             scheme=dash_table.Format.Scheme.decimal_integer,
         )
-        d["type"] = "numeric"
+        d["type"] = "numeric",
+    elif PINERY_COL.ParentSampleName in d["id"]:
+        d["hideable"] = True
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
@@ -184,7 +194,7 @@ def layout(query_string):
     return core.Loading( fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className='row flex-container', children=[
-                html.Div(className='sidebar four columns', children=[
+                html.Div(className='sidebar two columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
                     html.Br(),
                     html.Br(),
@@ -199,11 +209,21 @@ def layout(query_string):
                     dash_table.DataTable(
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
+                        hidden_columns=DOWNLOAD_ONLY_COLUMNS,
                         data=swap.to_dict('records'),
                         sort_action="native",
                         sort_by=[{"column_id": "LATEST_RUN", "direction": "desc"}],
                         export_format="csv",
+                        export_columns="all",
                         include_headers_on_copy_paste=True,
+                        style_data={
+                            'whiteSpace': 'normal',
+                            'height': 'auto',
+                        },
+                        style_cell_conditional=[
+                            {'if': {'column_id': special_cols["closest_libraries"]},
+                             'width': "500px"},
+                        ],
                         style_cell={'textAlign': 'left', 'padding-right': '50px'},
                         style_data_conditional=[
                             {

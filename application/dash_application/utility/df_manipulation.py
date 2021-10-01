@@ -181,7 +181,6 @@ _pinery_samples = _pinery_samples.drop(axis=1, columns=[
     PINERY_COL.SequencingParameters,
     PINERY_COL.GroupIDDescription,
     PINERY_COL.CreateDate,
-    PINERY_COL.ParentSampleName,
     PINERY_COL.TemplateType,
     PINERY_COL.RunBaseMask,
     PINERY_COL.RunDir,
