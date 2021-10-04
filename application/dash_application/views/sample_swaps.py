@@ -4,7 +4,6 @@ from dash.dependencies import Input, Output, State
 import dash_table
 import dash_table.Format
 import pinery
-import numpy
 import pandas
 import os
 import logging
@@ -77,6 +76,11 @@ def closest_lib(input_df):
     one from the same patient was identified. If there was no swap, only one library
     should have been traversed.
     """
+    # There must be at least two libraries for swap comparison
+    if len(input_df) < 2:
+        return pandas.DataFrame(columns=list(input_df) + [
+            special_cols["closest_libraries_count"], special_cols["closest_libraries"]
+        ])
     # Index will be used with `iloc` call, so has to go from 0 to number of rows
     lib_df = input_df.reset_index(drop=True)
     # The closest library
