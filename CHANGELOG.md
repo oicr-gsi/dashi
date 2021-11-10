@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * Add checkbox to swap view to enable seeing all comparisons, not just those marked
+as swaps.
 
 ## [211012-0851] - 2021-10-12
 ## Changed
