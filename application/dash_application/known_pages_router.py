@@ -1,14 +1,18 @@
 from collections import namedtuple
+import json
+import logging
+import os
 import random
 import dash_bootstrap_components as dbc
 import dash_html_components as html
 import dash_core_components as core
 from dash.dependencies import Input, Output
 
-from .dash_id import init_ids
 from . import pages
 from ..routes import version
 
+
+logger = logging.getLogger(__name__)
 
 """
 This file acts as a router which serves all the pages the Dash app knows about.
@@ -63,10 +67,41 @@ def navbar(current):
     )
 
 
+def load_user_messages(json_path=os.getenv("DISPLAY_USER_MESSAGE")):
+    if json_path is None:
+        return {}
+
+    if not os.path.isfile(json_path):
+        logger.warning("User message JSON file does not exist")
+        return {}
+
+    # If this fails, it will take down Dashi, so general exception handling is a must
+    try:
+        with open(json_path, "r") as f:
+            return json.load(f)
+    except json.decoder.JSONDecodeError as e:
+        logger.warning("Invalid user message JSON format: {}".format(e))
+        return {}
+    except OSError as e:
+        logger.warning("Failed to open user message JSON file: {}".format(e))
+        return {}
+
+
+# Messages to the displayed to users in specific views
+# Key is the page name and the value is the message to be displayed
+# If page name does not exist or value is `None` message won't be displayed
+user_message = load_user_messages()
+
+
 # Default layout element (wraps the page layout elements which are returned by the router)
 layout = html.Div([
     core.Location(id='url', refresh=False),
     navbar(default_title),
+    dbc.Alert(
+        id="user_message",
+        is_open=False,
+        color="warning",
+    ),
     core.Loading(id='page-content', type='dot'),
     html.Footer(id='footer', children=[
         html.Hr(), 
@@ -113,3 +148,22 @@ def init_callbacks(dash_app):
             page = pages_info[requested]
             return [page.layout(qs), page.dataversion()]
         return '404', None
+
+    @dash_app.callback(
+        [
+            Output('user_message', 'children'),
+            Output('user_message', 'is_open'),
+        ],
+        [
+            Input('url', 'pathname'),
+        ])
+    def display_user_message(path):
+        """
+        If there is a user message associated with the loaded page, display it.
+        """
+        requested = path[1:] # drop the leading slash
+        message = user_message.get(requested, None)
+        if message is None:
+            return "", False
+        else:
+            return message, True
