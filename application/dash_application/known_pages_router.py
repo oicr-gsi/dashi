@@ -100,7 +100,8 @@ layout = html.Div([
     dbc.Alert(
         id="user_message",
         is_open=False,
-        color="warning",
+        color="danger",
+        style={"margin-left": "15px"},
     ),
     core.Loading(id='page-content', type='dot'),
     html.Footer(id='footer', children=[
@@ -161,6 +162,9 @@ def init_callbacks(dash_app):
         """
         If there is a user message associated with the loaded page, display it.
         """
+        if path is None:
+            return "", False
+
         requested = path[1:] # drop the leading slash
         message = user_message.get(requested, None)
         if message is None:
