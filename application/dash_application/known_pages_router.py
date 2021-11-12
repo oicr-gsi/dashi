@@ -75,16 +75,9 @@ def load_user_messages(json_path=os.getenv("DISPLAY_USER_MESSAGE")):
         logger.warning("User message JSON file does not exist")
         return {}
 
-    # If this fails, it will take down Dashi, so general exception handling is a must
-    try:
-        with open(json_path, "r") as f:
-            return json.load(f)
-    except json.decoder.JSONDecodeError as e:
-        logger.warning("Invalid user message JSON format: {}".format(e))
-        return {}
-    except OSError as e:
-        logger.warning("Failed to open user message JSON file: {}".format(e))
-        return {}
+    # If opening or decoding fails, Dashi will crash.
+    with open(json_path, "r") as f:
+        return json.load(f)
 
 
 # Messages to the displayed to users in specific views
