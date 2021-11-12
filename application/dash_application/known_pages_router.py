@@ -68,6 +68,13 @@ def navbar(current):
 
 
 def load_user_messages(json_path=os.getenv("DISPLAY_USER_MESSAGE")):
+    """
+    Loads the user messages. Raises an exception in the following cases:
+    * Cannot parse JSON file
+    * If message is not a string
+    * If the view of the message does not exist
+    * If multiple messages exist for a single view
+    """
     if json_path is None:
         return {}
 
@@ -75,9 +82,25 @@ def load_user_messages(json_path=os.getenv("DISPLAY_USER_MESSAGE")):
         logger.warning("User message JSON file does not exist")
         return {}
 
-    # If opening or decoding fails, Dashi will crash.
+    def json_parse(pairs):
+        parsed = {}
+
+        for k, v in pairs:
+            if not isinstance(v, str):
+                raise TypeError("User messages must be a string: {}".format(v))
+
+            if k not in pages_info:
+                raise KeyError("Unknown page name: {}".format(k))
+
+            if k in parsed:
+                raise KeyError("Multiple messages for the same page: {}".format(k))
+            else:
+                parsed[k] = v
+
+        return parsed
+
     with open(json_path, "r") as f:
-        return json.load(f)
+        return json.load(f, object_pairs_hook=json_parse)
 
 
 # Messages to the displayed to users in specific views
