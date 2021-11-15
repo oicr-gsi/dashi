@@ -212,7 +212,10 @@ for d in TABLE_COLUMNS:
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(swap, PINERY_COL.StudyTitle)
+ALL_PROJECTS = df_manipulation.unique_set(
+    filter_for_swaps(swap),
+    PINERY_COL.StudyTitle
+)
 
 INITIAL = {
     "projects": ALL_PROJECTS,
