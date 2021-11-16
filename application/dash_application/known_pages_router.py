@@ -117,7 +117,7 @@ layout = html.Div([
         id="user_message",
         is_open=False,
         color="danger",
-        style={"margin-left": "15px"},
+        style={"margin-left": "15px", "margin-right": "15px"},
     ),
     core.Loading(id='page-content', type='dot'),
     html.Footer(id='footer', children=[
