@@ -30,6 +30,7 @@ ids = init_ids([
 
     # Sidebar
     "all-projects",
+    "checkbox_show_swaps",
     "projects-list",
 
     # Main Table
@@ -145,6 +146,33 @@ def exclude_false_positives(swap_df):
     true_pos = matches["JIRA_ISSUE"].isna()
     return swap_df[list(true_pos)].copy()
 
+
+def filter_for_swaps(df):
+    """
+    Filter for rows that are swaps
+
+    Args:
+        df: The DataFrame must have the been annotated by the `closest_lib` function
+
+    Returns:
+
+    """
+    # Libraries from patients with more than one library
+    # Check for both positive and negative LOD values
+    multi_lib = df[df[special_cols["closest_libraries_count"]] > 1]
+    multi_lib = multi_lib[multi_lib[COL.LODScore].abs() > AMBIGUOUS_ZONE]
+
+    # Libraries from patients with only one library
+    # Negative LOD scores are expected, so only check for positive ones
+    single_lib = df[df[special_cols["closest_libraries_count"]] == 0]
+    single_lib = single_lib[single_lib[COL.LODScore] > AMBIGUOUS_ZONE]
+
+    swaps = pandas.concat([multi_lib, single_lib])
+    swaps = exclude_false_positives(swaps)
+
+    return swaps
+
+
 result = []
 # Two for loops (blah) go through each swap workflow and then check each library
 # Will try to vectorize this if this approach proves superior to previous hard LOD cutoff
@@ -154,19 +182,6 @@ for _, top in swap.groupby(COL.FileSWID):
         result.append(closest_lib(d))
 
 swap = pandas.concat(result)
-
-# Libraries from patients with more than one library
-# Check for both positive and negative LOD values
-multi_lib = swap[swap[special_cols["closest_libraries_count"]] > 1]
-multi_lib = multi_lib[multi_lib[COL.LODScore].abs() > AMBIGUOUS_ZONE]
-
-# Libraries from patients with only one library
-# Negative LOD scores are expected, so only check for positive ones
-single_lib = swap[swap[special_cols["closest_libraries_count"]] == 0]
-single_lib = single_lib[single_lib[COL.LODScore] > AMBIGUOUS_ZONE]
-
-swap = pandas.concat([multi_lib, single_lib])
-swap = exclude_false_positives(swap)
 
 DATA_COLUMN = [
     COL.LibraryLeft,
@@ -196,7 +211,10 @@ for d in TABLE_COLUMNS:
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(swap, PINERY_COL.StudyTitle)
+ALL_PROJECTS = df_manipulation.unique_set(
+    filter_for_swaps(swap),
+    PINERY_COL.StudyTitle
+)
 
 INITIAL = {
     "projects": ALL_PROJECTS,
@@ -226,13 +244,20 @@ def layout(query_string):
                         ALL_PROJECTS,
                         INITIAL["projects"]
                     ),
+                    core.Checklist(
+                        id=ids["checkbox_show_swaps"],
+                        options=[
+                            {"label": "Only show swaps", "value": "swap"},
+                        ],
+                        value=["swap"]
+                    )
                 ]),
                 html.Div(className="seven columns", children=[
                     dash_table.DataTable(
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
                         hidden_columns=DOWNLOAD_ONLY_COLUMNS,
-                        data=swap.to_dict('records'),
+                        data=filter_for_swaps(swap).to_dict('records'),
                         sort_action="native",
                         sort_by=[{"column_id": "LATEST_RUN", "direction": "desc"}],
                         export_format="csv",
@@ -268,10 +293,17 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         Output(ids["table"], "data"),
         [Input(ids["update-button-top"], "n_clicks")],
-        [State(ids['projects-list'], 'value')],
+        [
+            State(ids["projects-list"], "value"),
+            State(ids["checkbox_show_swaps"], "value"),
+        ]
     )
-    def update_pressed(_click, projects):
-        df = swap[swap[PINERY_COL.StudyTitle].isin(projects)]
+    def update_pressed(_click, projects, show_swap):
+        if "swap" in show_swap:
+            df = filter_for_swaps(swap)
+        else:
+            df = swap
+        df = df[df[PINERY_COL.StudyTitle].isin(projects)]
         return df.to_dict('records')
 
     @dash_app.callback(

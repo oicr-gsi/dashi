@@ -9,6 +9,11 @@ and as of version 1.0.0, follows semantic versioning.
 ## Fixed
   * Wrong swap was being shown if patient has had only one library sequenced.
 
+## Changed
+  * User messages can be displayed in each view.
+  * Add checkbox to swap view to enable seeing all comparisons, not just those marked
+as swaps.
+
 ## [211012-0851] - 2021-10-12
 ## Changed
   * Added sample hierarchy information to swap view (hidden by default to avoid clutter)
