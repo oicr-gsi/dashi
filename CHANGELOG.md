@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [211122-1638] - 2021-11-22
 ## Changed
   * User messages can be displayed in each view.
   * Add checkbox to swap view to enable seeing all comparisons, not just those marked
