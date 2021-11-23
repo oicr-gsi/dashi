@@ -8,7 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Fixed
   * Wrong swap was being shown if patient has had only one library sequenced.
-   
+
 ## Changed
   * User messages can be displayed in each view.
   * Add checkbox to swap view to enable seeing all comparisons, not just those marked
