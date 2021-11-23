@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Fixed
+  * Wrong swap was being shown if patient has had only one library sequenced.
 
 ## [211122-1638] - 2021-11-22
 ## Changed

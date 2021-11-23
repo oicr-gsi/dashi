@@ -89,15 +89,14 @@ def closest_lib(input_df):
     # Libraries that came from the same patient
     same_ident_df = lib_df[lib_df[special_cols["same_identity"]]]
     # Patient has only one library sequenced
-    # Get the next closest library (should not match, as it is from different patient)
+    # Take the first hit (should not match, as it is from different patient)
     if same_ident_df.empty:
-        closest_other_patient = lib_df.iloc[1]
         # As there are no expected close libraries, this is always 0
         return_df[special_cols["closest_libraries_count"]] = 0
         return_df[special_cols["closest_libraries"]] = (
-            closest_other_patient["RIGHT_LIBRARY"] +
+            return_df["RIGHT_LIBRARY"] +
             " (" +
-            closest_other_patient[COL.LODScore].round().astype(int).astype(str) +
+            return_df[COL.LODScore].round().astype(int).astype(str) +
             ")"
         )
         return return_df
