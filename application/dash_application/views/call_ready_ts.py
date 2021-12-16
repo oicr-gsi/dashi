@@ -83,6 +83,7 @@ special_cols = {
     "On Bait Percentage": "On Bait Percentage",
     "Near Bait Percentage": "Near Bait Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
+    "Coverage per Gb": "coverage per gb",
 }
 
 
@@ -116,6 +117,12 @@ def get_merged_ts_data():
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
     bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
+    bamqc3_df[special_cols["Coverage per Gb"]] = round(
+        bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (
+                bamqc3_df[BAMQC_COL.TotalReads] *
+                bamqc3_df[ BAMQC_COL.AverageReadLength] /
+                1e9
+        ), 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
