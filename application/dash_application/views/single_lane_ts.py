@@ -162,7 +162,9 @@ later_col_set = [
     PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
     INSTRUMENT_COLS.ModelName
 ]
-ex_table_columns = [*first_col_set, *most_bamqc_cols, *later_col_set]
+ex_table_columns = [
+    *first_col_set, *most_bamqc_cols, *special_cols.values(), *later_col_set
+]
 
 
 shape_colour = ColourShapeSingleLane(
