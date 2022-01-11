@@ -13,7 +13,7 @@ import pinery
 import logging
 logger = logging.getLogger(__name__)
 
-page_name = 'single-lane-ts'
+page_name = 'single-lane-tar'
 title = "Single-Lane Targeted Sequencing"
 
 ids = init_ids([
