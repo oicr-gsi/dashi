@@ -12,13 +12,13 @@ prefix = "application.dash_application.views."
 # These are for the modules that Dash can graph
 pagenames = [
     "bcl2barcode",
-    "call_ready_ts",
+    "call_ready_tar",
     "call_ready_rna",
     "call_ready_wgs",
     # Turn on once GDI-2080 is resoved
     # "runscanner_illumina_flowcell",
     "sample_swaps",
-    "single_lane_ts",
+    "single_lane_tar",
     "single_lane_rna",
     "single_lane_wgs",
     "SARS-CoV-2",
