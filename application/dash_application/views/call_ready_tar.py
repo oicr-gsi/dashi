@@ -13,7 +13,7 @@ from ..utility import log_utils
 
 logger = logging.getLogger(__name__)
 
-page_name = 'call-ready-ts'
+page_name = 'call-ready-tar'
 title = "Call-Ready Targeted Sequencing"
 
 ids = init_ids([
