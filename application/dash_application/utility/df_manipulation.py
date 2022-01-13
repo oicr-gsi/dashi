@@ -141,10 +141,26 @@ def normalized_merged(df: DataFrame, merged_cols: List[str]):
 qc-etl API keeps loaded caches in memory for fast reloading
 """
 cache = QCETLCache()
-
 _pinery_client = pinery.PineryClient()
-_provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
-_pinery_samples = _provenance_client.get_all_samples()
+
+# Mongo Provenance can be loaded from DB or a cached hd5 DataFrame
+mongo_source = {}
+for s in ["MONGO_URL", "MONGO_FILE"]:
+    if os.getenv(s) is not None:
+        mongo_source[s] = os.getenv(s)
+if len(mongo_source) != 1:
+    raise ValueError(
+        "Expected one source for Mango Provenance. Got {}".format(mongo_source)
+    )
+
+if mongo_source.get("MONGO_URL"):
+    _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
+    _pinery_samples = _provenance_client.get_all_samples()
+elif mongo_source.get("MONGO_FILE"):
+    _pinery_samples = pandas.read_hdf(mongo_source["MONGO_FILE"])
+else:
+    raise ValueError("No Mongo source specified")
+
 # NaN sample attrs need to be changed to a str.
 # Use the expected default values
 _pinery_samples = _pinery_samples.fillna({
