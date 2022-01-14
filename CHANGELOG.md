@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Changed
   * TS acronym is TAR now
+  * Mongo Provenance can be supplied as a hd5 file via MONGO_FILE env
 
 ## [220111-0825] - 2022-01-11
 ## Fixed
