@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [220125-1411] - 2022-01-25
 ## Changed
   * TS acronym is TAR now
   * Mongo Provenance can be supplied as a hd5 file via MONGO_FILE env
