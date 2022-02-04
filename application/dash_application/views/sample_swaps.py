@@ -182,8 +182,29 @@ for _, top in swap.groupby(COL.FileSWID):
         result.append(closest_lib(d))
 
 swap = pandas.concat(result)
+swap[COL.LibraryLeft] = (
+     swap[COL.LibraryLeft] +
+     " (" +
+     swap[PINERY_COL.LibrarySourceTemplateType] +
+     ", " +
+     swap[PINERY_COL.TissueType] +
+     ", " +
+     swap[PINERY_COL.TissueOrigin] +
+     ")"
+)
+swap[COL.LibraryRight] = (
+        swap[COL.LibraryRight] +
+        " (" +
+        swap[PINERY_COL.LibrarySourceTemplateType + "_RIGHT"] +
+        ", " +
+        swap[PINERY_COL.TissueType + "_RIGHT"] +
+        ", " +
+        swap[PINERY_COL.TissueOrigin + "_RIGHT"] +
+        ")"
+)
 
 DATA_COLUMN = [
+    PINERY_COL.StudyTitle,
     COL.LibraryLeft,
     COL.LibraryRight,
     COL.LODScore,
@@ -291,7 +312,7 @@ def layout(query_string):
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        Output(ids["table"], "data"),
+        [Output(ids["table"], "data"), Output(ids["projects-list"], "options")],
         [Input(ids["update-button-top"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
@@ -303,8 +324,10 @@ def init_callbacks(dash_app):
             df = filter_for_swaps(swap)
         else:
             df = swap
+        project_options = df_manipulation.unique_set(df, PINERY_COL.StudyTitle)
+        project_options = [{"label":x, "value":x} for x in project_options]
         df = df[df[PINERY_COL.StudyTitle].isin(projects)]
-        return df.to_dict('records')
+        return df.to_dict('records'), project_options
 
     @dash_app.callback(
         Output(ids['projects-list'], 'value'),
