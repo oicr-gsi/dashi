@@ -182,8 +182,29 @@ for _, top in swap.groupby(COL.FileSWID):
         result.append(closest_lib(d))
 
 swap = pandas.concat(result)
+swap[COL.LibraryLeft] = (
+     swap[COL.LibraryLeft] +
+     " (" +
+     swap[PINERY_COL.LibrarySourceTemplateType] +
+     ", " +
+     swap[PINERY_COL.TissueType] +
+     ", " +
+     swap[PINERY_COL.TissueOrigin] +
+     ")"
+)
+swap[COL.LibraryRight] = (
+        swap[COL.LibraryRight] +
+        " (" +
+        swap[PINERY_COL.LibrarySourceTemplateType + "_RIGHT"] +
+        ", " +
+        swap[PINERY_COL.TissueType + "_RIGHT"] +
+        ", " +
+        swap[PINERY_COL.TissueOrigin + "_RIGHT"] +
+        ")"
+)
 
 DATA_COLUMN = [
+    PINERY_COL.StudyTitle,
     COL.LibraryLeft,
     COL.LibraryRight,
     COL.LODScore,
@@ -211,10 +232,7 @@ for d in TABLE_COLUMNS:
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(
-    filter_for_swaps(swap),
-    PINERY_COL.StudyTitle
-)
+ALL_PROJECTS = df_manipulation.unique_set(swap,PINERY_COL.StudyTitle)
 
 INITIAL = {
     "projects": ALL_PROJECTS,
