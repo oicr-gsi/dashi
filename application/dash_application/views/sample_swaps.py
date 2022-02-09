@@ -232,10 +232,7 @@ for d in TABLE_COLUMNS:
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(
-    filter_for_swaps(swap),
-    PINERY_COL.StudyTitle
-)
+ALL_PROJECTS = df_manipulation.unique_set(swap,PINERY_COL.StudyTitle)
 
 INITIAL = {
     "projects": ALL_PROJECTS,
@@ -312,7 +309,7 @@ def layout(query_string):
 
 def init_callbacks(dash_app):
     @dash_app.callback(
-        [Output(ids["table"], "data"), Output(ids["projects-list"], "options")],
+        Output(ids["table"], "data"),
         [Input(ids["update-button-top"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
@@ -324,10 +321,8 @@ def init_callbacks(dash_app):
             df = filter_for_swaps(swap)
         else:
             df = swap
-        project_options = df_manipulation.unique_set(df, PINERY_COL.StudyTitle)
-        project_options = [{"label":x, "value":x} for x in project_options]
         df = df[df[PINERY_COL.StudyTitle].isin(projects)]
-        return df.to_dict('records'), project_options
+        return df.to_dict('records')
 
     @dash_app.callback(
         Output(ids['projects-list'], 'value'),
