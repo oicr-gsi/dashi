@@ -16,6 +16,4 @@ fi
 # mount your private key for bitbucket into the container to allow this command to succeed
 pip install --trusted-host pypi.python.org -r requirements.txt
 
-export MONGO_FILE=/cache/provenance_samples/latest
-
 flask run --host=0.0.0.0 --port=5000
