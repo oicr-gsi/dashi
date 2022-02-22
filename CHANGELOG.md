@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [220222-0847] - 2022-02-22
+
 ## [220207-1446] - 2022-02-07
 ## Changed
   * Sample provenance is loaded from cache on disk rather than Mongo DB
