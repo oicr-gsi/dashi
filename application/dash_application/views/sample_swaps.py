@@ -44,6 +44,12 @@ special_cols = {
     "closest_libraries_count": "CLOSEST_LIBRARIES_COUNT",
 }
 
+rename_columns = {
+    COL.LibraryLeft: "QUERY_LIBRARY",
+    COL.LibraryRight: "BEST_MATCH",
+    PINERY_COL.StudyTitle: 'PROJECT',
+}
+
 swap = df_manipulation.get_crosscheckfingerprints()
 swap = swap[~swap[COL.LibraryLeft].str.startswith("GSICAPBENCH")]
 swap = swap[~swap[COL.LibraryLeft].str.startswith("GLCS")]
@@ -229,6 +235,9 @@ for d in TABLE_COLUMNS:
         d["type"] = "numeric",
     elif PINERY_COL.ParentSampleName in d["id"]:
         d["hideable"] = True
+
+    if d["id"] in rename_columns:
+        d["name"] = rename_columns[d["id"]]
 
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
