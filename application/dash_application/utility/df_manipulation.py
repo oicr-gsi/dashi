@@ -17,6 +17,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
 CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsColumn
+DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
@@ -43,8 +44,8 @@ pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
 
 bamqc3_ius_columns = [BAMQC3_COL.Run, BAMQC3_COL.Lane, BAMQC3_COL.Barcodes]
 bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
-ichorcna_ius_columns = [ICHORCNA_COL.Run,ICHORCNA_COL.Lane,
-                        ICHORCNA_COL.Barcodes]
+dnaseqqc_ius_columns = [DNASEQQC_COL.Run, DNASEQQC_COL.Lane, DNASEQQC_COL.Barcodes]
+ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
 fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
 bedtools_calc_ius_columns = [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes]
 bedtools_percentile_ius_columns = [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes]
@@ -287,6 +288,17 @@ def get_bamqc3_and_4():
     return gsiqcetl.common.utility.concat_workflow_versions(
         [normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns), get_bamqc3()],
         bamqc4_ius_columns,
+    )
+
+
+def get_dnaseqqc_and_bamqc4():
+    # Utility function creates new DataFrame, so no need to copy again
+    return gsiqcetl.common.utility.concat_workflow_versions(
+        [
+            normalized_ius(cache.dnaseqqc.dnaseqqc, dnaseqqc_ius_columns),
+            normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns),
+        ],
+        dnaseqqc_ius_columns,
     )
 
 
