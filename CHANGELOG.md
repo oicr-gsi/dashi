@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+## Changed
+  * dnaSeqQC cache loading alongside BamQC4 (picking the newest record if its found in
+both caches)
 
 ## [220315-1154] - 2022-03-15
 
