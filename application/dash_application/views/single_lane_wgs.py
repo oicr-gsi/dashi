@@ -139,7 +139,7 @@ def get_wgs_data():
                                ICHOR_COL.Ploidy,
                                ICHOR_COL.TumorFraction]]
 
-    bamqc_df = util.get_bamqc3_and_4()
+    bamqc_df = util.get_dnaseqqc_and_bamqc4()
     bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
