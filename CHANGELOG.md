@@ -8,15 +8,18 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 
 ## [220315-1154] - 2022-03-15
+## Changed
+  * Renamed columns in swap view
 
 ## [220222-0847] - 2022-02-22
+## Changed
+  * Unticking 'only show swaps' shows all projects in swap view
+  * Added project name to swap view (does not always match Alias)
+  * Showing meta data along library alias in swap view
 
 ## [220207-1446] - 2022-02-07
 ## Changed
   * Sample provenance is loaded from cache on disk rather than Mongo DB
-  * Unticking `only show swaps` shows all projects in swap view
-  * Added project name to swap view (does not always match Alias)
-  * Showing meta data along library alias in swap view
 
 ## [220125-1411] - 2022-01-25
 ## Changed
