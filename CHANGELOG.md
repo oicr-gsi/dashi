@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
 ## Changed
   * Display Shallow Whole Genome libraries
+  * Switch Dashi to qc-etl v1 caches
 
 ## [220418-0952] - 2022-04-18
 ## Changed
