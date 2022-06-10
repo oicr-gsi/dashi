@@ -158,7 +158,7 @@ if mongo_source.get("MONGO_URL"):
     _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
     _pinery_samples = _provenance_client.get_all_samples()
 elif mongo_source.get("MONGO_FILE"):
-    _pinery_samples = pandas.read_hdf(mongo_source["MONGO_FILE"])
+    _pinery_samples = pinery.load_db("sqlite:///" + mongo_source["MONGO_FILE"])
 else:
     raise ValueError("No Mongo source specified")
 
