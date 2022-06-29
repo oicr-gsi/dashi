@@ -242,17 +242,17 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
     )
 
 
-def generate_median_insert_size(df, graph_params):
+def generate_mean_insert_size(df, graph_params):
     return SingleLaneSubplot(
-        "Median Insert Size with 10/90 Percentile",
+        "Mean Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[INSERT_COL.MedianInsertSize],
+        lambda d: d[INSERT_COL.MeanInsertSize],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        bar_positive=INSERT_COL.InsertMedian90Percentile,
-        bar_negative=INSERT_COL.InsertMedian10Percentile,
+        bar_positive=INSERT_COL.InsertMean90Percentile,
+        bar_negative=INSERT_COL.InsertMean10Percentile,
     )
 
 
@@ -332,7 +332,7 @@ GRAPHS = [
     generate_total_clusters,
     generate_number_windows,
     generate_percent_pf_reads_aligned,
-    generate_median_insert_size,
+    generate_mean_insert_size,
     generate_percent_duplcation,
     generate_relative_cpg_frequency_enrichment,
     generate_observed_to_expected_enrichment,

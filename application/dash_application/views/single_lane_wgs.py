@@ -50,7 +50,7 @@ ids = init_ids([
     "shape-by",
     "search-sample",
     "search-sample-ext",
-    "insert-median-cutoff",
+    "insert-mean-cutoff",
     "percent-duplication-cutoff",
     "clusters-per-sample-cutoff",
     "date-range",
@@ -108,8 +108,8 @@ initial = get_initial_single_lane_values()
 initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
-cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
-initial["cutoff_insert_median"] = 150
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+initial["cutoff_insert_mean"] = 150
 cutoff_percent_duplication_label = sidebar_utils.percent_duplication_cutoff_label
 initial["cutoff_percent_duplication"] = 50
 cutoff_clusters_per_sample_label = sidebar_utils.clusters_per_sample_cutoff_label
@@ -233,8 +233,8 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Purity"]},
     {"label": "Ploidy",
      "value": ICHOR_COL.Ploidy},
-    {"label": "Median Insert Size",
-     "value": BAMQC_COL.InsertMedian},
+    {"label": "Mean Insert Size",
+     "value": BAMQC_COL.InsertMean},
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
@@ -280,16 +280,16 @@ def generate_deduplicated_coverage_per_gb(df, graph_params):
         graph_params["shownames_val"], )
 
 
-def generate_median_insert_size(df, graph_params):
+def generate_mean_insert_size(df, graph_params):
     return SingleLaneSubplot(
-        "Median Insert Size with 10/90 Percentile",
+        "Mean Insert Size with 10/90 Percentile",
         df,
-        lambda d: d[BAMQC_COL.InsertMedian],
+        lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_insert_median_label, graph_params["cutoff_insert_median"])],
+        cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
         bar_positive=BAMQC_COL.Insert90Percentile,
         bar_negative=BAMQC_COL.Insert10Percentile,
     )
@@ -348,7 +348,7 @@ GRAPHS = [
     generate_total_clusters,
     generate_deduplicated_coverage,
     generate_deduplicated_coverage_per_gb,
-    generate_median_insert_size,
+    generate_mean_insert_size,
     generate_duplication,
     generate_unmapped_reads,
     generate_non_primary,
@@ -472,8 +472,8 @@ def layout(query_string):
                 sidebar_utils.hr(),
 
                 # Cutoffs
-                sidebar_utils.cutoff_input(cutoff_insert_median_label,
-                    ids["insert-median-cutoff"], initial["cutoff_insert_median"]),
+                sidebar_utils.cutoff_input(cutoff_insert_mean_label,
+                    ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
                 sidebar_utils.cutoff_input(cutoff_percent_duplication_label, 
                     ids["percent-duplication-cutoff"], initial["cutoff_percent_duplication"]),
                 sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
@@ -504,7 +504,7 @@ def layout(query_string):
                                 df,
                                 wgs_table_columns,
                                 [
-                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
+                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, initial["cutoff_percent_duplication"],
                                     (lambda row, col, cutoff: row[col] >= cutoff)),
@@ -556,7 +556,7 @@ def init_callbacks(dash_app):
             State(ids['search-sample'], 'value'),
             State(ids["search-sample-ext"], 'value'),
             State(ids['show-data-labels'], 'value'),
-            State(ids["insert-median-cutoff"], 'value'),
+            State(ids["insert-mean-cutoff"], 'value'),
             State(ids["percent-duplication-cutoff"], 'value'),
             State(ids["clusters-per-sample-cutoff"], 'value'),
             State(ids["date-range"], 'start_date'),
@@ -579,7 +579,7 @@ def init_callbacks(dash_app):
                        searchsample,
                        searchsampleext,
                        show_names,
-                       insert_median_cutoff,
+                       insert_mean_cutoff,
                        percent_duplication_cutoff,
                        clusters_per_sample_cutoff,
                        start_date,
@@ -600,14 +600,14 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
-            "cutoff_insert_median": insert_median_cutoff,
+            "cutoff_insert_mean": insert_mean_cutoff,
             "cutoff_percent_duplication": percent_duplication_cutoff,
             "cutoff_clusters_per_sample": clusters_per_sample_cutoff,
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_ius(df, [
-            (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_median_cutoff,
+            (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, percent_duplication_cutoff,
              (lambda row, col, cutoff: row[col] >= cutoff)),
@@ -621,10 +621,10 @@ def init_callbacks(dash_app):
 
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
-                'title': "Median Insert Size",
+                'title': "Mean Insert Size",
                 'threshold_type': 'ge',
-                'threshold': insert_median_cutoff,
-                'value': BAMQC_COL.InsertMedian
+                'threshold': insert_mean_cutoff,
+                'value': BAMQC_COL.InsertMean
             }, {
                 'title': "% Duplication",
                 'threshold_type': 'lt',
