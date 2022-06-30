@@ -244,13 +244,13 @@ def generate_percent_pf_reads_aligned(current_data, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return SingleLaneSubplot(
-        "Mean Insert Size with 10/90 Percentile",
+        "Mean Insert Size",
         df,
         lambda d: d[INSERT_COL.MeanInsertSize],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"],
+        graph_params["shownames_val"]
     )
 
 

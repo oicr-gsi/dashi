@@ -193,7 +193,7 @@ initial["cutoff_duplicate_rate"] = 50
 cutoff_callability_label = "Callability minimum"
 initial["cutoff_callability"] = 50
 cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
-initial["cutoff_insert_mean"] = 100
+initial["cutoff_insert_mean"] = 150
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(TS_DF, PINERY_COL.StudyTitle)
