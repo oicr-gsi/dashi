@@ -282,7 +282,7 @@ def generate_deduplicated_coverage_per_gb(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return SingleLaneSubplot(
-        "Mean Insert Size with 10/90 Percentile",
+        "Mean Insert Size",
         df,
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
@@ -290,8 +290,6 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
-        bar_positive=BAMQC_COL.Insert90Percentile,
-        bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
 

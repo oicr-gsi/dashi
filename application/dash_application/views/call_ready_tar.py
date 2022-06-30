@@ -192,8 +192,8 @@ initial["cutoff_duplicate_rate"] = 50
 # TODO: Look at ALL the reports for common labels
 cutoff_callability_label = "Callability minimum"
 initial["cutoff_callability"] = 50
-cutoff_insert_mean_label = "Insert Size Mean + Intron"
-initial["cutoff_insert_mean"] = 150
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+initial["cutoff_insert_mean"] = 100
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(TS_DF, PINERY_COL.StudyTitle)
@@ -295,10 +295,10 @@ def generate_callability(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return CallReadySubplot(
-        "Mean Insert Size + Intron",
+        "Mean Insert Size",
         df,
         lambda d: d[BAMQC_COL.InsertMean],
-        "Mean Insert Size + Intron",
+        "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],

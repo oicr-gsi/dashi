@@ -170,7 +170,7 @@ initial["second_sort"] = BAMQC_COL.TotalClusters
 # TODO: This is supposed to depend on Coverage being 80x/30x?
 cutoff_callability_label = "Callability minimum"
 initial["cutoff_callability"] = 50
-cutoff_insert_mean_label = "Insert Size Mean + Intron"
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
 initial["cutoff_insert_mean"] = 150
 cutoff_duplicate_rate_label = sidebar_utils.percent_duplication_cutoff_label
 initial["cutoff_duplicate_rate"] = 50
@@ -320,7 +320,7 @@ def generate_callability(df, graph_params):
 
 def generate_mean_insert_size(df, graph_params):
     return CallReadySubplot(
-        "Mean Insert Size with 10/90 Percentile",
+        "Mean Insert Size",
         df,
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
@@ -328,8 +328,6 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
-        bar_positive=BAMQC_COL.Insert90Percentile,
-        bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
 def generate_duplicate_rate(df, graph_params):

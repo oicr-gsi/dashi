@@ -88,7 +88,7 @@ initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 cutoff_pf_clusters_label = sidebar_utils.clusters_per_sample_cutoff_label
 initial["cutoff_pf_clusters"] = 0.01
-cutoff_insert_mean_label = "Insert Mean Size + Intron"
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
 initial["cutoff_insert_mean"] = 150
 
 
@@ -267,7 +267,7 @@ def generate_on_target_reads(current_data, graph_params):
 
 def generate_mean_insert_size(current_data, graph_params):
     return SingleLaneSubplot(
-        "Mean Insert Size with 10/90 Percentile",
+        "Mean Insert Size",
         current_data,
         lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
@@ -275,8 +275,6 @@ def generate_mean_insert_size(current_data, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
-        bar_positive=BAMQC_COL.Insert90Percentile,
-        bar_negative=BAMQC_COL.Insert10Percentile,
     )
 
 
