@@ -251,8 +251,6 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        bar_positive=INSERT_COL.InsertMean90Percentile,
-        bar_negative=INSERT_COL.InsertMean10Percentile,
     )
 
 
