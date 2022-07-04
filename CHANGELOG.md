@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [220629-1419] - 2022-06-29
+## Changed
+  * Switch median insert size to mean insert size
+
 ## [220614-1309] - 2022-06-14
 ## Changed
   * Display Shallow Whole Genome libraries

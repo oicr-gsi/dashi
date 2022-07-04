@@ -101,8 +101,6 @@ DATA_LABEL_NAME = {
     BEDTOOLS_COL.Coverage10Percentile: '10 Percentile Coverage: ',
     BAMQC_COL.CoverageMedian90Percentile: '90 Percentile Median Coverage: ',
     BAMQC_COL.CoverageMedian10Percentile: '10 Percentile Median Coverage: ',
-    BAMQC_COL.Insert90Percentile: '90 Percentile Median Insert: ',
-    BAMQC_COL.Insert10Percentile: '10 Percentile Median Insert: ',
     CALL_COL.NormalMinCoverage: 'Normal coverage for callability >= ',
     CALL_COL.TumorMinCoverage: 'Tumor coverage for callability >= ',
 }
