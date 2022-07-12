@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [220712-0842] - 2022-07-12
+
 ## [220629-1419] - 2022-06-29
 ## Changed
   * Switch median insert size to mean insert size
