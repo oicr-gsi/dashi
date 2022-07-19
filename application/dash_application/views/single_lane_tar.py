@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc4Column, FastqcColumn
+from gsiqcetl.column import BamQc4Column, FastqcColumn, HsMetricsColumn
 import pinery
 import logging
 logger = logging.getLogger(__name__)
@@ -66,6 +66,7 @@ ids = init_ids([
 
 BAMQC_COL = BamQc4Column
 FASTQC_COL = FastqcColumn
+HSMETRICS_COL = HsMetricsColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
@@ -79,6 +80,7 @@ special_cols = {
     "Coverage per Gb": "coverage per gb",
     # Column comes from `df_with_fastqc_data` call
     "Total Clusters (Passed Filter)": "Total Clusters",
+    "On Target Reads (%) TEST DO NOT USE": "On Target Reads (%) TEST DO NOT USE"
 }
 
 initial = get_initial_single_lane_values()
@@ -96,6 +98,9 @@ def get_bamqc_data():
     bamqc_df = util.get_dnaseqqc_and_bamqc4()
     bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
+    hsmetrics_df = util.get_hsmetrics_merged()
+    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
+
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
     bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
@@ -107,8 +112,9 @@ def get_bamqc_data():
         bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
         bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
     bamqc_df[special_cols["On Target Reads (%)"]] = round(
-        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
-        bamqc_df[BAMQC_COL.TotalReads], 3)
+        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0)
+    hsmetrics_df[special_cols["On Target Reads (%) TEST DO NOT USE"]] = round(
+        hsmetrics_df[HSMETRICS_COL.PCT_SELECTED_BASES] * 100.0)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc_df[FASTQC_COL.TotalSequences] *
@@ -185,6 +191,8 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["On Target Reads (%)"]},
     {"label": "Mean Insert Size",
      "value": BAMQC_COL.InsertMean},
+    {"label": "On-target Reads",
+     "value": special_cols["On Target Reads (%) TEST DO NOT USE"]},
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
@@ -264,6 +272,16 @@ def generate_on_target_reads(current_data, graph_params):
         graph_params["shownames_val"]
     )
 
+def generate_on_target_reads_TEST_DO_NOT_USE(current_data, graph_params):
+    return SingleLaneSubplot(
+        "On Target Reads (%) TEST DO NOT USE",
+        current_data,
+        lambda d: d[special_cols["On Target Reads (%) TEST DO NOT USE"]],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
 
 def generate_mean_insert_size(current_data, graph_params):
     return SingleLaneSubplot(
@@ -285,6 +303,7 @@ GRAPHS = [
     generate_unmapped_reads,
     generate_nonprimary_reads,
     generate_on_target_reads,
+    generate_on_target_reads_TEST_DO_NOT_USE,
     generate_mean_insert_size,
 ]
 
