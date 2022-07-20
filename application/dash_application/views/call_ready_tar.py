@@ -49,7 +49,7 @@ ids = init_ids([
 
     # Graphs
     'graphs',
-    'bait-bases',
+    'on-target-reads',
 
     # Tables
     'failed-samples',
@@ -80,11 +80,11 @@ special_cols = {
     "File SWID BamQC3": "File SWID BamQC3",
     "File SWID HsMetrics": "File SWID HsMetrics",
     "Total Bait Bases": "Total bait bases",
+    "On Bait Percentage": "On Bait Percentage",
+    "Near Bait Percentage": "Near Bait Percentage",
     "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
-    "Coverage per Gb": "coverage per gb",
-    "On Bait Percentage": "On Bait Percentage",
-    "Near Bait Percentage": "Near Bait Percentage"
+    "Coverage per Gb": "coverage per gb"
 }
 
 
@@ -387,19 +387,17 @@ def generate_gc_dropout(df, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"],
+        graph_params["shownames_val"]
     )
 
 
 def generate_on_target_reads(df, graph_params):
-    return CallReadySubplot(
-        "On Target Reads (%)",
+    return generate(
+        "On Target Percentage",
         df,
-        lambda d: d[special_cols["On Target Percentage"]],
+        lambda d: d[HSMETRICS_COL.PctSelectedBases],
         "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
+
     )
 
 
@@ -428,7 +426,6 @@ GRAPHS = [
     generate_fraction_excluded,
     generate_at_dropout,
     generate_gc_dropout,
-    generate_on_target_reads
 ]
 
 
@@ -548,8 +545,8 @@ def layout(query_string):
                                               create_graph_element_with_subplots(ids["graphs"], df,
                                                                                  initial, GRAPHS),
                                               core.Graph(
-                                                  id=ids['bait-bases'],
-                                                  figure=generate_bait(df)
+                                                  id=ids['on-target-reads'],
+                                                  figure=generate_on_target_reads(df)
                                               ),
                                           ]),
                                  # Tables tab
@@ -618,7 +615,7 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["graphs"], "figure"),
-            Output(ids['bait-bases'], "figure"),
+            Output(ids['on-target-reads'], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
