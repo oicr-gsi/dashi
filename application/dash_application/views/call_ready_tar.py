@@ -49,7 +49,6 @@ ids = init_ids([
 
     # Graphs
     'graphs',
-    'on-target-reads',
 
     # Tables
     'failed-samples',
@@ -84,7 +83,7 @@ special_cols = {
     "Near Bait Percentage": "Near Bait Percentage",
     "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
-    "Coverage per Gb": "coverage per gb"
+    "Coverage per Gb": "coverage per gb",
 }
 
 
@@ -260,12 +259,12 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.AtDropout},
     {"label": "GC Dropout",
      "value": HSMETRICS_COL.GCDropout},
-    {"label": "On Target",
-     "value": special_cols["On Target Percentage"]},
     {"label": "On Bait",
      "value": special_cols["On Bait Percentage"]},
     {"label": "Near Bait",
      "value": special_cols["Near Bait Percentage"]},
+    {"label": "On Target",  # Create scatter plot for on target reads (%)
+     "value": special_cols["On Target Percentage"]},
     {"label": "Merged Lane",
      "value": util.ml_col}
 ]
@@ -387,17 +386,7 @@ def generate_gc_dropout(df, graph_params):
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
-
-
-def generate_on_target_reads(df, graph_params):
-    return generate(
-        "On Target Percentage",
-        df,
-        lambda d: d[HSMETRICS_COL.PctSelectedBases],
-        "%",
-
+        graph_params["shownames_val"],
     )
 
 
@@ -416,6 +405,18 @@ def generate_bait(df):
     )
 
 
+def generate_on_target_reads_scatter_TEST_DO_NOT_USE(df, graph_params):
+    return CallReadySubplot(
+        "TEST DO NOT USE On Target Reads (%)",
+        df,
+        lambda d: d[special_cols["On Target Percentage"]],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+    )
+
+
 GRAPHS = [
     generate_total_clusters,
     generate_median_target_coverage,
@@ -426,6 +427,7 @@ GRAPHS = [
     generate_fraction_excluded,
     generate_at_dropout,
     generate_gc_dropout,
+    generate_on_target_reads_scatter_TEST_DO_NOT_USE
 ]
 
 
@@ -544,10 +546,6 @@ def layout(query_string):
                                           children=[
                                               create_graph_element_with_subplots(ids["graphs"], df,
                                                                                  initial, GRAPHS),
-                                              core.Graph(
-                                                  id=ids['on-target-reads'],
-                                                  figure=generate_on_target_reads(df)
-                                              ),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -615,7 +613,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["graphs"], "figure"),
-            Output(ids['on-target-reads'], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -717,7 +714,6 @@ def init_callbacks(dash_app):
 
         return [
             generate_subplot_from_func(df, graph_params, GRAPHS),
-            generate_on_target_reads(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
