@@ -79,8 +79,7 @@ special_cols = {
     "Non-Primary Reads (%)": "Non-Primary Reads (%)",
     "Coverage per Gb": "coverage per gb",
     # Column comes from `df_with_fastqc_data` call
-    "Total Clusters (Passed Filter)": "Total Clusters",
-    "On Target Reads (%) TEST DO NOT USE": "On Target Reads (%) TEST DO NOT USE"
+    "Total Clusters (Passed Filter)": "Total Clusters"
 }
 
 initial = get_initial_single_lane_values()
@@ -111,9 +110,7 @@ def get_bamqc_data():
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = round(
         bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
         bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
-    bamqc_df[special_cols["On Target Reads (%)"]] = round(
-        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0)
-    hsmetrics_df[special_cols["On Target Reads (%) TEST DO NOT USE"]] = round(
+    hsmetrics_df[special_cols["On Target Reads (%)"]] = round(
         hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100.0)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
@@ -187,12 +184,10 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Unmapped Reads (%)"]},
     {"label": "Non-primary Reads",
      "value": special_cols["Non-Primary Reads (%)"]},
-    {"label": "On-target Reads",
+    {"label": "On Target Reads",
      "value": special_cols["On Target Reads (%)"]},
     {"label": "Mean Insert Size",
      "value": BAMQC_COL.InsertMean},
-    {"label": "On-target Reads",
-     "value": special_cols["On Target Reads (%) TEST DO NOT USE"]},
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
@@ -260,23 +255,11 @@ def generate_nonprimary_reads(current_data, graph_params):
         graph_params["shownames_val"]
     )
 
-
 def generate_on_target_reads(current_data, graph_params):
     return SingleLaneSubplot(
         "On Target Reads (%)",
         current_data,
         lambda d: d[special_cols["On Target Reads (%)"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"]
-    )
-
-def generate_on_target_reads_TEST_DO_NOT_USE(current_data, graph_params):
-    return SingleLaneSubplot(
-        "On Target Reads (%) TEST DO NOT USE",
-        current_data,
-        lambda d: d[special_cols["On Target Reads (%) TEST DO NOT USE"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -303,7 +286,6 @@ GRAPHS = [
     generate_unmapped_reads,
     generate_nonprimary_reads,
     generate_on_target_reads,
-    generate_on_target_reads_TEST_DO_NOT_USE,
     generate_mean_insert_size,
 ]
 

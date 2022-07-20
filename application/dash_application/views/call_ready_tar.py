@@ -80,8 +80,6 @@ special_cols = {
     "File SWID BamQC3": "File SWID BamQC3",
     "File SWID HsMetrics": "File SWID HsMetrics",
     "Total Bait Bases": "Total bait bases",
-    "On Bait Percentage": "On Bait Percentage",
-    "Near Bait Percentage": "Near Bait Percentage",
     "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
     "Coverage per Gb": "coverage per gb",
@@ -129,8 +127,6 @@ def get_merged_ts_data():
     callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
-    hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
-    hsmetrics_df[special_cols["Near Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.NearBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
     hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
@@ -242,11 +238,7 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.AtDropout},
     {"label": "GC Dropout",
      "value": HSMETRICS_COL.GCDropout},
-    {"label": "On Bait",
-     "value": special_cols["On Bait Percentage"]},
-    {"label": "Near Bait",
-     "value": special_cols["Near Bait Percentage"]},
-    {"label": "On Target", # Create scatter plot for on target reads (%)
+    {"label": "On Target",
      "value": special_cols["On Target Percentage"]},
     {"label": "Merged Lane",
      "value": util.ml_col}
@@ -369,24 +361,9 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"],
     )
 
-
-def generate_bait(df):
-    return generate_bar(
-        df,
-        [special_cols["On Bait Percentage"], special_cols["Near Bait Percentage"], ],
-        lambda d: d[util.ml_col],
-        lambda d, col: d[col],
-        "On and Near Bait Bases (%)",
-        "%",
-        fill_color={
-            special_cols["On Bait Percentage"]: "black",
-            special_cols["Near Bait Percentage"]: "red",
-        },
-    )
-
-def generate_on_target_reads_scatter_TEST_DO_NOT_USE(df, graph_params):
+def generate_on_target_reads(df, graph_params):
     return CallReadySubplot(
-        "TEST DO NOT USE On Target Reads (%)",
+        "On Target Reads (%)",
         df,
         lambda d: d[special_cols["On Target Percentage"]],
         "%",
@@ -394,8 +371,6 @@ def generate_on_target_reads_scatter_TEST_DO_NOT_USE(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
-
-
 
 GRAPHS = [
     generate_total_clusters,
@@ -407,9 +382,8 @@ GRAPHS = [
     generate_fraction_excluded,
     generate_at_dropout,
     generate_gc_dropout,
-    generate_on_target_reads_scatter_TEST_DO_NOT_USE
+    generate_on_target_reads
 ]
-
 
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
@@ -517,7 +491,7 @@ def layout(query_string):
                                               create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                                               core.Graph(
                                                   id=ids['bait-bases'],
-                                                  figure=generate_bait(df)
+                                                  figure=generate_on_target_reads(df)
                                               ),
                                           ]),
                                  # Tables tab
@@ -663,7 +637,7 @@ def init_callbacks(dash_app):
 
         return [
             generate_subplot_from_func(df, graph_params, GRAPHS),
-            generate_bait(df),
+            generate_on_target_reads(df, graph_params),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
