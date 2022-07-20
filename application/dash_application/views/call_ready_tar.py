@@ -78,9 +78,6 @@ special_cols = {
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
     "File SWID HsMetrics": "File SWID HsMetrics",
-    "Total Bait Bases": "Total bait bases",
-    "On Bait Percentage": "On Bait Percentage",
-    "Near Bait Percentage": "Near Bait Percentage",
     "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
     "Coverage per Gb": "coverage per gb",
@@ -131,15 +128,6 @@ def get_merged_ts_data():
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
-    hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + \
-                                                     hsmetrics_df[HSMETRICS_COL.NearBaitBases] + \
-                                                     hsmetrics_df[HSMETRICS_COL.OffBaitBases]
-    hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] / \
-                                                       hsmetrics_df[
-                                                           special_cols["Total Bait Bases"]] * 100
-    hsmetrics_df[special_cols["Near Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.NearBaitBases] / \
-                                                         hsmetrics_df[
-                                                             special_cols["Total Bait Bases"]] * 100
     hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[
                                                              HSMETRICS_COL.PctSelectedBases] * 100
 
@@ -259,10 +247,6 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.AtDropout},
     {"label": "GC Dropout",
      "value": HSMETRICS_COL.GCDropout},
-    {"label": "On Bait",
-     "value": special_cols["On Bait Percentage"]},
-    {"label": "Near Bait",
-     "value": special_cols["Near Bait Percentage"]},
     {"label": "On Target",  # Create scatter plot for on target reads (%)
      "value": special_cols["On Target Percentage"]},
     {"label": "Merged Lane",
@@ -390,24 +374,9 @@ def generate_gc_dropout(df, graph_params):
     )
 
 
-def generate_bait(df):
-    return generate_bar(
-        df,
-        [special_cols["On Bait Percentage"], special_cols["Near Bait Percentage"], ],
-        lambda d: d[util.ml_col],
-        lambda d, col: d[col],
-        "On and Near Bait Bases (%)",
-        "%",
-        fill_color={
-            special_cols["On Bait Percentage"]: "black",
-            special_cols["Near Bait Percentage"]: "red",
-        },
-    )
-
-
-def generate_on_target_reads_scatter_TEST_DO_NOT_USE(df, graph_params):
+def generate_on_target_reads_scatter(df, graph_params):
     return CallReadySubplot(
-        "TEST DO NOT USE On Target Reads (%)",
+        "On Target Reads (%)",
         df,
         lambda d: d[special_cols["On Target Percentage"]],
         "%",
@@ -427,7 +396,7 @@ GRAPHS = [
     generate_fraction_excluded,
     generate_at_dropout,
     generate_gc_dropout,
-    generate_on_target_reads_scatter_TEST_DO_NOT_USE
+    generate_on_target_reads_scatter
 ]
 
 
