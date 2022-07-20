@@ -83,6 +83,8 @@ special_cols = {
     "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
     "Coverage per Gb": "coverage per gb",
+    "On Bait Percentage": "On Bait Percentage",
+    "Near Bait Percentage": "Near Bait Percentage"
 }
 
 
@@ -101,16 +103,20 @@ def get_merged_ts_data():
     pinery_samples = util.filter_by_library_design(pinery_samples, util.ex_lib_designs)
 
     ichorcna_df = util.get_ichorcna_merged()
-    ichorcna_df = util.filter_by_library_design(ichorcna_df, util.ex_lib_designs, ICHOR_COL.LibraryDesign)
+    ichorcna_df = util.filter_by_library_design(ichorcna_df, util.ex_lib_designs,
+                                                ICHOR_COL.LibraryDesign)
 
     hsmetrics_df = util.get_hsmetrics_merged()
-    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
+    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs,
+                                                 HSMETRICS_COL.LibraryDesign)
 
     callability_df = util.get_mutect_callability()
-    callability_df = util.filter_by_library_design(callability_df, util.ex_lib_designs, CALL_COL.LibraryDesign)
+    callability_df = util.filter_by_library_design(callability_df, util.ex_lib_designs,
+                                                   CALL_COL.LibraryDesign)
 
     bamqc3_df = util.get_bamqc3_and_4_merged()
-    bamqc3_df = util.filter_by_library_design(bamqc3_df, util.ex_lib_designs, BAMQC_COL.LibraryDesign)
+    bamqc3_df = util.filter_by_library_design(bamqc3_df, util.ex_lib_designs,
+                                              BAMQC_COL.LibraryDesign)
 
     bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
@@ -119,20 +125,32 @@ def get_merged_ts_data():
     bamqc3_df[special_cols["Coverage per Gb"]] = round(
         bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc3_df[BAMQC_COL.TotalReads] *
-                bamqc3_df[ BAMQC_COL.AverageReadLength] /
+                bamqc3_df[BAMQC_COL.AverageReadLength] /
                 1e9
         ), 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
-    hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
-    hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100
+    hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + \
+                                                     hsmetrics_df[HSMETRICS_COL.NearBaitBases] + \
+                                                     hsmetrics_df[HSMETRICS_COL.OffBaitBases]
+    hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] / \
+                                                       hsmetrics_df[
+                                                           special_cols["Total Bait Bases"]] * 100
+    hsmetrics_df[special_cols["Near Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.NearBaitBases] / \
+                                                         hsmetrics_df[
+                                                             special_cols["Total Bait Bases"]] * 100
+    hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[
+                                                             HSMETRICS_COL.PctSelectedBases] * 100
 
-    ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
-    callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
+    ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]},
+                       inplace=True)
+    callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
+                          inplace=True)
     bamqc3_df.rename(columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]}, inplace=True)
-    hsmetrics_df.rename(columns={HSMETRICS_COL.FileSWID: special_cols["File SWID HsMetrics"]}, inplace=True)
+    hsmetrics_df.rename(columns={HSMETRICS_COL.FileSWID: special_cols["File SWID HsMetrics"]},
+                        inplace=True)
 
     # Join IchorCNA and HSMetrics Data
     ts_df = ichorcna_df.merge(
@@ -166,7 +184,8 @@ def get_merged_ts_data():
     ts_df = util.remove_suffixed_columns(ts_df, '_y')  # Callability duplicate columns
     ts_df = util.remove_suffixed_columns(ts_df, '_z')  # BamQC3 duplicate columns
 
-    return ts_df, util.cache.versions(["bamqc3merged", "ichorcnamerged", "mutectcallability", "hsmetrics"])
+    return ts_df, util.cache.versions(
+        ["bamqc3merged", "ichorcnamerged", "mutectcallability", "hsmetrics"])
 
 
 (TS_DF, DATAVERSION) = get_merged_ts_data()
@@ -204,11 +223,14 @@ ALL_SAMPLE_TYPES = util.unique_set(TS_DF, util.sample_type_col)
 ALL_REFERENCES = util.unique_set(TS_DF, ICHOR_COL.Reference)
 
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS,
+                                                                    "all_projects"),
     "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
         selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
-    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES,
+                                                                        "all_sample_types"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES,
+                                                                      "all_references"),
 }
 
 shape_colour = ColourShapeCallReady(
@@ -240,9 +262,14 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.GCDropout},
     {"label": "On Target",
      "value": special_cols["On Target Percentage"]},
+    {"label": "On Bait",
+     "value": special_cols["On Bait Percentage"]},
+    {"label": "Near Bait",
+     "value": special_cols["Near Bait Percentage"]},
     {"label": "Merged Lane",
      "value": util.ml_col}
 ]
+
 
 def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
@@ -289,6 +316,7 @@ def generate_callability(df, graph_params):
         cutoff_lines=[(cutoff_callability_label, graph_params["cutoff_callability"])],
     )
 
+
 def generate_mean_insert_size(df, graph_params):
     return CallReadySubplot(
         "Mean Insert Size",
@@ -300,6 +328,7 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
     )
+
 
 def generate_hs_library_size(df, graph_params):
     return CallReadySubplot(
@@ -361,6 +390,7 @@ def generate_gc_dropout(df, graph_params):
         graph_params["shownames_val"],
     )
 
+
 def generate_on_target_reads(df, graph_params):
     return CallReadySubplot(
         "On Target Reads (%)",
@@ -371,6 +401,22 @@ def generate_on_target_reads(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
+
+
+def generate_bait(df):
+    return generate_bar(
+        df,
+        [special_cols["On Bait Percentage"], special_cols["Near Bait Percentage"], ],
+        lambda d: d[util.ml_col],
+        lambda d, col: d[col],
+        "On and Near Bait Bases (%)",
+        "%",
+        fill_color={
+            special_cols["On Bait Percentage"]: "black",
+            special_cols["Near Bait Percentage"]: "red",
+        },
+    )
+
 
 GRAPHS = [
     generate_total_clusters,
@@ -385,6 +431,7 @@ GRAPHS = [
     generate_on_target_reads
 ]
 
+
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
@@ -396,7 +443,8 @@ def layout(query_string):
     df = reshape_call_ready_df(TS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"], initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
+                               initial["colour_by"], initial["shape_by"],
+                               shape_colour.items_for_df(), [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -452,8 +500,9 @@ def layout(query_string):
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
                                                           []),
-                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
-                                                                                  None),
+                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(
+                        ids['search-sample-ext'],
+                        None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
                                                                     initial["shownames_val"],
@@ -463,22 +512,30 @@ def layout(query_string):
 
                     # Cutoffs
                     sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_tumour_label),
-                                               ids["pf-tumour-cutoff"], initial["cutoff_pf_clusters_tumour"]),
+                                               ids["pf-tumour-cutoff"],
+                                               initial["cutoff_pf_clusters_tumour"]),
                     sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_normal_label),
-                                               ids["pf-normal-cutoff"], initial["cutoff_pf_clusters_normal"]),
+                                               ids["pf-normal-cutoff"],
+                                               initial["cutoff_pf_clusters_normal"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
-                                               ids["tumour-coverage-cutoff"], initial["cutoff_coverage_tumour"]),
+                                               ids["tumour-coverage-cutoff"],
+                                               initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
-                                               ids["normal-coverage-cutoff"], initial["cutoff_coverage_normal"]),
+                                               ids["normal-coverage-cutoff"],
+                                               initial["cutoff_coverage_normal"]),
                     sidebar_utils.cutoff_input(cutoff_callability_label,
-                                               ids["callability-cutoff"], initial["cutoff_callability"]),
+                                               ids["callability-cutoff"],
+                                               initial["cutoff_callability"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
-                                               ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
+                                               ids["insert-mean-cutoff"],
+                                               initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
-                                               ids["duplicate-rate-max"], initial["cutoff_duplicate_rate"]),
+                                               ids["duplicate-rate-max"],
+                                               initial["cutoff_duplicate_rate"]),
 
                     html.Br(),
-                    html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
+                    html.Button("Update", id=ids["update-button-bottom"],
+                                className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs
@@ -488,10 +545,11 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df,
+                                                                                 initial, GRAPHS),
                                               core.Graph(
                                                   id=ids['bait-bases'],
-                                                  figure=generate_on_target_reads(df)
+                                                  figure=generate_bait(df)
                                               ),
                                           ]),
                                  # Tables tab
@@ -505,33 +563,56 @@ def layout(query_string):
                                                   df,
                                                   ts_table_columns,
                                                   [
-                                                      (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
+                                                      (cutoff_pf_clusters_tumour_label,
+                                                       special_cols[
+                                                           "Total Clusters (Passed Filter)"],
                                                        initial["cutoff_pf_clusters_tumour"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                                      (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff and util.is_tumour(
+                                                           row))),
+                                                      (cutoff_pf_clusters_normal_label,
+                                                       special_cols[
+                                                           "Total Clusters (Passed Filter)"],
                                                        initial["cutoff_pf_clusters_normal"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                                      (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff and util.is_normal(
+                                                           row))),
+                                                      (cutoff_coverage_tumour_label,
+                                                       HSMETRICS_COL.MedianTargetCoverage,
                                                        initial["cutoff_coverage_tumour"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                                      (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff and util.is_tumour(
+                                                           row))),
+                                                      (cutoff_coverage_normal_label,
+                                                       HSMETRICS_COL.MedianTargetCoverage,
                                                        initial["cutoff_coverage_normal"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                                      (cutoff_callability_label, special_cols["Callability"],
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff and util.is_normal(
+                                                           row))),
+                                                      (cutoff_callability_label,
+                                                       special_cols["Callability"],
                                                        initial["cutoff_callability"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff)),
-                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
-                                                       (lambda row, col, cutoff: row[col] < cutoff)),
-                                                      (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                                       initial["cutoff_duplicate_rate"], (lambda row, col, cutoff: row[col] > cutoff)),
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff)),
+                                                      (cutoff_insert_mean_label,
+                                                       BAMQC_COL.InsertMean,
+                                                       initial["cutoff_insert_mean"],
+                                                       (lambda row, col, cutoff: row[
+                                                                                     col] < cutoff)),
+                                                      (cutoff_duplicate_rate_label,
+                                                       BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                                       initial["cutoff_duplicate_rate"], (
+                                                           lambda row, col, cutoff: row[
+                                                                                        col] > cutoff)),
                                                   ]
                                               )
                                           ])
-                             ]) # End Tabs
-                         ]) # End Div
-            ]) # End Div
-        ]) # End Div
-    ]) # End Loading
+                             ])  # End Tabs
+                         ])  # End Div
+            ])  # End Div
+        ])  # End Div
+    ])  # End Loading
+
 
 def init_callbacks(dash_app):
     @dash_app.callback(
@@ -621,9 +702,11 @@ def init_callbacks(dash_app):
             (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage, tumour_coverage_cutoff,
+            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
+             tumour_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage, normal_coverage_cutoff,
+            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
+             normal_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_callability_label, special_cols["Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
@@ -644,7 +727,8 @@ def init_callbacks(dash_app):
             "Rows: {0}".format(len(failure_df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
-            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d
+             in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
         ]
 
     @dash_app.callback(
