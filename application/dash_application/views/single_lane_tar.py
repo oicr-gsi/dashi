@@ -95,12 +95,10 @@ initial["cutoff_insert_mean"] = 150
 
 def get_bamqc_data():
     bamqc_df = util.get_dnaseqqc_and_bamqc4()
-    bamqc_df = util.df_with_fastqc_data(bamqc_df,
-                                        [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
+    bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
     hsmetrics_df = util.get_hsmetrics_merged()
-    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs,
-                                                 HSMETRICS_COL.LibraryDesign)
+    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
 
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
@@ -147,18 +145,12 @@ ALL_REFERENCES = util.unique_set(bamqc, BAMQC_COL.Reference)
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS,
-                                                                    "all_projects"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
     "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
     "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected,
-                                                                       ILLUMINA_INSTRUMENT_MODELS,
-                                                                       "all_instruments"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected,
-                                                                           ALL_LIBRARY_DESIGNS,
-                                                                           "all_library_designs"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES,
-                                                                      "all_references"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
 # Specify which columns to display in the DataTable
@@ -418,15 +410,12 @@ def layout(query_string):
 
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_pf_clusters_label,
-                                               ids['passed-filter-clusters-cutoff'],
-                                               initial["cutoff_pf_clusters"]),
+                                               ids['passed-filter-clusters-cutoff'], initial["cutoff_pf_clusters"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
-                                               ids['insert-size-mean-cutoff'],
-                                               initial["cutoff_insert_mean"]),
+                                               ids['insert-size-mean-cutoff'], initial["cutoff_insert_mean"]),
 
                     html.Br(),
-                    html.Button('Update', id=ids['update-button-bottom'],
-                                className="update-button"),
+                    html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
 
                 # Graphs + Tables tabs
@@ -436,8 +425,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df,
-                                                                                 initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -450,17 +438,11 @@ def layout(query_string):
                                                   df,
                                                   ex_table_columns,
                                                   [
-                                                      (cutoff_insert_mean_label,
-                                                       BAMQC_COL.InsertMean,
-                                                       initial["cutoff_insert_mean"],
-                                                       (lambda row, col, cutoff: row[
-                                                                                     col] < cutoff)),
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
                                                       (cutoff_pf_clusters_label,
-                                                       special_cols[
-                                                           "Total Clusters (Passed Filter)"],
-                                                       initial["cutoff_pf_clusters"],
-                                                       (lambda row, col, cutoff: row[
-                                                                                     col] < cutoff)),
+                                                       special_cols["Total Clusters (Passed Filter)"], initial["cutoff_pf_clusters"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
                                                   ]
                                               ),
                                           ])
@@ -537,8 +519,7 @@ def init_callbacks(dash_app):
             searchsample += searchsampleext
         elif not searchsample and searchsampleext:
             searchsample = searchsampleext
-        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits,
-                                    library_designs,
+        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, shape_colour.items_for_df(), searchsample)
 
@@ -589,8 +570,7 @@ def init_callbacks(dash_app):
             "Rows: {0}".format(len(failure_df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
-            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in
-             df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
             jira_href,
             jira_style,
             miso_request,
