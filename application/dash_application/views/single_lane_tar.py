@@ -110,8 +110,7 @@ def get_bamqc_data():
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = round(
         bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
         bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
-    hsmetrics_df[special_cols["On Target Reads (%)"]] = round(
-        hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100.0)
+    hsmetrics_df[special_cols["On Target Reads (%)"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100.0
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc_df[FASTQC_COL.TotalSequences] *
