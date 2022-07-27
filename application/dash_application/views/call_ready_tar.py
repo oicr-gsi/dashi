@@ -241,7 +241,6 @@ SORT_BY = shape_colour.dropdown() + [
      "value": util.ml_col}
 ]
 
-
 def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
         "Total Clusters (Passed Filter)",
@@ -287,7 +286,6 @@ def generate_callability(df, graph_params):
         cutoff_lines=[(cutoff_callability_label, graph_params["cutoff_callability"])],
     )
 
-
 def generate_mean_insert_size(df, graph_params):
     return CallReadySubplot(
         "Mean Insert Size",
@@ -299,7 +297,6 @@ def generate_mean_insert_size(df, graph_params):
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
     )
-
 
 def generate_hs_library_size(df, graph_params):
     return CallReadySubplot(
@@ -399,8 +396,7 @@ def layout(query_string):
     df = reshape_call_ready_df(TS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"], initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"],
-                               shape_colour.items_for_df(), [])
+                               initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -456,7 +452,8 @@ def layout(query_string):
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
                                                           []),
-                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'], None),
+                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
+                                                                                  None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
                                                                     initial["shownames_val"],
@@ -526,12 +523,11 @@ def layout(query_string):
                                                   ]
                                               )
                                           ])
-                             ])  # End Tabs
-                         ])  # End Div
-            ])  # End Div
-        ])  # End Div
-    ])  # End Loading
-
+                             ]) # End Tabs
+                         ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 def init_callbacks(dash_app):
     @dash_app.callback(
@@ -620,11 +616,9 @@ def init_callbacks(dash_app):
             (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
-             tumour_coverage_cutoff,
+            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage, tumour_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
-             normal_coverage_cutoff,
+            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage, normal_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_callability_label, special_cols["Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
