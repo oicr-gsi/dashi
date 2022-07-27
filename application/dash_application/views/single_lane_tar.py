@@ -8,10 +8,9 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc4Column, FastqcColumn, HsMetricsColumn
+from gsiqcetl.column import BamQc4Column, FastqcColumn
 import pinery
 import logging
-
 logger = logging.getLogger(__name__)
 
 page_name = 'single-lane-tar'
@@ -55,10 +54,10 @@ ids = init_ids([
     'passed-filter-clusters-cutoff',
     "date-range",
 
-    # Graphs
+    #Graphs
     "graphs",
 
-    # Data table
+    #Data table
     'failed-samples',
     'data-table',
     'failed-count',
@@ -67,19 +66,19 @@ ids = init_ids([
 
 BAMQC_COL = BamQc4Column
 FASTQC_COL = FastqcColumn
-HSMETRICS_COL = HsMetricsColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
 
+
 special_cols = {
     "Total Reads (Passed Filter)": "Total Reads PassedFilter",
-    "On Target Reads (%)": "On Target Reads (%)",
+    "Estimated On Target Reads (%)": "Estimated On Target Reads (%)",
     "Unmapped Reads (%)": "Unmapped Reads (%)",
     "Non-Primary Reads (%)": "Non-Primary Reads (%)",
     "Coverage per Gb": "coverage per gb",
     # Column comes from `df_with_fastqc_data` call
-    "Total Clusters (Passed Filter)": "Total Clusters"
+    "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
 initial = get_initial_single_lane_values()
@@ -97,9 +96,6 @@ def get_bamqc_data():
     bamqc_df = util.get_dnaseqqc_and_bamqc4()
     bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
-    hsmetrics_df = util.get_hsmetrics_merged()
-    hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
-
     bamqc_df[special_cols["Total Reads (Passed Filter)"]] = round(
         bamqc_df[FASTQC_COL.TotalSequences] / 1e6, 3)
     bamqc_df[special_cols["Total Clusters (Passed Filter)"]] = round(
@@ -110,7 +106,9 @@ def get_bamqc_data():
     bamqc_df[special_cols["Non-Primary Reads (%)"]] = round(
         bamqc_df[BAMQC_COL.NonPrimaryReadsMeta] * 100.0 /
         bamqc_df[BAMQC_COL.TotalInputReadsMeta], 3)
-    hsmetrics_df[special_cols["On Target Reads (%)"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100.0
+    bamqc_df[special_cols["Estimated On Target Reads (%)"]] = round(
+        bamqc_df[BAMQC_COL.ReadsOnTarget] * 100.0 /
+        bamqc_df[BAMQC_COL.TotalReads], 3)
     bamqc_df[special_cols["Coverage per Gb"]] = round(
         bamqc_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc_df[FASTQC_COL.TotalSequences] *
@@ -132,7 +130,7 @@ def get_bamqc_data():
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True)  # reverse order
+ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
 ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
 ALL_TISSUE_ORIGIN = util.unique_set(bamqc, PINERY_COL.TissueOrigin)
@@ -168,11 +166,12 @@ ex_table_columns = [
     *first_col_set, *most_bamqc_cols, *special_cols.values(), *later_col_set
 ]
 
+
 shape_colour = ColourShapeSingleLane(
     ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
     ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
 )
-# Add shape, colour, and size cols to dataframe 
+# Add shape, colour, and size cols to dataframe
 bamqc = add_graphable_cols(bamqc, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
@@ -182,8 +181,8 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Unmapped Reads (%)"]},
     {"label": "Non-primary Reads",
      "value": special_cols["Non-Primary Reads (%)"]},
-    {"label": "On Target Reads",
-     "value": special_cols["On Target Reads (%)"]},
+    {"label": "Estimated On Target Reads",
+     "value": special_cols["Estimated On Target Reads (%)"]},
     {"label": "Mean Insert Size",
      "value": BAMQC_COL.InsertMean},
     {"label": "Sample Name",
@@ -193,7 +192,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Run End Date",
      "value": RUN_COLS.CompletionDate},
 ]
-
 
 def generate_total_clusters(df, graph_params):
     return SingleLaneSubplot(
@@ -257,9 +255,9 @@ def generate_nonprimary_reads(current_data, graph_params):
 
 def generate_on_target_reads(current_data, graph_params):
     return SingleLaneSubplot(
-        "On Target Reads (%)",
+        "Estimated On Target Reads (%)",
         current_data,
-        lambda d: d[special_cols["On Target Reads (%)"]],
+        lambda d: d[special_cols["Estimated On Target Reads (%)"]],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -289,7 +287,6 @@ GRAPHS = [
     generate_on_target_reads,
     generate_mean_insert_size,
 ]
-
 
 def dataversion():
     return DATAVERSION
@@ -396,9 +393,8 @@ def layout(query_string):
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
 
-                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(
-                        ids['search-sample-ext'],
-                        None),
+                    sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
+                                                                                  None),
 
                     sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
                                                                      initial["shownames_val"],
@@ -445,11 +441,11 @@ def layout(query_string):
                                                   ]
                                               ),
                                           ])
-                             ])  # End Tabs
-                         ])  # End Div
-            ])  # End Div
-        ])  # End Div
-    ])  # End Loading
+                             ]) # End Tabs
+                         ]) # End Div
+            ]) # End Div
+        ]) # End Div
+    ]) # End Loading
 
 
 def init_callbacks(dash_app):
@@ -533,7 +529,7 @@ def init_callbacks(dash_app):
         }
 
         dd = defaultdict(list)
-        (failure_df, failure_columns) = cutoff_table_data_ius(df, [
+        (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
             (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_pf_clusters_label, special_cols["Total Clusters (Passed "
@@ -554,8 +550,7 @@ def init_callbacks(dash_app):
                                                                      'title': 'Clusters per Sample (* 10^6)',
                                                                      'threshold_type': 'ge',
                                                                      'threshold': total_clusters_cutoff,
-                                                                     'value': special_cols[
-                                                                         "Total Clusters (Passed Filter)"]
+                                                                     'value': special_cols["Total Clusters (Passed Filter)"]
                                                                  }]
                                                                  )
 
