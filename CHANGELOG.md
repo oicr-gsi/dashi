@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [220712-0842] - 2022-07-12
+
+## [220629-1419] - 2022-06-29
+## Changed
+  * Switch median insert size to mean insert size
+
+## [220614-1309] - 2022-06-14
 ## Changed
   * Display Shallow Whole Genome libraries
   * Switch Dashi to qc-etl v1 caches

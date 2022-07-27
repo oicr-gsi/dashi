@@ -50,7 +50,7 @@ ids = init_ids([
     'search-sample-ext',
     'show-data-labels',
     'show-all-data-labels',
-    'insert-size-median-cutoff',
+    'insert-size-mean-cutoff',
     'passed-filter-clusters-cutoff',
     "date-range",
 
@@ -88,8 +88,8 @@ initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
 # Set initial values for graph cutoff lines
 cutoff_pf_clusters_label = sidebar_utils.clusters_per_sample_cutoff_label
 initial["cutoff_pf_clusters"] = 0.01
-cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
-initial["cutoff_insert_median"] = 150
+cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
+initial["cutoff_insert_mean"] = 150
 
 
 def get_bamqc_data():
@@ -183,8 +183,8 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Non-Primary Reads (%)"]},
     {"label": "On-target Reads",
      "value": special_cols["On Target Reads (%)"]},
-    {"label": "Median Insert Size",
-     "value": BAMQC_COL.InsertMedian},
+    {"label": "Mean Insert Size",
+     "value": BAMQC_COL.InsertMean},
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
@@ -265,18 +265,16 @@ def generate_on_target_reads(current_data, graph_params):
     )
 
 
-def generate_median_insert_size(current_data, graph_params):
+def generate_mean_insert_size(current_data, graph_params):
     return SingleLaneSubplot(
-        "Median Insert Size with 10/90 Percentile",
+        "Mean Insert Size",
         current_data,
-        lambda d: d[BAMQC_COL.InsertMedian],
+        lambda d: d[BAMQC_COL.InsertMean],
         "Base Pairs",
         graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_insert_median_label, graph_params["cutoff_insert_median"])],
-        bar_positive=BAMQC_COL.Insert90Percentile,
-        bar_negative=BAMQC_COL.Insert10Percentile,
+        cutoff_lines=[(cutoff_insert_mean_label, graph_params["cutoff_insert_mean"])],
     )
 
 
@@ -287,7 +285,7 @@ GRAPHS = [
     generate_unmapped_reads,
     generate_nonprimary_reads,
     generate_on_target_reads,
-    generate_median_insert_size,
+    generate_mean_insert_size,
 ]
 
 def dataversion():
@@ -408,8 +406,8 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_pf_clusters_label,
                         ids['passed-filter-clusters-cutoff'], initial["cutoff_pf_clusters"]),
-                    sidebar_utils.cutoff_input(cutoff_insert_median_label,
-                        ids['insert-size-median-cutoff'], initial["cutoff_insert_median"]),
+                    sidebar_utils.cutoff_input(cutoff_insert_mean_label,
+                        ids['insert-size-mean-cutoff'], initial["cutoff_insert_mean"]),
                     
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
@@ -435,7 +433,7 @@ def layout(query_string):
                                 df,
                                 ex_table_columns,
                                 [
-                                    (cutoff_insert_median_label, BAMQC_COL.InsertMedian, initial["cutoff_insert_median"],
+                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_pf_clusters_label,
                                     special_cols["Total Clusters (Passed Filter)"], initial["cutoff_pf_clusters"],
@@ -484,7 +482,7 @@ def init_callbacks(dash_app):
             State(ids['search-sample'], 'value'), 
             State(ids['search-sample-ext'], 'value'),
             State(ids['show-data-labels'], 'value'),
-            State(ids['insert-size-median-cutoff'], 'value'),
+            State(ids['insert-size-mean-cutoff'], 'value'),
             State(ids['passed-filter-clusters-cutoff'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
@@ -506,7 +504,7 @@ def init_callbacks(dash_app):
             searchsample,
             searchsampleext,
             show_names,
-            insert_median_cutoff,
+            insert_mean_cutoff,
             total_clusters_cutoff,
             start_date,
             end_date,
@@ -527,12 +525,12 @@ def init_callbacks(dash_app):
             "shape_by": shape_by,
             "shownames_val": show_names,
             "cutoff_pf_clusters": total_clusters_cutoff,
-            "cutoff_insert_median": insert_median_cutoff
+            "cutoff_insert_mean": insert_mean_cutoff
         }
 
         dd = defaultdict(list)
         (failure_df, failure_columns ) = cutoff_table_data_ius(df, [
-                (cutoff_insert_median_label, BAMQC_COL.InsertMedian, insert_median_cutoff,
+                (cutoff_insert_mean_label, BAMQC_COL.InsertMean, insert_mean_cutoff,
                  (lambda row, col, cutoff: row[col] < cutoff)),
                 (cutoff_pf_clusters_label, special_cols["Total Clusters (Passed "
                                                     "Filter)"], total_clusters_cutoff,
@@ -544,10 +542,10 @@ def init_callbacks(dash_app):
 
         (miso_request, miso_button_style) = util.build_miso_info(df, title, 
             [{
-                'title': 'Median Insert Size',
+                'title': 'Mean Insert Size',
                 'threshold_type': 'ge',
-                'threshold': insert_median_cutoff,
-                'value': BAMQC_COL.InsertMedian
+                'threshold': insert_mean_cutoff,
+                'value': BAMQC_COL.InsertMean
             }, {
                 'title': 'Clusters per Sample (* 10^6)',
                 'threshold_type': 'ge',
