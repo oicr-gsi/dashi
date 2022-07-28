@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [220719-1428] - 2022-07-19
+## Changed
+  * Change on target graphs for call-ready and single-lane tar to use HsMetrics PCT_SELECTED_BASES
+
 ## [220712-0842] - 2022-07-12
 
 ## [220629-1419] - 2022-06-29
