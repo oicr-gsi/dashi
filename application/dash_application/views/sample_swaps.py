@@ -45,79 +45,74 @@ special_cols = {
 }
 
 rename_columns = {
-    COL.LibraryLeft: "QUERY_LIBRARY",
-    COL.LibraryRight: "BEST_MATCH",
     PINERY_COL.StudyTitle: 'PROJECT',
 }
 
 swap = df_manipulation.get_crosscheckfingerprints()
-swap = swap[~swap[COL.LibraryLeft].str.startswith("GSICAPBENCH")]
-swap = swap[~swap[COL.LibraryLeft].str.startswith("GLCS")]
-# The below algorithm won't work if libraries are compared with themselves
-swap = swap[swap[COL.LibraryLeft] != swap[COL.LibraryRight]]
+
+# The COL.ClosestLibrariesCount column states how many libraries had to be traversed until a matching one is found
+# If 0: No matching library exist (patient has been sequenced only once), so no other libraries should match
+# If 1: Closest library is from the same patient. No swap.
+# If 2 or more: Closest library is NOT from the same patient. Swap has occurred.
+
+# Remove all libraries that correctly match (the closest library count is 1)
+swap = swap[swap[COL.ClosestLibrariesCount] != 1].sort_values([COL.QueryLibrary, COL.LODScore], ascending=False)
+
+result = []
+for _, lib in swap.groupby(COL.QueryLibrary):
+    # The closest library
+    return_df = lib.head(1).copy()
+    rest = lib.iloc[1:]
+    if len(rest) > 0:
+        closest_lib = (
+                rest[COL.MatchLibrary] +
+                " (" +
+                rest[COL.LODScore].round().astype(int).astype(str) +
+                ")"
+        )
+        return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
+    result.append(return_df)
+
+swap = pandas.concat(result)
 
 pinery_samples = df_manipulation.get_pinery_samples()
 swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.RunLeft, COL.LaneLeft, COL.BarcodeLeft]
+    swap, pinery_samples, [COL.QueryRun, COL.QueryLane, COL.QueryBarcode]
 )
 swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.RunRight, COL.LaneRight, COL.BarcodeRight], "_RIGHT"
+    swap, pinery_samples, [COL.MatchRun, COL.MatchLane, COL.MatchBarcode], "_MATCH"
 )
-swap = df_manipulation.df_with_run_info(swap, COL.RunLeft)
-swap = df_manipulation.df_with_run_info(swap, COL.RunRight, "_RIGHT")
+swap = df_manipulation.df_with_run_info(swap, COL.QueryRun)
+swap = df_manipulation.df_with_run_info(swap, COL.MatchRun, "_MATCH")
 
 # Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
 swap[special_cols["latest_run"]] = swap[
-    [RUN_COLS.StartDate, RUN_COLS.StartDate + "_RIGHT"]
+    [RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]
 ].max(1).dt.date
 swap[special_cols["same_identity"]] = (
-    swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_RIGHT"]
+    swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
 )
 
-
-def closest_lib(input_df):
-    """
-    The `input_df` must be sored by LOD_SCORE (descending) and have one library
-    in the LEFT_LIBRARY column. Returns the row with the most similar library and
-    adds a column that list the most similar libraries that had to be traversed until
-    one from the same patient was identified. If there was no swap, only one library
-    should have been traversed.
-    """
-    # There must be at least two libraries for swap comparison
-    if len(input_df) < 2:
-        return pandas.DataFrame(columns=list(input_df) + [
-            special_cols["closest_libraries_count"], special_cols["closest_libraries"]
-        ])
-    # Index will be used with `iloc` call, so has to go from 0 to number of rows
-    lib_df = input_df.reset_index(drop=True)
-    # The closest library
-    return_df = lib_df.head(1).copy()
-    # Libraries that came from the same patient
-    same_ident_df = lib_df[lib_df[special_cols["same_identity"]]]
-    # Patient has only one library sequenced
-    # Take the first hit (should not match, as it is from different patient)
-    if same_ident_df.empty:
-        # As there are no expected close libraries, this is always 0
-        return_df[special_cols["closest_libraries_count"]] = 0
-        return_df[special_cols["closest_libraries"]] = (
-            return_df["RIGHT_LIBRARY"] +
-            " (" +
-            return_df[COL.LODScore].round().astype(int).astype(str) +
-            ")"
-        )
-        return return_df
-
-    # Get libraries up to and including the first that came from the same patient
-    closest_df = lib_df.iloc[:same_ident_df.index[0] + 1]
-    return_df[special_cols["closest_libraries_count"]] = len(closest_df)
-    closest_lib = (
-            closest_df["RIGHT_LIBRARY"] +
-            " (" +
-            closest_df[COL.LODScore].round().astype(int).astype(str) +
-            ")"
-    )
-    return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
-    return return_df
+swap[COL.QueryLibrary] = (
+        swap[COL.QueryLibrary] +
+        " (" +
+        swap[PINERY_COL.LibrarySourceTemplateType] +
+        ", " +
+        swap[PINERY_COL.TissueType] +
+        ", " +
+        swap[PINERY_COL.TissueOrigin] +
+        ")"
+)
+swap[COL.MatchLibrary] = (
+        swap[COL.MatchLibrary] +
+        " (" +
+        swap[PINERY_COL.LibrarySourceTemplateType + "_MATCH"] +
+        ", " +
+        swap[PINERY_COL.TissueType + "_MATCH"] +
+        ", " +
+        swap[PINERY_COL.TissueOrigin + "_MATCH"] +
+        ")"
+)
 
 
 def exclude_false_positives(swap_df):
@@ -146,7 +141,7 @@ def exclude_false_positives(swap_df):
     matches = swap_df.merge(
         false_pos,
         how="left",
-        left_on=["LEFT_LIBRARY", "RIGHT_LIBRARY"],
+        left_on=[COL.QueryLibrary, COL.MatchLibrary],
         right_on=["LEFT_LIBRARY", "RIGHT_LIBRARY"],
     )
     true_pos = matches["JIRA_ISSUE"].isna()
@@ -179,51 +174,21 @@ def filter_for_swaps(df):
     return swaps
 
 
-result = []
-# Two for loops (blah) go through each swap workflow and then check each library
-# Will try to vectorize this if this approach proves superior to previous hard LOD cutoff
-for _, top in swap.groupby(COL.FileSWID):
-    top = top.sort_values([COL.LibraryLeft, COL.LODScore], ascending=False)
-    for _, d in top.groupby(COL.LibraryLeft):
-        result.append(closest_lib(d))
-
-swap = pandas.concat(result)
-swap[COL.LibraryLeft] = (
-     swap[COL.LibraryLeft] +
-     " (" +
-     swap[PINERY_COL.LibrarySourceTemplateType] +
-     ", " +
-     swap[PINERY_COL.TissueType] +
-     ", " +
-     swap[PINERY_COL.TissueOrigin] +
-     ")"
-)
-swap[COL.LibraryRight] = (
-        swap[COL.LibraryRight] +
-        " (" +
-        swap[PINERY_COL.LibrarySourceTemplateType + "_RIGHT"] +
-        ", " +
-        swap[PINERY_COL.TissueType + "_RIGHT"] +
-        ", " +
-        swap[PINERY_COL.TissueOrigin + "_RIGHT"] +
-        ")"
-)
-
 DATA_COLUMN = [
     PINERY_COL.StudyTitle,
-    COL.LibraryLeft,
-    COL.LibraryRight,
+    COL.QueryLibrary,
+    COL.MatchLibrary,
     COL.LODScore,
     special_cols["latest_run"],
     special_cols["closest_libraries"],
     PINERY_COL.ParentSampleName,
-    PINERY_COL.ParentSampleName + "_RIGHT",
+    PINERY_COL.ParentSampleName + "_MATCH",
 ]
 
 # These columns will be in the downloaded csv, but not displayed by default in Dashi
 DOWNLOAD_ONLY_COLUMNS = [
     PINERY_COL.ParentSampleName,
-    PINERY_COL.ParentSampleName + "_RIGHT",
+    PINERY_COL.ParentSampleName + "_MATCH",
 ]
 
 TABLE_COLUMNS = [{"name": i, "id": i} for i in DATA_COLUMN]
