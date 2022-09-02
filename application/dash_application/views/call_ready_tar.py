@@ -49,7 +49,6 @@ ids = init_ids([
 
     # Graphs
     'graphs',
-    'bait-bases',
 
     # Tables
     'failed-samples',
@@ -79,9 +78,7 @@ special_cols = {
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC3": "File SWID BamQC3",
     "File SWID HsMetrics": "File SWID HsMetrics",
-    "Total Bait Bases": "Total bait bases",
-    "On Bait Percentage": "On Bait Percentage",
-    "Near Bait Percentage": "Near Bait Percentage",
+    "On Target Percentage": "On Target Percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
     "Coverage per Gb": "coverage per gb",
 }
@@ -120,16 +117,14 @@ def get_merged_ts_data():
     bamqc3_df[special_cols["Coverage per Gb"]] = round(
         bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (
                 bamqc3_df[BAMQC_COL.TotalReads] *
-                bamqc3_df[ BAMQC_COL.AverageReadLength] /
+                bamqc3_df[BAMQC_COL.AverageReadLength] /
                 1e9
         ), 3)
     ichorcna_df[special_cols["Purity"]] = round(
         ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
-    hsmetrics_df[special_cols["Total Bait Bases"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] + hsmetrics_df[HSMETRICS_COL.NearBaitBases] + hsmetrics_df[HSMETRICS_COL.OffBaitBases]
-    hsmetrics_df[special_cols["On Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.OnBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
-    hsmetrics_df[special_cols["Near Bait Percentage"]] = hsmetrics_df[HSMETRICS_COL.NearBaitBases] /  hsmetrics_df[special_cols["Total Bait Bases"]] * 100
+    hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100
 
     ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
@@ -240,10 +235,8 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.AtDropout},
     {"label": "GC Dropout",
      "value": HSMETRICS_COL.GCDropout},
-    {"label": "On Bait",
-     "value": special_cols["On Bait Percentage"]},
-    {"label": "Near Bait",
-     "value": special_cols["Near Bait Percentage"]},
+    {"label": "On Target",
+     "value": special_cols["On Target Percentage"]},
     {"label": "Merged Lane",
      "value": util.ml_col}
 ]
@@ -258,13 +251,13 @@ def generate_total_clusters(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_pf_clusters_normal_label, graph_params["cutoff_pf_clusters_normal"]),
-         (cutoff_pf_clusters_tumour_label, graph_params["cutoff_pf_clusters_tumour"])]
+                      (cutoff_pf_clusters_tumour_label, graph_params["cutoff_pf_clusters_tumour"])]
     )
 
 
 def generate_median_target_coverage(df, graph_params):
     return CallReadySubplot(
-        "Median Target Coverage", 
+        "Median Target Coverage",
         df,
         lambda d: d[HSMETRICS_COL.MedianTargetCoverage],
         "",
@@ -283,11 +276,11 @@ def generate_callability(df, graph_params):
         hover_text = graph_params["shownames_val"] + extra_cols
 
     return CallReadySubplot(
-        "Callability (%)", 
+        "Callability (%)",
         df,
         lambda d: d[special_cols["Callability"]],
-        "%", 
-        graph_params["colour_by"], 
+        "%",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         hovertext_cols=hover_text,
         cutoff_lines=[(cutoff_callability_label, graph_params["cutoff_callability"])],
@@ -307,11 +300,11 @@ def generate_mean_insert_size(df, graph_params):
 
 def generate_hs_library_size(df, graph_params):
     return CallReadySubplot(
-        "HS Library Size", 
+        "HS Library Size",
         df,
         lambda d: d[HSMETRICS_COL.HsLibrarySize],
-        "", 
-        graph_params["colour_by"], 
+        "",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
@@ -319,11 +312,11 @@ def generate_hs_library_size(df, graph_params):
 
 def generate_duplicate_rate(df, graph_params):
     return CallReadySubplot(
-        "Duplication (%)", 
+        "Duplication (%)",
         df,
         lambda d: d[BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION],
-        "%", 
-        graph_params["colour_by"], 
+        "%",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
         cutoff_lines=[(cutoff_duplicate_rate_label, graph_params["cutoff_duplicate_rate"])],
@@ -332,11 +325,11 @@ def generate_duplicate_rate(df, graph_params):
 
 def generate_fraction_excluded(df, graph_params):
     return CallReadySubplot(
-        "Excluded due to Overlap (%)", 
+        "Excluded due to Overlap (%)",
         df,
         lambda d: d[HSMETRICS_COL.PctExcOverlap] * 100,
-        "%", 
-        graph_params["colour_by"], 
+        "%",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
@@ -344,11 +337,11 @@ def generate_fraction_excluded(df, graph_params):
 
 def generate_at_dropout(df, graph_params):
     return CallReadySubplot(
-        "AT Dropout (%)", 
+        "AT Dropout (%)",
         df,
         lambda d: d[HSMETRICS_COL.AtDropout],
-        "%", 
-        graph_params["colour_by"], 
+        "%",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
@@ -356,28 +349,25 @@ def generate_at_dropout(df, graph_params):
 
 def generate_gc_dropout(df, graph_params):
     return CallReadySubplot(
-        "GC Dropout (%)", 
+        "GC Dropout (%)",
         df,
         lambda d: d[HSMETRICS_COL.GCDropout],
-        "%", 
-        graph_params["colour_by"], 
+        "%",
+        graph_params["colour_by"],
         graph_params["shape_by"],
         graph_params["shownames_val"],
     )
 
 
-def generate_bait(df):
-    return generate_bar(
+def generate_on_target_reads_scatter(df, graph_params):
+    return CallReadySubplot(
+        "On Target Reads (%)",
         df,
-        [special_cols["On Bait Percentage"], special_cols["Near Bait Percentage"], ],
-        lambda d: d[util.ml_col],
-        lambda d, col: d[col],
-        "On and Near Bait Bases (%)",
+        lambda d: d[special_cols["On Target Percentage"]],
         "%",
-        fill_color={
-            special_cols["On Bait Percentage"]: "black",
-            special_cols["Near Bait Percentage"]: "red",
-        },
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
     )
 
 
@@ -391,6 +381,7 @@ GRAPHS = [
     generate_fraction_excluded,
     generate_at_dropout,
     generate_gc_dropout,
+    generate_on_target_reads_scatter
 ]
 
 
@@ -430,12 +421,12 @@ def layout(query_string):
                                                    ids["references-list"],
                                                    ALL_REFERENCES),
                     sidebar_utils.select_tissue_materials(
-                                                     ids["all-tissue-materials"],
-                                                     ids["tissue-materials-list"],
-                                                     ALL_TISSUE_MATERIALS),
+                        ids["all-tissue-materials"],
+                        ids["tissue-materials-list"],
+                        ALL_TISSUE_MATERIALS),
                     sidebar_utils.select_sample_types(ids["all-sample-types"],
-                                                     ids["sample-types-list"],
-                                                     ALL_SAMPLE_TYPES),
+                                                      ids["sample-types-list"],
+                                                      ALL_SAMPLE_TYPES),
                     sidebar_utils.hr(),
 
                     # Sort, colour and shape
@@ -449,7 +440,7 @@ def layout(query_string):
                         ids["second-sort"],
                         initial["second_sort"],
                         SORT_BY,
-                ),
+                    ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    shape_colour.dropdown(),
@@ -462,7 +453,7 @@ def layout(query_string):
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
                                                           []),
                     sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
-                                                          None),
+                                                                                  None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
                                                                     initial["shownames_val"],
@@ -491,53 +482,49 @@ def layout(query_string):
                 ]),
 
                 # Graphs + Tables tabs
-                html.Div(className="seven columns", 
-                children=[
-                    core.Tabs([
-                        # Graphs tab
-                        core.Tab(label="Graphs",
-                        children=[
-                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
-                            core.Graph(
-                                id=ids['bait-bases'],
-                                figure=generate_bait(df)
-                            ),
-                        ]),
-                        # Tables tab
-                        core.Tab(label="Tables",
-                        children=[
-                            table_tabs_call_ready(
-                                ids["failed-samples"],
-                                ids["data-table"],
-                                ids["failed-count"],
-                                ids["data-count"],
-                                df,
-                                ts_table_columns,
-                                [
-                                    (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
-                                    initial["cutoff_pf_clusters_tumour"],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
-                                    initial["cutoff_pf_clusters_normal"],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
-                                    initial["cutoff_coverage_tumour"],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                    (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
-                                    initial["cutoff_coverage_normal"],
-                                    (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                    (cutoff_callability_label, special_cols["Callability"],
-                                    initial["cutoff_callability"],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
-                                    (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                    initial["cutoff_duplicate_rate"], (lambda row, col, cutoff: row[col] > cutoff)),
-                                ]
-                            )
-                        ])
-                    ]) # End Tabs
-                ]) # End Div
+                html.Div(className="seven columns",
+                         children=[
+                             core.Tabs([
+                                 # Graphs tab
+                                 core.Tab(label="Graphs",
+                                          children=[
+                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                          ]),
+                                 # Tables tab
+                                 core.Tab(label="Tables",
+                                          children=[
+                                              table_tabs_call_ready(
+                                                  ids["failed-samples"],
+                                                  ids["data-table"],
+                                                  ids["failed-count"],
+                                                  ids["data-count"],
+                                                  df,
+                                                  ts_table_columns,
+                                                  [
+                                                      (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
+                                                       initial["cutoff_pf_clusters_tumour"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
+                                                       initial["cutoff_pf_clusters_normal"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                       initial["cutoff_coverage_tumour"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
+                                                      (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                       initial["cutoff_coverage_normal"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
+                                                      (cutoff_callability_label, special_cols["Callability"],
+                                                       initial["cutoff_callability"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
+                                                       (lambda row, col, cutoff: row[col] < cutoff)),
+                                                      (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+                                                       initial["cutoff_duplicate_rate"], (lambda row, col, cutoff: row[col] > cutoff)),
+                                                  ]
+                                              )
+                                          ])
+                             ]) # End Tabs
+                         ]) # End Div
             ]) # End Div
         ]) # End Div
     ]) # End Loading
@@ -546,7 +533,6 @@ def init_callbacks(dash_app):
     @dash_app.callback(
         [
             Output(ids["graphs"], "figure"),
-            Output(ids['bait-bases'], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["data-table"], "data"),
@@ -556,7 +542,7 @@ def init_callbacks(dash_app):
             Output(ids['search-sample-ext'], 'options'),
         ],
         [Input(ids["update-button-top"], "n_clicks"),
-        Input(ids["update-button-bottom"], "n_clicks")],
+         Input(ids["update-button-bottom"], "n_clicks")],
         [
             State(ids["projects-list"], "value"),
             State(ids['references-list'], 'value'),
@@ -646,7 +632,6 @@ def init_callbacks(dash_app):
 
         return [
             generate_subplot_from_func(df, graph_params, GRAPHS),
-            generate_bait(df),
             failure_columns,
             failure_df.to_dict("records"),
             df.to_dict("records", into=dd),
