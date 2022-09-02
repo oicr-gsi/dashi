@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [220809-1028] - 2022-08-09
+
+## [220719-1428] - 2022-07-19
+## Changed
+  * Change on target graphs for call-ready and single-lane tar to use HsMetrics PCT_SELECTED_BASES
+
+## [220712-0842] - 2022-07-12
+
+## [220629-1419] - 2022-06-29
+## Changed
+  * Switch median insert size to mean insert size
+
+## [220614-1309] - 2022-06-14
 ## Changed
   * Display Shallow Whole Genome libraries
   * Switch Dashi to qc-etl v1 caches
