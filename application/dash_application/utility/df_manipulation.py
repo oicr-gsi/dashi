@@ -16,7 +16,7 @@ wgs_lib_designs = ["AS", "CH", "NN", "SW", "WG"]
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
-CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsColumn
+CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
@@ -324,7 +324,7 @@ def get_cfmedip_insert_metrics():
 
 
 def get_crosscheckfingerprints():
-    return cache.crosscheckfingerprints.crosscheckfingerprints.copy(deep=True)
+    return cache.crosscheckfingerprints.filterswaps.copy(deep=True)
 
 
 def get_fastqc():
