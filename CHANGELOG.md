@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [221003-0956] - 2022-10-03
 ## Changed
   * Remove bamqc3 caches from Dashi
+  * Fixed werkzeug version
 
 ## [220809-1028] - 2022-08-09
 
