@@ -76,7 +76,7 @@ special_cols = {
     "Coverage per Gb": "coverage per gb",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
-    "File SWID BamQC3": "File SWID BamQC3",
+    "File SWID BamQC": "File SWID BamQC",
     "Tumor Purity (%)": "tumor purity percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
 }
@@ -100,7 +100,7 @@ def get_merged_wgs_data():
     callability_df = util.filter_by_library_design(callability_df,
                                                    util.wgs_lib_designs,
                                                    CALL_COL.LibraryDesign)
-    bamqc3_df = util.get_bamqc3_and_4_merged()
+    bamqc4_df = util.get_bamqc4_merged()
 
     ichorcna_df = util.get_ichorcna_merged()
     ichorcna_df = ichorcna_df[
@@ -112,39 +112,39 @@ def get_merged_wgs_data():
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
-    bamqc3_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc3_df[BAMQC_COL.TotalReads] / 1e6, 3)
-    bamqc3_df[special_cols["Total Clusters (Passed Filter)"]] = round(
-        bamqc3_df[BAMQC_COL.TotalClusters] / 1e6, 3)
-    bamqc3_df[special_cols["Coverage per Gb"]] = round(
-        bamqc3_df[BAMQC_COL.CoverageDeduplicated] / (bamqc3_df[
-                 BAMQC_COL.TotalReads] *  bamqc3_df[
+    bamqc4_df[special_cols["Total Reads (Passed Filter)"]] = round(
+        bamqc4_df[BAMQC_COL.TotalReads] / 1e6, 3)
+    bamqc4_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+        bamqc4_df[BAMQC_COL.TotalClusters] / 1e6, 3)
+    bamqc4_df[special_cols["Coverage per Gb"]] = round(
+        bamqc4_df[BAMQC_COL.CoverageDeduplicated] / (bamqc4_df[
+                 BAMQC_COL.TotalReads] *  bamqc4_df[
                  BAMQC_COL.AverageReadLength] / 1e9), 3)
     callability_df.rename(columns={
         CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]},
                           inplace=True)
-    bamqc3_df.rename(
-        columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC3"]},
+    bamqc4_df.rename(
+        columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC"]},
         inplace=True)
 
-    # Join BamQC3 and Callability data
-    wgs_df = bamqc3_df.merge(
+    # Join BamQC and Callability data
+    wgs_df = bamqc4_df.merge(
         callability_df,
         how="left",
-        left_on=util.bamqc3_merged_columns,
+        left_on=util.bamqc4_merged_columns,
         right_on=util.callability_merged_columns,
         suffixes=('', '_x')
     )
 
     # Join QC data and Pinery data
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples,
-                                                util.bamqc3_merged_columns)
+                                                util.bamqc4_merged_columns)
 
     # Join in ichorcna data
     wgs_df = wgs_df.merge(
         ichorcna_df,
         how="left",
-        left_on=util.bamqc3_merged_columns,
+        left_on=util.bamqc4_merged_columns,
         right_on=util.ichorcna_merged_columns,
         suffixes=('', '_i')
     )
@@ -154,7 +154,7 @@ def get_merged_wgs_data():
     wgs_df = util.remove_suffixed_columns(wgs_df, '_i')  # Ichorcna duplicate columns
 
     return wgs_df, util.cache.versions(
-        ["mutectcallability", "bamqc3merged"])
+        ["mutectcallability", "bamqc4merged"])
 
 
 # Make the WGS dataframe

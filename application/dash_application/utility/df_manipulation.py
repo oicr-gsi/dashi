@@ -14,13 +14,11 @@ rna_lib_designs = ["MR", "SM", "TR", "WT"]
 wgs_lib_designs = ["AS", "CH", "NN", "SW", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-BAMQC3_COL = gsiqcetl.column.BamQc3Column
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
 CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
-BAMQC3_MERGED_COL = gsiqcetl.column.BamQc3MergedColumn
 BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
 ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
@@ -42,7 +40,6 @@ ml_col = "Merged Library"
 pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
                       PINERY_COL.IUSTag]
 
-bamqc3_ius_columns = [BAMQC3_COL.Run, BAMQC3_COL.Lane, BAMQC3_COL.Barcodes]
 bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 dnaseqqc_ius_columns = [DNASEQQC_COL.Run, DNASEQQC_COL.Lane, DNASEQQC_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
@@ -57,9 +54,6 @@ rnaseqqc2_ius_columns = [RNASEQQC2_COL.Run, RNASEQQC2_COL.Lane,
 pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
     PINERY_COL.GroupID, PINERY_COL.LibrarySourceTemplateType,
     PINERY_COL.TissueOrigin, PINERY_COL.TissueType]
-bamqc3_merged_columns = [BAMQC3_MERGED_COL.Project, BAMQC3_MERGED_COL.Donor,
-    BAMQC3_MERGED_COL.GroupID, BAMQC3_MERGED_COL.LibraryDesign,
-    BAMQC3_MERGED_COL.TissueOrigin, BAMQC3_MERGED_COL.TissueType]
 bamqc4_merged_columns = [BAMQC4_MERGED_COL.Project, BAMQC4_MERGED_COL.Donor,
                          BAMQC4_MERGED_COL.GroupID, BAMQC4_MERGED_COL.LibraryDesign,
                          BAMQC4_MERGED_COL.TissueOrigin, BAMQC4_MERGED_COL.TissueType]
@@ -279,18 +273,6 @@ def get_bcl2barcode_run_summary():
     return cache.bcl2barcode.run_summary.copy(deep=True)
 
 
-def get_bamqc3():
-    return normalized_ius(cache.bamqc3.bamqc3, bamqc3_ius_columns)
-
-
-def get_bamqc3_and_4():
-    # Utility function creates new DataFrame, so no need to copy again
-    return gsiqcetl.common.utility.concat_workflow_versions(
-        [normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns), get_bamqc3()],
-        bamqc4_ius_columns,
-    )
-
-
 def get_dnaseqqc_and_bamqc4():
     # Utility function creates new DataFrame, so no need to copy again
     return gsiqcetl.common.utility.concat_workflow_versions(
@@ -355,19 +337,8 @@ def get_runscanner_flowcell():
     return cache.runscannerillumina.flowcell.copy(deep=True)
 
 
-def get_bamqc3_merged():
-    return normalized_merged(cache.bamqc3merged.bamqc3merged, bamqc3_merged_columns)
-
-
-def get_bamqc3_and_4_merged():
-    # Utility function creates new DataFrame, so no need to copy again
-    return gsiqcetl.common.utility.concat_workflow_versions(
-        [
-            normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns),
-            get_bamqc3_merged()
-        ],
-        bamqc4_merged_columns,
-    )
+def get_bamqc4_merged():
+    return normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns)
 
 
 def get_ichorcna_merged():

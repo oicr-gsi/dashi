@@ -8,6 +8,11 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
   * Swap view no longer loads huge data into memory and does heavy computation. Done by qc-etl.
 
+## [221003-0956] - 2022-10-03
+## Changed
+  * Remove bamqc3 caches from Dashi
+  * Fixed werkzeug version
+
 ## [220809-1028] - 2022-08-09
 
 ## [220719-1428] - 2022-07-19
