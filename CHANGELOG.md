@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Switch Dashi to qc-etl v1 caches
+  * Update Python Docker version to 3.10
   * Swap view no longer loads huge data into memory and does heavy computation. Done by qc-etl.
 
 ## [221003-0956] - 2022-10-03
@@ -28,7 +30,6 @@ and as of version 1.0.0, follows semantic versioning.
 ## [220614-1309] - 2022-06-14
 ## Changed
   * Display Shallow Whole Genome libraries
-  * Switch Dashi to qc-etl v1 caches
 
 ## [220418-0952] - 2022-04-18
 ## Changed
