@@ -9,6 +9,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Switch Dashi to qc-etl v1 caches
   * Update Python Docker version to 3.10
   * Swap view no longer loads huge data into memory and does heavy computation. Done by qc-etl.
+  * Use gsi-qc-etl v1.9, which uses a Pandas version supported by Python 3.10
 
 ## [221003-0956] - 2022-10-03
 ## Changed
