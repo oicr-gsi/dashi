@@ -136,7 +136,7 @@ PINERY_COL = util.PINERY_COL
 # This needs to match what is set during de-multiplexing
 BCL2FASTQ_MISMATCH = 1
 
-barcode_expansions = pandas.read_csv(os.getenv("BARCODES_STREXPAND"), sep="\t", header=None).melt(id_vars=0).drop(labels="variable", axis="columns").set_axis(['Index', 'Sequence'], axis="columns", inplace=False)
+barcode_expansions = pandas.read_csv(os.getenv("BARCODES_STREXPAND"), sep="\t", header=None).melt(id_vars=0).drop(labels="variable", axis="columns").set_axis(['Index', 'Sequence'], axis="columns", copy=False)
 # Expand pinery to include 4 rows for every 1 10X barcode
 # This allows for merging with the nucleotide sequence in bcl2barcode
 pinery_with_expanded_barcodes = pandas.merge(pinery, barcode_expansions, left_on='iusTag', right_on='Index', how='left')
