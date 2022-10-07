@@ -15,7 +15,7 @@ wgs_lib_designs = ["AS", "CH", "NN", "SW", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
-CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsColumn
+CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
@@ -152,7 +152,7 @@ if mongo_source.get("MONGO_URL"):
     _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
     _pinery_samples = _provenance_client.get_all_samples()
 elif mongo_source.get("MONGO_FILE"):
-    _pinery_samples = pandas.read_hdf(mongo_source["MONGO_FILE"])
+    _pinery_samples = pinery.load_db("sqlite:///" + mongo_source["MONGO_FILE"])
 else:
     raise ValueError("No Mongo source specified")
 
@@ -306,7 +306,7 @@ def get_cfmedip_insert_metrics():
 
 
 def get_crosscheckfingerprints():
-    return cache.crosscheckfingerprints.crosscheckfingerprints.copy(deep=True)
+    return cache.crosscheckfingerprints.filterswaps.copy(deep=True)
 
 
 def get_fastqc():
