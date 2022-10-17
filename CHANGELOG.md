@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [221017-1015] - 2022-10-17
   * Switch Dashi to qc-etl v1 caches
   * Update Python Docker version to 3.10
   * Swap view no longer loads huge data into memory and does heavy computation. Done by qc-etl.
