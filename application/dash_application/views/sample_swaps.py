@@ -48,18 +48,18 @@ rename_columns = {
     PINERY_COL.StudyTitle: 'PROJECT',
 }
 
-swap = df_manipulation.get_crosscheckfingerprints()
+df = df_manipulation.get_crosscheckfingerprints()
 
 # The COL.ClosestLibrariesCount column states how many libraries had to be traversed until a matching one is found
 # If 0: No matching library exist (patient has been sequenced only once), so no other libraries should match
 # If 1: Closest library is from the same patient. No swap.
 # If 2 or more: Closest library is NOT from the same patient. Swap has occurred.
 
-# Remove all libraries that correctly match (the closest library count is 1)
-swap = swap[swap[COL.ClosestLibrariesCount] != 1].sort_values([COL.QueryLibrary, COL.LODScore], ascending=False)
+# Libraries that correctly match (the closest library count is 1) don't have ot go through expensive `groupby`
+swap = df[df[COL.ClosestLibrariesCount] != 1].sort_values([COL.QueryLibrary, COL.LODScore], ascending=False)
 
 result = []
-for _, lib in swap.groupby(COL.QueryLibrary):
+for _, lib in swap.groupby(COL.QueryLibrary, sort=False):
     # The closest library
     return_df = lib.head(1).copy()
     rest = lib.iloc[1:]
@@ -74,6 +74,11 @@ for _, lib in swap.groupby(COL.QueryLibrary):
     result.append(return_df)
 
 swap = pandas.concat(result)
+
+# If there is no swap, the closest library is just the matched library
+non_swaps = df[df[COL.ClosestLibrariesCount] == 1].copy()
+non_swaps[special_cols["closest_libraries"]] = non_swaps[COL.MatchLibrary]
+swap = pandas.concat([swap, non_swaps])
 
 pinery_samples = df_manipulation.get_pinery_samples()
 swap = df_manipulation.df_with_pinery_samples_ius(
