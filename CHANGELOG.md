@@ -7,7 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
-## [221101-0907] - 2022-11-01
+## [221101-1532] - 2022-11-01
   * Fix bug where libraries without swaps were completely excluded from swap view
 
 ## [221017-1015] - 2022-10-17
