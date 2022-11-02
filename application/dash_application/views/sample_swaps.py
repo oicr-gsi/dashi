@@ -73,7 +73,10 @@ for _, lib in swap.groupby(COL.QueryLibrary, sort=False):
         return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
     result.append(return_df)
 
-swap = pandas.concat(result)
+if len(result) > 0:
+    swap = pandas.concat(result)
+else:
+    swap = pandas.DataFrame(columns=df.columns)
 
 # If there is no swap, the closest library is just the matched library
 non_swaps = df[df[COL.ClosestLibrariesCount] == 1].copy()
@@ -90,13 +93,15 @@ swap = df_manipulation.df_with_pinery_samples_ius(
 swap = df_manipulation.df_with_run_info(swap, COL.QueryRun)
 swap = df_manipulation.df_with_run_info(swap, COL.MatchRun, "_MATCH")
 
-# Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
-swap[special_cols["latest_run"]] = swap[
-    [RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]
-].max(1).dt.date
-swap[special_cols["same_identity"]] = (
-    swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
-)
+# DataFrame that's empty has issues with date column type
+if len(swap) > 0:
+    # Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
+    swap[special_cols["latest_run"]] = swap[
+        [RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]
+    ].max(1).dt.date
+    swap[special_cols["same_identity"]] = (
+        swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
+    )
 
 swap[COL.QueryLibrary] = (
         swap[COL.QueryLibrary] +

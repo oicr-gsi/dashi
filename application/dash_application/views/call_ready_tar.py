@@ -220,7 +220,7 @@ SORT_BY = shape_colour.dropdown() + [
     {"label": "Total Clusters",
      "value": BAMQC_COL.TotalClusters},
     {"label": "Median Target Coverage",
-     "value": HSMETRICS_COL.MedianTargetCoverage},
+     "value": HSMETRICS_COL.MeanBaitCoverage},
     {"label": "Callability",
      "value": CALL_COL.Callability},
     {"label": "Tumor Fraction",
@@ -255,11 +255,11 @@ def generate_total_clusters(df, graph_params):
     )
 
 
-def generate_median_target_coverage(df, graph_params):
+def generate_mean_bait_coverage(df, graph_params):
     return CallReadySubplot(
-        "Median Target Coverage",
+        "Mean Bait Coverage",
         df,
-        lambda d: d[HSMETRICS_COL.MedianTargetCoverage],
+        lambda d: d[HSMETRICS_COL.MeanBaitCoverage],
         "",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -373,7 +373,7 @@ def generate_on_target_reads_scatter(df, graph_params):
 
 GRAPHS = [
     generate_total_clusters,
-    generate_median_target_coverage,
+    generate_mean_bait_coverage,
     generate_callability,
     generate_mean_insert_size,
     generate_hs_library_size,
@@ -507,10 +507,10 @@ def layout(query_string):
                                                       (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
                                                        initial["cutoff_pf_clusters_normal"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
-                                                      (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                      (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanBaitCoverage,
                                                        initial["cutoff_coverage_tumour"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                                      (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage,
+                                                      (cutoff_coverage_normal_label, HSMETRICS_COL.MeanBaitCoverage,
                                                        initial["cutoff_coverage_normal"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                                       (cutoff_callability_label, special_cols["Callability"],
@@ -616,9 +616,9 @@ def init_callbacks(dash_app):
             (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
-            (cutoff_coverage_tumour_label, HSMETRICS_COL.MedianTargetCoverage, tumour_coverage_cutoff,
+            (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanBaitCoverage, tumour_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_coverage_normal_label, HSMETRICS_COL.MedianTargetCoverage, normal_coverage_cutoff,
+            (cutoff_coverage_normal_label, HSMETRICS_COL.MeanBaitCoverage, normal_coverage_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_callability_label, special_cols["Callability"], callability_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),

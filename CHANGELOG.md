@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Switched Call Ready TAR Median Target Coverage to Mean Bait Coverage
+  * No data for swap view doesn't cause crash (stage cache has become empty)
 
 ## [221101-1532] - 2022-11-01
   * Fix bug where libraries without swaps were completely excluded from swap view
