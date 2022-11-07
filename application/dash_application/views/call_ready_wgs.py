@@ -47,7 +47,6 @@ ids = init_ids([
     "cutoff-callability",
     "cutoff-mean-insert",
     "cutoff-duplicate-rate",
-    "cutoff-tumor-purity",
 
     # Graphs
     "graphs",
@@ -77,7 +76,6 @@ special_cols = {
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC": "File SWID BamQC",
-    "Tumor Purity (%)": "tumor purity percentage",
     "Total Clusters (Passed Filter)": "Total Clusters",
 }
 
@@ -178,8 +176,6 @@ cutoff_coverage_tumour_label = "Coverage (Tumour) minimum"
 initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
-cutoff_tumor_purity_label = "Tumor Purity (%) minimum"
-initial["cutoff_tumor_purity"] = 30
 
 # Build lists of attributes for sorting, shaping, and filtering on
 ALL_PROJECTS = util.unique_set(WGS_DF, PINERY_COL.StudyTitle)
@@ -342,17 +338,6 @@ def generate_duplicate_rate(df, graph_params):
         cutoff_lines=[(cutoff_duplicate_rate_label, graph_params["cutoff_duplicate_rate"])],
     )
 
-def generate_tumor_purity(df, graph_params):
-    return CallReadySubplot(
-        "Tumor Purity (%)",
-        df,
-        lambda d: d[special_cols["Tumor Purity (%)"]],
-        "%",
-        graph_params["colour_by"],
-        graph_params["shape_by"],
-        graph_params["shownames_val"],
-        cutoff_lines=[(cutoff_tumor_purity_label, graph_params["cutoff_tumor_purity"])],
-    )
 
 
 GRAPHS = [
@@ -363,7 +348,6 @@ GRAPHS = [
     generate_callability,
     generate_mean_insert_size,
     generate_duplicate_rate,
-    generate_tumor_purity,
 ]
 def layout(query_string):
     query = sidebar_utils.parse_query(query_string)
@@ -462,10 +446,6 @@ def layout(query_string):
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
                                                initial["cutoff_duplicate_rate"]),
-                    sidebar_utils.cutoff_input(cutoff_tumor_purity_label,
-                                               ids["cutoff-tumor-purity"],
-                                               initial["cutoff_tumor_purity"]),
-
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
@@ -528,13 +508,6 @@ def layout(query_string):
                                                           "cutoff_duplicate_rate"],
                                                       (lambda row, col, cutoff:
                                                        row[col] > cutoff)),
-                                                      (
-                                                          cutoff_tumor_purity_label,
-                                                          special_cols["Tumor Purity (%)"],
-                                                          initial[
-                                                              "cutoff_tumor_purity"],
-                                                          (lambda row, col, cutoff:
-                                                           row[col] <= cutoff)),
                                                   ]
                                               )
                                           ])
@@ -576,7 +549,6 @@ def init_callbacks(dash_app):
             State(ids["cutoff-callability"], "value"),
             State(ids["cutoff-mean-insert"], "value"),
             State(ids["cutoff-duplicate-rate"], "value"),
-            State(ids["cutoff-tumor-purity"], "value"),
             State('url', 'search'),
         ]
     )
@@ -598,7 +570,6 @@ def init_callbacks(dash_app):
                        callability_cutoff,
                        insert_mean_cutoff,
                        duplicate_rate_cutoff,
-                       tumor_purity_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if search_sample and searchsampleext:
@@ -619,7 +590,6 @@ def init_callbacks(dash_app):
             "cutoff_callability": callability_cutoff,
             "cutoff_insert_mean": insert_mean_cutoff,
             "cutoff_duplicate_rate": duplicate_rate_cutoff,
-            "cutoff_tumor_purity": tumor_purity_cutoff,
         }
 
         dd = defaultdict(list)
@@ -639,10 +609,6 @@ def init_callbacks(dash_app):
              BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
              duplicate_rate_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),
-            (cutoff_tumor_purity_label,
-             special_cols["Tumor Purity (%)"],
-             tumor_purity_cutoff,
-             (lambda row, col, cutoff: row[col] <= cutoff)),
         ])
 
         new_search_sample = util.unique_set(df, PINERY_COL.RootSampleName)
