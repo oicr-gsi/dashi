@@ -100,14 +100,6 @@ def get_merged_wgs_data():
                                                    CALL_COL.LibraryDesign)
     bamqc4_df = util.get_bamqc4_merged()
 
-    ichorcna_df = util.get_ichorcna_merged()
-    ichorcna_df = ichorcna_df[
-        util.ichorcna_merged_columns + [ICHOR_COL.TumorFraction]
-    ]
-    ichorcna_df[special_cols["Tumor Purity (%)"]] = round(
-        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3
-    )
-
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     bamqc4_df[special_cols["Total Reads (Passed Filter)"]] = round(
@@ -137,15 +129,6 @@ def get_merged_wgs_data():
     # Join QC data and Pinery data
     wgs_df = util.df_with_pinery_samples_merged(wgs_df, pinery_samples,
                                                 util.bamqc4_merged_columns)
-
-    # Join in ichorcna data
-    wgs_df = wgs_df.merge(
-        ichorcna_df,
-        how="left",
-        left_on=util.bamqc4_merged_columns,
-        right_on=util.ichorcna_merged_columns,
-        suffixes=('', '_i')
-    )
 
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
