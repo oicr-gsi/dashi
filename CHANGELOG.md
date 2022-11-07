@@ -8,6 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
   * Switched Call Ready TAR Median Target Coverage to Mean Bait Coverage
   * No data for swap view doesn't cause crash (stage cache has become empty)
+  * Remove 'Purity' from Call-Ready and Single-Lane WGS
 
 ## [221101-1532] - 2022-11-01
   * Fix bug where libraries without swaps were completely excluded from swap view
