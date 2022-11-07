@@ -130,13 +130,6 @@ def get_wgs_data():
     pinery_samples = util.filter_by_library_design(pinery_samples,
                                                    util.wgs_lib_designs)
 
-    ichorcna_df = util.get_ichorcna()
-    ichorcna_df = ichorcna_df[[ICHOR_COL.Run,
-                               ICHOR_COL.Lane,
-                               ICHOR_COL.Barcodes,
-                               ICHOR_COL.Ploidy,
-                               ICHOR_COL.TumorFraction]]
-
     bamqc_df = util.get_dnaseqqc_and_bamqc4()
     bamqc_df = util.df_with_fastqc_data(bamqc_df, [BAMQC_COL.Run, BAMQC_COL.Lane, BAMQC_COL.Barcodes])
 
@@ -158,14 +151,6 @@ def get_wgs_data():
                 bamqc_df[FASTQC_COL.TotalSequences] *
                 bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
         , 3)
-
-    # Join ichorCNA and BamQC data
-    wgs_df = bamqc_df.merge(
-        ichorcna_df, how="outer",
-        left_on=util.bamqc4_ius_columns,
-        right_on=util.ichorcna_ius_columns,
-        suffixes=['', '_ichorcn']
-    )
 
     # Join BamQC+ichorCNA and Pinery data
     wgs_df = util.df_with_pinery_samples_ius(wgs_df, pinery_samples,
