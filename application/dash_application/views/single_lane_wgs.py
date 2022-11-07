@@ -78,7 +78,6 @@ special_cols = {
     "Unmapped Reads": "percent unmapped reads",
     "Non-Primary Reads": "percent non-primary reads",
     "On-target Reads": "percent on-target reads",
-    "Purity": "percent purity",
     "Coverage per Gb": "coverage per gb",
     # Column comes from `df_with_fastqc_data` call
     "Total Clusters (Passed Filter)": "Total Clusters",
@@ -92,7 +91,6 @@ first_col_set = [
     special_cols["Unmapped Reads"],
     special_cols["Non-Primary Reads"],
     special_cols["On-target Reads"],
-    special_cols["Purity"],
     special_cols["Coverage per Gb"]
 ]
 later_col_set = [
@@ -160,8 +158,6 @@ def get_wgs_data():
                 bamqc_df[FASTQC_COL.TotalSequences] *
                 bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
         , 3)
-    ichorcna_df[special_cols["Purity"]] = round(
-        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
 
     # Join ichorCNA and BamQC data
     wgs_df = bamqc_df.merge(
@@ -229,8 +225,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Non-Primary Reads"]},
     {"label": "On-target Reads",
      "value": special_cols["On-target Reads"]},
-    {"label": "Purity",
-     "value": special_cols["Purity"]},
     {"label": "Ploidy",
      "value": ICHOR_COL.Ploidy},
     {"label": "Mean Insert Size",
