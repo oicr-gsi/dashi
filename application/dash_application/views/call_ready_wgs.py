@@ -219,10 +219,6 @@ SORT_BY = shape_colour.dropdown() + [
         "value": BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
     },
     {
-        "label": "Tumor Purity",
-        "value": special_cols["Tumor Purity (%)"]
-    },
-    {
         "label": "Merged Lane",
         "value": util.ml_col
     }
