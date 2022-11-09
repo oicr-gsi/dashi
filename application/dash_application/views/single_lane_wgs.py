@@ -152,7 +152,7 @@ def get_wgs_data():
                 bamqc_df[BAMQC_COL.AverageReadLength] / 1e9)
         , 3)
 
-    # Join BamQC+ichorCNA and Pinery data
+    # Join BamQC and Pinery data
     wgs_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples,
                                          util.bamqc4_ius_columns)
 
