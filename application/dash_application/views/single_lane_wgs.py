@@ -153,7 +153,7 @@ def get_wgs_data():
         , 3)
 
     # Join BamQC+ichorCNA and Pinery data
-    wgs_df = util.df_with_pinery_samples_ius(wgs_df, pinery_samples,
+    wgs_df = util.df_with_pinery_samples_ius(bamqc_df, pinery_samples,
                                          util.bamqc4_ius_columns)
 
     # Join df and instrument model
