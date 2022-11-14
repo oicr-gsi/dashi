@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [221114-1440] - 2022-11-14
   * Switched Call Ready TAR Median Target Coverage to Mean Bait Coverage
   * No data for swap view doesn't cause crash (stage cache has become empty)
   * Remove 'Purity' from Call-Ready and Single-Lane WGS
