@@ -71,7 +71,6 @@ def dataversion():
 special_cols = {
     # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
     # merging. Do not include any graphs based on those metrics
-    "Total Reads (Passed Filter)": "Total reads passed filter",
     "Callability": "callability",
     "Purity": "Purity",
     "File SWID ichorCNA": "File SWID ichorCNA",
@@ -79,7 +78,7 @@ special_cols = {
     "File SWID BamQC": "File SWID BamQC",
     "File SWID HsMetrics": "File SWID HsMetrics",
     "On Target Percentage": "On Target Percentage",
-    "Total Clusters (Passed Filter)": "Total Clusters",
+    "Pipeline Filtered Clusters": "Pipeline Filtered Clusters",
     "Coverage per Gb": "coverage per gb",
 }
 
@@ -110,9 +109,7 @@ def get_merged_ts_data():
     bamqc4_df = util.get_bamqc4_merged()
     bamqc4_df = util.filter_by_library_design(bamqc4_df, util.ex_lib_designs, BAMQC_COL.LibraryDesign)
 
-    bamqc4_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc4_df[BAMQC_COL.TotalReads] / 1e6, 3)
-    bamqc4_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+    bamqc4_df[special_cols["Pipeline Filtered Clusters"]] = round(
         bamqc4_df[BAMQC_COL.TotalClusters] / 1e6, 3)
     bamqc4_df[special_cols["Coverage per Gb"]] = round(
         bamqc4_df[BAMQC_COL.CoverageDeduplicated] / (
@@ -217,7 +214,7 @@ TS_DF = add_graphable_cols(
 )
 
 SORT_BY = shape_colour.dropdown() + [
-    {"label": "Total Clusters",
+    {"label": "Pipeline Filtered Clusters",
      "value": BAMQC_COL.TotalClusters},
     {"label": "Median Target Coverage",
      "value": HSMETRICS_COL.MeanBaitCoverage},
@@ -243,9 +240,9 @@ SORT_BY = shape_colour.dropdown() + [
 
 def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Clusters (Passed Filter)",
+        "Pipeline Filtered Clusters",
         df,
-        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        lambda d: d[special_cols["Pipeline Filtered Clusters"]],
         "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -501,10 +498,10 @@ def layout(query_string):
                                                   df,
                                                   ts_table_columns,
                                                   [
-                                                      (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
+                                                      (cutoff_pf_clusters_tumour_label, special_cols["Pipeline Filtered Clusters"],
                                                        initial["cutoff_pf_clusters_tumour"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
-                                                      (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
+                                                      (cutoff_pf_clusters_normal_label, special_cols["Pipeline Filtered Clusters"],
                                                        initial["cutoff_pf_clusters_normal"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                                       (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanBaitCoverage,
@@ -610,10 +607,10 @@ def init_callbacks(dash_app):
 
         dd = defaultdict(list)
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
-            (cutoff_pf_clusters_tumour_label, special_cols["Total Clusters (Passed Filter)"],
+            (cutoff_pf_clusters_tumour_label, special_cols["Pipeline Filtered Clusters"],
              pf_tumour_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_tumour(row) else None)),
-            (cutoff_pf_clusters_normal_label, special_cols["Total Clusters (Passed Filter)"],
+            (cutoff_pf_clusters_normal_label, special_cols["Pipeline Filtered Clusters"],
              pf_normal_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff if util.is_normal(row) else None)),
             (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanBaitCoverage, tumour_coverage_cutoff,

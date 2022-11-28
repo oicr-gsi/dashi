@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Changed `Total Clusters (Passed Filter)` to `Pipeline Filtered Clusters`
+  * Removed `Total Reads (Passed Filter)`, as it's not used and (like clusters) does not count total reads.
 
 ## [221114-1440] - 2022-11-14
   * Switched Call Ready TAR Median Target Coverage to Mean Bait Coverage
