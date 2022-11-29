@@ -65,10 +65,9 @@ def dataversion():
 special_cols = {
     # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
     # merging. Do not include any graphs based on those metrics
-    "Total Reads (Passed Filter)": "Total reads passed filter",
     "File SWID RNAseqQC": "File SWID RNAseqQC",
     "% rRNA Contamination": "Percent rRNA Contamination",
-    "Total Clusters (Passed Filter)": "Total Clusters",
+    "Pipeline Filtered Clusters": "Pipeline Filtered Clusters",
 }
 
 def get_merged_rna_data():
@@ -83,9 +82,7 @@ def get_merged_rna_data():
     rna_df = util.filter_by_library_design(rna_df, util.rna_lib_designs,
                                            RNASEQQC2_COL.LibraryDesign)
 
-    rna_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        rna_df[RNASEQQC2_COL.TotalReads] / 1e6, 3)
-    rna_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+    rna_df[special_cols["Pipeline Filtered Clusters"]] = round(
         rna_df[RNASEQQC2_COL.TotalClusters] / 1e6, 3)
     rna_df[special_cols["% rRNA Contamination"]] = round(
         (rna_df[RNASEQQC2_COL.RRnaContaminationMapped] / rna_df[
@@ -108,7 +105,7 @@ rna_table_columns = list(RNA_DF.columns.values)
 initial = get_initial_call_ready_values()
 
 # Set additional initial values for dropdown menus
-initial["second_sort"] = special_cols["Total Clusters (Passed Filter)"]
+initial["second_sort"] = special_cols["Pipeline Filtered Clusters"]
 # Set initial values for graph cutoff lines
 # Sourced from https://docs.google.com/document/d/1L056bikfIJDeX6Qzo6fwBb9j7A5NgC6o/edit
 cutoff_rrna_contam_label = sidebar_utils.rrna_contamination_cutoff_label
@@ -148,8 +145,8 @@ RNA_DF = add_graphable_cols(
 )
 
 SORT_BY = shape_colour.dropdown() + [
-    {"label":"Total Clusters",
-     "value": special_cols["Total Clusters (Passed Filter)"]},
+    {"label":"Pipeline Filtered Clusters",
+     "value": special_cols["Pipeline Filtered Clusters"]},
     {"label": "5 to 3 Prime Bias",
      "value": RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias},
     {"label": "% Correct Read Strand",
@@ -164,9 +161,9 @@ SORT_BY = shape_colour.dropdown() + [
 
 def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Clusters (Passed Filter)",
+        "Pipeline Filtered Clusters",
         df,
-        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        lambda d: d[special_cols["Pipeline Filtered Clusters"]],
         "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
@@ -360,7 +357,7 @@ def layout(query_string):
                                     (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean,
                                     initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"],
+                                    (cutoff_clusters_per_sample_label, special_cols["Pipeline Filtered Clusters"],
                                     initial["cutoff_clusters_per_sample"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
@@ -453,7 +450,7 @@ def init_callbacks(dash_app):
         (failure_df, failure_columns) = cutoff_table_data_merged(df, [
             (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean, insert_mean_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
-            (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], clusters_per_sample_cutoff,
+            (cutoff_clusters_per_sample_label, special_cols["Pipeline Filtered Clusters"], clusters_per_sample_cutoff,
              (lambda row, col, cutoff: row[col] < cutoff)),
             (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"], rrna_contam_cutoff,
              (lambda row, col, cutoff: row[col] > cutoff)),

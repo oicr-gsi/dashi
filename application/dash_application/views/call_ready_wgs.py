@@ -71,12 +71,11 @@ def dataversion():
 special_cols = {
     # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
     # merging. Do not include any graphs based on those metrics
-    "Total Reads (Passed Filter)": "total reads passed filter",
     "Coverage per Gb": "coverage per gb",
     "Percent Callability": "percent callability",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC": "File SWID BamQC",
-    "Total Clusters (Passed Filter)": "Total Clusters",
+    "Pipeline Filtered Clusters": "Pipeline Filtered Clusters",
 }
 
 
@@ -102,9 +101,7 @@ def get_merged_wgs_data():
 
     callability_df[special_cols["Percent Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
-    bamqc4_df[special_cols["Total Reads (Passed Filter)"]] = round(
-        bamqc4_df[BAMQC_COL.TotalReads] / 1e6, 3)
-    bamqc4_df[special_cols["Total Clusters (Passed Filter)"]] = round(
+    bamqc4_df[special_cols["Pipeline Filtered Clusters"]] = round(
         bamqc4_df[BAMQC_COL.TotalClusters] / 1e6, 3)
     bamqc4_df[special_cols["Coverage per Gb"]] = round(
         bamqc4_df[BAMQC_COL.CoverageDeduplicated] / (bamqc4_df[
@@ -199,7 +196,7 @@ WGS_DF = add_graphable_cols(
 
 SORT_BY = shape_colour.dropdown() + [
     {
-        "label": "Total Clusters (Passed Filter)",
+        "label": "Pipeline Filtered Clusters",
         "value": BAMQC_COL.TotalClusters
     },
     {
@@ -227,9 +224,9 @@ SORT_BY = shape_colour.dropdown() + [
 
 def generate_total_clusters(df, graph_params):
     return CallReadySubplot(
-        "Total Clusters (Passed Filter)",
+        "Pipeline Filtered Clusters",
         df,
-        lambda d: d[special_cols["Total Clusters (Passed Filter)"]],
+        lambda d: d[special_cols["Pipeline Filtered Clusters"]],
         "# PF Clusters X 10^6",
         graph_params["colour_by"],
         graph_params["shape_by"],
