@@ -148,7 +148,7 @@ def get_rna_data():
     # Join RNAseqQc and instrument model
     rna_df = util.df_with_run_info(rna_df, PINERY_COL.SequencerRunName)
 
-    return rna_df, util.cache.versions(["rnaseqqc2"])
+    return rna_df, util.cache.versions(["rnaseqqc2", "fastqc"])
 
 
 # Make the RNA dataframe

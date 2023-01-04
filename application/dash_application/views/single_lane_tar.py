@@ -123,7 +123,7 @@ def get_bamqc_data():
 
     bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 
-    return bamqc_df, util.cache.versions(["bamqc4"])
+    return bamqc_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
 
 
 (bamqc, DATAVERSION) = get_bamqc_data()
