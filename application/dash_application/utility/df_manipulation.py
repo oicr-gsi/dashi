@@ -11,7 +11,7 @@ import json
 
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
-wgs_lib_designs = ["AS", "CH", "NN", "SW", "WG"]
+wgs_lib_designs = ["AS", "CH", "NN", "PG", "SW", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
