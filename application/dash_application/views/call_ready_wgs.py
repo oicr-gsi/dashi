@@ -61,7 +61,6 @@ ids = init_ids([
 BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
-ICHOR_COL = gsiqcetl.column.IchorCnaMergedColumn
 
 
 def dataversion():
@@ -129,7 +128,6 @@ def get_merged_wgs_data():
 
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
-    wgs_df = util.remove_suffixed_columns(wgs_df, '_i')  # Ichorcna duplicate columns
 
     return wgs_df, util.cache.versions(
         ["mutectcallability", "bamqc4merged"])

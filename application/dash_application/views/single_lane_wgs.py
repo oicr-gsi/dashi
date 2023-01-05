@@ -68,7 +68,6 @@ ids = init_ids([
 
 BAMQC_COL = gsiqcetl.column.BamQc4Column
 FASTQC_COL = FastqcColumn
-ICHOR_COL = gsiqcetl.column.IchorCnaColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn
 RUN_COLS = pinery.column.RunsColumn
@@ -99,7 +98,7 @@ later_col_set = [
     PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
     PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
-wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *ICHOR_COL.values(), *later_col_set]
+wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *later_col_set]
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
@@ -119,7 +118,6 @@ def get_wgs_data():
     """
     Join together all the dataframes needed for graphing:
       * BamQC (where most of the graphed QC data comes from)
-      * ichorCNA (where the remainder of the graphed QC data comes from)
       * Pinery (sample information)
       * Instruments (to allow filtering by instrument model)
       * Runs (needed to join Pinery to Instruments)
@@ -163,7 +161,7 @@ def get_wgs_data():
     illumina_models = util.get_illumina_instruments(wgs_df)
     wgs_df = wgs_df[wgs_df[INSTRUMENT_COLS.ModelName].isin(illumina_models)]
 
-    return wgs_df, util.cache.versions(["bamqc4", "ichorcna"])
+    return wgs_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
 
 
 # Make the WGS dataframe
@@ -210,8 +208,6 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": special_cols["Non-Primary Reads"]},
     {"label": "On-target Reads",
      "value": special_cols["On-target Reads"]},
-    {"label": "Ploidy",
-     "value": ICHOR_COL.Ploidy},
     {"label": "Mean Insert Size",
      "value": BAMQC_COL.InsertMean},
     {"label": "Sample Name",
