@@ -6,8 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [230109-0955] - 2023-01-09
   * Corrected caches displayed in view footer
-  * Removed danling ichorcna usage in single lane and call ready WG
+  * Removed dangling ichorcna usage in single lane and call ready WG
   * Add the PG code (Plasma Whole Genome) to the WG view
 
 ## [221206-0851] - 2022-12-06
