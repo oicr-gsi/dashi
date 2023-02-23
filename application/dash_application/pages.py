@@ -21,7 +21,6 @@ pagenames = [
     "single_lane_tar",
     "single_lane_rna",
     "single_lane_wgs",
-    "SARS-CoV-2",
     'single_lane_cfmedip'
 ]
 
