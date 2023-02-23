@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Removed SARS-CoV-2 view
 
 ## [230109-0955] - 2023-01-09
   * Corrected caches displayed in view footer

@@ -29,10 +29,6 @@ RUN_COL = pinery.column.RunsColumn
 RUNSCANNER_FLOWCELL_COL = gsiqcetl.column.RunScannerFlowcellColumn
 PROJECT_COL = pinery.column.ProjectsColumn
 FASTQC_COL = gsiqcetl.column.FastqcColumn
-KRAKEN2_COL = gsiqcetl.column.Kraken2Column
-BEDTOOLS_CALC_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
-BEDTOOLS_PERCENTILE_COL = gsiqcetl.column.BedToolsGenomeCovCoveragePercentileColumn
-SAMTOOLS_STATS_COV2_COL = gsiqcetl.column.SamtoolsStatsColumn
 CFMEDIP_COL = gsiqcetl.column.CfMeDipQcColumn
 sample_type_col = "Sample Type"
 ml_col = "Merged Library"
@@ -44,9 +40,6 @@ bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 dnaseqqc_ius_columns = [DNASEQQC_COL.Run, DNASEQQC_COL.Lane, DNASEQQC_COL.Barcodes]
 ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
 fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
-bedtools_calc_ius_columns = [BEDTOOLS_CALC_COL.Run, BEDTOOLS_CALC_COL.Lane, BEDTOOLS_CALC_COL.Barcodes]
-bedtools_percentile_ius_columns = [BEDTOOLS_PERCENTILE_COL.Run, BEDTOOLS_PERCENTILE_COL.Lane, BEDTOOLS_PERCENTILE_COL.Barcodes]
-kraken2_ius_columns = [KRAKEN2_COL.Run, KRAKEN2_COL.Lane, KRAKEN2_COL.Barcodes]
 cfmedip_ius_columns = [CFMEDIP_COL.Run, CFMEDIP_COL.Lane, CFMEDIP_COL.Barcodes]
 rnaseqqc2_ius_columns = [RNASEQQC2_COL.Run, RNASEQQC2_COL.Lane,
                         RNASEQQC2_COL.Barcodes]
@@ -284,19 +277,6 @@ def get_dnaseqqc_and_bamqc4():
     )
 
 
-def get_bedtools_calc():
-    return normalized_ius(
-        cache.bedtools_sars_cov2.genomecov_calculations, bedtools_calc_ius_columns
-    )
-
-
-def get_bedtools_cov_perc():
-    return normalized_ius(
-        cache.bedtools_sars_cov2.genomecov_coverage_percentile,
-        bedtools_percentile_ius_columns
-    )
-
-
 def get_cfmedip():
     return cache.cfmedipqc.cfmedipqc.copy(deep=True)
 
@@ -315,18 +295,6 @@ def get_fastqc():
 
 def get_ichorcna():
     return normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
-
-
-def get_kraken2():
-    return normalized_ius(cache.kraken2.kraken2, kraken2_ius_columns)
-
-
-def get_samtools_stats_cov2_human():
-    return cache.samtools_stats_sars_cov2.human.copy(deep=True)
-
-
-def get_samtools_stats_cov2_depleted():
-    return cache.samtools_stats_sars_cov2.depleted.copy(deep=True)
 
 
 def get_rnaseqqc2():
