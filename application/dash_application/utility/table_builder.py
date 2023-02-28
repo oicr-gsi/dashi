@@ -1,7 +1,7 @@
 from typing import Callable, Dict, List, Tuple
 
-import dash_core_components as core
-import dash_html_components as html
+from dash import dcc as core
+from dash import html
 import dash_table as tabl
 from pandas import DataFrame
 import pinery

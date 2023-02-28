@@ -5,8 +5,8 @@ import json
 import os
 from typing import List, Dict, Union, Any
 
-import dash_core_components as core
-import dash_html_components as html
+from dash import dcc as core
+from dash import html
 import dash_bootstrap_components as dbc
 from dash.exceptions import PreventUpdate
 from pandas import Series, Timestamp

@@ -1,7 +1,7 @@
 from collections import defaultdict
 import logging
 
-import dash_html_components as html
+from dash import html
 from dash.dependencies import Input, Output, State
 
 from ..dash_id import init_ids

@@ -5,8 +5,8 @@ from pandas import DataFrame
 
 import sd_material_ui
 
-import dash_html_components as html
-import dash_core_components as core
+from dash import html
+from dash import dcc as core
 from dash.dependencies import Output, Input, State
 import dash.exceptions
 import dash_table
