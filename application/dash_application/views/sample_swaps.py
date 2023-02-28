@@ -1,5 +1,5 @@
-import dash_core_components as core
-import dash_html_components as html
+from dash import dcc as core
+from dash import html
 from dash.dependencies import Input, Output, State
 import dash_table
 import dash_table.Format

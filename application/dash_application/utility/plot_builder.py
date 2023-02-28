@@ -3,7 +3,7 @@ from typing import List, Tuple, Union, Dict, Callable
 import pandas
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import dash_core_components as core
+from dash import dcc as core
 from pandas import DataFrame
 import pinery
 import gsiqcetl.column

@@ -3,7 +3,7 @@ import importlib
 import sys
 import traceback
 
-import dash_html_components as html
+from dash import html
 from .utility import sidebar_utils
 
 prefix = "application.dash_application.views."

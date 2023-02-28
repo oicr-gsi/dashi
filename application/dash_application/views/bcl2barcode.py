@@ -17,9 +17,9 @@ from Pinery known index sequence
 import os
 from typing import List
 
-import dash_html_components as html
-import dash_core_components as core
-import dash_table
+from dash import html
+from dash import dcc as core
+from dash import dash_table
 from dash.dependencies import Input, Output
 import numpy
 import pandas
