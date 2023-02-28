@@ -1,5 +1,5 @@
 Flask_Caching>=1.7.2
-dash_bootstrap_components==0.7.2
+dash_bootstrap_components==1.4.0
 pandas>=1.4.0
 Flask>=1.1.1
 dash==2.8.1
