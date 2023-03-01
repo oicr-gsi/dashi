@@ -2,7 +2,7 @@ from typing import Callable, Dict, List, Tuple
 
 from dash import dcc as core
 from dash import html
-import dash_table as tabl
+from dash import dash_table as tabl
 from pandas import DataFrame
 import pinery
 from .Mode import Mode
