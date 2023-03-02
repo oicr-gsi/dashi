@@ -1,8 +1,8 @@
 from dash import dcc as core
 from dash import html
 from dash.dependencies import Input, Output, State
-import dash_table
-import dash_table.Format
+from dash import dash_table
+from dash import dash_table.Format
 import pinery
 import pandas
 import os

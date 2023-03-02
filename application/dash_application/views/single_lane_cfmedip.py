@@ -19,8 +19,6 @@ title = "Single-Lane cfMeDIP"
 
 ids = init_ids([
     # Buttons
-    'jira-issue-with-runs-button',
-    'general-jira-issue-button',
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
@@ -366,13 +364,6 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className="row jira-buttons", children=[
-                sidebar_utils.jira_button("Open an issue",
-                                          ids['general-jira-issue-button'],
-                                          {"display": "inline-block"},
-                                          sidebar_utils.construct_jira_link([], title)),
-                sidebar_utils.jira_button("Open an issue about these runs",
-                                          ids['jira-issue-with-runs-button'],
-                                          {"display": "none"}, ""),
                 sidebar_utils.unknown_run_alert(
                     ids['alerts-unknown-run'],
                     initial["runs"],
@@ -528,8 +519,6 @@ def init_callbacks(dash_app):
             Output(ids["data-count"], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids["search-sample-ext"], "options"),
-            Output(ids["jira-issue-with-runs-button"], "href"),
-            Output(ids["jira-issue-with-runs-button"], "style"),
             Output(ids['miso-request-body'], 'value'),
             Output(ids['miso-button'], 'style')
         ],
@@ -625,8 +614,6 @@ def init_callbacks(dash_app):
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
-        (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
-
         (miso_request, miso_button_style) = util.build_miso_info(df, title,
             [{
                 'title': "% Thaliana", 
@@ -647,8 +634,6 @@ def init_callbacks(dash_app):
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
-            jira_href,
-            jira_style,
             miso_request,
             miso_button_style
         ]

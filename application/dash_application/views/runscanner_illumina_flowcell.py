@@ -19,8 +19,6 @@ title = "Run Scanner Illumina Flow Cell"
 
 ids = init_ids([
     # Buttons
-    "jira-issue-with-runs-button",
-    "general-jira-issue-button",
     "update-button-top",
     "update-button-bottom",
 
@@ -124,12 +122,6 @@ def layout(_query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
-            html.Div(className="row jira-buttons", children=[
-                sidebar_utils.jira_button("Open an issue",
-                                          ids['general-jira-issue-button'],
-                                          {"display": "inline-block"},
-                                          sidebar_utils.construct_jira_link([], title)),
-            ]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
                     html.Button(
