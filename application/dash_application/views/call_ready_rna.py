@@ -18,7 +18,6 @@ title = "Call-Ready RNA-seq"
 
 ids = init_ids([
     # Buttons
-    'jira-issue-button',
     'update-button-top',
     'update-button-bottom',
 
@@ -260,11 +259,6 @@ def layout(query_string):
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
-            html.Div(className="row jira-buttons", children=[
-                sidebar_utils.jira_button("Open an issue",
-                                          ids['jira-issue-button'],
-                                          {"display": "inline-block"},
-                                          sidebar_utils.construct_jira_link([], title))]),
             html.Div(className="row flex-container", children=[
                 html.Div(className="sidebar four columns", children=[
                     html.Button("Update", id=ids["update-button-top"], className="update-button"),
