@@ -2,7 +2,7 @@ from dash import dcc as core
 from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
-from dash import dash_table.Format
+from dash.dash_table import Format
 import pinery
 import pandas
 import os
