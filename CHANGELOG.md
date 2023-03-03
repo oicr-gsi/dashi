@@ -7,6 +7,10 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Removed SARS-CoV-2 view
+  * Dash -> 2.8.1
+  * werkzeug -> 2.2.3
+  * dash_bootstrap_components -> 1.4.0
+  * Remove JIRA buttons due to compatibility issue
 
 ## [230109-0955] - 2023-01-09
   * Corrected caches displayed in view footer
