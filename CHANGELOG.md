@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [230303-1532] - 2023-03-03
   * Removed SARS-CoV-2 view
   * Dash -> 2.8.1
   * werkzeug -> 2.2.3
