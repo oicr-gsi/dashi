@@ -115,6 +115,8 @@ def normalized_ius(df: DataFrame, ius_cols: List[str]):
 
 def normalized_merged(df: DataFrame, merged_cols: List[str]):
     project_col, donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
+    if 'Merged Pinery Lims ID' in df.columns:
+        df['Merged Pinery Lims ID'] = df['Merged Pinery Lims ID'].apply(','.join)
     return df.astype({
         project_col: 'str',
         donor_col: 'str',
