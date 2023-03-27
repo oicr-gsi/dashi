@@ -167,6 +167,7 @@ def get_merged_ts_data():
 (TS_DF, DATAVERSION) = get_merged_ts_data()
 ts_table_columns = TS_DF.columns
 ts_curated_columns = [
+    "Merged Library",
     special_cols["Pipeline Filtered Clusters"],
     HSMETRICS_COL.MeanBaitCoverage,
     special_cols["Callability"],

@@ -167,6 +167,7 @@ ex_table_columns = [
 ]
 
 tar_curated_columns = [
+    PINERY_COL.SampleName,
     special_cols["Total Clusters (Passed Filter)"],
     BAMQC_COL.CoverageDeduplicated,
     special_cols["Coverage per Gb"],

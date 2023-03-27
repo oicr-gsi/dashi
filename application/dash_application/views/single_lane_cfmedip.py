@@ -161,6 +161,7 @@ later_col_set = [
 cfmedip_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 cfmedip_curated_columns = [
+    PINERY_COL.SampleName,
     special_cols["Total Clusters (Passed Filter)"],
     CFMEDIP_COL.NumWindowsWith1Reads,
     CFMEDIP_COL.NumWindowsWith10Reads,

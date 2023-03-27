@@ -102,6 +102,7 @@ later_col_set = [
 wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *later_col_set]
 
 wgs_curated_columns = [
+    PINERY_COL.SampleName,
     special_cols["Total Clusters (Passed Filter)"],
     BAMQC_COL.CoverageDeduplicated,
     special_cols["Coverage per Gb"],

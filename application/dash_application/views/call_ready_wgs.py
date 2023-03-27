@@ -138,6 +138,7 @@ def get_merged_wgs_data():
 (WGS_DF, DATAVERSION) = get_merged_wgs_data()
 wgs_table_columns = WGS_DF.columns
 wgs_curated_columns = [
+    "Merged Library",
     special_cols["Pipeline Filtered Clusters"],
     BAMQC_COL.CoverageDeduplicated,
     special_cols["Coverage per Gb"],
