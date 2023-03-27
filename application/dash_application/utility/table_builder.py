@@ -163,7 +163,7 @@ def _table_tabs(failed_id: str, all_id: str, data_id: str, failed_count_id, all_
                         children=[
                             build_table(
                                 all_id,
-                                all_columns, #TODO prettier column names
+                                all_columns,
                                 empty_data)]),
                     html.Br(),
                     html.P(id=all_count_id, children=["Rows: {0}".format(len(empty_data.index))])
