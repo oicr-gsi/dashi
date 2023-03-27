@@ -29,7 +29,6 @@ def build_table(table_id: str, columns: List[str], df: DataFrame):
         }
     )
 
-
 def cutoff_table_data_ius(data: DataFrame, limits: List[Tuple[str, str, float, bool
 ]]) -> Tuple[DataFrame, List[Dict[str, str]]]:
     '''
@@ -136,7 +135,7 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
     )
 
 
-def _table_tabs(failed_id: str, data_id: str, failed_count_id, data_count_id, empty_data: DataFrame, table_columns: List[str],
+def _table_tabs(failed_id: str, all_id: str, data_id: str, failed_count_id, all_count_id, data_count_id, empty_data: DataFrame, all_columns: List[str], table_columns: List[str],
                limits: List[Tuple[str, str, float, bool]], mode):
     return core.Tabs(id=failed_id+data_id+"tabs",
         children=[
@@ -156,6 +155,20 @@ def _table_tabs(failed_id: str, data_id: str, failed_count_id, data_count_id, em
                     html.P(id=failed_count_id, children=["Rows: {0}".format(len(empty_data.index))])
                 ]),
             core.Tab(
+                id=all_id+"_tab",
+                label="All Samples",
+                children=[
+                    html.Div(
+                        className='data-table',
+                        children=[
+                            build_table(
+                                all_id,
+                                all_columns, #TODO prettier column names
+                                empty_data)]),
+                    html.Br(),
+                    html.P(id=all_count_id, children=["Rows: {0}".format(len(empty_data.index))])
+                ]),
+            core.Tab(
                 id=data_id+"_tab",
                 label="🐌 Raw Data 🐌",
                 children=[
@@ -170,10 +183,10 @@ def _table_tabs(failed_id: str, data_id: str, failed_count_id, data_count_id, em
                     html.P(id=data_count_id, children=["Rows: {0}".format(len(empty_data.index))])
                 ])])
 
-def table_tabs_single_lane(failed_id: str, data_id: str, failed_count_id, row_count_id, empty_data: DataFrame, table_columns: List[str],
+def table_tabs_single_lane(failed_id: str, all_id: str, data_id: str, failed_count_id, all_count_id, row_count_id, empty_data: DataFrame, all_columns: List[str], table_columns: List[str],
                limits: List[Tuple[str, str, float, bool]]):
-    return _table_tabs(failed_id, data_id, failed_count_id, row_count_id, empty_data, table_columns, limits, Mode.IUS)
+    return _table_tabs(failed_id, all_id, data_id, failed_count_id, all_count_id, row_count_id, empty_data, all_columns, table_columns, limits, Mode.IUS)
 
-def table_tabs_call_ready(failed_id: str, data_id: str, failed_count_id, row_count_id, empty_data: DataFrame, table_columns: List[str],
+def table_tabs_call_ready(failed_id: str, all_id: str, data_id: str, failed_count_id, all_count_id, row_count_id, empty_data: DataFrame, all_columns: List[str], table_columns: List[str],
                limits: List[Tuple[str, str, float, bool]]):
-    return _table_tabs(failed_id, data_id, failed_count_id, row_count_id, empty_data, table_columns, limits, Mode.MERGED)
+    return _table_tabs(failed_id, all_id, data_id, failed_count_id, all_count_id, row_count_id, empty_data, all_columns, table_columns, limits, Mode.MERGED)
