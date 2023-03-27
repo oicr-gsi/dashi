@@ -99,6 +99,7 @@ later_col_set = [
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
 
 rnaseqqc_curated_columns = [
+    PINERY_COL.SampleName,
     special_cols["Total Clusters (Passed Filter)"],
     RNA_COL.InsertMean,
     special_cols["Percent Uniq Reads"],

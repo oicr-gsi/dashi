@@ -103,6 +103,7 @@ def get_merged_rna_data():
 (RNA_DF, DATAVERSION) = get_merged_rna_data()
 rna_table_columns = list(RNA_DF.columns.values)
 rna_curated_columns = [
+    "Merged Library",
     special_cols["Pipeline Filtered Clusters"], 
     RNASEQQC2_COL.InsertMean,
     RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias,
