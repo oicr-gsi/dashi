@@ -60,10 +60,13 @@ ids = init_ids([
     # Graphs
     "graphs",
 
-    "failed-samples",
-    "data-table",
-    "failed-count",
-    "data-count",
+    # Tables
+    'failed-samples',
+    'all-samples',
+    'data-table',
+    'failed-count',
+    'all-count',
+    'data-count'
 ])
 
 RNA_COL = RnaColumn
@@ -94,6 +97,18 @@ later_col_set = [
     PINERY_COL.TissueType, PINERY_COL.Institute, INSTRUMENT_COLS.ModelName
 ]
 rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
+
+rnaseqqc_curated_columns = [
+    special_cols["Total Clusters (Passed Filter)"],
+    RNA_COL.InsertMean,
+    special_cols["Percent Uniq Reads"],
+    RNA_COL.MetricsMedian5PrimeTo3PrimeBias,
+    RNA_COL.MetricsPercentCorrectStrandReads,
+    RNA_COL.MetricsPercentCodingBases,
+    special_cols["rRNA Percent Contamination"],
+    PINERY_COL.DV200,
+    PINERY_COL.RIN
+]
 
 initial = get_initial_single_lane_values()
 # Set additional initial values for dropdown menus
@@ -465,10 +480,13 @@ def layout(query_string):
                         children=[
                             table_tabs_single_lane(
                                 ids["failed-samples"],
+                                ids['all-samples'],
                                 ids["data-table"],
                                 ids["failed-count"],
+                                ids['all-count'],
                                 ids["data-count"],
                                 df,
+                                rnaseqqc_curated_columns,
                                 rnaseqqc_table_columns,
                                 [
                                     (cutoff_insert_mean_label,
@@ -498,8 +516,10 @@ def init_callbacks(dash_app):
             Output(ids["graphs"], "figure"),
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
+            Output(ids['all-samples'], "data"),
             Output(ids["data-table"], "data"),
             Output(ids["failed-count"], "children"),
+            Output(ids["all-count"], "children"),
             Output(ids["data-count"], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids['search-sample-ext'], "options"),
@@ -610,8 +630,10 @@ def init_callbacks(dash_app):
             generate_subplot_from_func(df, graph_params, GRAPHS),
             failure_columns,
             failure_df.to_dict('records'),
+            df[rnaseqqc_curated_columns].to_dict("records", into=dd),
             df[rnaseqqc_table_columns].to_dict("records", into=dd),
             "Rows: {0}".format(len(failure_df.index)),
+            "Rows: {0}".format(len(df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
