@@ -7,6 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Fixed Merged Pinery Lims ID being blank in exported csv
+  * Introduce All Samples table
 
 ## [230303-1532] - 2023-03-03
   * Removed SARS-CoV-2 view
