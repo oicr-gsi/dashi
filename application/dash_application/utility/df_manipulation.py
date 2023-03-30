@@ -6,6 +6,7 @@ from typing import List
 from gsiqcetl import QCETLCache
 import gsiqcetl.column
 import gsiqcetl.common.utility
+import gsiqcetl.common
 import pinery
 import json
 
@@ -300,7 +301,8 @@ def get_ichorcna():
 
 
 def get_rnaseqqc2():
-    return normalized_ius(cache.rnaseqqc2.rnaseqqc2, rnaseqqc2_ius_columns)
+    # TODO: Temporary loading older cache due to bug. Revert after fix.
+    return normalized_ius(cache.load("rnaseqqc2", 2, gsiqcetl.common.CleaningRules(), lambda x: None).rnaseqqc2, rnaseqqc2_ius_columns)
 
 
 def get_runscanner_flowcell():
