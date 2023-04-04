@@ -20,7 +20,7 @@ Create a `.env` file in the root directory of this repository:
 
 | Variable name               | Required?              | Description                                                                                                           | Example                                               | Default |
 |-----------------------------|------------------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------|
-| `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes**                | Directory where the QC-ETL caches are located                                                                         | `/qcetl`                                              | |
+| `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes**                | One or more colon seperated directories where the QC-ETL caches are located                                           | `/qcetl` or `/qcetl:/qcetl_archive`                    | |
 | `MONGO_URL`                 | **This or MONGO_FILE** | URL to location of MongoDB which holds Pinery data                                                                    | `mongodb://user:password@mongo_web_url:27017/db_name` | |
 | `MONGO_FILE`                | **This or MONGO_URL**  | File location of hd5 file holding DataFrame dump                                                                      | `/mongo_provenance.hd5`                               | |
 | `PINERY_URL`                | **Yes**                | URL to location of Pinery web service root                                                                            | `http://pinery-url:8080/pinery-ws-miso`               | 

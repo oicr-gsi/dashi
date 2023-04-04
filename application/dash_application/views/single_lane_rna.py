@@ -9,7 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import RnaSeqQc2Column as RnaColumn
+from gsiqcetl.column import RnaSeqQc2V3Column as RnaColumn
 import pinery
 import logging
 
