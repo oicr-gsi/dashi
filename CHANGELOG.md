@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Fixed dependency versions to speed up `pip install`
 
 ## [230330-1838] - 2023-03-30
   * Reverted to rnaseqqc2 V2 cache due to column naming bug
