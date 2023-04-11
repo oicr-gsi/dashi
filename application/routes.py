@@ -7,6 +7,11 @@ import datetime
 from application.dash_application.pages import pages
 import gsiqcetl.api
 
+# Dashi doesn't support displaying status data from multiple pages
+# Only the first source is being displayed
+qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+qc_etl_location = qc_etl_location.split(":")[0]
+
 # {pagename: Full Text Page Title}
 page_info = {}
 for module in pages:
@@ -21,7 +26,6 @@ for module in pages:
 @app.route('/')
 @app.route('/index')
 def index():
-    qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
     three_weeks_ago_ts = (datetime.datetime.today() - datetime.timedelta(days=21)).timestamp()
 
     latest_runs = []
@@ -48,8 +52,6 @@ def index():
 
 @app.route('/runs')
 def run_list():
-    qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
-
     all_runs = []
     with open(qc_etl_location + '/grouped_run_status.json', 'r') as run_status_file:
         run_json = json.load(run_status_file)
@@ -68,7 +70,7 @@ def run_list():
 
 @app.route('/status')
 def status_page():
-    qcetlapi = gsiqcetl.api.QCETLCache()
+    qcetlapi = gsiqcetl.api.QCETLCache(qc_etl_location)
     errors = {c.name: "Missing error file" for c in gsiqcetl.api.formats}
     lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.api.formats}
     shesmu_input = {c.name: "" for c in gsiqcetl.api.formats}
@@ -99,7 +101,7 @@ def status_page():
 
 @app.route('/shesmu_input/<cache_name>')
 def shesmu_input(cache_name):
-    qcetlapi = gsiqcetl.api.QCETLCache()
+    qcetlapi = gsiqcetl.api.QCETLCache(qc_etl_location)
 
     for cache in gsiqcetl.api.formats:
         if cache.name == cache_name:

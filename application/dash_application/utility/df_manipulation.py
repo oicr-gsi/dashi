@@ -3,7 +3,7 @@ import pandas
 from pandas import DataFrame, Series
 from typing import List
 
-from gsiqcetl import QCETLCache
+from gsiqcetl import QCETLMultiCache
 import gsiqcetl.column
 import gsiqcetl.common.utility
 import gsiqcetl.common
@@ -128,10 +128,12 @@ def normalized_merged(df: DataFrame, merged_cols: List[str]):
     })
 
 
-"""
-qc-etl API keeps loaded caches in memory for fast reloading
-"""
-cache = QCETLCache()
+root_dirs = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+if root_dirs is None:
+    raise KeyError("mandetory env variable GSI_QC_ETL_ROOT_DIRECTORY has not been set")
+else:
+    root_dirs = root_dirs.split(":")
+    cache = QCETLMultiCache(root_dirs)
 _pinery_client = pinery.PineryClient()
 
 # Mongo Provenance can be loaded from DB or a cached hd5 DataFrame
@@ -262,78 +264,73 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 
 
 def get_bcl2barcode():
-    return cache.bcl2barcode.bcl2barcode.copy(deep=True)
+    return cache.load_same_version("bcl2barcode").unique("bcl2barcode").copy(deep=True)
 
 
 def get_bcl2barcode_run_summary():
-    return cache.bcl2barcode.run_summary.copy(deep=True)
+    return cache.load_same_version("bcl2barcode").unique("run_summary").copy(deep=True)
 
 
 def get_dnaseqqc_and_bamqc4():
     # Utility function creates new DataFrame, so no need to copy again
     return gsiqcetl.common.utility.concat_workflow_versions(
         [
-            normalized_ius(cache.dnaseqqc.dnaseqqc, dnaseqqc_ius_columns),
-            normalized_ius(cache.bamqc4.bamqc4, bamqc4_ius_columns),
+            normalized_ius(cache.load_same_version("dnaseqqc").unique("dnaseqqc"), dnaseqqc_ius_columns),
+            normalized_ius(cache.load_same_version("bamqc4").unique("bamqc4"), bamqc4_ius_columns),
         ],
         dnaseqqc_ius_columns,
     )
 
 
 def get_cfmedip():
-    return cache.cfmedipqc.cfmedipqc.copy(deep=True)
+    return cache.load_same_version("cfmedipqc").unique("cfmedipqc").copy(deep=True)
 
 
 def get_cfmedip_insert_metrics():
-    return cache.cfmedipqc.insert_metrics.copy(deep=True)
+    return cache.load_same_version("cfmedipqc").unique("insert_metrics").copy(deep=True)
 
 
 def get_crosscheckfingerprints():
-    return cache.crosscheckfingerprints.filterswaps.copy(deep=True)
+    return cache.load_same_version("crosscheckfingerprints").unique("filterswaps").copy(deep=True)
 
 
 def get_fastqc():
-    return normalized_ius(cache.fastqc.fastqc, fastqc_ius_columns)
-
-
-def get_ichorcna():
-    return normalized_ius(cache.ichorcna.ichorcna, ichorcna_ius_columns)
+    return normalized_ius(cache.load_same_version("fastqc").unique("fastqc"), fastqc_ius_columns)
 
 
 def get_rnaseqqc2():
-    # TODO: Temporary loading older cache due to bug. Revert after fix.
-    return normalized_ius(cache.load("rnaseqqc2", 2, gsiqcetl.common.CleaningRules(), lambda x: None).rnaseqqc2, rnaseqqc2_ius_columns)
+    return normalized_ius(cache.load_same_version("rnaseqqc2").unique("rnaseqqc2"), rnaseqqc2_ius_columns)
 
 
 def get_runscanner_flowcell():
-    return cache.runscannerillumina.flowcell.copy(deep=True)
+    return cache.load_same_version("runscannerillumina").unique("flowcell").copy(deep=True)
 
 
 def get_bamqc4_merged():
-    return normalized_merged(cache.bamqc4merged.bamqc4merged, bamqc4_merged_columns)
+    return normalized_merged(cache.load_same_version("bamqc4merged").unique("bamqc4merged"), bamqc4_merged_columns)
 
 
 def get_ichorcna_merged():
     return normalized_merged(
-        cache.ichorcnamerged.ichorcnamerged,
+        cache.load_same_version("ichorcnamerged").unique("ichorcnamerged"),
         ichorcna_merged_columns
     )
 
 
 def get_mutect_callability():
     return normalized_merged(
-        cache.mutectcallability.mutectcallability,
+        cache.load_same_version("mutectcallability").unique("mutectcallability"),
         callability_merged_columns
     )
 
 
 def get_hsmetrics_merged():
-    return normalized_merged(cache.hsmetrics.metrics, hsmetrics_merged_columns)
+    return normalized_merged(cache.load_same_version("hsmetrics").unique("metrics"), hsmetrics_merged_columns)
 
 
 def get_rnaseqqc2_merged():
     return normalized_merged(
-        cache.rnaseqqc2merged.rnaseqqc2merged,
+        cache.load_same_version("rnaseqqc2merged").unique("rnaseqqc2merged"),
         rnaseqqc2_merged_columns
     )
 
