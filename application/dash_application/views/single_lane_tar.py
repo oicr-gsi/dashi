@@ -168,11 +168,13 @@ ex_table_columns = [
 
 tar_curated_columns = [
     PINERY_COL.SampleName,
+    PINERY_COL.IUSTag,
+    PINERY_COL.LaneNumber,
+    PINERY_COL.SequencerRunName,
+    PINERY_COL.TissueType,
+    PINERY_COL.LibrarySourceTemplateType,
     special_cols["Total Clusters (Passed Filter)"],
     BAMQC_COL.CoverageDeduplicated,
-    special_cols["Coverage per Gb"],
-    special_cols["Unmapped Reads (%)"],
-    special_cols["Non-Primary Reads (%)"],
     special_cols["Estimated On Target Reads (%)"],
     BAMQC_COL.InsertMean
 ]

@@ -104,10 +104,14 @@ def get_merged_rna_data():
 rna_table_columns = list(RNA_DF.columns.values)
 rna_curated_columns = [
     "Merged Library",
-    special_cols["Pipeline Filtered Clusters"], 
+    PINERY_COL.GroupID,
+    PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.TissueOrigin,
+    PINERY_COL.TissueType,
+    RNASEQQC2_COL.TotalClusters,
+    special_cols["Pipeline Filtered Clusters"],
     RNASEQQC2_COL.InsertMean,
-    RNASEQQC2_COL.MetricsMedian5PrimeTo3PrimeBias,
-    RNASEQQC2_COL.MetricsPercentCorrectStrandReads,
+    RNASEQQC2_COL.MetricsPercentCorrectStrandReads,  # not QC gate, but used to investigate negative controls
     RNASEQQC2_COL.MetricsPercentCodingBases,
     special_cols["% rRNA Contamination"]
 ]

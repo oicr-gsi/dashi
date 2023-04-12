@@ -162,18 +162,17 @@ cfmedip_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 cfmedip_curated_columns = [
     PINERY_COL.SampleName,
+    PINERY_COL.IUSTag,
+    PINERY_COL.LaneNumber,
+    PINERY_COL.SequencerRunName,
+    PINERY_COL.TissueType,
+    PINERY_COL.LibrarySourceTemplateType,
+    CFMEDIP_COL.TotalReads,
     special_cols["Total Clusters (Passed Filter)"],
-    CFMEDIP_COL.NumWindowsWith1Reads,
-    CFMEDIP_COL.NumWindowsWith10Reads,
-    CFMEDIP_COL.NumWindowsWith50Reads,
-    CFMEDIP_COL.NumWindowsWith100Reads,
-    CFMEDIP_COL.PercentPassedFilterAlignedReads, 
     INSERT_COL.MeanInsertSize,
     CFMEDIP_COL.PercentDuplication,
     CFMEDIP_COL.RelativeCpGFrequencyEnrichment,
-    CFMEDIP_COL.ObservedToExpectedEnrichment,
     CFMEDIP_COL.ATDropout,
-    CFMEDIP_COL.PercentageAthaliana,
     CFMEDIP_COL.MethylationBeta
 ]
 

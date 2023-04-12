@@ -103,14 +103,15 @@ wgs_table_columns = [*first_col_set, *BAMQC_COL.values(), *later_col_set]
 
 wgs_curated_columns = [
     PINERY_COL.SampleName,
+    PINERY_COL.IUSTag,
+    PINERY_COL.LaneNumber,
+    PINERY_COL.SequencerRunName,
+    PINERY_COL.TissueType,
+    PINERY_COL.LibrarySourceTemplateType,
     special_cols["Total Clusters (Passed Filter)"],
     BAMQC_COL.CoverageDeduplicated,
-    special_cols["Coverage per Gb"],
     BAMQC_COL.InsertMean,
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-    special_cols["Unmapped Reads"],
-    special_cols["Non-Primary Reads"],
-    special_cols["On-target Reads"]
 ]
 
 initial = get_initial_single_lane_values()

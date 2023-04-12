@@ -139,9 +139,12 @@ def get_merged_wgs_data():
 wgs_table_columns = WGS_DF.columns
 wgs_curated_columns = [
     "Merged Library",
+    PINERY_COL.GroupID,
+    PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.TissueOrigin,
+    PINERY_COL.TissueType,
     special_cols["Pipeline Filtered Clusters"],
     BAMQC_COL.CoverageDeduplicated,
-    special_cols["Coverage per Gb"],
     BAMQC_COL.CoverageMedian,
     special_cols["Percent Callability"],
     BAMQC_COL.InsertMean,

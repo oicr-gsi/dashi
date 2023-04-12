@@ -100,15 +100,17 @@ rnaseqqc_table_columns = [*first_col_set, *RNA_COL.values(), *later_col_set]
 
 rnaseqqc_curated_columns = [
     PINERY_COL.SampleName,
+    PINERY_COL.IUSTag,
+    PINERY_COL.LaneNumber,
+    PINERY_COL.SequencerRunName,
+    PINERY_COL.TissueType,
+    PINERY_COL.LibrarySourceTemplateType,
     special_cols["Total Clusters (Passed Filter)"],
     RNA_COL.InsertMean,
-    special_cols["Percent Uniq Reads"],
-    RNA_COL.MetricsMedian5PrimeTo3PrimeBias,
-    RNA_COL.MetricsPercentCorrectStrandReads,
+    RNA_COL.MetricsPercentCorrectStrandReads, # Not a QC gate, but used to investigate negative controls
     RNA_COL.MetricsPercentCodingBases,
     special_cols["rRNA Percent Contamination"],
     PINERY_COL.DV200,
-    PINERY_COL.RIN
 ]
 
 initial = get_initial_single_lane_values()

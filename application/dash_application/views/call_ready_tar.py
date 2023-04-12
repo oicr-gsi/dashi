@@ -168,15 +168,15 @@ def get_merged_ts_data():
 ts_table_columns = TS_DF.columns
 ts_curated_columns = [
     "Merged Library",
+    PINERY_COL.GroupID,
+    PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.TissueOrigin,
+    PINERY_COL.TissueType,
+    BAMQC_COL.TotalClusters, # For top ups
     special_cols["Pipeline Filtered Clusters"],
     HSMETRICS_COL.MeanBaitCoverage,
-    special_cols["Callability"],
     BAMQC_COL.InsertMean,
-    HSMETRICS_COL.HsLibrarySize,
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-    HSMETRICS_COL.PctExcOverlap,
-    HSMETRICS_COL.AtDropout,
-    HSMETRICS_COL.GCDropout,
     special_cols["On Target Percentage"]
 ]
 
