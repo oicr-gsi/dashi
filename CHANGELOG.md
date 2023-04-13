@@ -11,6 +11,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Update Dashi to gsiqcetl V1.22
   * Edited "All Samples" tables after user feedback
   * Allow `crosscheckfingerprints` cache to be missing from archival source
+  * Remove the Raw Data Table
 
 ## [230330-1838] - 2023-03-30
   * Reverted to rnaseqqc2 V2 cache due to column naming bug
