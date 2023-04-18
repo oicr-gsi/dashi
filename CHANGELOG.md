@@ -8,7 +8,7 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
   * Fixed dependency versions to speed up `pip install`
   * Allow Dashi to pull from more than one cache source
-  * Update Dashi to gsiqcetl V1.21
+  * Update Dashi to gsiqcetl V1.22
   * Edited "All Samples" tables after user feedback
 
 ## [230330-1838] - 2023-03-30
