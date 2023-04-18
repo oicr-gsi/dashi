@@ -291,7 +291,12 @@ def get_cfmedip_insert_metrics():
 
 
 def get_crosscheckfingerprints():
-    return cache.load_same_version("crosscheckfingerprints").unique("filterswaps").copy(deep=True)
+    return cache.load_same_version(
+        "crosscheckfingerprints"
+    # crosscheckfingerprints caches won't be archived
+    ).remove_missing(
+        "filterswaps"
+    ).unique("filterswaps").copy(deep=True)
 
 
 def get_fastqc():
