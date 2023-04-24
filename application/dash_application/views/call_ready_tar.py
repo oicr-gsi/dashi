@@ -58,7 +58,6 @@ ids = init_ids([
 
 BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 HSMETRICS_COL = gsiqcetl.column.HsMetricsColumn
-ICHOR_COL = gsiqcetl.column.IchorCnaMergedColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
@@ -71,8 +70,6 @@ special_cols = {
     # WARNING: Unmapped reads and non-primary reads are filtered out during BAM
     # merging. Do not include any graphs based on those metrics
     "Callability": "callability",
-    "Purity": "Purity",
-    "File SWID ichorCNA": "File SWID ichorCNA",
     "File SWID MutectCallability": "File SWID MutectCallability",
     "File SWID BamQC": "File SWID BamQC",
     "File SWID HsMetrics": "File SWID HsMetrics",
@@ -86,7 +83,6 @@ def get_merged_ts_data():
     """"
     Join together all the dataframes needed for graphing:
       * BamQC (where most of the graphed QC data comes from)
-      * ichorCNA (where the QC data comes from for Purity)
       * MutectCallability (where the QC data comes from for Callability graph)
       * HSMetrics (where the remainder of the QC data comes from)
       * Pinery (sample information)
@@ -95,9 +91,6 @@ def get_merged_ts_data():
     # Sample metadata from Pinery
     pinery_samples = util.get_pinery_merged_samples()
     pinery_samples = util.filter_by_library_design(pinery_samples, util.ex_lib_designs)
-
-    ichorcna_df = util.get_ichorcna_merged()
-    ichorcna_df = util.filter_by_library_design(ichorcna_df, util.ex_lib_designs, ICHOR_COL.LibraryDesign)
 
     hsmetrics_df = util.get_hsmetrics_merged()
     hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
@@ -116,30 +109,18 @@ def get_merged_ts_data():
                 bamqc4_df[BAMQC_COL.AverageReadLength] /
                 1e9
         ), 3)
-    ichorcna_df[special_cols["Purity"]] = round(
-        ichorcna_df[ICHOR_COL.TumorFraction] * 100.0, 3)
     callability_df[special_cols["Callability"]] = round(
         callability_df[CALL_COL.Callability] * 100.0, 3)
     hsmetrics_df[special_cols["On Target Percentage"]] = hsmetrics_df[HSMETRICS_COL.PctSelectedBases] * 100
 
-    ichorcna_df.rename(columns={ICHOR_COL.FileSWID: special_cols["File SWID ichorCNA"]}, inplace=True)
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
     bamqc4_df.rename(columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC"]}, inplace=True)
     hsmetrics_df.rename(columns={HSMETRICS_COL.FileSWID: special_cols["File SWID HsMetrics"]}, inplace=True)
 
-    # Join IchorCNA and HSMetrics Data
-    ts_df = ichorcna_df.merge(
-        hsmetrics_df,
-        how="outer",
-        left_on=util.ichorcna_merged_columns,
-        right_on=util.hsmetrics_merged_columns,
-        suffixes=('', '_x'))
-
-    # Join IchorCNA+HsMetrics and Callability data
-    ts_df = ts_df.merge(
+    ts_df = hsmetrics_df.merge(
         callability_df,
         how="outer",
-        left_on=util.ichorcna_merged_columns,
+        left_on=util.hsmetrics_merged_columns,
         right_on=util.callability_merged_columns,
         suffixes=('', '_y'))
 
@@ -147,7 +128,7 @@ def get_merged_ts_data():
     ts_df = ts_df.merge(
         bamqc4_df,
         how="outer",
-        left_on=util.ichorcna_merged_columns,
+        left_on=util.hsmetrics_merged_columns,
         right_on=util.bamqc4_merged_columns,
         suffixes=('', '_z'))
 
@@ -155,11 +136,10 @@ def get_merged_ts_data():
     ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.bamqc4_merged_columns)
 
     ts_df = util.remove_suffixed_columns(ts_df, '_q')  # Pinery duplicate columns
-    ts_df = util.remove_suffixed_columns(ts_df, '_x')  # IchorCNA duplicate columns
     ts_df = util.remove_suffixed_columns(ts_df, '_y')  # Callability duplicate columns
     ts_df = util.remove_suffixed_columns(ts_df, '_z')  # BamQC duplicate columns
 
-    return ts_df, util.cache.versions(["bamqc4merged", "ichorcnamerged", "mutectcallability", "hsmetrics"])
+    return ts_df, util.cache.versions(["bamqc4merged", "mutectcallability", "hsmetrics"])
 
 
 (TS_DF, DATAVERSION) = get_merged_ts_data()
@@ -206,7 +186,7 @@ ALL_TISSUE_MATERIALS = util.unique_set(TS_DF, PINERY_COL.TissuePreparation)
 ALL_TISSUE_ORIGIN = util.unique_set(TS_DF, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(TS_DF, PINERY_COL.LibrarySourceTemplateType)
 ALL_SAMPLE_TYPES = util.unique_set(TS_DF, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(TS_DF, ICHOR_COL.Reference)
+ALL_REFERENCES = util.unique_set(TS_DF, HSMETRICS_COL.Reference)
 
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
@@ -231,8 +211,6 @@ SORT_BY = shape_colour.dropdown() + [
      "value": HSMETRICS_COL.MeanBaitCoverage},
     {"label": "Callability",
      "value": CALL_COL.Callability},
-    {"label": "Tumor Fraction",
-     "value": ICHOR_COL.TumorFraction},
     {"label": "HS Library Size",
      "value": HSMETRICS_COL.HsLibrarySize},
     {"label": "Duplication (%)",

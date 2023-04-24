@@ -18,10 +18,8 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
 CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
-ICHORCNA_COL = gsiqcetl.column.IchorCnaColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
-ICHORCNA_MERGED_COL = gsiqcetl.column.IchorCnaMergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
 RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
@@ -39,7 +37,6 @@ pinery_ius_columns = [PINERY_COL.SequencerRunName, PINERY_COL.LaneNumber,
 
 bamqc4_ius_columns = [BAMQC4_COL.Run, BAMQC4_COL.Lane, BAMQC4_COL.Barcodes]
 dnaseqqc_ius_columns = [DNASEQQC_COL.Run, DNASEQQC_COL.Lane, DNASEQQC_COL.Barcodes]
-ichorcna_ius_columns = [ICHORCNA_COL.Run, ICHORCNA_COL.Lane, ICHORCNA_COL.Barcodes]
 fastqc_ius_columns = [FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes]
 cfmedip_ius_columns = [CFMEDIP_COL.Run, CFMEDIP_COL.Lane, CFMEDIP_COL.Barcodes]
 rnaseqqc2_ius_columns = [RNASEQQC2_COL.Run, RNASEQQC2_COL.Lane,
@@ -51,10 +48,6 @@ pinery_merged_columns = [PINERY_COL.StudyTitle, PINERY_COL.RootSampleName,
 bamqc4_merged_columns = [BAMQC4_MERGED_COL.Project, BAMQC4_MERGED_COL.Donor,
                          BAMQC4_MERGED_COL.GroupID, BAMQC4_MERGED_COL.LibraryDesign,
                          BAMQC4_MERGED_COL.TissueOrigin, BAMQC4_MERGED_COL.TissueType]
-ichorcna_merged_columns = [ICHORCNA_MERGED_COL.Project,
-    ICHORCNA_MERGED_COL.Donor, ICHORCNA_MERGED_COL.GroupID,
-    ICHORCNA_MERGED_COL.LibraryDesign, ICHORCNA_MERGED_COL.TissueOrigin,
-    ICHORCNA_MERGED_COL.TissueType]
 callability_merged_columns = [MUTECT_CALL_COL.Project, MUTECT_CALL_COL.Donor,
     MUTECT_CALL_COL.GroupID, MUTECT_CALL_COL.LibraryDesign,
     MUTECT_CALL_COL.TissueOrigin, MUTECT_CALL_COL.TissueType]
@@ -313,13 +306,6 @@ def get_runscanner_flowcell():
 
 def get_bamqc4_merged():
     return normalized_merged(cache.load_same_version("bamqc4merged").unique("bamqc4merged"), bamqc4_merged_columns)
-
-
-def get_ichorcna_merged():
-    return normalized_merged(
-        cache.load_same_version("ichorcnamerged").unique("ichorcnamerged"),
-        ichorcna_merged_columns
-    )
 
 
 def get_mutect_callability():
