@@ -58,10 +58,8 @@ ids = init_ids([
     #Data table
     'failed-samples',
     'all-samples',
-    'data-table',
     'failed-count',
     'all-count',
-    'data-count'
 ])
 
 BAMQC_COL = BamQc4Column
@@ -149,22 +147,6 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
-
-# Specify which columns to display in the DataTable
-first_col_set = [
-    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
-]
-most_bamqc_cols = [*BAMQC_COL.values()]
-later_col_set = [
-    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
-    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
-    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
-    PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
-    INSTRUMENT_COLS.ModelName
-]
-ex_table_columns = [
-    *first_col_set, *most_bamqc_cols, *special_cols.values(), *later_col_set
-]
 
 tar_curated_columns = [
     PINERY_COL.SampleName,
@@ -433,13 +415,10 @@ def layout(query_string):
                                               table_tabs_single_lane(
                                                   ids["failed-samples"],
                                                   ids["all-samples"],
-                                                  ids["data-table"],
                                                   ids["failed-count"],
                                                   ids['all-count'],
-                                                  ids["data-count"],
                                                   df,
                                                   tar_curated_columns,
-                                                  ex_table_columns,
                                                   [
                                                       (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
                                                        (lambda row, col, cutoff: row[col] < cutoff)),
@@ -465,10 +444,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['all-samples'], "data"),
-            Output(ids['data-table'], 'data'),
             Output(ids['failed-count'], "children"),
             Output(ids['all-count'], "children"),
-            Output(ids['data-count'], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids["search-sample-ext"], "options"),
             Output(ids["miso-request-body"], "value"),
@@ -567,9 +544,7 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict('records'),
             df[tar_curated_columns].to_dict('records'),
-            df.to_dict('records', into=dd),
             "Rows: {0}".format(len(failure_df.index)),
-            "Rows: {0}".format(len(df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],

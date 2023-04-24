@@ -62,10 +62,8 @@ ids = init_ids([
     #Data table
     'failed-samples',
     'all-samples',
-    'data-table',
     'failed-count',
     'all-count',
-    'data-count'
 ])
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
@@ -145,20 +143,6 @@ collapsing_functions = {
     "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
-
-# Specify which columns to display in the DataTable
-first_col_set = [
-    PINERY_COL.SampleName, PINERY_COL.StudyTitle,
-]
-most_cfmedip_cols = [*CFMEDIP_COL.values()]
-later_col_set = [
-    PINERY_COL.PrepKit, PINERY_COL.TissuePreparation,
-    PINERY_COL.LibrarySourceTemplateType, PINERY_COL.ExternalName,
-    PINERY_COL.GroupID, PINERY_COL.TissueOrigin, PINERY_COL.TissueType,
-    PINERY_COL.TargetedResequencing, PINERY_COL.Institute,
-    INSTRUMENT_COLS.ModelName
-]
-cfmedip_table_columns = [*first_col_set, *most_cfmedip_cols, *later_col_set]
 
 cfmedip_curated_columns = [
     PINERY_COL.SampleName,
@@ -494,13 +478,10 @@ def layout(query_string):
                             table_tabs_single_lane(
                                 ids["failed-samples"],
                                 ids["all-samples"],
-                                ids["data-table"],
                                 ids["failed-count"],
                                 ids["all-count"],
-                                ids["data-count"],
                                 df,
                                 cfmedip_curated_columns,
-                                cfmedip_table_columns,
                                 [
                                     # (cutoff_minimum_clusters_label,
                                     # ???, initial["cutoff_minimum_clusters"],
@@ -536,10 +517,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids["all-samples"], "data"),
-            Output(ids['data-table'], 'data'),
             Output(ids["failed-count"], "children"),
             Output(ids["all-count"], "children"),
-            Output(ids["data-count"], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids["search-sample-ext"], "options"),
             Output(ids['miso-request-body'], 'value'),
@@ -653,9 +632,7 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict('records'),
             df[cfmedip_curated_columns].to_dict('records', into=dd),
-            df.to_dict('records', into=dd),
             "Rows: {0}".format(len(failure_df.index)),
-            "Rows: {0}".format(len(df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],

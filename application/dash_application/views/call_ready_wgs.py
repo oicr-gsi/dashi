@@ -53,10 +53,8 @@ ids = init_ids([
     # Tables
     'failed-samples',
     'all-samples',
-    'data-table',
     'failed-count',
     'all-count',
-    'data-count'
 ])
 
 BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
@@ -136,7 +134,6 @@ def get_merged_wgs_data():
 
 # Make the WGS dataframe
 (WGS_DF, DATAVERSION) = get_merged_wgs_data()
-wgs_table_columns = WGS_DF.columns
 wgs_curated_columns = [
     "Merged Library",
     PINERY_COL.GroupID,
@@ -447,13 +444,10 @@ def layout(query_string):
                                               table_tabs_call_ready(
                                                   ids["failed-samples"],
                                                   ids['all-samples'],
-                                                  ids["data-table"],
                                                   ids["failed-count"],
                                                   ids['all-count'],
-                                                  ids["data-count"],
                                                   df,
                                                   wgs_curated_columns,
-                                                  wgs_table_columns,
                                                   [
                                                       (
                                                       cutoff_coverage_tumour_label,
@@ -510,10 +504,8 @@ def init_callbacks(dash_app):
             Output(ids["failed-samples"], "columns"),
             Output(ids["failed-samples"], "data"),
             Output(ids['all-samples'],"data"),
-            Output(ids["data-table"], "data"),
             Output(ids["failed-count"], "children"),
             Output(ids["all-count"], "children"),
-            Output(ids["data-count"], "children"),
             Output(ids["search-sample"], "options"),
             Output(ids['search-sample-ext'], 'options'),
         ],
@@ -605,9 +597,7 @@ def init_callbacks(dash_app):
             failure_columns,
             failure_df.to_dict("records"),
             df[wgs_curated_columns].to_dict("records"),
-            df.to_dict("records", into=dd),
             "Rows: {0}".format(len(failure_df.index)),
-            "Rows: {0}".format(len(df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
             [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.RootSampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.RootSampleName]].iterrows()],
