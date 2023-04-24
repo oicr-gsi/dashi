@@ -10,6 +10,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Allow Dashi to pull from more than one cache source
   * Update Dashi to gsiqcetl V1.22
   * Edited "All Samples" tables after user feedback
+  * Allow `crosscheckfingerprints` cache to be missing from archival source
 
 ## [230330-1838] - 2023-03-30
   * Reverted to rnaseqqc2 V2 cache due to column naming bug
