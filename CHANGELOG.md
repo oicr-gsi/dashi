@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [230424-1324] - 2023-04-24
   * Fixed dependency versions to speed up `pip install`
   * Allow Dashi to pull from more than one cache source
   * Update Dashi to gsiqcetl V1.22
