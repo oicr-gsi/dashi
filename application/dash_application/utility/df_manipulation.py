@@ -268,7 +268,10 @@ def get_dnaseqqc_and_bamqc4():
     # Utility function creates new DataFrame, so no need to copy again
     return gsiqcetl.common.utility.concat_workflow_versions(
         [
-            normalized_ius(cache.load_same_version("dnaseqqc").unique("dnaseqqc"), dnaseqqc_ius_columns),
+            normalized_ius(
+                cache.load_same_version("dnaseqqc").remove_missing("dnaseqqc").unique("dnaseqqc"),
+                dnaseqqc_ius_columns
+            ),
             normalized_ius(cache.load_same_version("bamqc4").unique("bamqc4"), bamqc4_ius_columns),
         ],
         dnaseqqc_ius_columns,

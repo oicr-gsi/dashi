@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Remove all ichorcna usage.
+  * Made `dnaseqqc` an optional archival source
+  * Update Dashi to gsiqcetl V1.23
 
 ## [230424-1324] - 2023-04-24
   * Fixed dependency versions to speed up `pip install`
