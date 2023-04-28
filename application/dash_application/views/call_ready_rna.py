@@ -67,6 +67,7 @@ special_cols = {
     "File SWID RNAseqQC": "File SWID RNAseqQC",
     "% rRNA Contamination": "Percent rRNA Contamination",
     "Pipeline Filtered Clusters": "Pipeline Filtered Clusters",
+    "LDIs": "LDIs",
 }
 
 def get_merged_rna_data():
@@ -86,6 +87,7 @@ def get_merged_rna_data():
     rna_df[special_cols["% rRNA Contamination"]] = round(
         (rna_df[RNASEQQC2_COL.RRnaContaminationMapped] / rna_df[
             RNASEQQC2_COL.TotalReads]) * 100, 2)
+    rna_df[special_cols["LDIs"]] = rna_df[RNASEQQC2_COL.MergedPineryLimsID].apply(util.extract_multi_ldi)
     rna_df.rename(columns={RNASEQQC2_COL.FileSWID: special_cols["File "
                                                                      "SWID RNAseqQC"]}, inplace=True)
 
@@ -105,12 +107,22 @@ rna_curated_columns = [
     PINERY_COL.LibrarySourceTemplateType,
     PINERY_COL.TissueOrigin,
     PINERY_COL.TissueType,
+    PINERY_COL.StudyTitle,
+    PINERY_COL.ExternalName,
+    PINERY_COL.PrepKit,
+    PINERY_COL.TissuePreparation,
+    PINERY_COL.UMIs,
+    RNASEQQC2_COL.Donor,
+    RNASEQQC2_COL.Reference,
+    special_cols["LDIs"],
+    util.sample_type_col,
     RNASEQQC2_COL.TotalClusters,
     special_cols["Pipeline Filtered Clusters"],
     RNASEQQC2_COL.InsertMean,
     RNASEQQC2_COL.MetricsPercentCorrectStrandReads,  # not QC gate, but used to investigate negative controls
     RNASEQQC2_COL.MetricsPercentCodingBases,
-    special_cols["% rRNA Contamination"]
+    special_cols["% rRNA Contamination"],
+    PINERY_COL.DV200,
 ]
 
 initial = get_initial_call_ready_values()
