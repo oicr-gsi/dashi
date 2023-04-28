@@ -140,12 +140,23 @@ wgs_curated_columns = [
     PINERY_COL.LibrarySourceTemplateType,
     PINERY_COL.TissueOrigin,
     PINERY_COL.TissueType,
+    PINERY_COL.StudyTitle,
+    PINERY_COL.ExternalName,
+    PINERY_COL.PrepKit,
+    PINERY_COL.TissuePreparation,
+    PINERY_COL.UMIs,
+    BAMQC_COL.Donor,
+    BAMQC_COL.Reference,
+    util.sample_type_col,
+    BAMQC_COL.Library,
     special_cols["Pipeline Filtered Clusters"],
     BAMQC_COL.CoverageDeduplicated,
     BAMQC_COL.CoverageMedian,
     special_cols["Percent Callability"],
     BAMQC_COL.InsertMean,
-    BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION
+    BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+    special_cols["Coverage per Gb"],
+    BAMQC_COL.InsertMedian,
 ]
 
 initial = get_initial_call_ready_values()

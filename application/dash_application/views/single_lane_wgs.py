@@ -105,10 +105,22 @@ wgs_curated_columns = [
     PINERY_COL.SequencerRunName,
     PINERY_COL.TissueType,
     PINERY_COL.LibrarySourceTemplateType,
+    PINERY_COL.StudyTitle,
+    PINERY_COL.ExternalName,
+    PINERY_COL.GroupID,
+    PINERY_COL.PrepKit,
+    PINERY_COL.TissuePreparation,
+    PINERY_COL.UMIs,
+    INSTRUMENT_COLS.ModelName,
+    BAMQC_COL.Reference,
+    BAMQC_COL.AverageReadLength,
+    util.sample_type_col,
     special_cols["Total Clusters (Passed Filter)"],
     BAMQC_COL.CoverageDeduplicated,
     BAMQC_COL.InsertMean,
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
+    special_cols["Coverage per Gb"],
+    BAMQC_COL.InsertMedian,
 ]
 
 initial = get_initial_single_lane_values()

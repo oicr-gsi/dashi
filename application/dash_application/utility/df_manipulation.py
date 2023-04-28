@@ -109,8 +109,6 @@ def normalized_ius(df: DataFrame, ius_cols: List[str]):
 
 def normalized_merged(df: DataFrame, merged_cols: List[str]):
     project_col, donor_col, group_id_col, ld_col, to_col, tt_col = merged_cols
-    if 'Merged Pinery Lims ID' in df.columns:
-        df['Merged Pinery Lims ID'] = df['Merged Pinery Lims ID'].apply(','.join)
     return df.astype({
         project_col: 'str',
         donor_col: 'str',
@@ -498,3 +496,29 @@ def build_miso_info(df, page_title, metrics):
         return [json.dumps(miso_request), miso_button_style]
     else:
         return [json.dumps({}), {"display": "none"}]
+
+
+def extract_single_ldi(pinery_lims_id: str) -> str:
+    """
+    Dashi gets the Pinery LIMS ID (6273_1_LDI92180), but lab only deals with LDI part.
+
+    Args:
+        pinery_lims_id: Pinery LIMS ID
+
+    Returns: Just the LDI info
+
+    """
+    return pinery_lims_id.rsplit("_", 1)[1]
+
+
+def extract_multi_ldi(pinery_lims_ids: List[str]) -> str:
+    """
+    Call ready views have a comma seperated string of Pinery LIMS IDs. Extract LDI part from all of them.
+
+    Args:
+        pinery_lims_ids: List of Pinery LIMS ID
+
+    Returns: Comma seperated LDIs
+
+    """
+    return ",".join([extract_single_ldi(x) for x in pinery_lims_ids])
