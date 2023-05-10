@@ -165,7 +165,9 @@ ts_curated_columns = [
     HSMETRICS_COL.MeanBaitCoverage,
     BAMQC_COL.InsertMean,
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-    special_cols["On Target Percentage"]
+    special_cols["On Target Percentage"],
+    BAMQC_COL.Coverage,
+    BAMQC_COL.CoverageDeduplicated,
 ]
 
 initial = get_initial_call_ready_values()
