@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Yet more columns for the All Samples tables
 
 ## [230503-1624] - 2023-05-03
   * Remove all ichorcna usage.
