@@ -1,7 +1,7 @@
 Flask-Caching~=2.0
 dash-bootstrap-components~=1.4
 pandas~=1.5
-Flask~=2.0
+Flask~=2.0.0
 dash~=2.8
 prometheus-flask-exporter~=0.22
 gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.23
