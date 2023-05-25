@@ -7,8 +7,9 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Yet more columns for the All Samples tables
-  * Narrow Flask version to speed up Docker installation
   * Removed unnecessary Docker instructions
+  * Update gsiqcetl to V1.24, which allows for Flask to be updated to latest version
+    (removes `click` dependency conflict)
 
 ## [230503-1624] - 2023-05-03
   * Remove all ichorcna usage.
