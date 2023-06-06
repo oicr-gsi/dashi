@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * One more column for the All Samples table: Coverage for single lane TAR
 
 ## [230529-1503] - 2023-05-29
   * Yet more columns for the All Samples tables
