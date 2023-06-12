@@ -168,6 +168,7 @@ tar_curated_columns = [
     BAMQC_COL.TargetFile,
     BAMQC_COL.TotalTargetSize,
     special_cols["Total Clusters (Passed Filter)"],
+    BAMQC_COL.Coverage,
     BAMQC_COL.CoverageDeduplicated,
     special_cols["Estimated On Target Reads (%)"],
     BAMQC_COL.InsertMean
