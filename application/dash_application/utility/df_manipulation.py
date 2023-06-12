@@ -258,15 +258,15 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 
 
 def get_bcl2barcodecaller_known():
-    return cache.load_same_version("bcl2barcodecaller").unique("known").copy(deep=True)
+    return cache.load_same_version("bcl2barcodecaller").remove_missing("known").unique("known").copy(deep=True)
 
 
 def get_bcl2barcodecaller_unknown():
-    return cache.load_same_version("bcl2barcodecaller").unique("unknown").copy(deep=True)
+    return cache.load_same_version("bcl2barcodecaller").remove_missing("unknown").unique("unknown").copy(deep=True)
 
 
 def get_bcl2barcodecaller_summary():
-    return cache.load_same_version("bcl2barcodecaller").unique("summary").copy(deep=True)
+    return cache.load_same_version("bcl2barcodecaller").remove_missing("summary").unique("summary").copy(deep=True)
 
 
 def get_dnaseqqc_and_bamqc4():
