@@ -16,6 +16,9 @@ wgs_lib_designs = ["AS", "CH", "NN", "PG", "SW", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 BAMQC4_COL = gsiqcetl.column.BamQc4Column
+BCL_KNOWN = gsiqcetl.column.Bcl2BarcodeCallerKnownColumn
+BCL_UNKNOWN = gsiqcetl.column.Bcl2BarcodeCallerUnknownColumn
+BCL_SUMMARY = gsiqcetl.column.Bcl2BarcodeCallerSummaryColumn
 CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
@@ -254,12 +257,16 @@ _runs_with_instruments = _runs.copy(deep=True).merge(
 )
 
 
-def get_bcl2barcode():
-    return cache.load_same_version("bcl2barcode").unique("bcl2barcode").copy(deep=True)
+def get_bcl2barcodecaller_known():
+    return cache.load_same_version("bcl2barcodecaller").unique("known").copy(deep=True)
 
 
-def get_bcl2barcode_run_summary():
-    return cache.load_same_version("bcl2barcode").unique("run_summary").copy(deep=True)
+def get_bcl2barcodecaller_unknown():
+    return cache.load_same_version("bcl2barcodecaller").unique("unknown").copy(deep=True)
+
+
+def get_bcl2barcodecaller_summary():
+    return cache.load_same_version("bcl2barcodecaller").unique("summary").copy(deep=True)
 
 
 def get_dnaseqqc_and_bamqc4():
