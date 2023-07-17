@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [230717-1358] - 2023-07-17
   * One more column for the All Samples table: Coverage for single lane TAR
   * Bcl2barcode view has been greatly simplified by using the `bcl2barcodecaller` gsiqcetl cache
+  * Downgrade PyYAML dependency to sidestep Cython 3.0 breaking change
 
 ## [230529-1503] - 2023-05-29
   * Yet more columns for the All Samples tables
