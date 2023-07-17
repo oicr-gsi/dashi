@@ -11,3 +11,5 @@ gevent~=22.10
 gunicorn~=20.1
 numpy~=1.23
 Werkzeug~=2.2
+pyyaml==5.3.1
+
