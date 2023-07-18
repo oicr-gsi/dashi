@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Add comments to requirements.txt to explain `~=` operator
 
 ## [230717-1358] - 2023-07-17
   * One more column for the All Samples table: Coverage for single lane TAR
