@@ -1,3 +1,4 @@
+# The `~=` is the compatible release operator (https://peps.python.org/pep-0440/#compatible-release)
 Flask-Caching~=2.0
 dash-bootstrap-components~=1.4
 pandas~=1.5
@@ -11,5 +12,5 @@ gevent~=22.10
 gunicorn~=20.1
 numpy~=1.23
 Werkzeug~=2.2
-pyyaml==5.3.1
+pyyaml==5.3.1 # required because of pyyaml bug https://github.com/yaml/pyyaml/issues/601
 
