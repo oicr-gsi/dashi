@@ -98,7 +98,7 @@ if len(swap) > 0:
     # Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
     swap[special_cols["latest_run"]] = swap[
         [RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]
-    ].max(1).dt.date
+    ].max(1, numeric_only=False).dt.date
     swap[special_cols["same_identity"]] = (
         swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
     )
