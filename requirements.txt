@@ -5,12 +5,11 @@ pandas~=1.5
 Flask~=2.3
 dash~=2.8
 prometheus-flask-exporter~=0.22
-gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.25
+gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.27
 sd-material-ui~=4.6
 python-dotenv~=0.19
 gevent~=22.10
 gunicorn~=20.1
 numpy~=1.23
 Werkzeug~=2.2
-pyyaml==5.3.1 # required because of pyyaml bug https://github.com/yaml/pyyaml/issues/601
 
