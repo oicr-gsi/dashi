@@ -53,7 +53,7 @@ ids = init_ids([
     'all-count',
 ])
 
-RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2V3MergedColumn
+RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
 
