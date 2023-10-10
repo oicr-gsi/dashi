@@ -171,7 +171,9 @@ tar_curated_columns = [
     BAMQC_COL.Coverage,
     BAMQC_COL.CoverageDeduplicated,
     special_cols["Estimated On Target Reads (%)"],
-    BAMQC_COL.InsertMean
+    BAMQC_COL.InsertMean,
+    special_cols["Unmapped Reads (%)"],
+    special_cols["Non-Primary Reads (%)"],
 ]
 
 shape_colour = ColourShapeSingleLane(
