@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Bump gevent version due to security issue
 
 ## [230912-1151] - 2023-09-12
   * Add comments to requirements.txt to explain `~=` operator
