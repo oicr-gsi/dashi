@@ -9,6 +9,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Fixed serious logic bug during swap filtering. Before this, the closest LOD was used to filter for swaps.
 This was wrong. The furthers away LOD needs to be looked at for swap filtering. This bug hid orphan swaps where the 
 closest match was in the "can't make a call" ambiguous zone of LOD -20 to 20.
+  * Additional columns to the export table. Needed for top-up prevention calculations.
 
 ## [230912-1151] - 2023-09-12
   * Add comments to requirements.txt to explain `~=` operator
