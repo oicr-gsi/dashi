@@ -42,6 +42,7 @@ special_cols = {
     "same_identity": "SAME_IDENTITY",
     "closest_libraries": "CLOSEST_LIBRARIES",
     "closest_libraries_count": "CLOSEST_LIBRARIES_COUNT",
+    "significant_lod": "SIGNIFICANT_LOD",
 }
 
 rename_columns = {
@@ -71,6 +72,7 @@ for _, lib in swap.groupby(COL.QueryLibrary, sort=False):
                 ")"
         )
         return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
+        return_df[special_cols["significant_lod"]] = any(lib[COL.LODScore].abs() > AMBIGUOUS_ZONE)
     result.append(return_df)
 
 if len(result) > 0:
@@ -169,9 +171,9 @@ def filter_for_swaps(df):
 
     """
     # Libraries from patients with more than one library
-    # Check for both positive and negative LOD values
+    # If even a single comparison has an LOD outside the ambiguous zone, report it as a swap
     multi_lib = df[df[special_cols["closest_libraries_count"]] > 1]
-    multi_lib = multi_lib[multi_lib[COL.LODScore].abs() > AMBIGUOUS_ZONE]
+    multi_lib = multi_lib[multi_lib[special_cols["significant_lod"]]]
 
     # Libraries from patients with only one library
     # Negative LOD scores are expected, so only check for positive ones
