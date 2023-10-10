@@ -121,6 +121,9 @@ wgs_curated_columns = [
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
     special_cols["Coverage per Gb"],
     BAMQC_COL.InsertMedian,
+    special_cols["Unmapped Reads"],
+    special_cols["Non-Primary Reads"],
+
 ]
 
 initial = get_initial_single_lane_values()
