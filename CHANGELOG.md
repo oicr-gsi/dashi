@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Insert a annoying kludge because gsi-qc-etl does not handle crosscheckfingerprints correctly
 
 ## [231016-1108] - 2023-10-16
   * Bump gevent version due to security issue

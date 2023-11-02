@@ -3,7 +3,7 @@ import pandas
 from pandas import DataFrame, Series
 from typing import List
 
-from gsiqcetl import QCETLMultiCache
+from gsiqcetl import QCETLMultiCache, QCETLCache
 import gsiqcetl.column
 import gsiqcetl.common.utility
 import gsiqcetl.common
@@ -292,12 +292,20 @@ def get_cfmedip_insert_metrics():
 
 
 def get_crosscheckfingerprints():
+    # qc-etl couldn't gracefully switch versions, so Dashi has to pay the temporary price
+    kludge_cache = QCETLCache(root_dirs[0])
+    try:
+        return kludge_cache.load("crosscheckfingerprints", 3).filterswaps
+    except ValueError:
+        return kludge_cache.load("crosscheckfingerprints", 4).filterswaps
+    """
     return cache.load_same_version(
         "crosscheckfingerprints"
     # crosscheckfingerprints caches won't be archived
     ).remove_missing(
         "filterswaps"
     ).unique("filterswaps").copy(deep=True)
+    """
 
 
 def get_fastqc():
