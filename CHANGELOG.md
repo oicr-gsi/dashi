@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Update Werkzeug package due to security issue
+  * Bump qc-etl to v1.28
+  * Remove crosscheckfingerprints kludge from previous release
 
 ## [231102-1512] - 2023-11-02
   * Insert a annoying kludge because gsi-qc-etl does not handle crosscheckfingerprints correctly
