@@ -2,7 +2,6 @@ from dash import dcc as core
 from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
-from dash.dash_table import Format
 import pinery
 import pandas
 import os
@@ -43,6 +42,11 @@ special_cols = {
     "closest_libraries": "CLOSEST_LIBRARIES",
     "closest_libraries_count": "CLOSEST_LIBRARIES_COUNT",
     "significant_lod": "SIGNIFICANT_LOD",
+    "expected_library": "EXPECTED_LIBRARY",
+    "expected_library_lod": "EXPECTED_LIBRARY_LOD",
+    "expected_barcode": "EXPECTED_BARCODE",
+    "expected_lane": "EXPECTED_LANE",
+    "expected_run": "EXPECTED_RUN",
 }
 
 rename_columns = {
@@ -65,6 +69,12 @@ for _, lib in swap.groupby(COL.QueryLibrary, sort=False):
     return_df = lib.head(1).copy()
     rest = lib.iloc[1:]
     if len(rest) > 0:
+        return_df[special_cols["expected_library"]] = rest[COL.MatchLibrary].iloc[-1]
+        return_df[special_cols["expected_library_lod"]] = rest[COL.LODScore].iloc[-1]
+        return_df[special_cols["expected_barcode"]] = rest[COL.MatchBarcode].iloc[-1]
+        return_df[special_cols["expected_lane"]] = rest[COL.MatchLane].iloc[-1]
+        return_df[special_cols["expected_run"]] = rest[COL.MatchRun].iloc[-1]
+
         closest_lib = (
                 rest[COL.MatchLibrary] +
                 " (" +
@@ -92,6 +102,11 @@ swap = df_manipulation.df_with_pinery_samples_ius(
 swap = df_manipulation.df_with_pinery_samples_ius(
     swap, pinery_samples, [COL.MatchRun, COL.MatchLane, COL.MatchBarcode], "_MATCH"
 )
+swap = df_manipulation.df_with_pinery_samples_ius(
+    swap, pinery_samples,
+    [special_cols["expected_run"], special_cols["expected_lane"], special_cols["expected_barcode"]],
+    "_EXPECTED"
+)
 swap = df_manipulation.df_with_run_info(swap, COL.QueryRun)
 swap = df_manipulation.df_with_run_info(swap, COL.MatchRun, "_MATCH")
 
@@ -105,25 +120,24 @@ if len(swap) > 0:
         swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
     )
 
-swap[COL.QueryLibrary] = (
-        swap[COL.QueryLibrary] +
-        " (" +
-        swap[PINERY_COL.LibrarySourceTemplateType] +
-        ", " +
-        swap[PINERY_COL.TissueType] +
-        ", " +
-        swap[PINERY_COL.TissueOrigin] +
-        ")"
-)
-swap[COL.MatchLibrary] = (
-        swap[COL.MatchLibrary] +
-        " (" +
-        swap[PINERY_COL.LibrarySourceTemplateType + "_MATCH"] +
-        ", " +
-        swap[PINERY_COL.TissueType + "_MATCH"] +
-        ", " +
-        swap[PINERY_COL.TissueOrigin + "_MATCH"] +
-        ")"
+
+def metadata_to_library(swap_df, library_col, pinery_str):
+    return (
+            swap[library_col] +
+            " (" +
+            swap[PINERY_COL.LibrarySourceTemplateType + pinery_str] +
+            ", " +
+            swap[PINERY_COL.TissueType + pinery_str] +
+            ", " +
+            swap[PINERY_COL.TissueOrigin + pinery_str] +
+            ")"
+    )
+
+
+swap[COL.QueryLibrary] = metadata_to_library(swap, COL.QueryLibrary, "")
+swap[COL.MatchLibrary] = metadata_to_library(swap, COL.MatchLibrary, "_MATCH")
+swap[special_cols["expected_library"]] = metadata_to_library(
+    swap, special_cols["expected_library"], "_EXPECTED"
 )
 
 
@@ -191,6 +205,8 @@ DATA_COLUMN = [
     COL.QueryLibrary,
     COL.MatchLibrary,
     COL.LODScore,
+    special_cols["expected_library"],
+    special_cols["expected_library_lod"],
     special_cols["latest_run"],
     special_cols["closest_libraries"],
     PINERY_COL.ParentSampleName,
@@ -201,6 +217,7 @@ DATA_COLUMN = [
 DOWNLOAD_ONLY_COLUMNS = [
     PINERY_COL.ParentSampleName,
     PINERY_COL.ParentSampleName + "_MATCH",
+    special_cols["closest_libraries"],
 ]
 
 TABLE_COLUMNS = [{"name": i, "id": i} for i in DATA_COLUMN]
@@ -211,6 +228,8 @@ for d in TABLE_COLUMNS:
         )
         d["type"] = "numeric",
     elif PINERY_COL.ParentSampleName in d["id"]:
+        d["hideable"] = True
+    elif special_cols["closest_libraries"] in d["id"]:
         d["hideable"] = True
 
     if d["id"] in rename_columns:
