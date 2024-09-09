@@ -375,7 +375,6 @@ def layout(query_string):
             html.Div(className='row flex-container', children=[
                 html.Div(className='sidebar four columns', children=[
                     html.Button('Update', id=ids['update-button-top'], className="update-button"),
-                    sidebar_utils.miso_qc_button(ids['miso-request-body'], ids['miso-button']),
                     sidebar_utils.approve_run_button(ids['approve-run-button']),
                     html.Br(),
                     html.Br(),
@@ -520,9 +519,7 @@ def init_callbacks(dash_app):
             Output(ids["failed-count"], "children"),
             Output(ids["all-count"], "children"),
             Output(ids["search-sample"], "options"),
-            Output(ids["search-sample-ext"], "options"),
-            Output(ids['miso-request-body'], 'value'),
-            Output(ids['miso-button'], 'style')
+            Output(ids["search-sample-ext"], "options")
         ],
         [Input(ids['update-button-top'], 'n_clicks'),
         Input(ids['update-button-bottom'], 'n_clicks')],
@@ -616,15 +613,6 @@ def init_callbacks(dash_app):
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 
-        (miso_request, miso_button_style) = util.build_miso_info(df, title,
-            [{
-                'title': "% Thaliana", 
-                'threshold_type': 'ge',
-                'threshold': percent_thaliana_cutoff,
-                'value': CFMEDIP_COL.PercentageAthaliana
-            }] #TODO: Add the rest when they're not a mystery
-        )
-
         return [
             approve_run_href,
             approve_run_style,
@@ -635,9 +623,7 @@ def init_callbacks(dash_app):
             "Rows: {0}".format(len(failure_df.index)),
             "Rows: {0}".format(len(df.index)),
             [{'label': x, 'value': x} for x in new_search_sample],
-            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()],
-            miso_request,
-            miso_button_style
+            [{'label': d[PINERY_COL.ExternalName], 'value': d[PINERY_COL.SampleName]} for i, d in df[[PINERY_COL.ExternalName, PINERY_COL.SampleName]].iterrows()]
         ]
 
     @dash_app.callback(
