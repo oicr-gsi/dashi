@@ -34,8 +34,6 @@ ids = init_ids([
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
-    'miso-request-body',
-    'miso-button',
 
     # Alerts
     "alerts-unknown-run",
@@ -177,7 +175,6 @@ return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='row flex-container', children=[
             html.Div(className='sidebar four columns', children=[
                 html.Button('Update', id=ids['update-button-top'], className="update-button"),
-                sidebar_utils.miso_qc_button(ids["miso-request-body"], ids["miso-button"]),
                 sidebar_utils.approve_run_button(ids['approve-run-button']),
                 html.Br(),
                 html.Br(),
@@ -417,24 +414,10 @@ new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 ```
 Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
 
-Values for JIRA and MISO buttons are also set up using [sidebar_utils.py](../application/dash_application/utility/sidebar_utils.py) and [df_manipulation.py](../application/dash_application/utility/df_manipulation.py)("util"):
+Values for JIRA buttons are also set up using [sidebar_utils.py](../application/dash_application/utility/sidebar_utils.py) and [df_manipulation.py](../application/dash_application/utility/df_manipulation.py)("util"):
 
 ```python
 (jira_href, jira_style) = sidebar_utils.jira_display_button(runs, title)
-
-(miso_request, miso_button_style) = util.build_miso_info(df, title, 
-    [{
-        'title': 'Median Insert Size',
-        'threshold_type': 'ge',
-        'threshold': insert_median_cutoff,
-        'value': BAMQC_COL.InsertMedian
-    }, {
-        'title': 'Clusters per Sample (* 10^6)',
-        'threshold_type': 'ge',
-        'threshold': total_clusters_cutoff,
-        'value': special_cols["Total Clusters (Passed Filter)"]
-    }]
-)
 ```
 Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
 

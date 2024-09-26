@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+  * Remove 'QC in MISO' button
 
 ## [231114-1038] - 2023-11-14
   * Update Werkzeug package due to security issue

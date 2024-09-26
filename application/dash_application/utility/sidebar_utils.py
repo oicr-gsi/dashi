@@ -421,21 +421,6 @@ def update_only_if_clicked(click):
     to cancel further action in this callback. """
     if click is None: raise PreventUpdate
 
-def miso_qc_button(body_id, button_id):
-    """
-    Different IDs for the HTTP body and the button (for controlling visibility) are required.
-    """
-    return html.Form(children=[
-        core.Input(id=body_id, type="hidden", name="data", value=json.dumps("{}")),
-        
-        # button text subject to change
-        core.Input(id=button_id, value="QC in MISO", type="submit", className="miso-qc-button")
-    ],
-    method="POST",
-    action=os.getenv("MISO_URL")+"miso/runlibraries/metrics",
-    target="_blank"
-    )
-
 
 def unknown_run_alert(alert_id: str, picked_runs: List[str], all_runs: List[str]):
     """
