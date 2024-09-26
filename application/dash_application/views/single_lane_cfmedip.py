@@ -22,8 +22,6 @@ ids = init_ids([
     'update-button-top',
     'update-button-bottom',
     'approve-run-button',
-    'miso-request-body',
-    'miso-button',
 
     # Alerts
     "alerts-unknown-run",
