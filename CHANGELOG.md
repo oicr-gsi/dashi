@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [240930-1516] - 2024-09-30
   * Fix MISO URL formatting for MISO 2.23.0
 
 ## [231114-1038] - 2023-11-14
