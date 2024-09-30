@@ -432,7 +432,7 @@ def miso_qc_button(body_id, button_id):
         core.Input(id=button_id, value="QC in MISO", type="submit", className="miso-qc-button")
     ],
     method="POST",
-    action=os.getenv("MISO_URL")+"miso/runlibraries/metrics",
+    action=os.getenv("MISO_URL")+"runlibraries/metrics",
     target="_blank"
     )
 
