@@ -106,7 +106,7 @@ def approve_run_button(approve_run_id: str) -> html.A:
 
 def approve_run_url(runs: List[str]):
     if len(runs) == 1:
-        return [os.getenv("MISO_URL") + "/run/alias/" + runs[0], {"display": "inline-block"}]
+        return [os.getenv("MISO_URL") + "run/alias/" + runs[0], {"display": "inline-block"}]
 
     else:
         return ["", {"display": "none"}]
@@ -123,7 +123,7 @@ def select_projects(all_projects_id: str, projects_id: str, projects: List[
         str], requested_projects) -> core.Loading:
     return select_with_select_all("All Projects", all_projects_id,
                                   "Filter by Projects", projects_id, projects,
-                                  requested_projects, os.getenv("MISO_URL") + "/projects")
+                                  requested_projects, os.getenv("MISO_URL") + "projects")
 
 
 def select_reference(all_references_id: str, references_id: str, references: List[
