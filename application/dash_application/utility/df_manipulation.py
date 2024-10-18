@@ -492,7 +492,8 @@ def build_miso_info(df, page_title, metrics):
                     'title': metric['title'],
                     'threshold_type': metric['threshold_type'],
                     'threshold': metric['threshold'],
-                    'value': row[metric['value']]
+                    # MISO expects a JSON null object for missing data, not Pandas's NaN
+                    'value': None if pandas.isna(row[metric['value']]) else row[metric['value']]
                 })
             miso_request['library_aliquots'].append({
                 'name': split_provenance_id[2],
