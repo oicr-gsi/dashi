@@ -33,6 +33,7 @@ summary = util.get_bcl2barcodecaller_summary()
 # In case there is a run that is all unknown barcodes
 all_runs = pandas.concat([known[util.BCL_KNOWN.Run], unknown[util.BCL_UNKNOWN.Run]]).unique()
 all_runs = sorted(all_runs, reverse=True)
+run_options = [{"label":r, "value":r} for r in all_runs]
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": util.BCL_KNOWN.LibraryAlias},
@@ -58,7 +59,7 @@ def layout(qs):
             core.Dropdown(
                 id=ids["run_select"],
                 #   Options is concatenated string versions of all_runs.
-                options=[{"label": r, "value": r} for r in all_runs],
+                options=[run_options],
                 value=all_runs[0],
                 clearable=False,
             ),
