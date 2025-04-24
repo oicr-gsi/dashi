@@ -58,6 +58,7 @@ ids = init_ids([
 
 BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
 HSMETRICS_COL = gsiqcetl.column.HsMetricsColumn
+HSMETRICS_CONSENSUS_CRUNCHER_COL = gsiqcetl.column.HsMetricsConsensusCruncherColumn
 CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
@@ -76,6 +77,7 @@ special_cols = {
     "On Target Percentage": "On Target Percentage",
     "Pipeline Filtered Clusters": "Pipeline Filtered Clusters",
     "Coverage per Gb": "coverage per gb",
+    "Collapsed Coverage": "Collapsed Coverage",
 }
 
 
@@ -94,6 +96,13 @@ def get_merged_ts_data():
 
     hsmetrics_df = util.get_hsmetrics_merged()
     hsmetrics_df = util.filter_by_library_design(hsmetrics_df, util.ex_lib_designs, HSMETRICS_COL.LibraryDesign)
+
+    hsmetrics_consensus_cruncher_df = util.get_hsmetrics_consensus_cruncher_merged()
+    hsmetrics_consensus_cruncher_df = util.filter_by_library_design(
+        hsmetrics_consensus_cruncher_df,
+        util.ex_lib_designs,
+        HSMETRICS_CONSENSUS_CRUNCHER_COL.LibraryDesign
+    )
 
     callability_df = util.get_mutect_callability()
     callability_df = util.filter_by_library_design(callability_df, util.ex_lib_designs, CALL_COL.LibraryDesign)
@@ -116,6 +125,10 @@ def get_merged_ts_data():
     callability_df.rename(columns={CALL_COL.FileSWID: special_cols["File SWID MutectCallability"]}, inplace=True)
     bamqc4_df.rename(columns={BAMQC_COL.FileSWID: special_cols["File SWID BamQC"]}, inplace=True)
     hsmetrics_df.rename(columns={HSMETRICS_COL.FileSWID: special_cols["File SWID HsMetrics"]}, inplace=True)
+    # This follows Dimsum convention of using MeanBaitCoverage as CollapsedCoverage
+    hsmetrics_consensus_cruncher_df.rename(
+        columns={HSMETRICS_CONSENSUS_CRUNCHER_COL.MeanBaitCoverage: special_cols["Collapsed Coverage"]}, inplace=True
+    )
 
     ts_df = hsmetrics_df.merge(
         callability_df,
@@ -132,10 +145,19 @@ def get_merged_ts_data():
         right_on=util.bamqc4_merged_columns,
         suffixes=('', '_z'))
 
+    ts_df = ts_df.merge(
+        hsmetrics_consensus_cruncher_df,
+        how="outer",
+        left_on=util.hsmetrics_merged_columns,
+        right_on=util.hsmetrics_consensus_cruncher_merged_columns,
+        suffixes=('', '_x')
+    )
+
     # Join QC data and Pinery data
     ts_df = util.df_with_pinery_samples_merged(ts_df, pinery_samples, util.bamqc4_merged_columns)
 
     ts_df = util.remove_suffixed_columns(ts_df, '_q')  # Pinery duplicate columns
+    ts_df = util.remove_suffixed_columns(ts_df, '_x')  # HSMetricsConsensusCruncher duplicated columns
     ts_df = util.remove_suffixed_columns(ts_df, '_y')  # Callability duplicate columns
     ts_df = util.remove_suffixed_columns(ts_df, '_z')  # BamQC duplicate columns
 
@@ -163,6 +185,7 @@ ts_curated_columns = [
     BAMQC_COL.TotalClusters, # For top ups
     special_cols["Pipeline Filtered Clusters"],
     HSMETRICS_COL.MeanBaitCoverage,
+    special_cols["Collapsed Coverage"],
     BAMQC_COL.InsertMean,
     BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
     special_cols["On Target Percentage"],

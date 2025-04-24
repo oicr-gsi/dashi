@@ -10,6 +10,7 @@ and as of version 1.0.0, follows semantic versioning.
 expects.
   * Updated requirements.txt with newest gsi-qc-etl version, which required other version to be bumped
   * Updated gunicorn version for security
+  * Add Collapsed Coverage to Call Ready TAR
 
 ## [240930-1516] - 2024-09-30
   * Fix MISO URL formatting for MISO 2.23.0

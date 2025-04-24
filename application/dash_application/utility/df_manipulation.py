@@ -25,6 +25,7 @@ RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
 MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
 HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
+HSMETRICS_CONSENSUS_CRUNCHER_COL = gsiqcetl.column.HsMetricsConsensusCruncherColumn
 RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
@@ -58,6 +59,14 @@ hsmetrics_merged_columns = [HSMETRICS_MERGED_COL.Project,
                             HSMETRICS_MERGED_COL.Donor, HSMETRICS_MERGED_COL.GroupID,
                             HSMETRICS_MERGED_COL.LibraryDesign, HSMETRICS_MERGED_COL.TissueOrigin,
                             HSMETRICS_MERGED_COL.TissueType]
+hsmetrics_consensus_cruncher_merged_columns = [
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.Project,
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.Donor,
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.GroupID,
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.LibraryDesign,
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.TissueOrigin,
+    HSMETRICS_CONSENSUS_CRUNCHER_COL.TissueType
+]
 rnaseqqc2_merged_columns = [RNASEQQC2_MERGED_COL.Project,
     RNASEQQC2_MERGED_COL.Donor, RNASEQQC2_MERGED_COL.GroupID,
     RNASEQQC2_MERGED_COL.LibraryDesign, RNASEQQC2_MERGED_COL.TissueOrigin,
@@ -325,6 +334,13 @@ def get_mutect_callability():
 
 def get_hsmetrics_merged():
     return normalized_merged(cache.load_same_version("hsmetrics").unique("metrics"), hsmetrics_merged_columns)
+
+
+def get_hsmetrics_consensus_cruncher_merged():
+    return normalized_merged(
+        cache.load_same_version("hsmetrics_consensus_cruncher").unique("metrics"),
+        hsmetrics_consensus_cruncher_merged_columns
+    )
 
 
 def get_rnaseqqc2_merged():
