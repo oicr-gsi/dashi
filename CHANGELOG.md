@@ -8,6 +8,8 @@ and as of version 1.0.0, follows semantic versioning.
 ## [Unreleased]
   * Replace Pandas `NaN` with Python `None`. When sending to MISO, `None` gets converted to `null`, which is what MISO
 expects.
+  * Updated requirements.txt with newest gsi-qc-etl version, which required other version to be bumped
+  * Updated gunicorn version for security
 
 ## [240930-1516] - 2024-09-30
   * Fix MISO URL formatting for MISO 2.23.0
