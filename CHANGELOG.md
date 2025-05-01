@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [250501-1304] - 2025-05-01
   * Replace Pandas `NaN` with Python `None`. When sending to MISO, `None` gets converted to `null`, which is what MISO
 expects.
   * Updated requirements.txt with newest gsi-qc-etl version, which required other version to be bumped
