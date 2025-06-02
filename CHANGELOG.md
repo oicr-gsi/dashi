@@ -7,6 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
   * Fix invalid docker-compose configuration.
+  * Switch swap view to use crosscheckFingerprintCaller
 
 ## [250501-1304] - 2025-05-01
   * Replace Pandas `NaN` with Python `None`. When sending to MISO, `None` gets converted to `null`, which is what MISO
