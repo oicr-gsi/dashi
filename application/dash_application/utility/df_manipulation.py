@@ -3,7 +3,7 @@ import pandas
 from pandas import DataFrame, Series
 from typing import List
 
-from gsiqcetl import QCETLMultiCache, QCETLCache
+from gsiqcetl import QCETLMultiCache
 import gsiqcetl.column
 import gsiqcetl.common.utility
 import gsiqcetl.common
@@ -19,7 +19,7 @@ BAMQC4_COL = gsiqcetl.column.BamQc4Column
 BCL_KNOWN = gsiqcetl.column.Bcl2BarcodeCallerKnownColumn
 BCL_UNKNOWN = gsiqcetl.column.Bcl2BarcodeCallerUnknownColumn
 BCL_SUMMARY = gsiqcetl.column.Bcl2BarcodeCallerSummaryColumn
-CROSSCHECKFINGERPRINTS_COL = gsiqcetl.column.CrosscheckFingerprintsCallSwapColumn
+CROSSCHECKFINGERPRINT_CALLER_COL = gsiqcetl.column.CrosscheckFingerprintCallerDetailedColumn
 DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
 RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
 BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
@@ -299,15 +299,13 @@ def get_cfmedip():
 def get_cfmedip_insert_metrics():
     return cache.load_same_version("cfmedipqc").unique("insert_metrics").copy(deep=True)
 
-
-def get_crosscheckfingerprints():
+def get_crosscheckfingerprint_caller():
     return cache.load_same_version(
-        "crosscheckfingerprints"
-    # crosscheckfingerprints caches won't be archived
+        "crosscheckfingerprint_caller"
+        # crosscheckfingerprints caches won't be archived
     ).remove_missing(
-        "filterswaps"
-    ).unique("filterswaps").copy(deep=True)
-
+        "detailed"
+    ).unique("detailed").copy(deep=True)
 
 def get_fastqc():
     return normalized_ius(cache.load_same_version("fastqc").unique("fastqc"), fastqc_ius_columns)

@@ -3,13 +3,11 @@ from dash import html
 from dash.dependencies import Input, Output, State
 from dash import dash_table
 import pinery
-import pandas
-import os
 import logging
 
 from ..dash_id import init_ids
 from ..utility import df_manipulation, sidebar_utils
-from ..utility.df_manipulation import CROSSCHECKFINGERPRINTS_COL as COL
+from ..utility.df_manipulation import CROSSCHECKFINGERPRINT_CALLER_COL as COL
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +16,6 @@ RUN_COLS = pinery.column.RunsColumn
 
 page_name = "sample_swaps"
 title = "Sample Swaps"
-
-# LOD scores around 0 mean not enough data to determine swap
-# Set a zone left and right of 0 that where swaps will be ignored
-AMBIGUOUS_ZONE = 20
 
 ids = init_ids([
     # Buttons
@@ -38,177 +32,70 @@ ids = init_ids([
 
 special_cols = {
     "latest_run": "LATEST_RUN",
-    "same_identity": "SAME_IDENTITY",
-    "closest_libraries": "CLOSEST_LIBRARIES",
-    "closest_libraries_count": "CLOSEST_LIBRARIES_COUNT",
-    "significant_lod": "SIGNIFICANT_LOD",
-    "expected_library": "EXPECTED_LIBRARY",
-    "expected_library_lod": "EXPECTED_LIBRARY_LOD",
-    "expected_barcode": "EXPECTED_BARCODE",
-    "expected_lane": "EXPECTED_LANE",
-    "expected_run": "EXPECTED_RUN",
+    "miso": "miso",
+    "miso_match": "miso_match",
 }
 
-rename_columns = {
-    PINERY_COL.StudyTitle: 'PROJECT',
-}
-
-df = df_manipulation.get_crosscheckfingerprints()
-
-# The COL.ClosestLibrariesCount column states how many libraries had to be traversed until a matching one is found
-# If 0: No matching library exist (patient has been sequenced only once), so no other libraries should match
-# If 1: Closest library is from the same patient. No swap.
-# If 2 or more: Closest library is NOT from the same patient. Swap has occurred.
-
-# Libraries that correctly match (the closest library count is 1) don't have ot go through expensive `groupby`
-swap = df[df[COL.ClosestLibrariesCount] != 1].sort_values([COL.QueryLibrary, COL.LODScore], ascending=False)
-
-result = []
-for _, lib in swap.groupby(COL.QueryLibrary, sort=False):
-    # The closest library
-    return_df = lib.head(1).copy()
-    rest = lib.iloc[1:]
-    if len(rest) > 0:
-        return_df[special_cols["expected_library"]] = rest[COL.MatchLibrary].iloc[-1]
-        return_df[special_cols["expected_library_lod"]] = rest[COL.LODScore].iloc[-1]
-        return_df[special_cols["expected_barcode"]] = rest[COL.MatchBarcode].iloc[-1]
-        return_df[special_cols["expected_lane"]] = rest[COL.MatchLane].iloc[-1]
-        return_df[special_cols["expected_run"]] = rest[COL.MatchRun].iloc[-1]
-
-        closest_lib = (
-                rest[COL.MatchLibrary] +
-                " (" +
-                rest[COL.LODScore].round().astype(int).astype(str) +
-                ")"
-        )
-        return_df[special_cols["closest_libraries"]] = ", ".join(closest_lib)
-        return_df[special_cols["significant_lod"]] = any(lib[COL.LODScore].abs() > AMBIGUOUS_ZONE)
-    result.append(return_df)
-
-if len(result) > 0:
-    swap = pandas.concat(result)
-else:
-    swap = pandas.DataFrame(columns=df.columns)
-
-# If there is no swap, the closest library is just the matched library
-non_swaps = df[df[COL.ClosestLibrariesCount] == 1].copy()
-non_swaps[special_cols["closest_libraries"]] = non_swaps[COL.MatchLibrary]
-swap = pandas.concat([swap, non_swaps])
+swap = df_manipulation.get_crosscheckfingerprint_caller()
+swap.sort_values([COL.LibraryName, COL.SwapCall, COL.LODScore], inplace=True)
 
 pinery_samples = df_manipulation.get_pinery_samples()
+pinery_samples = pinery_samples[[
+    PINERY_COL.SequencerRunName,
+    PINERY_COL.LaneNumber,
+    PINERY_COL.IUSTag,
+    PINERY_COL.ParentSampleName,
+    PINERY_COL.SampleName,
+    PINERY_COL.RootSampleName,
+]]
+
 swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.QueryRun, COL.QueryLane, COL.QueryBarcode]
+    swap, pinery_samples, [COL.Run, COL.Lane, COL.Barcode]
 )
 swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.MatchRun, COL.MatchLane, COL.MatchBarcode], "_MATCH"
+    swap, pinery_samples, [COL.RunMatch, COL.LaneMatch, COL.BarcodeMatch], "_MATCH"
 )
-swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples,
-    [special_cols["expected_run"], special_cols["expected_lane"], special_cols["expected_barcode"]],
-    "_EXPECTED"
-)
-swap = df_manipulation.df_with_run_info(swap, COL.QueryRun)
-swap = df_manipulation.df_with_run_info(swap, COL.MatchRun, "_MATCH")
+swap = df_manipulation.df_with_run_info(swap, COL.Run)
+swap = df_manipulation.df_with_run_info(swap, COL.RunMatch, "_MATCH")
 
-# DataFrame that's empty has issues with date column type
-if len(swap) > 0:
-    # Get the latest run of the pair for sorting purposes and make format YYYY-MM-DD
-    swap[special_cols["latest_run"]] = swap[
-        [RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]
-    ].max(1, numeric_only=False).dt.date
-    swap[special_cols["same_identity"]] = (
-        swap[PINERY_COL.RootSampleName] == swap[PINERY_COL.RootSampleName + "_MATCH"]
-    )
+# Take all the runs where a swap has been called for a given library and store the latest run
+swap["start_date_max"] = swap[[RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]].max(axis=1)
+latest_swap = swap[swap[COL.PairwiseSwap]].groupby(COL.LibraryName)["start_date_max"].max().rename(special_cols["latest_run"])
+swap = swap.merge(latest_swap, how="outer", left_on=COL.LibraryName, right_index=True)
+swap[special_cols["latest_run"]] = swap[special_cols["latest_run"]].fillna(swap["start_date_max"])
+swap[special_cols["latest_run"]] = swap[special_cols["latest_run"]].dt.date
+swap.drop(columns="start_date_max")
 
+swap[special_cols["miso"]] = swap[COL.LibraryDesign] + "_" + swap[COL.TissueType] + "_" + swap[COL.TissueOrigin]
+swap[special_cols["miso_match"]] = swap[COL.LibraryDesignMatch] + "_" + swap[COL.TissueTypeMatch] + "_" + swap[COL.TissueOriginMatch]
 
-def metadata_to_library(swap_df, library_col, pinery_str):
-    return (
-            swap[library_col] +
-            " (" +
-            swap[PINERY_COL.LibrarySourceTemplateType + pinery_str] +
-            ", " +
-            swap[PINERY_COL.TissueType + pinery_str] +
-            ", " +
-            swap[PINERY_COL.TissueOrigin + pinery_str] +
-            ")"
-    )
-
-
-swap[COL.QueryLibrary] = metadata_to_library(swap, COL.QueryLibrary, "")
-swap[COL.MatchLibrary] = metadata_to_library(swap, COL.MatchLibrary, "_MATCH")
-swap[special_cols["expected_library"]] = metadata_to_library(
-    swap, special_cols["expected_library"], "_EXPECTED"
+# There is a row for each lib, lib_match, lane, run permutation
+# The LODs are stable between the lanes, so pick the highest one
+# If there is both a swap and a not swap call, both will be shown
+swap = swap.drop_duplicates(
+    [COL.LibraryName, COL.LibraryNameMatch, COL.PairwiseSwap], keep="last"
 )
 
+# The swaps to display. Basically all swaps and then the first expected match (if it exists)
+indx = []
+for _, g in swap.groupby(COL.LibraryName, sort=False):
+    indx.extend(g[g[COL.PairwiseSwap]].index)
+    mtch = g[~g[COL.PairwiseSwap]].index
+    if len(mtch) > 0 and any(g[COL.SwapCall]):
+        indx.append(mtch[0])
 
-def exclude_false_positives(swap_df):
-    """
-    Excludes specific library pair swaps defined in an external file.
-
-    Current workflow setup prevents this from being done by Shesmu.
-
-    Args:
-        swap_df: The swaps called by Dashi
-
-    Returns: The input table minus the library pairs in the file
-
-    """
-    excl_file = os.getenv("EXCLUDE_SWAP_LIBS")
-    if excl_file is None:
-        return swap_df
-
-    if not os.path.isfile(excl_file):
-        logger.warning("False positive swap file does not exist")
-        return swap_df
-
-    false_pos = pandas.read_csv(excl_file, sep="\t", comment="#")
-    # Merge will preserve all rows of swap_df. If a row is a false positive, it will
-    # have non-NA values in the false_pol columns
-    matches = swap_df.merge(
-        false_pos,
-        how="left",
-        left_on=[COL.QueryLibrary, COL.MatchLibrary],
-        right_on=["LEFT_LIBRARY", "RIGHT_LIBRARY"],
-    )
-    true_pos = matches["JIRA_ISSUE"].isna()
-    return swap_df[list(true_pos)].copy()
-
-
-def filter_for_swaps(df):
-    """
-    Filter for rows that are swaps
-
-    Args:
-        df: The DataFrame must have the been annotated by the `closest_lib` function
-
-    Returns:
-
-    """
-    # Libraries from patients with more than one library
-    # If even a single comparison has an LOD outside the ambiguous zone, report it as a swap
-    multi_lib = df[df[special_cols["closest_libraries_count"]] > 1]
-    multi_lib = multi_lib[multi_lib[special_cols["significant_lod"]]]
-
-    # Libraries from patients with only one library
-    # Negative LOD scores are expected, so only check for positive ones
-    single_lib = df[df[special_cols["closest_libraries_count"]] == 0]
-    single_lib = single_lib[single_lib[COL.LODScore] > AMBIGUOUS_ZONE]
-
-    swaps = pandas.concat([multi_lib, single_lib])
-    swaps = exclude_false_positives(swaps)
-
-    return swaps
-
+swap['swap_display'] = swap.index.isin(indx)
 
 DATA_COLUMN = [
-    PINERY_COL.StudyTitle,
-    COL.QueryLibrary,
-    COL.MatchLibrary,
+    COL.Project,
+    COL.LibraryName,
+    special_cols["miso"],
+    COL.LibraryNameMatch,
+    special_cols["miso_match"],
     COL.LODScore,
-    special_cols["expected_library"],
-    special_cols["expected_library_lod"],
+    COL.PairwiseSwap,
+    COL.SameBatch,
     special_cols["latest_run"],
-    special_cols["closest_libraries"],
     PINERY_COL.ParentSampleName,
     PINERY_COL.ParentSampleName + "_MATCH",
 ]
@@ -217,7 +104,6 @@ DATA_COLUMN = [
 DOWNLOAD_ONLY_COLUMNS = [
     PINERY_COL.ParentSampleName,
     PINERY_COL.ParentSampleName + "_MATCH",
-    special_cols["closest_libraries"],
 ]
 
 TABLE_COLUMNS = [{"name": i, "id": i} for i in DATA_COLUMN]
@@ -229,15 +115,9 @@ for d in TABLE_COLUMNS:
         d["type"] = "numeric",
     elif PINERY_COL.ParentSampleName in d["id"]:
         d["hideable"] = True
-    elif special_cols["closest_libraries"] in d["id"]:
-        d["hideable"] = True
-
-    if d["id"] in rename_columns:
-        d["name"] = rename_columns[d["id"]]
-
 
 # Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(swap,PINERY_COL.StudyTitle)
+ALL_PROJECTS = df_manipulation.unique_set(swap,COL.Project)
 
 INITIAL = {
     "projects": ALL_PROJECTS,
@@ -280,9 +160,12 @@ def layout(query_string):
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
                         hidden_columns=DOWNLOAD_ONLY_COLUMNS,
-                        data=filter_for_swaps(swap).to_dict('records'),
+                        data=swap[swap["swap_display"]].to_dict('records'),
                         sort_action="native",
-                        sort_by=[{"column_id": "LATEST_RUN", "direction": "desc"}],
+                        sort_by=[
+                            {"column_id": special_cols["latest_run"], "direction": "desc"},
+                            {"column_id": COL.LibraryName, "direction": "desc"},
+                        ],
                         export_format="csv",
                         export_columns="all",
                         include_headers_on_copy_paste=True,
@@ -290,11 +173,7 @@ def layout(query_string):
                             'whiteSpace': 'normal',
                             'height': 'auto',
                         },
-                        style_cell_conditional=[
-                            {'if': {'column_id': special_cols["closest_libraries"]},
-                             'width': "500px"},
-                        ],
-                        style_cell={'textAlign': 'left', 'padding-right': '50px'},
+                        style_cell={'textAlign': 'left', 'padding-right': '5px'},
                         style_data_conditional=[
                             {
                                 "if": {"row_index": "odd"},
@@ -323,10 +202,10 @@ def init_callbacks(dash_app):
     )
     def update_pressed(_click, projects, show_swap):
         if "swap" in show_swap:
-            df = filter_for_swaps(swap)
+            df = swap[swap["swap_display"]]
         else:
             df = swap
-        df = df[df[PINERY_COL.StudyTitle].isin(projects)]
+        df = df[df[COL.Project].isin(projects)]
         return df.to_dict('records')
 
     @dash_app.callback(
