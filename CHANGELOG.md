@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [250624-1348] - 2025-06-24
   * Fix invalid docker-compose configuration.
   * Switch swap view to use crosscheckFingerprintCaller
 
