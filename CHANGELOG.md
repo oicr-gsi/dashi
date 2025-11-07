@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [251107-1528] - 2025-11-07
+
 ## [250624-1348] - 2025-06-24
   * Fix invalid docker-compose configuration.
   * Switch swap view to use crosscheckFingerprintCaller
