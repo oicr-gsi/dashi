@@ -37,6 +37,7 @@ special_cols = {
 }
 
 swap = df_manipulation.get_crosscheckfingerprint_caller()
+swap = swap[swap[COL.Grouping] == "project"]
 swap.sort_values([COL.LibraryName, COL.SwapCall, COL.LODScore], inplace=True)
 
 pinery_samples = df_manipulation.get_pinery_samples()
