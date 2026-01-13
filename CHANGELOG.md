@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
+
+## [260113-0940] - 2026-01-13
 * `sample_swap` view filters for project grouping only, as additional groupings will be added for autoverification.
 
 ## [251107-1528] - 2025-11-07
