@@ -1,9 +1,9 @@
 # The `~=` is the compatible release operator (https://peps.python.org/pep-0440/#compatible-release)
-Flask-Caching~=2.0
+Flask-Caching~=2.4
 dash-bootstrap-components~=1.4
 pandas~=2.2
-Flask~=2.3
-dash~=2.18
+Flask~=3.1
+dash~=3.0
 prometheus-flask-exporter~=0.22
 gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.41
 sd-material-ui~=4.6
@@ -11,5 +11,5 @@ python-dotenv~=1.1
 gevent~=23.9
 gunicorn~=23.0
 numpy~=2.2
-Werkzeug~=3.0
+Werkzeug~=3.1
 
