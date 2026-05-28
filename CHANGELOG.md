@@ -7,6 +7,9 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [260528-1518] - 2026-05-28
+  * Upgrade Flask to 3.1
+
 ## [260113-0940] - 2026-01-13
 * `sample_swap` view filters for project grouping only, as additional groupings will be added for autoverification.
 

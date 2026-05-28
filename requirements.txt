@@ -5,7 +5,7 @@ pandas~=2.2
 Flask~=3.1
 dash~=3.0
 prometheus-flask-exporter~=0.22
-gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.41
+gsiqcetl @ git+ssh://git@bitbucket.oicr.on.ca/gsi/gsi-qc-etl.git@v1.47
 sd-material-ui~=4.6
 python-dotenv~=1.1
 gevent~=23.9
