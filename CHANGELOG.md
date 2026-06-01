@@ -7,6 +7,8 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [260601-0944] - 2026-06-01
+
   * Upgrade Python to 3.13
 
 ## [260528-1518] - 2026-05-28
