@@ -1,19 +1,13 @@
 #!/usr/bin/env bash
 
-# check if the passphrase is mounted. If it is, install it into ssh-agent
-if [ -e /run/secrets/ssh_passphrase ]
-then
-    eval $(ssh-agent -s);
-    /dashi/.docker/enter_passphrase $(cat /run/secrets/ssh_passphrase)
-fi
 
-# Optionally rewrite requirements.txt to use untested current ETL version (gsi-qc-etl@master)
-# instead of a tested release version (gsi-qc-etl@<release version>)
+# Optionally rewrite pyproject.toml to use untested current ETL version (qc-etl@main)
+# instead of a tested pinned commit of qc-etl
 if [ "$USE_BLEEDING_EDGE_ETL" -eq 1 ]; then
-    sed -irn 's/^\(.*\)\/gsi-qc-etl.git@v.*$/\1\/gsi-qc-etl.git@master/ip' requirements.txt
+    sed -i -E 's/(qc-etl = \{ git = "[^"]+", )rev = "[^"]*"/\1branch = "main"/' pyproject.toml
+    uv lock -P qc-etl
 fi
 
-# mount your private key for bitbucket into the container to allow this command to succeed
-pip install --trusted-host pypi.python.org -r requirements.txt
+uv sync --frozen
 
-flask run --host=0.0.0.0 --port=5000
+uv run flask run --host=0.0.0.0 --port=5000

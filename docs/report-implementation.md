@@ -122,7 +122,7 @@ Source: [single_lane_tar.py](../application/dash_application/views/single_lane_t
 
 
 ### DATAVERSION
-The `DATAVERSION` constant is required by known_pages_router for display in the footer of the page. This helps inform the user about the integrity of the QC data. This is retrieved from gsi-qc-etl via [df_manipulation.py](../application/dash_application/utility/df_manipulation.py)'s 'cache' object, eg `util.cache.versions(["bamqc4"])`.
+The `DATAVERSION` constant is required by known_pages_router for display in the footer of the page. This helps inform the user about the integrity of the QC data. This is retrieved from qc-etl via [df_manipulation.py](../application/dash_application/utility/df_manipulation.py)'s 'cache' object, eg `util.cache.versions(["bamqc4"])`.
 
 ### The Layout Function
 

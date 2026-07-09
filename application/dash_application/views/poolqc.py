@@ -8,10 +8,10 @@ import numpy as np
 import urllib
 from datetime import datetime
 import sd_material_ui as sd
-import gsiqcetl.load
-from gsiqcetl.rnaseqqc.constants import CacheSchema as RNASeqQCCacheSchema
-from gsiqcetl.bamqc.constants import CacheSchema as BamQCCacheSchema
-from gsiqcetl.bcl2fastq.constants import SamplesSchema
+import qcetl.load
+from qcetl.rnaseqqc.constants import CacheSchema as RNASeqQCCacheSchema
+from qcetl.bamqc.constants import CacheSchema as BamQCCacheSchema
+from qcetl.bcl2fastq.constants import SamplesSchema
 
 page_name = "pooling_qc"
 
@@ -34,16 +34,16 @@ ids = init_ids(
     ]
 )
 
-rnaseq = gsiqcetl.load.rnaseqqc(RNASeqQCCacheSchema.v1)
-rnaseq_col = gsiqcetl.load.rnaseqqc_columns(RNASeqQCCacheSchema.v1)
+rnaseq = qcetl.load.rnaseqqc(RNASeqQCCacheSchema.v1)
+rnaseq_col = qcetl.load.rnaseqqc_columns(RNASeqQCCacheSchema.v1)
 # Column name is being renamed to allow for a seamless merge on column 'library'
 rnaseq.rename(columns={rnaseq_col.SampleName: "library"}, inplace=True)
 
-bamqc = gsiqcetl.load.bamqc(BamQCCacheSchema.v1)
-bamcq_col = gsiqcetl.load.bamqc_columns(BamQCCacheSchema.v1)
+bamqc = qcetl.load.bamqc(BamQCCacheSchema.v1)
+bamcq_col = qcetl.load.bamqc_columns(BamQCCacheSchema.v1)
 
-bcl2fastq = gsiqcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
-bcl2fastq_col = gsiqcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
+bcl2fastq = qcetl.load.bcl2fastq_known_samples(SamplesSchema.v1)
+bcl2fastq_col = qcetl.load.bcl2fastq_known_samples_columns(SamplesSchema.v1)
 
 # Column is being renamed for clarification
 bcl2fastq.rename(columns={bcl2fastq_col.ReadCount: "Clusters"}, inplace=True)

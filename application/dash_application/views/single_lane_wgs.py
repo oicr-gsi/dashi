@@ -9,7 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import FastqcColumn
+from qcetl.column import FastqcColumn
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ ids = init_ids([
     'all-count',
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQc4Column
+BAMQC_COL = qcetl.column.BamQc4Column
 FASTQC_COL = FastqcColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 INSTRUMENT_COLS = pinery.column.InstrumentWithModelColumn

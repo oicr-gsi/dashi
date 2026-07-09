@@ -6,19 +6,19 @@ from plotly.subplots import make_subplots
 from dash import dcc as core
 from pandas import DataFrame
 import pinery
-import gsiqcetl.column
+import qcetl.column
 from .df_manipulation import sample_type_col, ml_col
 from .sidebar_utils import runs_in_range
 from .Mode import Mode
 import re
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-COMMON_COL = gsiqcetl.column.ColumnNames
-BEDTOOLS_COL = gsiqcetl.column.BedToolsGenomeCovCalculationsColumn
-BAMQC_COL = gsiqcetl.column.BamQc4Column
-CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
+COMMON_COL = qcetl.column.ColumnNames
+BEDTOOLS_COL = qcetl.column.BedToolsGenomeCovCalculationsColumn
+BAMQC_COL = qcetl.column.BamQc4Column
+CALL_COL = qcetl.column.MutetctCallabilityColumn
 INSTRUMENT_COL = pinery.column.InstrumentWithModelColumn
-RUN_COL = gsiqcetl.column.RunScannerFlowcellColumn
+RUN_COL = qcetl.column.RunScannerFlowcellColumn
 
 """
 Avoid the following symbols, which fail to render correctly:

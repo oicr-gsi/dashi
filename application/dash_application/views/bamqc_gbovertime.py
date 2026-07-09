@@ -4,16 +4,16 @@ from dash.dependencies import Input, Output
 from ..dash_id import init_ids
 import pandas as pd
 import plotly.graph_objects as go 
-import gsiqcetl.load
-from gsiqcetl.bamqc.constants import CacheSchema
+import qcetl.load
+from qcetl.bamqc.constants import CacheSchema
 from flask import current_app as app
 
 page_name = "bamqc/gbovertime"
 
 ids = init_ids(["lib", "month_plot", "3month_plot", "cum_plot"])
 
-bamqc = gsiqcetl.load.bamqc(CacheSchema.v1)
-col = gsiqcetl.load.bamqc_columns(CacheSchema.v1)
+bamqc = qcetl.load.bamqc(CacheSchema.v1)
+col = qcetl.load.bamqc_columns(CacheSchema.v1)
 
 COL_TOTAL_BASES = "total bases"
 COL_RUN_DATE = "run date"

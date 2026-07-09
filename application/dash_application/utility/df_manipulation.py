@@ -3,10 +3,10 @@ import pandas
 from pandas import DataFrame, Series
 from typing import List
 
-from gsiqcetl import QCETLMultiCache
-import gsiqcetl.column
-import gsiqcetl.common.utility
-import gsiqcetl.common
+from qcetl import QCETLMultiCache
+import qcetl.column
+import qcetl.common.utility
+import qcetl.common
 import pinery
 import json
 
@@ -15,24 +15,24 @@ rna_lib_designs = ["MR", "SM", "TR", "WT"]
 wgs_lib_designs = ["AS", "CH", "NN", "PG", "SW", "WG"]
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
-BAMQC4_COL = gsiqcetl.column.BamQc4Column
-BCL_KNOWN = gsiqcetl.column.Bcl2BarcodeCallerKnownColumn
-BCL_UNKNOWN = gsiqcetl.column.Bcl2BarcodeCallerUnknownColumn
-BCL_SUMMARY = gsiqcetl.column.Bcl2BarcodeCallerSummaryColumn
-CROSSCHECKFINGERPRINT_CALLER_COL = gsiqcetl.column.CrosscheckFingerprintCallerDetailedColumn
-DNASEQQC_COL = gsiqcetl.column.DnaSeqQCColumn
-RNASEQQC2_COL = gsiqcetl.column.RnaSeqQc2Column
-BAMQC4_MERGED_COL = gsiqcetl.column.BamQc4MergedColumn
-MUTECT_CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
-HSMETRICS_MERGED_COL = gsiqcetl.column.HsMetricsColumn
-HSMETRICS_CONSENSUS_CRUNCHER_COL = gsiqcetl.column.HsMetricsConsensusCruncherColumn
-RNASEQQC2_MERGED_COL = gsiqcetl.column.RnaSeqQc2MergedColumn
+BAMQC4_COL = qcetl.column.BamQc4Column
+BCL_KNOWN = qcetl.column.Bcl2BarcodeCallerKnownColumn
+BCL_UNKNOWN = qcetl.column.Bcl2BarcodeCallerUnknownColumn
+BCL_SUMMARY = qcetl.column.Bcl2BarcodeCallerSummaryColumn
+CROSSCHECKFINGERPRINT_CALLER_COL = qcetl.column.CrosscheckFingerprintCallerDetailedColumn
+DNASEQQC_COL = qcetl.column.DnaSeqQCColumn
+RNASEQQC2_COL = qcetl.column.RnaSeqQc2Column
+BAMQC4_MERGED_COL = qcetl.column.BamQc4MergedColumn
+MUTECT_CALL_COL = qcetl.column.MutetctCallabilityColumn
+HSMETRICS_MERGED_COL = qcetl.column.HsMetricsColumn
+HSMETRICS_CONSENSUS_CRUNCHER_COL = qcetl.column.HsMetricsConsensusCruncherColumn
+RNASEQQC2_MERGED_COL = qcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
-RUNSCANNER_FLOWCELL_COL = gsiqcetl.column.RunScannerFlowcellColumn
+RUNSCANNER_FLOWCELL_COL = qcetl.column.RunScannerFlowcellColumn
 PROJECT_COL = pinery.column.ProjectsColumn
-FASTQC_COL = gsiqcetl.column.FastqcColumn
-CFMEDIP_COL = gsiqcetl.column.CfMeDipQcColumn
+FASTQC_COL = qcetl.column.FastqcColumn
+CFMEDIP_COL = qcetl.column.CfMeDipQcColumn
 sample_type_col = "Sample Type"
 ml_col = "Merged Library"
 
@@ -280,7 +280,7 @@ def get_bcl2barcodecaller_summary():
 
 def get_dnaseqqc_and_bamqc4():
     # Utility function creates new DataFrame, so no need to copy again
-    return gsiqcetl.common.utility.concat_workflow_versions(
+    return qcetl.common.utility.concat_workflow_versions(
         [
             normalized_ius(
                 cache.load_same_version("dnaseqqc").remove_missing("dnaseqqc").unique("dnaseqqc"),
