@@ -1,5 +1,7 @@
 [project]
 name = "dashi"
+# This version is unused.
+# The app's real version comes from version.py.
 version = "0.1.0"
 description = "Dashi QC dashboard"
 requires-python = ">=3.13"

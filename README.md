@@ -6,7 +6,7 @@ transcriptomic data. It is built on top of
 system.
 
 # Requirements
-* Access to [qc-etl](https://github.com/oicr-gsi/qc-etl)
+* A built [qc-etl](https://github.com/oicr-gsi/qc-etl) cache directory
 * A running [pinery](https://github.com/oicr-gsi/pinery) install
 * A running MongoDB installation with provenance data and the password for the
     same. See
