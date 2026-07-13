@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import CfMeDipQcColumn, InsertSizeMetricsColumn
+from qcetl.column import CfMeDipQcColumn, InsertSizeMetricsColumn
 import pinery
 import logging
 

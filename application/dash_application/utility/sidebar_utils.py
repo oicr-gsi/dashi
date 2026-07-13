@@ -12,7 +12,7 @@ from dash.exceptions import PreventUpdate
 from pandas import Series, Timestamp
 
 import pinery.column
-import gsiqcetl.column
+import qcetl.column
 from . import df_manipulation as df_tools
 
 insert_mean_cutoff_label = "Mean Insert Size minimum"
@@ -24,7 +24,7 @@ rrna_contamination_cutoff_label = "rRNA Contamination maximum"
 
 PINERY_COL = pinery.column.SampleProvenanceColumn
 RUNS_COL = pinery.column.RunsColumn
-COMMON_COL = gsiqcetl.column.ColumnNames
+COMMON_COL = qcetl.column.ColumnNames
 ALL_RUNS = df_tools.get_runs()
 
 def frange(range_min, range_max, step):

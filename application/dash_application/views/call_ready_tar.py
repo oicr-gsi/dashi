@@ -56,10 +56,10 @@ ids = init_ids([
     'all-count',
 ])
 
-BAMQC_COL = gsiqcetl.column.BamQc4MergedColumn
-HSMETRICS_COL = gsiqcetl.column.HsMetricsColumn
-HSMETRICS_CONSENSUS_CRUNCHER_COL = gsiqcetl.column.HsMetricsConsensusCruncherColumn
-CALL_COL = gsiqcetl.column.MutetctCallabilityColumn
+BAMQC_COL = qcetl.column.BamQc4MergedColumn
+HSMETRICS_COL = qcetl.column.HsMetricsColumn
+HSMETRICS_CONSENSUS_CRUNCHER_COL = qcetl.column.HsMetricsConsensusCruncherColumn
+CALL_COL = qcetl.column.MutetctCallabilityColumn
 PINERY_COL = pinery.column.SampleProvenanceColumn
 
 

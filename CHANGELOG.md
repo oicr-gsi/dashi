@@ -7,6 +7,9 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+  * Migrate dependency management from `pip`/`requirements.txt` to `uv`/`pyproject.toml`
+  * Switch `gsi-qc-etl` (private) to the newly open-sourced `qc-etl` (https://github.com/oicr-gsi/qc-etl)
+
 ## [260601-0944] - 2026-06-01
 
   * Upgrade Python to 3.13

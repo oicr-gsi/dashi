@@ -5,7 +5,7 @@ import os
 import json
 import datetime
 from application.dash_application.pages import pages
-import gsiqcetl.api
+import qcetl.api
 
 # Dashi doesn't support displaying status data from multiple pages
 # Only the first source is being displayed
@@ -70,12 +70,12 @@ def run_list():
 
 @app.route('/status')
 def status_page():
-    qcetlapi = gsiqcetl.api.QCETLCache(qc_etl_location)
-    errors = {c.name: "Missing error file" for c in gsiqcetl.api.formats}
-    lastinputdate = {c.name: "Cache not enabled" for c in gsiqcetl.api.formats}
-    shesmu_input = {c.name: "" for c in gsiqcetl.api.formats}
+    qcetlapi = qcetl.api.QCETLCache(qc_etl_location)
+    errors = {c.name: "Missing error file" for c in qcetl.api.formats}
+    lastinputdate = {c.name: "Cache not enabled" for c in qcetl.api.formats}
+    shesmu_input = {c.name: "" for c in qcetl.api.formats}
 
-    for cache in gsiqcetl.api.formats:
+    for cache in qcetl.api.formats:
         error_path = qcetlapi.path_failed_input(cache)
         if os.path.exists(error_path):
             with open(error_path, "r") as f:
@@ -101,9 +101,9 @@ def status_page():
 
 @app.route('/shesmu_input/<cache_name>')
 def shesmu_input(cache_name):
-    qcetlapi = gsiqcetl.api.QCETLCache(qc_etl_location)
+    qcetlapi = qcetl.api.QCETLCache(qc_etl_location)
 
-    for cache in gsiqcetl.api.formats:
+    for cache in qcetl.api.formats:
         if cache.name == cache_name:
             shesmu_path = qcetlapi.path_latest_input(cache)
             if not os.path.exists(shesmu_path):

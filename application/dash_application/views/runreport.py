@@ -7,8 +7,8 @@ import pandas
 import numpy
 import plotly.figure_factory as ff
 
-import gsiqcetl.load
-from gsiqcetl.runreport.constants import CacheSchema
+import qcetl.load
+from qcetl.runreport.constants import CacheSchema
 
 page_name = "runreport/proj_hist"
 
@@ -21,8 +21,8 @@ ids = init_ids([
 
 idx = pandas.IndexSlice
 
-rr = gsiqcetl.load.runreport(CacheSchema.v1)
-rr_col = gsiqcetl.load.runreport_columns(CacheSchema.v1)
+rr = qcetl.load.runreport(CacheSchema.v1)
+rr_col = qcetl.load.runreport_columns(CacheSchema.v1)
 
 COL_PROJECT = "Project"
 

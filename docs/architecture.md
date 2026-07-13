@@ -1,5 +1,5 @@
 # Dashi Architecture
-**Dashi** is a QC Reporting system. It pulls data from gsi-qc-etl, filters, and displays it in an interactive series of graphs grouped into reports. The graphs are powered by [Dash](https://dash.plot.ly/), however we use Dash in a relatively non-standard way in order to exact more control over the display. We use Dash as an attachment to a [Flask](https://flask.palletsprojects.com/en/1.1.x/) instance rather than using the Flask instance embedded in Dash, which allows for serving plain HTML pages through Flask for a performance boost.
+**Dashi** is a QC Reporting system. It pulls data from [qc-etl](https://github.com/oicr-gsi/qc-etl), filters, and displays it in an interactive series of graphs grouped into reports. The graphs are powered by [Dash](https://dash.plot.ly/), however we use Dash in a relatively non-standard way in order to exact more control over the display. We use Dash as an attachment to a [Flask](https://flask.palletsprojects.com/en/1.1.x/) instance rather than using the Flask instance embedded in Dash, which allows for serving plain HTML pages through Flask for a performance boost.
 
 ## Directory Structure
 

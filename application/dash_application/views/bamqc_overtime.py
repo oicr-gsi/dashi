@@ -3,9 +3,9 @@ from dash import dcc as core
 from dash.dependencies import Input, Output
 from ..dash_id import init_ids
 import pandas
-import gsiqcetl.load
-from gsiqcetl.bamqc.constants import CacheSchema
-from gsiqcetl.pinery.sampleprovenance.constants import (
+import qcetl.load
+from qcetl.bamqc.constants import CacheSchema
+from qcetl.pinery.sampleprovenance.constants import (
     CacheSchema as SampleProvenanceCacheSchema,
 )
 from application.dash_application.plots.shiny_mimic import ShinyMimic
@@ -14,8 +14,8 @@ page_name = "bamqc/shiny"
 
 ids = init_ids([])
 
-BAMQC_DF = gsiqcetl.load.bamqc(CacheSchema.v1)
-BAMQC_COL = gsiqcetl.load.bamqc_columns(CacheSchema.v1)
+BAMQC_DF = qcetl.load.bamqc(CacheSchema.v1)
+BAMQC_COL = qcetl.load.bamqc_columns(CacheSchema.v1)
 
 COL_RUN_DATE = "Run Date"
 PROJECT = "Project"
@@ -45,10 +45,10 @@ BAMQC_DF[FRACTION_SECONDARY] = (
 
 # Pull in meta data from Pinery
 # noinspection PyTypeChecker
-PINERY: pandas.DataFrame = gsiqcetl.load.pinery_sample_provenance(
+PINERY: pandas.DataFrame = qcetl.load.pinery_sample_provenance(
     SampleProvenanceCacheSchema.v1
 )
-PINERY_COL = gsiqcetl.load.pinery_sample_provenance_columns(
+PINERY_COL = qcetl.load.pinery_sample_provenance_columns(
     SampleProvenanceCacheSchema.v1
 )
 

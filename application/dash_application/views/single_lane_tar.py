@@ -8,7 +8,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
-from gsiqcetl.column import BamQc4Column, FastqcColumn
+from qcetl.column import BamQc4Column, FastqcColumn
 import pinery
 import logging
 logger = logging.getLogger(__name__)

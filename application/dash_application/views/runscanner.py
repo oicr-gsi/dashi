@@ -5,9 +5,9 @@ from ..dash_id import init_ids
 import dash_table
 import pandas
 import plotly.graph_objects as go
-import gsiqcetl.load
-from gsiqcetl.runscanner.illumina.constants import FlowCellCacheSchema
-from gsiqcetl.pinery.instruments.constants import CacheSchema
+import qcetl.load
+from qcetl.runscanner.illumina.constants import FlowCellCacheSchema
+from qcetl.pinery.instruments.constants import CacheSchema
 
 page_name = "runscanner/sum_over_time"
 
@@ -23,8 +23,8 @@ ids = init_ids(
     ]
 )
 
-rs_flow = gsiqcetl.load.runscanner_illumina_flowcell(FlowCellCacheSchema.v1)
-rs_flow_col = gsiqcetl.load.runscanner_illumina_flowcell_columns(FlowCellCacheSchema.v1)
+rs_flow = qcetl.load.runscanner_illumina_flowcell(FlowCellCacheSchema.v1)
+rs_flow_col = qcetl.load.runscanner_illumina_flowcell_columns(FlowCellCacheSchema.v1)
 
 COL_TOTAL_YIELD = "Total Yield (GB)"
 
@@ -46,8 +46,8 @@ rs_flow = rs_flow[
     ]
 ]
 
-inst_raw = gsiqcetl.load.pinery_instruments(CacheSchema.v1)
-inst_col = gsiqcetl.load.pinery_instruments_columns(CacheSchema.v1)
+inst_raw = qcetl.load.pinery_instruments(CacheSchema.v1)
+inst_col = qcetl.load.pinery_instruments_columns(CacheSchema.v1)
 
 inst_model = inst_raw[[inst_col.InstrumentName, inst_col.ModelName]]
 
