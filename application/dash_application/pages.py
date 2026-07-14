@@ -1,5 +1,6 @@
 from collections import namedtuple
 import importlib
+import os
 import sys
 import traceback
 
@@ -10,7 +11,7 @@ prefix = "application.dash_application.views."
 
 # An array of module names as strings, one per page
 # These are for the modules that Dash can graph
-pagenames = [
+ALL_PAGENAMES = [
     "bcl2barcode",
     "call_ready_tar",
     "call_ready_rna",
@@ -23,6 +24,16 @@ pagenames = [
     "single_lane_wgs",
     'single_lane_cfmedip'
 ]
+
+_enabled_env = os.getenv("ENABLED_REPORTS")
+if _enabled_env:
+    _requested = [n.strip() for n in _enabled_env.split(",") if n.strip()]
+    for _name in _requested:
+        if _name not in ALL_PAGENAMES:
+            print("Unknown report name in ENABLED_REPORTS: " + _name, file=sys.stderr)
+    pagenames = [n for n in _requested if n in ALL_PAGENAMES]
+else:
+    pagenames = ALL_PAGENAMES
 
 # Emulates the module members that are called in known_pages_router in case of error
 ErrorPage = namedtuple('ErrorPage', 'layout title dataversion page_name init_callbacks')
