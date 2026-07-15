@@ -441,6 +441,8 @@ Source: [single_lane_tar.py](../application/dash_application/views/single_lane_t
 Finally, return all of the newly-transformed data as a list in the same order they're promised in the Output list in the callback annotation.
 
 ## Serving Your Report
-known_pages_router uses [pages.py](../application/dash_application/pages.py) as a directory of all the pages it can load. On startup, Dashi iterates over the `pagenames` list, appending the names to `application.dash_application.views.`, and importing the module by name. This automatically performs the data processing at the top of your report, makes the URL able to be navigated to, makes Dashi aware of the layout function so it can be called, and loads all the callbacks into memory.
+known_pages_router uses [pages.py](../application/dash_application/pages.py) as a directory of all the pages it can load. `ALL_REPORTS` is the full catalog of every report that exists in the codebase, whether or not a given deployment actually uses it. On startup, Dashi filters `ALL_REPORTS` down to `pagenames` based on the `ENABLED_REPORTS` environment variable (see [README](../README.md#environment-variables)) — if `ENABLED_REPORTS` is unset, every report in the catalog is enabled. Dashi then iterates over `pagenames`, appending each name to `application.dash_application.views.`, and importing the module by name. This automatically performs the data processing at the top of your report, makes the URL able to be navigated to, makes Dashi aware of the layout function so it can be called, and loads all the callbacks into memory.
 
-You report file must be in `dashi/application/dash_application/views` for pages to pick it up. Add your reports *file name* (not `page_name`) to the `pagenames` list. 
+Your report file must be in `dashi/application/dash_application/views` for pages to pick it up. Add your report's *file name* (not `page_name`) to the `ALL_REPORTS` list.
+
+Adding a report to `ALL_REPORTS` makes it available to the codebase, but it will only actually be served on deployments that either leave `ENABLED_REPORTS` unset or explicitly include your report's file name in it.

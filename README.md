@@ -31,6 +31,7 @@ Create a `.env` file in the root directory of this repository:
 | `EXCLUDE_SWAP_LIBS`         | No                     | File path to TSV file of library pairs to be excluded for swap view                                                                                      | `./exclude_swap_lib.tsv`                              | |
 | `SAMPLES_FOR_PROJECTS`      | No                     | Indicate whether samples from ALL projects should be used, or only samples from ACTIVE projects.                                                         | `ALL`                                                 | `ACTIVE` |
 | `DISPLAY_USER_MESSAGE`      | No                     | A JSON file containing a dictionary of page names (key) and messages to display (value)                                                                  | `./user_messages.json`                                | |
+| `ENABLED_REPORTS`           | No                     | Comma-separated list of view module names (as listed in `ALL_REPORTS` in `pages.py`) to enable on this deployment                                       | `call_ready_wgs,single_lane_wgs,bcl2barcode`           | all reports |
 
 ## Setup on bare metal
 
