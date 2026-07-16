@@ -8,10 +8,6 @@ system.
 # Requirements
 * A built [qc-etl](https://github.com/oicr-gsi/qc-etl) cache directory
 * A running [pinery](https://github.com/oicr-gsi/pinery) install
-* A running MongoDB installation with provenance data and the password for the
-    same. See
-    [Historical Provenance MongoDB](https://wiki.oicr.on.ca/display/GSI/Historical+Provenance+MongoDB)
-    (OICR internal)
 
 
 ## Environment Variables
@@ -20,9 +16,11 @@ Create a `.env` file in the root directory of this repository:
 | Variable name               | Required?              | Description                                                                                                                                              | Example                                               | Default |
 |-----------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------|
 | `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes**                | One or more colon seperated directories where the QC-ETL caches are located. Records will be deduplicated, with records kept from the cache listed first | `/qcetl` or `/qcetl:/qcetl_archive`                    | |
-| `MONGO_URL`                 | **This or MONGO_FILE** | URL to location of MongoDB which holds Pinery data                                                                                                       | `mongodb://user:password@mongo_web_url:27017/db_name` | |
-| `MONGO_FILE`                | **This or MONGO_URL**  | File location of hd5 file holding DataFrame dump                                                                                                         | `/mongo_provenance.hd5`                               | |
+| `MONGO_URL`                 | No                     | URL to location of MongoDB which holds historical Pinery provenance data                                                                                 | `mongodb://user:password@mongo_web_url:27017/db_name` | |
+| `MONGO_FILE`                | No                     | File location of hd5 file holding DataFrame dump                                                                                                          | `/mongo_provenance.hd5`                               | |
 | `PINERY_URL`                | **Yes**                | URL to location of Pinery web service root                                                                                                               | `http://pinery-url:8080/pinery-ws-miso`               | 
+| `PINERY_USERNAME`           | No                     | Username for Pinery, only needed if `MONGO_URL`/`MONGO_FILE` are unset and Pinery sits behind HTTP Basic Auth                                            | `dashi`                                               | |
+| `PINERY_PASSWORD`           | No                     | Password for Pinery, only needed if `MONGO_URL`/`MONGO_FILE` are unset and Pinery sits behind HTTP Basic Auth                                            |                                                        | |
 | `MISO_URL`                  | **Yes**                | URL to location of MISO web service root                                                                                                                 | `http://miso.your.domain/`                            |
 | `LOG_FILE_LOCATION`         | **Yes**                | File path where logs should be written                                                                                                                   | `~/logs/dashi.log`                                    | `./dashi.log` |
 | `BARCODES_STREXPAND`        | **Yes**                | Tab-separated file listing 10X barcodes and 4 sequences for each                                                                                         | `~/barcodes`                                          | |
