@@ -8,11 +8,6 @@ system.
 # Requirements
 * A built [qc-etl](https://github.com/oicr-gsi/qc-etl) cache directory
 * A running [pinery](https://github.com/oicr-gsi/pinery) install
-* Optionally, a running MongoDB installation with provenance data and the password
-    for the same. See
-    [Historical Provenance MongoDB](https://wiki.oicr.on.ca/display/GSI/Historical+Provenance+MongoDB)
-    (OICR internal). If neither `MONGO_URL` nor `MONGO_FILE` is configured, sample
-    provenance is fetched directly from Pinery instead.
 
 
 ## Environment Variables
@@ -21,8 +16,8 @@ Create a `.env` file in the root directory of this repository:
 | Variable name               | Required?              | Description                                                                                                                                              | Example                                               | Default |
 |-----------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------|
 | `GSI_QC_ETL_ROOT_DIRECTORY` | **Yes**                | One or more colon seperated directories where the QC-ETL caches are located. Records will be deduplicated, with records kept from the cache listed first | `/qcetl` or `/qcetl:/qcetl_archive`                    | |
-| `MONGO_URL`                 | No                     | URL to location of MongoDB which holds Pinery data                                                                                                       | `mongodb://user:password@mongo_web_url:27017/db_name` | |
-| `MONGO_FILE`                | No                     | File location of hd5 file holding DataFrame dump                                                                                                         | `/mongo_provenance.hd5`                               | |
+| `MONGO_URL`                 | No                     | URL to location of MongoDB which holds Pinery data. See [Historical Provenance MongoDB](https://wiki.oicr.on.ca/display/GSI/Historical+Provenance+MongoDB) (OICR internal). If neither this nor `MONGO_FILE` is set, sample provenance is fetched directly from Pinery instead | `mongodb://user:password@mongo_web_url:27017/db_name` | |
+| `MONGO_FILE`                | No                     | File location of hd5 file holding DataFrame dump. If neither this nor `MONGO_URL` is set, sample provenance is fetched directly from Pinery instead      | `/mongo_provenance.hd5`                               | |
 | `PINERY_URL`                | **Yes**                | URL to location of Pinery web service root                                                                                                               | `http://pinery-url:8080/pinery-ws-miso`               | 
 | `PINERY_USERNAME`           | No                     | Username for Pinery, if it sits behind HTTP Basic Auth                                                                                                   | `dashi`                                               | |
 | `PINERY_PASSWORD`           | No                     | Password for Pinery, if it sits behind HTTP Basic Auth                                                                                                   |                                                        | |
