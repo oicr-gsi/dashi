@@ -2,7 +2,9 @@ import os
 import pandas
 from pandas import DataFrame, Series
 from typing import List
+import urllib.parse
 
+import requests
 from qcetl import QCETLMultiCache
 import qcetl.column
 import qcetl.common.utility
@@ -139,14 +141,43 @@ else:
     cache = QCETLMultiCache(root_dirs)
 _pinery_client = pinery.PineryClient()
 
-# Mongo Provenance can be loaded from DB or a cached hd5 DataFrame
+_PROVENANCE_ATTRIBUTE_MAPS = [
+    "sampleAttributes", "laneAttributes", "sequencerRunAttributes", "studyAttributes"
+]
+
+
+def _flatten_provenance_record(record):
+    """Unpack a Pinery sample-provenance record's nested attribute maps into flat fields."""
+    flat = {k: v for k, v in record.items() if k not in _PROVENANCE_ATTRIBUTE_MAPS}
+    for attribute_map in _PROVENANCE_ATTRIBUTE_MAPS:
+        for key, values in (record.get(attribute_map) or {}).items():
+            flat[key] = values[0] if values else None
+    return flat
+
+
+def get_pinery_sample_provenance(version="latest"):
+    """Fetch sample provenance directly from Pinery over HTTP, with optional Basic Auth."""
+    url = urllib.parse.urljoin(
+        _pinery_client.pinery_url, "provenance/{}/sample-provenance".format(version)
+    )
+    pinery_user = os.getenv("PINERY_USERNAME")
+    pinery_password = os.getenv("PINERY_PASSWORD")
+    auth = (pinery_user, pinery_password) if pinery_user and pinery_password else None
+    response = requests.get(url, auth=auth)
+    response.raise_for_status()
+    records = [_flatten_provenance_record(r) for r in response.json()]
+    return pinery.add_missing_columns(PINERY_COL, pandas.DataFrame.from_records(records))
+
+
+# Mongo Provenance can be loaded from DB or a cached hd5 DataFrame. If neither is
+# configured, sample provenance is instead fetched directly from Pinery (see above).
 mongo_source = {}
 for s in ["MONGO_URL", "MONGO_FILE"]:
     if os.getenv(s) is not None:
         mongo_source[s] = os.getenv(s)
-if len(mongo_source) != 1:
+if len(mongo_source) > 1:
     raise ValueError(
-        "Expected one source for Mango Provenance. Got {}".format(mongo_source)
+        "Expected at most one source for Mongo Provenance. Got {}".format(mongo_source)
     )
 
 if mongo_source.get("MONGO_URL"):
@@ -155,7 +186,7 @@ if mongo_source.get("MONGO_URL"):
 elif mongo_source.get("MONGO_FILE"):
     _pinery_samples = pinery.load_db("sqlite:///" + mongo_source["MONGO_FILE"])
 else:
-    raise ValueError("No Mongo source specified")
+    _pinery_samples = get_pinery_sample_provenance()
 
 # NaN sample attrs need to be changed to a str.
 # Use the expected default values
