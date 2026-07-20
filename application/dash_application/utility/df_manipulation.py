@@ -3,6 +3,7 @@ import pandas
 from pandas import DataFrame, Series
 from typing import List
 import urllib.parse
+import urllib.request
 
 import requests
 from qcetl import QCETLMultiCache
@@ -141,6 +142,19 @@ else:
     cache = QCETLMultiCache(root_dirs)
 _pinery_client = pinery.PineryClient()
 
+# pinery.PineryClient has no auth support of its own; install a global Basic Auth
+# handler so get_runs/get_instruments_with_models/get_projects are authenticated too.
+_pinery_username = os.getenv("PINERY_USERNAME")
+_pinery_password = os.getenv("PINERY_PASSWORD")
+if _pinery_username and _pinery_password:
+    _pinery_password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+    _pinery_password_mgr.add_password(
+        None, _pinery_client.pinery_url, _pinery_username, _pinery_password
+    )
+    urllib.request.install_opener(
+        urllib.request.build_opener(urllib.request.HTTPBasicAuthHandler(_pinery_password_mgr))
+    )
+
 _PROVENANCE_ATTRIBUTE_MAPS = [
     "sampleAttributes", "laneAttributes", "sequencerRunAttributes", "studyAttributes"
 ]
@@ -173,7 +187,7 @@ def get_pinery_sample_provenance(version="latest"):
 # configured, sample provenance is instead fetched directly from Pinery (see above).
 mongo_source = {}
 for s in ["MONGO_URL", "MONGO_FILE"]:
-    if os.getenv(s) is not None:
+    if os.getenv(s):
         mongo_source[s] = os.getenv(s)
 if len(mongo_source) > 1:
     raise ValueError(
