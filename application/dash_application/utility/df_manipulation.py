@@ -134,9 +134,9 @@ def normalized_merged(df: DataFrame, merged_cols: List[str]):
     })
 
 
-root_dirs = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+root_dirs = os.getenv("QC_ETL_ROOT_DIRECTORY")
 if root_dirs is None:
-    raise KeyError("mandetory env variable GSI_QC_ETL_ROOT_DIRECTORY has not been set")
+    raise KeyError("mandetory env variable QC_ETL_ROOT_DIRECTORY has not been set")
 else:
     root_dirs = root_dirs.split(":")
     cache = QCETLMultiCache(root_dirs)

@@ -9,7 +9,7 @@ import qcetl.api
 
 # Dashi doesn't support displaying status data from multiple pages
 # Only the first source is being displayed
-qc_etl_location = os.getenv("GSI_QC_ETL_ROOT_DIRECTORY")
+qc_etl_location = os.getenv("QC_ETL_ROOT_DIRECTORY")
 qc_etl_location = qc_etl_location.split(":")[0]
 
 # {pagename: Full Text Page Title}
