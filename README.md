@@ -11,7 +11,7 @@ system.
 
 
 ## Environment Variables
-Create a `.env` file in the root directory of this repository.
+Create a `.env` file in the root directory of this repository:
 
 | Variable name               | Required?              | Description                                                                                                                                              | Example                                               | Default |
 |-----------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------|
