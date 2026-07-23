@@ -11,9 +11,7 @@ system.
 
 
 ## Environment Variables
-Create a `.env` file in the root directory of this repository. Paths given below must be
-valid on whichever host actually runs the service — a `.env` copied or bind-mounted in from
-another machine (e.g. a dev laptop) with that machine's paths will not work:
+Create a `.env` file in the root directory of this repository.
 
 | Variable name               | Required?              | Description                                                                                                                                              | Example                                               | Default |
 |-----------------------------|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|---------|
@@ -156,11 +154,3 @@ errors.
  
 
 Gunicorn and Docker dislike each other. Try using `flask run` instead.
-
-**3. App fails to start with `ValueError: No objects to concatenate`**
-
-Several view modules load their QC-ETL dataset(s) at import time, so a single missing or
-empty dataset in the cache directory (`GSI_QC_ETL_ROOT_DIRECTORY`) will crash the entire
-app on startup, not just the page that uses it. Verify the cache directory actually
-contains data for every dataset referenced by your enabled reports, or set
-`ENABLED_REPORTS` to only the reports whose datasets you have.
