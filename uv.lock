@@ -222,7 +222,7 @@ requires-dist = [
     { name = "pandas", specifier = "~=2.2" },
     { name = "prometheus-flask-exporter", specifier = "~=0.22" },
     { name = "python-dotenv", specifier = "~=1.1" },
-    { name = "qc-etl", git = "https://github.com/oicr-gsi/qc-etl.git?rev=423388ac8c07255bc63a89eeb7301d00fb37f573" },
+    { name = "qc-etl", git = "https://github.com/oicr-gsi/qc-etl.git?rev=bed186743883452a8b2a4a39abb9124634882800" },
     { name = "sd-material-ui", specifier = "~=4.6" },
     { name = "werkzeug", specifier = "~=3.1" },
 ]
@@ -774,7 +774,7 @@ wheels = [
 [[package]]
 name = "qc-etl"
 version = "1.47"
-source = { git = "https://github.com/oicr-gsi/qc-etl.git?rev=423388ac8c07255bc63a89eeb7301d00fb37f573#423388ac8c07255bc63a89eeb7301d00fb37f573" }
+source = { git = "https://github.com/oicr-gsi/qc-etl.git?rev=bed186743883452a8b2a4a39abb9124634882800#bed186743883452a8b2a4a39abb9124634882800" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "crimson" },

@@ -16,6 +16,7 @@ ALL_REPORTS = [
     "call_ready_tar",
     "call_ready_rna",
     "call_ready_wgs",
+    "call_ready_wgs_ica",
     # Turn on once GDI-2080 is resoved
     # "runscanner_illumina_flowcell",
     "sample_swaps",
