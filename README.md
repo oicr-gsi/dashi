@@ -38,6 +38,66 @@ Create a `.env` file in the root directory of this repository:
 1. Ensure your `.env` file is populated as per `Environment Variables` above.
 1. `uv run flask run` **OR** `uv run gunicorn --bind 0.0.0.0:5000 wsgi:app`
 
+### Running as a systemd service
+
+To keep Dashi running persistently on a systemd-based Linux host, run it under
+a dedicated system user rather than root.
+
+Create a system user, then give it ownership of wherever Dashi is checked
+out. `/var/lib/dashi` and `/home/ubuntu/dashi` below are just examples —
+replace both with the actual paths on your host:
+```
+sudo useradd --system --create-home --home-dir /var/lib/dashi dashi
+sudo chown -R dashi:dashi /home/ubuntu/dashi
+```
+This user also needs write access to the file specified by
+`LOG_FILE_LOCATION`, and read access to the `QC_ETL_ROOT_DIRECTORY` cache.
+
+With uv installed and `uv sync` already run for that user, and a populated
+`.env` file (see `Environment Variables` above) in the checked-out
+directory, here's an example systemd service. Adjust
+`User`/`Group`/`WorkingDirectory` and the `uv` path to match your
+deployment:
+```
+[Unit]
+Description=Dashi
+After=syslog.target
+After=(your webproxy)
+Wants=(your webproxy)
+
+[Service]
+User=dashi
+Group=dashi
+WorkingDirectory=/home/ubuntu/dashi
+ExecStart=/var/lib/dashi/.local/bin/uv run flask run
+Environment=PATH=/var/lib/dashi/.local/bin:/usr/bin:/bin
+NoNewPrivileges=true
+# Restarts Dashi hourly to refresh its state (qcetl cache, Pinery data, etc.)
+Restart=always
+RuntimeMaxSec=1h
+
+[Install]
+WantedBy=multi-user.target
+```
+If you're deploying Dashi behind a web proxy (e.g. haproxy), replace
+`(your webproxy)` above with its systemd unit name, e.g. `haproxy.service` —
+otherwise remove those two `After`/`Wants` lines.
+
+
+Then load and start it with:
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now dashi
+```
+
+Verify it actually started:
+```
+sudo systemctl status dashi
+sudo journalctl -u dashi -f
+```
+Look for `Running on http://0.0.0.0:5000` in the journal output — that confirms
+Flask actually bound the port, not just that the process launched.
+
 
 ## Set up Docker container
 
