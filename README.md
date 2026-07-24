@@ -41,62 +41,48 @@ Create a `.env` file in the root directory of this repository:
 ### Running as a systemd service
 
 To keep Dashi running persistently on a systemd-based Linux host, run it under
-a dedicated, unprivileged system user rather than root.
+a dedicated system user rather than root.
 
-1. Create a system user with its own home directory (`uv` needs somewhere to
-   install itself) and no login shell, then give it ownership of wherever
-   Dashi is checked out. `/var/lib/dashi` and `/home/ubuntu/dashi` below are
-   just examples — replace both with the actual paths on your host:
-   ```
-   sudo useradd --system --create-home --home-dir /var/lib/dashi --shell /usr/sbin/nologin dashi
-   sudo chown -R dashi:dashi /home/ubuntu/dashi
-   ```
-   This user also needs write access to the file specified by
-   `LOG_FILE_LOCATION`, and read access to the `QC_ETL_ROOT_DIRECTORY`
-   cache.
+Create a system user, then give it ownership of wherever Dashi is checked
+out. `/var/lib/dashi` and `/home/ubuntu/dashi` below are just examples —
+replace both with the actual paths on your host:
+```
+sudo useradd --system --create-home --home-dir /var/lib/dashi dashi
+sudo chown -R dashi:dashi /home/ubuntu/dashi
+```
+This user also needs write access to the file specified by
+`LOG_FILE_LOCATION`, and read access to the `QC_ETL_ROOT_DIRECTORY` cache.
 
-1. Install `uv` as that user, so it lands in `dashi`'s own home/bin rather
-   than root's:
-   ```
-   sudo -u dashi -H bash -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
-   ```
+With uv installed and `uv sync` already run for that user, and a populated
+`.env` file (see `Environment Variables` above) in the checked-out
+directory, here's an example systemd service. Adjust
+`User`/`Group`/`WorkingDirectory` and the `uv` path to match your
+deployment:
+```
+[Unit]
+Description=Dashi
+After=syslog.target
+After=(your webproxy)
+Wants=(your webproxy)
 
-1. Make sure `git` is installed — `uv sync` needs it to pull `qc-etl` directly
-   from its GitHub repo per `pyproject.toml` (e.g. `sudo apt-get install -y
-   git` on Debian/Ubuntu). Then, as the `dashi` user, sync dependencies inside
-   the checked-out directory:
-   ```
-   sudo -u dashi -H bash -c 'cd /home/ubuntu/dashi && ~/.local/bin/uv sync'
-   ```
-   Make sure a populated `.env` file (see `Environment Variables` above) also
-   exists in that directory and is readable by `dashi`.
+[Service]
+User=dashi
+Group=dashi
+WorkingDirectory=/home/ubuntu/dashi
+ExecStart=/var/lib/dashi/.local/bin/uv run flask run
+Environment=PATH=/var/lib/dashi/.local/bin:/usr/bin:/bin
+NoNewPrivileges=true
+# Restarts Dashi hourly to refresh its state (qcetl cache, Pinery data, etc.)
+Restart=always
+RuntimeMaxSec=1h
 
-1. Create a unit file at `/etc/systemd/system/dashi.service`. Adjust
-   `WorkingDirectory` and the `uv` path/home directory to match your
-   deployment, and `User`/`Group` if you named the system user something
-   other than `dashi` in step 1. The `After=haproxy.service` /
-   `Wants=haproxy.service` lines are only relevant if you're running Dashi
-   behind haproxy like this deployment does — remove them if you aren't:
-   ```
-   [Unit]
-   Description=Dashi
-   After=syslog.target
-   After=haproxy.service
-   Wants=haproxy.service
+[Install]
+WantedBy=multi-user.target
+```
+If you're deploying Dashi behind a web proxy (e.g. haproxy), replace
+`(your webproxy)` above with its systemd unit name, e.g. `haproxy.service` —
+otherwise remove those two `After`/`Wants` lines.
 
-   [Service]
-   User=dashi
-   Group=dashi
-   WorkingDirectory=/home/ubuntu/dashi
-   ExecStart=/var/lib/dashi/.local/bin/uv run flask run
-   Environment=PATH=/var/lib/dashi/.local/bin:/usr/bin:/bin
-   NoNewPrivileges=true
-   Restart=always
-   RuntimeMaxSec=1h
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
 
 Then load and start it with:
 ```
