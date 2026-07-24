@@ -13,7 +13,7 @@ from ..utility import sidebar_utils, log_utils
 logger = logging.getLogger(__name__)
 
 """
-Call-Ready WGS report for ICA (UHN) data.
+Call-Ready WGS report for ICA data.
 """
 page_name = "call-ready-wgs-ica"
 title = "Call-Ready WGS (ICA)"
