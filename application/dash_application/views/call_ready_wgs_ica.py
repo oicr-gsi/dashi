@@ -192,7 +192,7 @@ def reshape_ica_df(df, projects, tissue_materials, sample_types, first_sort,
         if sample_types:
             df = df[df[util.sample_type_col].isin(sample_types)]
 
-    sort_by = [first_sort, second_sort]
+    sort_by = [s for s in [first_sort, second_sort] if s]
     df = df.sort_values(by=sort_by)
     df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
     df = fill_in_colour_col(
