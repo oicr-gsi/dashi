@@ -100,6 +100,21 @@ ica_curated_columns = [
     PINERY_COL.TissueType,
     util.sample_type_col,
     ICA_COL.MeanCovGenome,
+    ICA_COL.MeanCovFull,
+    ICA_COL.MeanCovSub,
+    ICA_COL.FailedRegion,
+    ICA_COL.PctGenome,
+    ICA_COL.UniCov,
+    ICA_COL.PctMapped,
+    ICA_COL.PctUnique,
+    ICA_COL.MeanInsertLength,
+    ICA_COL.MedInsertLength,
+    ICA_COL.TiTvRatio,
+    ICA_COL.PctAutosome,
+    ICA_COL.CovUni,
+    ICA_COL.DupDelRatio,
+    ICA_COL.Sex,
+    ICA_COL.ObsSex,
 ]
 
 
@@ -219,8 +234,190 @@ def generate_mean_coverage_genome(df, graph_params):
     )
 
 
+def generate_mean_coverage_full(df, graph_params):
+    return CallReadySubplot(
+        "Mean Coverage (Full)",
+        df,
+        lambda d: d[ICA_COL.MeanCovFull],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_mean_coverage_sub(df, graph_params):
+    return CallReadySubplot(
+        "Mean Coverage (Sub)",
+        df,
+        lambda d: d[ICA_COL.MeanCovSub],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_failed_region(df, graph_params):
+    return CallReadySubplot(
+        "Failed Region",
+        df,
+        lambda d: d[ICA_COL.FailedRegion],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_pct_genome(df, graph_params):
+    return CallReadySubplot(
+        "% Genome",
+        df,
+        lambda d: d[ICA_COL.PctGenome],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_uniformity_coverage(df, graph_params):
+    return CallReadySubplot(
+        "Uniformity of Coverage",
+        df,
+        lambda d: d[ICA_COL.UniCov],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_pct_mapped(df, graph_params):
+    return CallReadySubplot(
+        "% Mapped Reads",
+        df,
+        lambda d: d[ICA_COL.PctMapped],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_pct_unique(df, graph_params):
+    return CallReadySubplot(
+        "% Unique Reads",
+        df,
+        lambda d: d[ICA_COL.PctUnique],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_mean_insert_length(df, graph_params):
+    return CallReadySubplot(
+        "Mean Insert Length",
+        df,
+        lambda d: d[ICA_COL.MeanInsertLength],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_median_insert_length(df, graph_params):
+    return CallReadySubplot(
+        "Median Insert Length",
+        df,
+        lambda d: d[ICA_COL.MedInsertLength],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_ti_tv_ratio(df, graph_params):
+    return CallReadySubplot(
+        "Ti/Tv Ratio",
+        df,
+        lambda d: d[ICA_COL.TiTvRatio],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_pct_autosome_callability(df, graph_params):
+    return CallReadySubplot(
+        "% Autosome Callability",
+        df,
+        lambda d: d[ICA_COL.PctAutosome],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_coverage_uniformity(df, graph_params):
+    return CallReadySubplot(
+        "Coverage Uniformity",
+        df,
+        lambda d: d[ICA_COL.CovUni],
+        "%",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
+def generate_dup_del_ratio(df, graph_params):
+    return CallReadySubplot(
+        "Dup/Del Ratio",
+        df,
+        lambda d: d[ICA_COL.DupDelRatio],
+        "",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"],
+        x_fn=lambda d: d[ICA_COL.DeID],
+    )
+
+
 GRAPHS = [
     generate_mean_coverage_genome,
+    generate_mean_coverage_full,
+    generate_mean_coverage_sub,
+    generate_failed_region,
+    generate_pct_genome,
+    generate_uniformity_coverage,
+    generate_pct_mapped,
+    generate_pct_unique,
+    generate_mean_insert_length,
+    generate_median_insert_length,
+    generate_ti_tv_ratio,
+    generate_pct_autosome_callability,
+    generate_coverage_uniformity,
+    generate_dup_del_ratio,
 ]
 
 
