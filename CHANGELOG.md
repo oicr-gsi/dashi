@@ -17,7 +17,7 @@ and as of version 1.0.0, follows semantic versioning.
   * Add optional `PINERY_USERNAME`/`PINERY_PASSWORD` environment variables for Pinery deployments
   behind HTTP Basic Auth
 
-  * Add `call_ready_wgs_ica` report (POC), showing Mean Coverage (Genome) from the `icametrics` qcetl cache
+  * Add `call_ready_wgs_ica` report (POC), showing all the metrics from the `icametrics` qcetl cache
     
 ## [260601-0944] - 2026-06-01
 
