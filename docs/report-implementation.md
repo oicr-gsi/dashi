@@ -13,7 +13,7 @@ Each report is known by two names, and they must be defined at the top of the py
 page_name = 'single-lane-tar'
 title = "Single-Lane Targeted Sequencing"
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 **page_name** is used in the page URL.
 
@@ -75,7 +75,7 @@ ids = init_ids([
     'data-count'
 ])
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 In the report layout and callbacks, elements are always referred to using `ids['element-name']`. **The exception** is the id 'url', which is defined once for all reports in known_pages_router.
 
@@ -118,7 +118,7 @@ initial["cutoff_pf_clusters"] = 0.01
 cutoff_insert_median_label = sidebar_utils.insert_median_cutoff_label
 initial["cutoff_insert_median"] = 150
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 
 ### DATAVERSION
@@ -144,14 +144,14 @@ def layout(query_string):
     if "req_projects" in query and query["req_projects"]:
         initial["projects"] = query["req_projects"]
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 The layout function then calls a utility function from [plot_builder.py](../application/dash_application/utility/plot_builder.py), based on whether the report is based on single-lane or call-ready data, which filters the dataframe based on the contents of the initial values dictionary. Note that said initial values may have just been overwritten by the process detailed above.
 
 ```python
 df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"], initial["projects"], initial["references"], initial["kits"], initial["library_designs"], initial["start_date"], initial["end_date"], initial["first_sort"], initial["second_sort"], initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 The layout function returns the entire report layout as a nested Dash `Loading` layout element object. For an introduction to these objects see [the Dash tutorial on layouts](https://dash.plotly.com/layout), though note that Dashi requires this layout function rather than just a layout object. 
 
@@ -182,7 +182,7 @@ return core.Loading(fullscreen=True, type="dot", children=[
                 html.Br(),
                 html.Br(),
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 It's a good idea to use an existing report's layout as a reference for the order and functions to call to set up all the sidebar widgets and the graph and tables tabs:
 
@@ -204,7 +204,7 @@ sidebar_utils.select_projects(ids["all-projects"],
     ALL_PROJECTS,
     query["req_projects"]),
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Set up sorts, colour and shape selectors:
 ```python
@@ -225,7 +225,7 @@ sidebar_utils.select_colour_by(ids['colour-by'],
     shape_colour.dropdown(),
     initial["colour_by"]),
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Set up cutoff threshold widgets:
 ```python
@@ -235,7 +235,7 @@ sidebar_utils.cutoff_input(cutoff_pf_clusters_label,
     sidebar_utils.cutoff_input(cutoff_insert_median_label,
     ids['insert-size-median-cutoff'], initial["cutoff_insert_median"]),
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 When the sidebar is done, define the graphs and tables tabs and their contents. The graphs are programmatically generated from the `GRAPHS` list you will define in the 'Graph Generation' section. 
 
@@ -269,7 +269,7 @@ html.Div(className="seven columns",
                 ),
             ])
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 ### init_callbacks()
 Every report requires a function with the signature `def init_callbacks(dash_app)`. This function will contain all of the Dash callbacks you will add in the Interaction section. known_pages_router uses this function to load callbacks from multiple pages at startup.
@@ -292,7 +292,7 @@ bamqc_df = util.df_with_run_info(bamqc_df, PINERY_COL.SequencerRunName)
 
 bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Single-Lane reports use 'ius' pinery function calls, and Call-Ready reports use 'merged' pinery function calls.
 
@@ -315,7 +315,7 @@ def generate_total_clusters(df, graph_params):
         cutoff_lines=[(cutoff_pf_clusters_label, graph_params["cutoff_pf_clusters"])]
     )
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 After all of your graph generation functions are defined, they need to go into a `GRAPHS` list. This list gets passed to a utility function in the layout definition which draws all the graphs in the list onto the page.
 
@@ -330,7 +330,7 @@ GRAPHS = [
     generate_median_insert_size,
 ]
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 ## Interaction 
 
@@ -350,7 +350,7 @@ collapsing_functions = {
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 ### Dash callbacks
 Dash provides interaction with layout elements using callback functions with annotations unique to Dash. These annotations use layout elements `id` attribute to refer to layout elements, which we previously set up using the `ids` dictionary. Dash then provides further attributes per element which can be read or written to, such as `value` or `options`. The general format is:
@@ -384,7 +384,7 @@ In the body of the update_pressed callback, the developer logs the filters curre
 ```python
 log_utils.log_filters(locals(), collapsing_functions, logger)
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Then, the Highlighted Sample sets are merged, and [plot_builder.py](../application/dash_application/utility/plot_builder.py)'s `reshape_single_lane_df` or `reshape_call_ready_df` is called as appropriate, to apply all the filters selected in the sidebar to the dataframe:
 
@@ -395,7 +395,7 @@ elif not searchsample and searchsampleext:
     searchsample = searchsampleext
 df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs, start_date, end_date, first_sort, second_sort, colour_by, shape_by, shape_colour.items_for_df(), searchsample)
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 `df` now contains properly adjusted data, which the developer can use to calculate failure table contents. [table_builder.py](../application/dash_application/utility/table_builder.py) contains utility functions for this purpose:
 
@@ -408,14 +408,14 @@ Source: [single_lane_tar.py](../application/dash_application/views/single_lane_t
     (lambda row, col, cutoff: row[col] < cutoff)),
 ])
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Calculate the set of samples which should now be available through the *Highlight Samples* dropdowns:
 
 ```python
 new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Values for JIRA and MISO buttons are also set up using [sidebar_utils.py](../application/dash_application/utility/sidebar_utils.py) and [df_manipulation.py](../application/dash_application/utility/df_manipulation.py)("util"):
 
@@ -436,7 +436,7 @@ Values for JIRA and MISO buttons are also set up using [sidebar_utils.py](../app
     }]
 )
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
 Finally, return all of the newly-transformed data as a list in the same order they're promised in the Output list in the callback annotation.
 

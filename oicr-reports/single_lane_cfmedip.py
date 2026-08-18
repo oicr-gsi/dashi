@@ -2,12 +2,12 @@ from collections import defaultdict
 
 from dash import html
 from dash.dependencies import Input, Output, State
-from ..dash_id import init_ids
-from ..utility.plot_builder import *
-from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
-from ..utility import df_manipulation as util
-from ..utility import sidebar_utils
-from ..utility import log_utils
+from application.dash_application.dash_id import init_ids
+from application.dash_application.utility.plot_builder import *
+from application.dash_application.utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
+from application.dash_application.utility import df_manipulation as util
+from application.dash_application.utility import sidebar_utils
+from application.dash_application.utility import log_utils
 from qcetl.column import CfMeDipQcColumn, InsertSizeMetricsColumn
 import pinery
 import logging

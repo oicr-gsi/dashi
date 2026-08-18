@@ -5,9 +5,9 @@ from dash import dash_table
 import pinery
 import logging
 
-from ..dash_id import init_ids
-from ..utility import df_manipulation, sidebar_utils
-from ..utility.df_manipulation import CROSSCHECKFINGERPRINT_CALLER_COL as COL
+from application.dash_application.dash_id import init_ids
+from application.dash_application.utility import df_manipulation, sidebar_utils
+from application.dash_application.utility.df_manipulation import CROSSCHECKFINGERPRINT_CALLER_COL as COL
 
 logger = logging.getLogger(__name__)
 

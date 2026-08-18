@@ -120,9 +120,9 @@ def layout(query_string):
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
 ```
-Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+Source: [single_lane_tar.py](../oicr-reports/single_lane_tar.py)
 
-For example, the *layout()* function in [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py) passes the received query from 'search' to *parse_query()* (shown below) then uses the values from the query to change what the page will display before returning the page layout.
+For example, the *layout()* function in [single_lane_tar.py](../oicr-reports/single_lane_tar.py) passes the received query from 'search' to *parse_query()* (shown below) then uses the values from the query to change what the page will display before returning the page layout.
 
 ```python
 def parse_query(query) -> Dict[str, Any]:

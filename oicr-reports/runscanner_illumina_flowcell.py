@@ -2,12 +2,12 @@ from dash import html
 from dash import dcc as core
 from dash.dependencies import Input, Output, State
 
-from ..dash_id import init_ids
-from ..utility import df_manipulation as util
-from ..utility import sidebar_utils
-from ..utility import plot_builder
-from ..utility import log_utils
-from ..utility import table_builder
+from application.dash_application.dash_id import init_ids
+from application.dash_application.utility import df_manipulation as util
+from application.dash_application.utility import sidebar_utils
+from application.dash_application.utility import plot_builder
+from application.dash_application.utility import log_utils
+from application.dash_application.utility import table_builder
 
 import logging
 

@@ -1,39 +1,33 @@
-from collections import namedtuple
 import importlib
 import os
 import sys
 import traceback
+from collections import namedtuple
 
 from dash import html
+
 from .utility import sidebar_utils
 
-prefix = "application.dash_application.views."
-
-# An array of module names as strings, one per page
-# These are for the modules that Dash can graph
-ALL_REPORTS = [
-    "bcl2barcode",
-    "call_ready_tar",
-    "call_ready_rna",
-    "call_ready_wgs",
-    # Turn on once GDI-2080 is resoved
-    # "runscanner_illumina_flowcell",
-    "sample_swaps",
-    "single_lane_tar",
-    "single_lane_rna",
-    "single_lane_wgs",
-    'single_lane_cfmedip'
-]
+# Get the installed pages
+all_reports = []
+_report_sources = os.getenv("REPORT_SOURCES")
+for source in _report_sources.split(","):
+    sys.path.append(source)
+    for (dirpath, _, filenames) in os.walk(source):
+        for filename in filenames:
+            if filename.endswith(".py"):
+                module = importlib.import_module(os.path.join(dirpath, filename))
+                all_reports.append(getattr(module, "page_name").replace("-", "_"))
 
 _enabled_env = os.getenv("ENABLED_REPORTS")
 if _enabled_env:
     _requested = [n.strip() for n in _enabled_env.split(",") if n.strip()]
     for _name in _requested:
-        if _name not in ALL_REPORTS:
+        if _name not in all_reports:
             print("Unknown report name in ENABLED_REPORTS: " + _name, file=sys.stderr)
-    pagenames = [n for n in _requested if n in ALL_REPORTS]
+    pagenames = [n for n in _requested if n in all_reports]
 else:
-    pagenames = ALL_REPORTS
+    pagenames = all_reports
 
 # Emulates the module members that are called in known_pages_router in case of error
 ErrorPage = namedtuple('ErrorPage', 'layout title dataversion page_name init_callbacks')

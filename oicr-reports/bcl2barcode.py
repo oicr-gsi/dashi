@@ -4,8 +4,8 @@ from dash import dash_table
 from dash.dependencies import Input, Output
 import pandas
 
-from ..utility import df_manipulation as util
-from ..dash_id import init_ids
+from application.dash_application.utility import df_manipulation as util
+from application.dash_application.dash_id import init_ids
 
 page_name = "bcl2barcode-index-qc"
 title = "Bcl2Barcode Index QC"

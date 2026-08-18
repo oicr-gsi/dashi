@@ -1,7 +1,7 @@
 from dash import html
 from dash import dcc as core
 from dash.dependencies import Input, Output
-from ..dash_id import init_ids
+from application.dash_application.dash_id import init_ids
 import pandas as pd
 import plotly.graph_objects as go 
 import qcetl.load
