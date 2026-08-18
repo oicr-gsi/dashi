@@ -56,13 +56,13 @@ for source in _report_sources.split(","):
                     pages.append(module)
                 except (IOError, OSError):
                     exception = traceback.format_exc()
-                    jira_summary = "Error loading cache in " + name + " Dashi view"
+                    jira_summary = "Error loading " + filename + " Dashi module"
                     print(exception, file=sys.stderr)
                     pages.append(ErrorPage(
-                        error_div(name, jira_summary, exception),
-                        name,
+                        error_div(filename, jira_summary, exception),
+                        filename,
                         lambda: "Unknown version",
-                        name,
+                        filename,
                         lambda x: None,
                     ))
 
