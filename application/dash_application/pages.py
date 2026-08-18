@@ -40,6 +40,7 @@ def error_div(module_name, jira_error_summary, jira_error_text):
 all_reports = []
 pages = []
 _report_sources = os.getenv("REPORT_SOURCES")
+_enabled_env = os.getenv("ENABLED_REPORTS").split(",")
 
 # Emulates the module members that are called in known_pages_router in case of error
 ErrorPage = namedtuple('ErrorPage', 'layout title dataversion page_name init_callbacks')
@@ -52,8 +53,13 @@ for source in _report_sources.split(","):
                 try:
                     module = importlib.import_module(os.path.join(dirpath, filename))
                     name = getattr(module, "page_name").replace("-", "_")
-                    all_reports.append(name)
-                    pages.append(module)
+                    if name in _enabled_env:
+                        all_reports.append(name)
+                        pages.append(module)
+                    else:
+                        module_name = module.__name__
+                        del module
+                        del sys.modules[module_name]
                 except (IOError, OSError):
                     exception = traceback.format_exc()
                     jira_summary = "Error loading " + filename + " Dashi module"
