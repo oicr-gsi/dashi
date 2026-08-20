@@ -13,9 +13,12 @@ and as of version 1.0.0, follows semantic versioning.
   * Add `ENABLED_REPORTS` environment variable to control which reports are loaded per deployment
   * `MONGO_URL`/`MONGO_FILE` are now optional. If neither is set, sample provenance is fetched
     directly from Pinery instead (for deployments with no Mongo provenance cache).
-    Add optional `PINERY_USERNAME`/`PINERY_PASSWORD` environment variables for Pinery deployments
-    behind HTTP Basic Auth
+    
+  * Add optional `PINERY_USERNAME`/`PINERY_PASSWORD` environment variables for Pinery deployments
+  behind HTTP Basic Auth
 
+  * Add `call_ready_wgs_ica` report (POC), showing all the metrics from the `icametrics` qcetl cache
+    
 ## [260601-0944] - 2026-06-01
 
   * Upgrade Python to 3.13

@@ -25,5 +25,5 @@ dependencies = [
 package = false
 
 [tool.uv.sources]
-qc-etl = { git = "https://github.com/oicr-gsi/qc-etl.git", rev = "423388ac8c07255bc63a89eeb7301d00fb37f573" }
+qc-etl = { git = "https://github.com/oicr-gsi/qc-etl.git", rev = "bed186743883452a8b2a4a39abb9124634882800" }
 
