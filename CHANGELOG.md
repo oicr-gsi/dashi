@@ -18,7 +18,11 @@ and as of version 1.0.0, follows semantic versioning.
   behind HTTP Basic Auth
 
   * Add `call_ready_wgs_ica` report (POC), showing all the metrics from the `icametrics` qcetl cache
-    
+
+  * Add `PENDING_URL_PATTERN` environment variable to control where each library in the landing page's
+    "Processing" list links to. Defaults to the existing OICR JIRA search link; other deployments
+    can configure their own URL pattern with `{lookup_name}`/`{lookup_value}` placeholders.
+
 ## [260601-0944] - 2026-06-01
 
   * Upgrade Python to 3.13

@@ -30,6 +30,7 @@ Create a `.env` file in the root directory of this repository:
 | `SAMPLES_FOR_PROJECTS`      | No                     | Indicate whether samples from ALL projects should be used, or only samples from ACTIVE projects.                                                         | `ALL`                                                 | `ACTIVE` |
 | `DISPLAY_USER_MESSAGE`      | No                     | A JSON file containing a dictionary of page names (key) and messages to display (value)                                                                  | `./user_messages.json`                                | |
 | `ENABLED_REPORTS`           | No                     | Comma-separated list of view module names (as listed in `ALL_REPORTS` in `pages.py`) to enable on this deployment                                       | `call_ready_wgs,single_lane_wgs,bcl2barcode`           | all reports |
+| `PENDING_URL_PATTERN`       | No                     | Full `<a>` tag used for each library in the landing page's "Processing" list, with `{lookup_name}` (library name, shown as the link text) and `{lookup_value}` (id, used only in the href) as placeholders. Must be left **unset** to use the default. | `<a href="https://miso.your.domain/libraryaliquot/{lookup_value}">{lookup_name}</a>` | JIRA OICR search link (`https://jira.oicr.on.ca/issues/?jql=...`) |
 
 ## Setup on bare metal
 

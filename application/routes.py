@@ -12,6 +12,14 @@ import qcetl.api
 qc_etl_location = os.getenv("QC_ETL_ROOT_DIRECTORY")
 qc_etl_location = qc_etl_location.split(":")[0]
 
+# Landing page "processing libraries" links. PENDING_URL_PATTERN is a full
+# <a> tag with a {lookup_value} and {lookup_name} placeholder. 
+# Default to the existing OICR JIRA link.
+pending_url_pattern = os.getenv(
+    "PENDING_URL_PATTERN",
+    '<a href="https://jira.oicr.on.ca/issues/?jql=text%20~%20%22{lookup_name}%22">{lookup_name}</a>'
+)
+
 # {pagename: Full Text Page Title}
 page_info = {}
 for module in pages:
@@ -47,7 +55,9 @@ def index():
     version=version,
     runs=latest_runs,
     projects=project_json,
-    page_info=page_info)
+    page_info=page_info,
+    pending_url_pattern=pending_url_pattern
+    )
 
 
 @app.route('/runs')
@@ -65,7 +75,9 @@ def run_list():
     return render_template('runs.html',
     version=version,
     runs=all_runs,
-    page_info=page_info)
+    page_info=page_info,
+    pending_url_pattern=pending_url_pattern
+    )
 
 
 @app.route('/status')
