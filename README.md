@@ -8,6 +8,12 @@ system.
 # Requirements
 * A built [qc-etl](https://github.com/oicr-gsi/qc-etl) cache directory
 * A running [pinery](https://github.com/oicr-gsi/pinery) install
+* `grouped_run_status.json` and `grouped_project_status.json` in the root of
+  `QC_ETL_ROOT_DIRECTORY` — the landing page (`/`, `/index`, `/runs`) reads
+  these on every request and returns an error if they're missing. See
+  [`scripts/generate_landing_page_status.py`](scripts/generate_landing_page_status.py)
+  for an example of how to generate those scripts; run it on a schedule to keep the
+  landing page up to date.
 
 
 ## Environment Variables
