@@ -8,6 +8,12 @@ system.
 # Requirements
 * A built [qc-etl](https://github.com/oicr-gsi/qc-etl) cache directory
 * A running [pinery](https://github.com/oicr-gsi/pinery) install
+* `grouped_run_status.json` and `grouped_project_status.json` in the root of
+  `QC_ETL_ROOT_DIRECTORY` — the landing page (`/`, `/index`, `/runs`) reads
+  these on every request and returns an error if they're missing. See
+  [`scripts/generate_landing_page_status.py`](scripts/generate_landing_page_status.py)
+  for an example of how to generate those scripts; run it on a schedule to keep the
+  landing page up to date.
 
 
 ## Environment Variables
@@ -30,6 +36,7 @@ Create a `.env` file in the root directory of this repository:
 | `SAMPLES_FOR_PROJECTS`      | No                     | Indicate whether samples from ALL projects should be used, or only samples from ACTIVE projects.                                                         | `ALL`                                                 | `ACTIVE` |
 | `DISPLAY_USER_MESSAGE`      | No                     | A JSON file containing a dictionary of page names (key) and messages to display (value)                                                                  | `./user_messages.json`                                | |
 | `ENABLED_REPORTS`           | No                     | Comma-separated list of view module names (as listed in `ALL_REPORTS` in `pages.py`) to enable on this deployment                                       | `call_ready_wgs,single_lane_wgs,bcl2barcode`           | all reports |
+| `PENDING_URL_PATTERN`       | **Yes**                | Full `<a>` tag used for each library in the landing page's "Processing" list, with `{lookup_name}` (library name, shown as the link text) and `{lookup_value}` (id, used only in the href) as placeholders. | `<a href="https://jira.your.domain/issues/?jql=text%20~%20%22{lookup_name}%22">{lookup_name}</a>` or `<a href="https://miso.your.domain/libraryaliquot/{lookup_value}">{lookup_name}</a>` | |
 
 ## Setup on bare metal
 

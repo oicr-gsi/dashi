@@ -12,6 +12,10 @@ import qcetl.api
 qc_etl_location = os.getenv("QC_ETL_ROOT_DIRECTORY")
 qc_etl_location = qc_etl_location.split(":")[0]
 
+# Landing page "processing libraries" links. PENDING_URL_PATTERN is a full
+# <a> tag with {lookup_name} and {lookup_value} placeholders.
+pending_url_pattern = os.getenv("PENDING_URL_PATTERN")
+
 # {pagename: Full Text Page Title}
 page_info = {}
 for module in pages:
@@ -47,7 +51,9 @@ def index():
     version=version,
     runs=latest_runs,
     projects=project_json,
-    page_info=page_info)
+    page_info=page_info,
+    pending_url_pattern=pending_url_pattern
+    )
 
 
 @app.route('/runs')
@@ -65,7 +71,9 @@ def run_list():
     return render_template('runs.html',
     version=version,
     runs=all_runs,
-    page_info=page_info)
+    page_info=page_info,
+    pending_url_pattern=pending_url_pattern
+    )
 
 
 @app.route('/status')
