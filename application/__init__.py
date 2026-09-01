@@ -18,7 +18,7 @@ def create_app(debug=False):
             instance_relative_config=False)
 
     # Enable cache
-    app.cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+    app.cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
 
     # Enable metrics
     app.metrics = PrometheusMetrics(app)
