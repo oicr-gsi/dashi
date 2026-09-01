@@ -5,6 +5,7 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='bootstrap.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='custom.css') }}" />
     <title>Dashi</title>
   </head>
   <body>
@@ -40,7 +41,7 @@
     </script>
     <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
       <div class="container">
-        <span class="navbar-brand" style="font-size: 14pt;">Dashi</span>
+        <span class="navbar-brand" style="font-size: 22pt;">Dashi</span>
         <div class="collapse navbar-collapse" aria-expanded="false">
           <ul class="ml-auto navbar-nav">
             <li class="dropdown nav-item" style="font-size: 12pt;">
@@ -57,10 +58,10 @@
         </div> <!-- end navbar-collapse-->
       </div>  <!-- end container-->
     </nav>
-    <div class="page-content">
-    <h1>Dashi QC</h1>
-    <h2><u>All Runs</u></h2>
-    <table border=1>
+    <div class="container page-content">
+    <h2 class="mt-4">All Runs</h2>
+    <div class="table-responsive">
+    <table class="table table-bordered table-sm dashi-table">
       <tr>
         <th>Run</th>
         <th>Report</th>
@@ -69,8 +70,9 @@
       </tr>
       {% for run in runs %}
       {% set ns = namespace(first_row=true) %}
+      {% set run_stripe = 'stripe' if loop.index0 is even else '' %}
         {% for page in run["pages"] %}
-       <tr>
+       <tr class="{{ run_stripe }}">
           {% if ns.first_row is sameas true %}
             <td rowspan={{ run["pages"]|length }}> <a id="{{ run["run"] }}">{{ run["run"] }}</a><br /><i>Completed: {{ run["run_completed"] }}</i></td>
           {% endif %}
@@ -84,6 +86,7 @@
         {% endfor %}
       {% endfor %}
     </table>
+    </div>
     <hr />
     <footer id="footer">Dashi version {{version}}</footer>
     </div>
