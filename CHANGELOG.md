@@ -22,6 +22,10 @@ and as of version 1.0.0, follows semantic versioning.
   * Add required `PENDING_URL_PATTERN` environment variable to control where each library in the
     landing page's "Processing" list links to, using `{lookup_name}`/`{lookup_value}` placeholders.
 
+  * Refresh landing/runs page styling
+  * Fix graph colours/shapes sometimes repeating for different selected values
+  * Extend graph colourblind-friendly palette from 6 to 9 colours
+
 ## [260601-0944] - 2026-06-01
 
   * Upgrade Python to 3.13
