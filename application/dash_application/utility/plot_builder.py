@@ -59,15 +59,20 @@ ALL_SYMBOLS = [
 ]
 
 # Colourblind-friendly palette shuffled to make more distinct
-# Source https://personal.sron.nl/~pault/#sec:qualitative
+# Source https://web.archive.org/web/20250226211931/https://personal.sron.nl/~pault/#sec:qualitative
 # Tested with 'A11Y Color Blindness Empathy Test' extension for Firefox
+# Extended from 6 to 9 colours so more values selected at once (e.g. more
+# than 6 projects) can still each get a distinct colour before any repeat.
 COLOURS=[
     '#4477AA',  # blue
     '#CCBB44',  # yellow
     '#66CCEE',  # cyan
     '#EE6677',  # red
     '#228833',  # green
-    '#AA3377'   # purple
+    '#AA3377',  # purple
+    '#332288',  # indigo
+    '#44AA99',  # teal
+    '#999933',  # olive
 ]
 
 CUTOFF_LINE_COLOURS = [
@@ -166,7 +171,8 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     if df.empty:
         df['shape'] = pandas.Series
     else:
-        all_shapes = _get_shapes_for_values(shape_or_colour_values[shape_col])
+        df[shape_col] = df[shape_col].fillna("Unknown")
+        all_shapes = _get_shapes_for_values(df[shape_col])
         # for each row, apply the shape according the shape col's value
         shape_col = df.apply(lambda row: all_shapes.get(row[shape_col]),
                              axis=1)
@@ -198,7 +204,8 @@ def fill_in_colour_col(
     if df.empty:
         df['colour'] = pandas.Series
     else:
-        all_colours = _get_colours_for_values(shape_or_colour_values[colour_col])
+        df[colour_col] = df[colour_col].fillna("Unknown")
+        all_colours = _get_colours_for_values(df[colour_col])
         # for each row, apply the colour according the colour col's value
         colour_col = df.apply(
             lambda row: all_colours.get(row[colour_col]), axis=1
@@ -422,11 +429,12 @@ def _generate_traces(
         cutoff_lines: List[Tuple[str, float]]=[],
         markermode="markers",
         bar_positive=None,
-        bar_negative=None
+        bar_negative=None,
+        use_webgl=True
 ):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     # Webgl bugs occur with error bars: https://github.com/oicr-gsi/dashi/pull/170
-    if bar_positive is None and bar_negative is None:
+    if bar_positive is None and bar_negative is None and use_webgl:
         graph_type = "scattergl"
     else:
         graph_type = "scatter"
@@ -676,10 +684,10 @@ def _define_graph(data, y_fn, bar_positive, bar_negative, hovertext_cols, marker
     )
 
 
-def _get_dict_wrapped(key_list, value_list):
+def _get_dict_wrapped(key_series: pandas.Series, value_list):
     kv_dict = {}
     index = 0
-    for item in key_list:
+    for item in sorted(key_series.dropna().unique()):
         # loop back to beginning of value list
         if index >= len(value_list):
             index = 0
@@ -916,7 +924,8 @@ class Subplot:
             markermode,
             bar_positive,
             bar_negative,
-            log_y
+            log_y,
+            use_webgl=True
     ):
         self.title = title
         self.y_label = y_label
@@ -932,6 +941,7 @@ class Subplot:
         self.bar_negative = bar_negative
         self.log_y = log_y
         self.mode = mode
+        self.use_webgl = use_webgl
 
     def traces(self):
         self.display_x = None
@@ -957,6 +967,7 @@ class Subplot:
             self.markermode,
             self.bar_positive,
             self.bar_negative,
+            self.use_webgl,
         )
 
 
@@ -1011,6 +1022,7 @@ class CallReadySubplot(Subplot):
             bar_positive=None,
             bar_negative=None,
             log_y=False,
+            use_webgl=True,
     ):
         super().__init__(
             title,
@@ -1027,6 +1039,7 @@ class CallReadySubplot(Subplot):
             bar_positive,
             bar_negative,
             log_y,
+            use_webgl,
         )
 
 

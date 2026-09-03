@@ -231,6 +231,7 @@ def generate_mean_coverage_genome(df, graph_params):
             (cutoff_coverage_tumour_label, graph_params["cutoff_coverage_tumour"]),
             (cutoff_coverage_normal_label, graph_params["cutoff_coverage_normal"]),
         ],
+        use_webgl=False,
     )
 
 
@@ -244,6 +245,7 @@ def generate_mean_coverage_full(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -257,6 +259,7 @@ def generate_mean_coverage_sub(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -270,6 +273,7 @@ def generate_failed_region(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -283,6 +287,7 @@ def generate_pct_genome(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -296,6 +301,7 @@ def generate_uniformity_coverage(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -309,6 +315,7 @@ def generate_pct_mapped(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -322,6 +329,7 @@ def generate_pct_unique(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -335,6 +343,7 @@ def generate_mean_insert_length(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -348,6 +357,7 @@ def generate_median_insert_length(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -361,6 +371,7 @@ def generate_ti_tv_ratio(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -374,6 +385,7 @@ def generate_pct_autosome_callability(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -387,6 +399,7 @@ def generate_coverage_uniformity(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -400,6 +413,7 @@ def generate_dup_del_ratio(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 

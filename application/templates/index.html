@@ -5,6 +5,7 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='bootstrap.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='custom.css') }}" />
     <title>Dashi</title>
   </head>
   <body>
@@ -41,7 +42,7 @@
     </script>
     <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-light sticky-top">
       <div class="container">
-        <span class="navbar-brand" style="font-size: 14pt;">Dashi</span>
+        <span class="navbar-brand" style="font-size: 22pt;">Dashi</span>
         <div class="collapse navbar-collapse" aria-expanded="false">
           <ul class="ml-auto navbar-nav">
             <li class="dropdown nav-item" style="font-size: 12pt;">
@@ -58,17 +59,17 @@
         </div> <!-- end navbar-collapse-->
       </div>  <!-- end container-->
     </nav>
-    <div class="page-content">
-    <h1>Dashi QC</h1>
-    <p>Jump:
-      <ul>
-        <li><a href="#runs">Runs (Last 3 Weeks)</a></li>
-        <li><a href="#projects">Projects</a></li>
-      </ul>
-    </p>
-    <a id="runs"><h2><u>Runs (Last 3 Weeks)</u></h2></a>
+    <div class="container page-content">
+    <ul class="list-inline mt-4 mb-4 pb-3 border-bottom">
+      <li class="list-inline-item text-muted">Jump to:</li>
+      <li class="list-inline-item"><a href="#runs">Runs (Last 3 Weeks)</a></li>
+      <li class="list-inline-item text-muted">&middot;</li>
+      <li class="list-inline-item"><a href="#projects">Projects</a></li>
+    </ul>
+    <a id="runs"><h2>Runs (Last 3 Weeks)</h2></a>
     <a href="runs">View All</a><br />
-    <table border=1>
+    <div class="table-responsive">
+    <table class="table table-bordered table-sm dashi-table">
       <tr>
         <th>Run</th>
         <th>Report</th>
@@ -77,8 +78,9 @@
       </tr>
       {% for run in runs %}
       {% set ns = namespace(first_row=true) %}
+      {% set run_stripe = 'stripe' if loop.index0 is even else '' %}
         {% for page in run["pages"] %}
-        <tr>
+        <tr class="{{ run_stripe }}">
           {% if ns.first_row is sameas true %}
             <td rowspan={{ run["pages"]|length }}>{{ run["run"] }}<br /><i>Completed: {{ run["run_completed"] }}</i></td>
           {% endif %}
@@ -92,10 +94,12 @@
         {% endfor %}
       {% endfor %}
     </table>
+    </div>
     <a href="runs">View All</a><br /><br />
 
-    <a id="projects"><h2><u>Projects</u></h2></a>
-    <table border=1>
+    <a id="projects"><h2>Projects</h2></a>
+    <div class="table-responsive">
+    <table class="table table-bordered table-sm dashi-table">
       <tr>
         <th>Project</th>
         <th>Report</th>
@@ -104,8 +108,9 @@
       </tr>
       {% for proj in projects %}
       {% set ns = namespace(first_row=true) %}
+      {% set proj_stripe = 'stripe' if loop.index0 is even else '' %}
         {% for page in proj["pages"] %}
-        <tr>
+        <tr class="{{ proj_stripe }}">
           {% if ns.first_row is sameas true %}
             <td rowspan={{ proj["pages"]|length }}>{{ proj["project"] }}</td>
           {% endif %}
@@ -119,6 +124,7 @@
         {% endfor %}
       {% endfor %}
     </table>
+    </div>
 
     <hr />
     <footer id="footer">Dashi version {{version}}</footer>
