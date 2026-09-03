@@ -171,6 +171,7 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
     if df.empty:
         df['shape'] = pandas.Series
     else:
+        df[shape_col] = df[shape_col].fillna("Unknown")
         present_values = sorted(df[shape_col].dropna().unique())
         all_shapes = _get_shapes_for_values(present_values)
         # for each row, apply the shape according the shape col's value
@@ -204,6 +205,7 @@ def fill_in_colour_col(
     if df.empty:
         df['colour'] = pandas.Series
     else:
+        df[colour_col] = df[colour_col].fillna("Unknown")
         present_values = sorted(df[colour_col].dropna().unique())
         all_colours = _get_colours_for_values(present_values)
         # for each row, apply the colour according the colour col's value
@@ -429,11 +431,12 @@ def _generate_traces(
         cutoff_lines: List[Tuple[str, float]]=[],
         markermode="markers",
         bar_positive=None,
-        bar_negative=None
+        bar_negative=None,
+        use_webgl=True
 ):
     highlight_df = sorted_data.loc[sorted_data['markersize']==BIG_MARKER_SIZE]
     # Webgl bugs occur with error bars: https://github.com/oicr-gsi/dashi/pull/170
-    if bar_positive is None and bar_negative is None:
+    if bar_positive is None and bar_negative is None and use_webgl:
         graph_type = "scattergl"
     else:
         graph_type = "scatter"
@@ -923,7 +926,8 @@ class Subplot:
             markermode,
             bar_positive,
             bar_negative,
-            log_y
+            log_y,
+            use_webgl=True
     ):
         self.title = title
         self.y_label = y_label
@@ -939,6 +943,7 @@ class Subplot:
         self.bar_negative = bar_negative
         self.log_y = log_y
         self.mode = mode
+        self.use_webgl = use_webgl
 
     def traces(self):
         self.display_x = None
@@ -964,6 +969,7 @@ class Subplot:
             self.markermode,
             self.bar_positive,
             self.bar_negative,
+            self.use_webgl,
         )
 
 
@@ -1018,6 +1024,7 @@ class CallReadySubplot(Subplot):
             bar_positive=None,
             bar_negative=None,
             log_y=False,
+            use_webgl=True,
     ):
         super().__init__(
             title,
@@ -1034,6 +1041,7 @@ class CallReadySubplot(Subplot):
             bar_positive,
             bar_negative,
             log_y,
+            use_webgl,
         )
 
 
