@@ -36,7 +36,7 @@ Create a `.env` file in the root directory of this repository:
 | `SAMPLES_FOR_PROJECTS`      | No                     | Indicate whether samples from ALL projects should be used, or only samples from ACTIVE projects.                                                         | `ALL`                                                 | `ACTIVE` |
 | `DISPLAY_USER_MESSAGE`      | No                     | A JSON file containing a dictionary of page names (key) and messages to display (value)                                                                  | `./user_messages.json`                                | |
 | `ENABLED_REPORTS`           | No                     | Comma-separated list of view module names (as listed in `ALL_REPORTS` in `pages.py`) to enable on this deployment                                       | `call_ready_wgs,single_lane_wgs,bcl2barcode`           | all reports |
-| `PENDING_URL_PATTERN`       | **Yes**                | Full `<a>` tag used for each library in the landing page's "Processing" list, with `{lookup_name}` (library name, shown as the link text) and `{lookup_value}` (id, used only in the href) as placeholders. | `<a href="https://jira.your.domain/issues/?jql=text%20~%20%22{lookup_name}%22">{lookup_name}</a>` or `<a href="https://miso.your.domain/libraryaliquot/{lookup_value}">{lookup_name}</a>` | |
+| `PENDING_URL_PATTERN`       | **Yes**                | URL used for each library link in the landing page's "Processing" list, with `{lookup_name}` (library name, shown as the link text) and `{lookup_value}` (id) as placeholders. | `https://jira.your.domain/issues/?jql=text%20~%20%22{lookup_name}%22"` or `"https://miso.your.domain/libraryaliquot/{lookup_value}"` | |
 
 ## Setup on bare metal
 
