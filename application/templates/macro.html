@@ -9,7 +9,7 @@
     <ul style="display: none;">
         {% for proc_lib in processing_libraries %}
             {% set lookup_name, sep, lookup_value = proc_lib.partition(":") %}
-            <li>{{ pending_url_pattern.format(lookup_name=lookup_name, lookup_value=lookup_value) | safe}}</li>
+            <li><a href="{{ pending_url_pattern.format(lookup_name=lookup_name, lookup_value=lookup_value) | safe }}">{{lookup_name}}</a></li>
         {% endfor %}
     </ul>
 {% endmacro %}
