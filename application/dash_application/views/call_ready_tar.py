@@ -237,7 +237,7 @@ shape_colour = ColourShapeCallReady(
     ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_REFERENCES
 )
 TS_DF = add_graphable_cols(
-    TS_DF, initial, shape_colour.items_for_df(), None, REPORT_TYPE["Call-Ready"]
+    TS_DF, initial, None, REPORT_TYPE["Call-Ready"]
 )
 
 SORT_BY = shape_colour.dropdown() + [
@@ -418,7 +418,7 @@ def layout(query_string):
     df = reshape_call_ready_df(TS_DF, initial["projects"], initial["references"],
                                initial["tissue_materials"], initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"], shape_colour.items_for_df(), [])
+                               initial["colour_by"], initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -611,7 +611,7 @@ def init_callbacks(dash_app):
         df = reshape_call_ready_df(TS_DF, projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
-                                   shape_colour.items_for_df(), search_sample)
+                                   search_sample)
         graph_params = {
             "colour_by": colour_by,
             "shape_by": shape_by,
