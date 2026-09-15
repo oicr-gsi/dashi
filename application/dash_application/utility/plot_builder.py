@@ -155,19 +155,17 @@ def create_data_label(
 def add_graphable_cols(
         df: DataFrame,
         graph_params: dict,
-        shape_or_colour: dict,
         highlight_samples: List[str] = None,
         highlight_col: str = REPORT_TYPE["Single-Lane"]
 ) -> DataFrame:
-    df = fill_in_shape_col(df, graph_params["shape_by"], shape_or_colour)
-    df = fill_in_colour_col(df, graph_params["colour_by"], shape_or_colour,
+    df = fill_in_shape_col(df, graph_params["shape_by"])
+    df = fill_in_colour_col(df, graph_params["colour_by"],
                             highlight_samples, highlight_col)
     df = fill_in_size_col(df, highlight_samples, highlight_col)
     return df
 
 
-def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
-        dict):
+def fill_in_shape_col(df: DataFrame, shape_col: str):
     if df.empty:
         df['shape'] = pandas.Series
     else:
@@ -183,7 +181,6 @@ def fill_in_shape_col(df: DataFrame, shape_col: str, shape_or_colour_values:
 def fill_in_colour_col(
         df: DataFrame,
         colour_col: str,
-        shape_or_colour_values: dict,
         highlight_samples: List[str] = None,
         highlight_col: str = REPORT_TYPE["Single-Lane"]
 ):
@@ -193,8 +190,6 @@ def fill_in_colour_col(
     Args:
         df: Input DataFrame
         colour_col: Which column to use to assign colours
-        shape_or_colour_values: For each column that can be used in `colour_col`,
-            provides a list of possible unique values
         highlight_samples: Which data points to highlight
         highlight_col: Which column to use for highlighting samples
 
@@ -245,7 +240,6 @@ def reshape_runscanner_df(
         second_sort,
         colour_by,
         shape_by,
-        shape_or_colour_values,
         searchsample,
 ):
     if not instruments:
@@ -256,9 +250,9 @@ def reshape_runscanner_df(
 
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_shape_col(df, shape_by)
     df = fill_in_colour_col(
-        df, colour_by, shape_or_colour_values, searchsample, RUN_COL.Run
+        df, colour_by, searchsample, RUN_COL.Run
     )
     df = fill_in_size_col(df, searchsample, REPORT_TYPE["RunScanner"])
 
@@ -266,8 +260,7 @@ def reshape_runscanner_df(
 
 
 def reshape_single_lane_df(df, runs, instruments, projects, references, kits, library_designs,
-        start_date, end_date, first_sort, second_sort, colour_by, shape_by,
-        shape_or_colour_values, searchsample) -> DataFrame:
+        start_date, end_date, first_sort, second_sort, colour_by, shape_by, searchsample) -> DataFrame:
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
@@ -293,14 +286,14 @@ def reshape_single_lane_df(df, runs, instruments, projects, references, kits, li
     df = df.sort_values(by=sort_by)
     df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
         [str(x) for x in range(len(df))], sep=".")
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_shape_col(df, shape_by)
+    df = fill_in_colour_col(df, colour_by, searchsample)
     df = fill_in_size_col(df, searchsample)
     return df
 
 
 def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
-        first_sort, second_sort, colour_by, shape_by, shape_or_colour_values, searchsample):
+        first_sort, second_sort, colour_by, shape_by, searchsample):
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
@@ -320,9 +313,9 @@ def reshape_call_ready_df(df, projects, references, tissue_preps, sample_types,
 
     sort_by = [first_sort, second_sort]
     df = df.sort_values(by=sort_by)
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_shape_col(df, shape_by)
     df = fill_in_colour_col(
-        df, colour_by, shape_or_colour_values, searchsample, REPORT_TYPE["Call-Ready"]
+        df, colour_by, searchsample, REPORT_TYPE["Call-Ready"]
     )
     df = fill_in_size_col(df, searchsample, REPORT_TYPE["Call-Ready"])
     return df
