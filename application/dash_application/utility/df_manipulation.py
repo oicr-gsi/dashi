@@ -33,6 +33,7 @@ RNASEQQC2_MERGED_COL = qcetl.column.RnaSeqQc2MergedColumn
 INSTRUMENTS_COL = pinery.column.InstrumentWithModelColumn
 RUN_COL = pinery.column.RunsColumn
 RUNSCANNER_FLOWCELL_COL = qcetl.column.RunScannerFlowcellColumn
+ULTIMA_LIBRARY_METRICS_COL = qcetl.column.UltimaLibraryMetricsColumn
 PROJECT_COL = pinery.column.ProjectsColumn
 FASTQC_COL = qcetl.column.FastqcColumn
 CFMEDIP_COL = qcetl.column.CfMeDipQcColumn
@@ -393,6 +394,11 @@ def get_rnaseqqc2_merged():
     )
 
 
+def get_ultima_library_metrics():
+    df = cache.load_same_version("ultimalibrarymetrics").unique("ultimalibrarymetrics").copy(deep=True)
+    return df.astype({ULTIMA_LIBRARY_METRICS_COL.Run: 'str'})
+
+
 def get_pinery_samples(active_projects_only=True):
     """Get Pinery Sample Provenance DataFrame"""
     samples = _pinery_samples.copy(deep=True)
@@ -439,6 +445,24 @@ def df_with_pinery_samples_ius(df: DataFrame, pinery_samples: DataFrame, ius_col
         how="left",
         left_on=ius_cols,
         right_on=pinery_ius_columns,
+        suffixes=('', right_suffix)
+    )
+    # Drop metrics with no corresponding Pinery data. This should only happen
+    # if data is very old or stale
+    df = df.dropna(subset=[PINERY_COL.SampleName])
+    return df
+
+
+def df_with_pinery_samples_lims_id(df: DataFrame, pinery_samples: DataFrame,
+                                   lims_id_col: str, right_suffix='_q'):
+    """Do a left merge between the DataFrame and modern Pinery samples
+    data on the Pinery LIMS ID (sample provenance ID). Only samples in QC
+    DataFrame will be kept."""
+    df = df.merge(
+        pinery_samples,
+        how="left",
+        left_on=lims_id_col,
+        right_on=PINERY_COL.SampleProvenanceID,
         suffixes=('', right_suffix)
     )
     # Drop metrics with no corresponding Pinery data. This should only happen
@@ -508,6 +532,17 @@ def get_illumina_instruments(df: DataFrame) -> List[str]:
         correct_order.index(i) if i in correct_order else -1)
     return sorted_instruments
 
+def get_ultima_instruments(df: DataFrame) -> List[str]:
+    """
+    Gets a list of Ultima instruments
+
+    :param df: DataFrame (must contain Platform and Model Name columns)
+    :return: list of instruments
+    """
+    instruments = df.loc[df[INSTRUMENTS_COL.Platform] == 'ULTIMA'][
+        INSTRUMENTS_COL.ModelName].sort_values().unique()
+    pruned = [i for i in instruments]
+    return pruned
 
 def unique_set(df: DataFrame, col: str, reverse: bool=False) -> List[str]:
     unique = list(df[col].sort_values().dropna().unique())
