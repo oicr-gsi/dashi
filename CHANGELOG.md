@@ -27,6 +27,8 @@ and as of version 1.0.0, follows semantic versioning.
   * Fix graph colours/shapes sometimes repeating for different selected values
   * Extend graph colourblind-friendly palette from 6 to 9 colours
 
+  * Reload Pinery and report data in the background every hour, so new data appears without restarting Dashi.
+
 ## [260601-0944] - 2026-06-01
 
   * Upgrade Python to 3.13
