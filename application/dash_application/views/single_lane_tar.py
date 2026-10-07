@@ -124,18 +124,41 @@ def get_bamqc_data():
     return bamqc_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
 
 
-(bamqc, DATAVERSION) = get_bamqc_data()
+def refresh():
+    global bamqc, DATAVERSION, ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, \
+        ALL_TISSUE_ORIGIN, ALL_LIBRARY_DESIGNS, ILLUMINA_INSTRUMENT_MODELS, \
+        ALL_SAMPLE_TYPES, ALL_REFERENCES, shape_colour
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(bamqc, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
-ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(bamqc, BAMQC_COL.Reference)
+    bamqc_df, data_version = get_bamqc_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(bamqc_df, PINERY_COL.StudyTitle)
+    runs = util.unique_set(bamqc_df, PINERY_COL.SequencerRunName, True) # reverse order
+    kits = util.unique_set(bamqc_df, PINERY_COL.PrepKit)
+    tissue_materials = util.unique_set(bamqc_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(bamqc_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(bamqc_df, PINERY_COL.LibrarySourceTemplateType)
+    instrument_models = util.get_illumina_instruments(bamqc_df)
+    sample_types = util.unique_set(bamqc_df, util.sample_type_col)
+    references = util.unique_set(bamqc_df, BAMQC_COL.Reference)
+
+    new_shape_colour = ColourShapeSingleLane(
+        projects, runs, kits, tissue_materials, tissue_origin,
+        library_designs, references,
+    )
+    # Add shape, colour, and size cols to dataframe
+    bamqc_df = add_graphable_cols(bamqc_df, initial)
+
+    bamqc, DATAVERSION = bamqc_df, data_version
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS = projects, runs, kits
+    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN = tissue_materials, tissue_origin
+    ALL_LIBRARY_DESIGNS, ILLUMINA_INSTRUMENT_MODELS = library_designs, instrument_models
+    ALL_SAMPLE_TYPES, ALL_REFERENCES = sample_types, references
+    shape_colour = new_shape_colour
+
+
+refresh()
+
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -175,13 +198,6 @@ tar_curated_columns = [
     special_cols["Unmapped Reads (%)"],
     special_cols["Non-Primary Reads (%)"],
 ]
-
-shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
-    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
-)
-# Add shape, colour, and size cols to dataframe
-bamqc = add_graphable_cols(bamqc, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Clusters",

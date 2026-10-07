@@ -25,14 +25,23 @@ ids = init_ids(
     ]
 )
 
-DATAVERSION = util.cache.versions(["bcl2barcodecaller"])
-known = util.get_bcl2barcodecaller_known()
-unknown = util.get_bcl2barcodecaller_unknown()
-summary = util.get_bcl2barcodecaller_summary()
+def refresh():
+    global DATAVERSION, known, unknown, summary, all_runs
 
-# In case there is a run that is all unknown barcodes
-all_runs = pandas.concat([known[util.BCL_KNOWN.Run], unknown[util.BCL_UNKNOWN.Run]]).unique()
-all_runs = sorted(all_runs, reverse=True)
+    data_version = util.cache.versions(["bcl2barcodecaller"])
+    known_df = util.get_bcl2barcodecaller_known()
+    unknown_df = util.get_bcl2barcodecaller_unknown()
+    summary_df = util.get_bcl2barcodecaller_summary()
+
+    # In case there is a run that is all unknown barcodes
+    runs = pandas.concat([known_df[util.BCL_KNOWN.Run], unknown_df[util.BCL_UNKNOWN.Run]]).unique()
+    runs = sorted(runs, reverse=True)
+
+    DATAVERSION, known, unknown, summary, all_runs = data_version, known_df, unknown_df, summary_df, runs
+
+
+refresh()
+
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": util.BCL_KNOWN.LibraryAlias},

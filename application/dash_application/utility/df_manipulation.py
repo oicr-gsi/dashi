@@ -194,62 +194,11 @@ if len(mongo_source) > 1:
         "Expected at most one source for Mongo Provenance. Got {}".format(mongo_source)
     )
 
+_provenance_client = None
 if mongo_source.get("MONGO_URL"):
     _provenance_client = pinery.PineryProvenanceClient(provider="pinery-miso-v7")
-    _pinery_samples = _provenance_client.get_all_samples()
-elif mongo_source.get("MONGO_FILE"):
-    _pinery_samples = pinery.load_db("sqlite:///" + mongo_source["MONGO_FILE"])
-else:
-    _pinery_samples = get_pinery_sample_provenance()
 
-# NaN sample attrs need to be changed to a str.
-# Use the expected default values
-_pinery_samples = _pinery_samples.fillna({
-    PINERY_COL.PrepKit: "Unspecified",
-    PINERY_COL.LibrarySourceTemplateType: "NN",
-    PINERY_COL.TissueOrigin: "nn",
-    PINERY_COL.TissueType: "n",
-    PINERY_COL.TissuePreparation: "Unspecified",
-    PINERY_COL.GroupID: "",
-    PINERY_COL.GroupIDDescription: "",
-    PINERY_COL.Institute: "Unspecified",
-    PINERY_COL.SequencingControlType: "Sample"
-})
-# Cast the primary key/join columns to explicit types now that the NA values are filled in
-_pinery_samples = _pinery_samples.astype({
-    PINERY_COL.SequencerRunName: 'str',
-    PINERY_COL.LaneNumber: 'int64',
-    PINERY_COL.IUSTag: 'str',
-    PINERY_COL.GroupID: 'str'})
-# Fill in the "Sample Type" column (Tumor/Reference/Blood/Unknown)
-_pinery_samples[sample_type_col] = _pinery_samples.apply(label_sample_type, axis=1)
-# Drop columns we definitely don't care about.
-_pinery_samples = _pinery_samples.drop(axis=1, columns=[
-    PINERY_COL.NanodropConcentration,
-    PINERY_COL.QubitConcentration,
-    PINERY_COL.RunIDandPosition,
-    PINERY_COL.TubeID,
-    PINERY_COL.PoolName,
-    PINERY_COL.STRResult,
-    PINERY_COL.QubitConcentration,
-    PINERY_COL.Version,
-    PINERY_COL.NanodropConcentration,
-    PINERY_COL.Purpose,
-    PINERY_COL.SequencingParameters,
-    PINERY_COL.GroupIDDescription,
-    PINERY_COL.CreateDate,
-    PINERY_COL.TemplateType,
-    PINERY_COL.RunBaseMask,
-    PINERY_COL.RunDir,
-    PINERY_COL.LastModified,
-    PINERY_COL.SequencerRunPlatformModel,
-    PINERY_COL.ReceiveDate,
-    PINERY_COL.TissueRegion,
-    PINERY_COL.WorkflowType,
-    PINERY_COL.Skip,
-    ])
-
-# Helper function for the _pinery_merged_samples aggregation below.
+# Helper function for the merged samples aggregation in _load_pinery.
 # Takes a list of values and converts it to a comma-separated string.
 unique_list = lambda vals: ", ".join(str(val) for val in sorted(set(vals)) if (val and val != "nan"))
 
@@ -273,42 +222,110 @@ retain_columns_after_merge = {
     PINERY_COL.TargetedResequencing: unique_list,
     PINERY_COL.UMIs: unique_list,
 }
-    
-"""
-Converts the _pinery_samples data, where each row represents a single sequenced sample,
-to a dataframe where each row represents a "merged library" (rows are joined on the following
-PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
-LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
-data to Pinery data.
-1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
-2. Group the data by "merged library" columns
-3. Aggregate and transform the columns we want to keep for Dashi
-4. Reset the index to flatten the row
-"""
-_pinery_merged_samples = _pinery_samples.fillna('').groupby(by=pinery_merged_columns).agg(retain_columns_after_merge).reset_index()
-# Fill in the "Merged Library" column (used as the x-axis for merged graphs)
-_pinery_merged_samples[ml_col] = _pinery_merged_samples.apply(
-    label_merged_library, axis=1)
 
-_runs = _pinery_client.get_runs(False).runs
-_runs[pinery.column.RunsColumn.StartDate] = pandas.to_datetime(
-    _runs[pinery.column.RunsColumn.StartDate], utc=True)
-_runs[pinery.column.RunsColumn.CompletionDate] = pandas.to_datetime(
-    _runs[pinery.column.RunsColumn.CompletionDate], utc=True)
 
-_instruments = _pinery_client.get_instruments_with_models()
-_projects = _pinery_client.get_projects()
+def _load_pinery():
+    if _provenance_client is not None:
+        samples = _provenance_client.get_all_samples()
+    elif mongo_source.get("MONGO_FILE"):
+        samples = pinery.load_db("sqlite:///" + mongo_source["MONGO_FILE"])
+    else:
+        samples = get_pinery_sample_provenance()
 
-_active_projects = _projects.loc[_projects[PROJECT_COL.IsActive]]
-_active_projects = _active_projects[PROJECT_COL.Name].unique()
+    # NaN sample attrs need to be changed to a str.
+    # Use the expected default values
+    samples = samples.fillna({
+        PINERY_COL.PrepKit: "Unspecified",
+        PINERY_COL.LibrarySourceTemplateType: "NN",
+        PINERY_COL.TissueOrigin: "nn",
+        PINERY_COL.TissueType: "n",
+        PINERY_COL.TissuePreparation: "Unspecified",
+        PINERY_COL.GroupID: "",
+        PINERY_COL.GroupIDDescription: "",
+        PINERY_COL.Institute: "Unspecified",
+        PINERY_COL.SequencingControlType: "Sample"
+    })
+    # Cast the primary key/join columns to explicit types now that the NA values are filled in
+    samples = samples.astype({
+        PINERY_COL.SequencerRunName: 'str',
+        PINERY_COL.LaneNumber: 'int64',
+        PINERY_COL.IUSTag: 'str',
+        PINERY_COL.GroupID: 'str'})
+    # Fill in the "Sample Type" column (Tumor/Reference/Blood/Unknown)
+    samples[sample_type_col] = samples.apply(label_sample_type, axis=1)
+    # Drop columns we definitely don't care about.
+    samples = samples.drop(axis=1, columns=[
+        PINERY_COL.NanodropConcentration,
+        PINERY_COL.QubitConcentration,
+        PINERY_COL.RunIDandPosition,
+        PINERY_COL.TubeID,
+        PINERY_COL.PoolName,
+        PINERY_COL.STRResult,
+        PINERY_COL.QubitConcentration,
+        PINERY_COL.Version,
+        PINERY_COL.NanodropConcentration,
+        PINERY_COL.Purpose,
+        PINERY_COL.SequencingParameters,
+        PINERY_COL.GroupIDDescription,
+        PINERY_COL.CreateDate,
+        PINERY_COL.TemplateType,
+        PINERY_COL.RunBaseMask,
+        PINERY_COL.RunDir,
+        PINERY_COL.LastModified,
+        PINERY_COL.SequencerRunPlatformModel,
+        PINERY_COL.ReceiveDate,
+        PINERY_COL.TissueRegion,
+        PINERY_COL.WorkflowType,
+        PINERY_COL.Skip,
+        ])
 
-_runs_with_instruments = _runs.copy(deep=True).merge(
-    _instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
-                  INSTRUMENTS_COL.InstrumentID]],
-    how="left",
-    left_on=[RUN_COL.InstrumentID],
-    right_on=[INSTRUMENTS_COL.InstrumentID]
-)
+    # Convert the samples data, where each row represents a single sequenced sample,
+    # to a dataframe where each row represents a "merged library" (rows are joined on the following
+    # PINERY_COL columns: RootSampleName (Donor), GroupID, TissueOrigin, TissueType,
+    # LibrarySourceTemplateType). This multi-column index will be used to join full-depth QC
+    # data to Pinery data.
+    # 1. Convert NA values to empty string (because our QC data seems to use '' instead of NA for Group ID)
+    # 2. Group the data by "merged library" columns
+    # 3. Aggregate and transform the columns we want to keep for Dashi
+    # 4. Reset the index to flatten the row
+    merged_samples = samples.fillna('').groupby(by=pinery_merged_columns).agg(retain_columns_after_merge).reset_index()
+    # Fill in the "Merged Library" column (used as the x-axis for merged graphs)
+    merged_samples[ml_col] = merged_samples.apply(
+        label_merged_library, axis=1)
+
+    runs = _pinery_client.get_runs(False).runs
+    runs[pinery.column.RunsColumn.StartDate] = pandas.to_datetime(
+        runs[pinery.column.RunsColumn.StartDate], utc=True)
+    runs[pinery.column.RunsColumn.CompletionDate] = pandas.to_datetime(
+        runs[pinery.column.RunsColumn.CompletionDate], utc=True)
+
+    instruments = _pinery_client.get_instruments_with_models()
+    projects = _pinery_client.get_projects()
+
+    active_projects = projects.loc[projects[PROJECT_COL.IsActive]]
+    active_projects = active_projects[PROJECT_COL.Name].unique()
+
+    runs_with_instruments = runs.copy(deep=True).merge(
+        instruments[[INSTRUMENTS_COL.ModelName, INSTRUMENTS_COL.Platform,
+                     INSTRUMENTS_COL.InstrumentID]],
+        how="left",
+        left_on=[RUN_COL.InstrumentID],
+        right_on=[INSTRUMENTS_COL.InstrumentID]
+    )
+
+    return samples, merged_samples, runs_with_instruments, active_projects
+
+
+def refresh_pinery():
+    global _pinery_samples, _pinery_merged_samples, _runs_with_instruments, _active_projects
+    samples, merged_samples, runs_with_instruments, active_projects = _load_pinery()
+    _pinery_samples = samples
+    _pinery_merged_samples = merged_samples
+    _runs_with_instruments = runs_with_instruments
+    _active_projects = active_projects
+
+
+refresh_pinery()
 
 
 def get_bcl2barcodecaller_known():
