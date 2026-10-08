@@ -182,7 +182,7 @@ def generate_mean_read_length(current_data, graph_params):
 
 def generate_pf_barcode_reads(current_data, graph_params):
     return SingleLaneSubplot(
-        "PF Barcode Reads",
+        "Barcode Reads (Passed Filter)",
         current_data,
         lambda d: d[ULTIMA_COL.PFBarcodeReads],
         "Reads",
