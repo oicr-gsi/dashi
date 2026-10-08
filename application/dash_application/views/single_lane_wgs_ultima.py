@@ -113,6 +113,8 @@ ultima_curated_columns = [
     ULTIMA_COL.PineryLimsID,
     ULTIMA_COL.MeanCoverage,
     ULTIMA_COL.PercentDuplicates,
+    ULTIMA_COL.MeanReadLength,
+    ULTIMA_COL.PFBarcodeReads,
 ]
 
 shape_colour = ColourShapeSingleLane(
@@ -129,6 +131,10 @@ SORT_BY = sidebar_utils.default_first_sort + [
      "value": ULTIMA_COL.MeanCoverage},
     {"label": "Duplicates",
      "value": ULTIMA_COL.PercentDuplicates},
+    {"label": "Mean Read Length",
+     "value": ULTIMA_COL.MeanReadLength},
+    {"label": "PF Barcode Reads",
+     "value": ULTIMA_COL.PFBarcodeReads},
     {"label": "Sample Name",
      "value": PINERY_COL.SampleName},
     {"label": "Run Start Date",
@@ -162,9 +168,35 @@ def generate_percent_duplicates(current_data, graph_params):
     )
 
 
+def generate_mean_read_length(current_data, graph_params):
+    return SingleLaneSubplot(
+        "Mean Read Length",
+        current_data,
+        lambda d: d[ULTIMA_COL.MeanReadLength],
+        "Base Pairs",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
+
+
+def generate_pf_barcode_reads(current_data, graph_params):
+    return SingleLaneSubplot(
+        "PF Barcode Reads",
+        current_data,
+        lambda d: d[ULTIMA_COL.PFBarcodeReads],
+        "Reads",
+        graph_params["colour_by"],
+        graph_params["shape_by"],
+        graph_params["shownames_val"]
+    )
+
+
 GRAPHS = [
     generate_mean_coverage,
     generate_percent_duplicates,
+    generate_mean_read_length,
+    generate_pf_barcode_reads,
 ]
 
 def dataversion():

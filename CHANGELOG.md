@@ -23,8 +23,8 @@ and as of version 1.0.0, follows semantic versioning.
   * Add required `PENDING_URL_PATTERN` environment variable to control where each library in the
     landing page's "Processing" list links to, using `{lookup_name}`/`{lookup_value}` placeholders.
 
-  * Add `single_lane_ultima` report, showing Mean Coverage and Duplicates (%) from the
-    `ultimalibrarymetrics` qcetl cache, joined to Pinery by LIMS ID
+  * Add `single_lane_wgs_ultima` report, showing Mean Coverage, Duplicates (%), Mean Read
+    Length, and PF Barcode Reads from the `ultimalibrarymetrics` qcetl cache, joined to Pinery by LIMS ID
 
 ## [260601-0944] - 2026-06-01
 

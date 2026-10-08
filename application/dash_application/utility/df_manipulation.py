@@ -541,8 +541,7 @@ def get_ultima_instruments(df: DataFrame) -> List[str]:
     """
     instruments = df.loc[df[INSTRUMENTS_COL.Platform] == 'ULTIMA'][
         INSTRUMENTS_COL.ModelName].sort_values().unique()
-    pruned = [i for i in instruments]
-    return pruned
+    return list(instruments)
 
 def unique_set(df: DataFrame, col: str, reverse: bool=False) -> List[str]:
     unique = list(df[col].sort_values().dropna().unique())
