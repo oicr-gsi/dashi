@@ -211,7 +211,7 @@ shape_colour = ColourShapeCallReady(
     ALL_REFERENCES
 )
 WGS_DF = add_graphable_cols(
-    WGS_DF, initial, shape_colour.items_for_df(), None, REPORT_TYPE["Call-Ready"]
+    WGS_DF, initial, None, REPORT_TYPE["Call-Ready"]
 )
 
 SORT_BY = shape_colour.dropdown() + [
@@ -357,7 +357,7 @@ def layout(query_string):
                                initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
                                initial["colour_by"],
-                               initial["shape_by"], shape_colour.items_for_df(),
+                               initial["shape_by"],
                                [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
@@ -569,7 +569,7 @@ def init_callbacks(dash_app):
         df = reshape_call_ready_df(WGS_DF, projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
-                                   shape_colour.items_for_df(), search_sample)
+                                   search_sample)
 
         graph_params = {
             "colour_by": colour_by,

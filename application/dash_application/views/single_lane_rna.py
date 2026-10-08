@@ -190,7 +190,7 @@ shape_colour = ColourShapeSingleLane(
 )
 
 # Add shape, colour, and size cols to RNA dataframe
-RNA_DF = add_graphable_cols(RNA_DF, initial, shape_colour.items_for_df())
+RNA_DF = add_graphable_cols(RNA_DF, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Clusters",
@@ -364,7 +364,7 @@ def layout(query_string):
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], shape_colour.items_for_df(), [])
+                                initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
@@ -570,7 +570,7 @@ def init_callbacks(dash_app):
             searchsample = searchsampleext
         df = reshape_single_lane_df(RNA_DF, runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
-                                    shape_by, shape_colour.items_for_df(), searchsample)
+                                    shape_by, searchsample)
 
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
 

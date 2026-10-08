@@ -25,6 +25,9 @@ and as of version 1.0.0, follows semantic versioning.
 
   * Add `single_lane_wgs_ultima` report, showing Mean Coverage, Duplicates (%), Mean Read
     Length, and PF Barcode Reads from the `ultimalibrarymetrics` qcetl cache, joined to Pinery by LIMS ID
+  * Refresh landing/runs page styling
+  * Fix graph colours/shapes sometimes repeating for different selected values
+  * Extend graph colourblind-friendly palette from 6 to 9 colours
 
 ## [260601-0944] - 2026-06-01
 

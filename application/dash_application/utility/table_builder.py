@@ -24,7 +24,8 @@ def build_table(table_id: str, columns: List[str], df: DataFrame):
             }
         ],
         style_header={
-            "backgroundColor": "rgb(230, 230, 230)",
+            "backgroundColor": "#eef3f9",
+            "color": "#35618f",
             "fontWeight": "bold"
         }
     )
@@ -129,7 +130,8 @@ def cutoff_table(table_id: str, data: DataFrame, limits: List[Tuple[str, str,
             } for (name, *_) in limits),
         ],
         style_header={
-            "backgroundColor": "rgb(230, 230, 230)",
+            "backgroundColor": "#eef3f9",
+            "color": "#35618f",
             "fontWeight": "bold"
         }
     )

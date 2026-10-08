@@ -1,0 +1,61 @@
+:root {
+  --dashi-blue-darkest: #2c4a6e;
+  --dashi-blue-dark: #35618f;
+  --dashi-blue: #4a6fa5;
+  --dashi-blue-light: #7996bb;
+  --dashi-blue-bg: #eef3f9;
+  --dashi-blue-border: #cddced;
+}
+
+.navbar-brand {
+  color: var(--dashi-blue-darkest) !important;
+  font-weight: 700;
+}
+
+h1 {
+  color: var(--dashi-blue-dark);
+}
+
+h2 {
+  color: var(--dashi-blue);
+}
+
+table th {
+  background-color: var(--dashi-blue-bg);
+  color: var(--dashi-blue-dark);
+  font-weight: 600;
+  border-color: var(--dashi-blue-border) !important;
+}
+
+.dashi-table tr.stripe {
+  background-color: #f7fafc;
+}
+
+.toggle_processing {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0 0.55em;
+  color: var(--dashi-blue-dark);
+  background-color: var(--dashi-blue-bg);
+  border: 1px solid var(--dashi-blue-border);
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toggle_processing:hover {
+  background-color: var(--dashi-blue-border);
+  border-color: var(--dashi-blue-light);
+  color: var(--dashi-blue-darkest);
+}
+
+.dashi-table td:first-child,
+.dashi-table th:first-child {
+  word-break: break-all;
+  max-width: 260px;
+}
+
+.dashi-table td:not(:first-child),
+.dashi-table th:not(:first-child) {
+  white-space: nowrap;
+}

@@ -171,7 +171,7 @@ shape_colour = ColourShapeCfMeDIP(
     ALL_REFERENCES
 )
 # Add shape, colour, and size cols to dataframe 
-cfmedip = add_graphable_cols(cfmedip, initial, shape_colour.items_for_df())
+cfmedip = add_graphable_cols(cfmedip, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Project",
@@ -361,7 +361,7 @@ def layout(query_string):
                                 initial["institutes"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
                                 initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], shape_colour.items_for_df(), [])
+                                initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -580,7 +580,7 @@ def init_callbacks(dash_app):
             searchsample = searchsampleext
         df = reshape_cfmedip_df(cfmedip, runs, instruments, projects, references, kits, institutes,
                                     start_date, end_date, first_sort, second_sort, colour_by,
-                                    shape_by, shape_colour.items_for_df(), searchsample)
+                                    shape_by, searchsample)
 
         (approve_run_href, approve_run_style) = sidebar_utils.approve_run_url(runs)
 
@@ -699,7 +699,7 @@ def init_callbacks(dash_app):
 
 def reshape_cfmedip_df(df, runs, instruments, projects, references, kits, institutes,
         start_date, end_date, first_sort, second_sort, colour_by, shape_by,
-        shape_or_colour_values, searchsample) -> DataFrame:
+        searchsample) -> DataFrame:
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
@@ -725,7 +725,7 @@ def reshape_cfmedip_df(df, runs, instruments, projects, references, kits, instit
     df = df.sort_values(by=sort_by)
     df["SampleNameExtra"] = df[PINERY_COL.SampleName].str.cat(
         [str(x) for x in range(len(df))], sep=".")
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
-    df = fill_in_colour_col(df, colour_by, shape_or_colour_values, searchsample)
+    df = fill_in_shape_col(df, shape_by)
+    df = fill_in_colour_col(df, colour_by, searchsample)
     df = fill_in_size_col(df, searchsample)
     return df

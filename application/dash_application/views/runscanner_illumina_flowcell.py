@@ -67,7 +67,7 @@ INITIAL = {
 }
 
 # Add shape col to WG dataframe
-DF = plot_builder.add_graphable_cols(DF, INITIAL, shape_colour.items_for_df())
+DF = plot_builder.add_graphable_cols(DF, INITIAL)
 
 SORT_BY = [
     {"label": "Instruments", "value": INSTRUMENT_COL.ModelName},
@@ -114,7 +114,6 @@ def layout(_query_string):
         INITIAL["second_sort"],
         INITIAL["colour_by"],
         INITIAL["shape_by"],
-        shape_colour.items_for_df(),
         INITIAL["shownames_val"],
     )
 
@@ -238,7 +237,6 @@ def init_callbacks(dash_app):
             second_sort,
             colour_by,
             shape_by,
-            shape_colour.items_for_df(),
             highlighted_runs,
         )
 

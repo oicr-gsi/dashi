@@ -183,7 +183,7 @@ shape_colour = ColourShapeICA(
     ALL_PROJECTS, ALL_SAMPLE_TYPES, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN
 )
 ICA_DF = add_graphable_cols(
-    ICA_DF, initial, shape_colour.items_for_df(), None, ICA_COL.DeID
+    ICA_DF, initial, None, ICA_COL.DeID
 )
 
 SORT_BY = shape_colour.dropdown() + [
@@ -192,7 +192,7 @@ SORT_BY = shape_colour.dropdown() + [
 
 
 def reshape_ica_df(df, projects, tissue_materials, sample_types, first_sort,
-        second_sort, colour_by, shape_by, shape_or_colour_values, searchsample):
+        second_sort, colour_by, shape_by, searchsample):
     """
     This performs dataframe manipulation based on the input filters, and gets the data into a
     graph-friendly form.
@@ -209,9 +209,9 @@ def reshape_ica_df(df, projects, tissue_materials, sample_types, first_sort,
 
     sort_by = [s for s in [first_sort, second_sort] if s]
     df = df.sort_values(by=sort_by)
-    df = fill_in_shape_col(df, shape_by, shape_or_colour_values)
+    df = fill_in_shape_col(df, shape_by)
     df = fill_in_colour_col(
-        df, colour_by, shape_or_colour_values, searchsample, ICA_COL.DeID
+        df, colour_by, searchsample, ICA_COL.DeID
     )
     df = fill_in_size_col(df, searchsample, ICA_COL.DeID)
     return df
@@ -231,6 +231,7 @@ def generate_mean_coverage_genome(df, graph_params):
             (cutoff_coverage_tumour_label, graph_params["cutoff_coverage_tumour"]),
             (cutoff_coverage_normal_label, graph_params["cutoff_coverage_normal"]),
         ],
+        use_webgl=False,
     )
 
 
@@ -244,6 +245,7 @@ def generate_mean_coverage_full(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -257,6 +259,7 @@ def generate_mean_coverage_sub(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -270,6 +273,7 @@ def generate_failed_region(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -283,6 +287,7 @@ def generate_pct_genome(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -296,6 +301,7 @@ def generate_uniformity_coverage(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -309,6 +315,7 @@ def generate_pct_mapped(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -322,6 +329,7 @@ def generate_pct_unique(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -335,6 +343,7 @@ def generate_mean_insert_length(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -348,6 +357,7 @@ def generate_median_insert_length(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -361,6 +371,7 @@ def generate_ti_tv_ratio(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -374,6 +385,7 @@ def generate_pct_autosome_callability(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -387,6 +399,7 @@ def generate_coverage_uniformity(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -400,6 +413,7 @@ def generate_dup_del_ratio(df, graph_params):
         graph_params["shape_by"],
         graph_params["shownames_val"],
         x_fn=lambda d: d[ICA_COL.DeID],
+        use_webgl=False,
     )
 
 
@@ -432,7 +446,7 @@ def layout(query_string):
     df = reshape_ica_df(ICA_DF, initial["projects"], initial["tissue_materials"],
                         initial["sample_types"], initial["first_sort"],
                         initial["second_sort"], initial["colour_by"],
-                        initial["shape_by"], shape_colour.items_for_df(), [])
+                        initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -593,7 +607,7 @@ def init_callbacks(dash_app):
 
         df = reshape_ica_df(ICA_DF, projects, tissue_materials, sample_types,
                             first_sort, second_sort, colour_by, shape_by,
-                            shape_colour.items_for_df(), search_sample)
+                             search_sample)
 
         graph_params = {
             "colour_by": colour_by,
