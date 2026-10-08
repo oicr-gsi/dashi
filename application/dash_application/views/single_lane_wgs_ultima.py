@@ -42,6 +42,7 @@ ids = init_ids([
     'show-data-labels',
     'show-all-data-labels',
     "date-range",
+    "percent-duplication-cutoff",
 
     #Graphs
     "graphs",
@@ -60,6 +61,10 @@ initial = get_initial_single_lane_values()
 
 # Set additional initial values for dropdown menus
 initial["second_sort"] = ULTIMA_COL.MeanCoverage
+
+# Set initial values for graph cutoff lines
+cutoff_percent_duplication_label = sidebar_utils.percent_duplication_cutoff_label
+initial["cutoff_percent_duplication"] = 50
 
 
 def get_ultima_data():
@@ -127,9 +132,9 @@ SHAPE_COLOUR_DROPDOWN = [x for x in shape_colour.dropdown() if x["value"] != COM
 ultima = add_graphable_cols(ultima, initial, shape_colour.items_for_df())
 
 SORT_BY = sidebar_utils.default_first_sort + [
-    {"label": "Mean Coverage",
+    {"label": "Mean Coverage (Deduplicated)",
      "value": ULTIMA_COL.MeanCoverage},
-    {"label": "Duplicates",
+    {"label": "Duplication",
      "value": ULTIMA_COL.PercentDuplicates},
     {"label": "Mean Read Length",
      "value": ULTIMA_COL.MeanReadLength},
@@ -144,9 +149,9 @@ SORT_BY = sidebar_utils.default_first_sort + [
 ]
 
 
-def generate_mean_coverage(current_data, graph_params):
+def generate_deduplicated_coverage(current_data, graph_params):
     return SingleLaneSubplot(
-        "Mean Coverage",
+        "Mean Coverage (Deduplicated)",
         current_data,
         lambda d: d[ULTIMA_COL.MeanCoverage],
         "",
@@ -156,15 +161,16 @@ def generate_mean_coverage(current_data, graph_params):
     )
 
 
-def generate_percent_duplicates(current_data, graph_params):
+def generate_duplication(current_data, graph_params):
     return SingleLaneSubplot(
-        "Duplicates (%)",
+        "Duplication (%)",
         current_data,
         lambda d: d[ULTIMA_COL.PercentDuplicates],
         "%",
         graph_params["colour_by"],
         graph_params["shape_by"],
-        graph_params["shownames_val"]
+        graph_params["shownames_val"],
+        cutoff_lines=[(cutoff_percent_duplication_label, graph_params["cutoff_percent_duplication"])],
     )
 
 
@@ -193,8 +199,8 @@ def generate_pf_barcode_reads(current_data, graph_params):
 
 
 GRAPHS = [
-    generate_mean_coverage,
-    generate_percent_duplicates,
+    generate_deduplicated_coverage,
+    generate_duplication,
     generate_mean_read_length,
     generate_pf_barcode_reads,
 ]
@@ -299,6 +305,13 @@ def layout(query_string):
                                                                      'ALL LABELS',
                                                                      ids['show-all-data-labels']),
 
+                    sidebar_utils.hr(),
+
+                    # Cutoffs
+                    sidebar_utils.cutoff_input(cutoff_percent_duplication_label,
+                                               ids["percent-duplication-cutoff"],
+                                               initial["cutoff_percent_duplication"]),
+
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
                 ]),
@@ -355,6 +368,7 @@ def init_callbacks(dash_app):
             State(ids['show-data-labels'], 'value'),
             State(ids["date-range"], 'start_date'),
             State(ids["date-range"], 'end_date'),
+            State(ids["percent-duplication-cutoff"], 'value'),
             State('url', 'search'),
         ]
     )
@@ -374,6 +388,7 @@ def init_callbacks(dash_app):
                        show_names,
                        start_date,
                        end_date,
+                       percent_duplication_cutoff,
                        search_query):
         log_utils.log_filters(locals(), collapsing_functions, logger)
         if searchsample and searchsampleext:
@@ -388,6 +403,7 @@ def init_callbacks(dash_app):
             "colour_by": colour_by,
             "shape_by": shape_by,
             "shownames_val": show_names,
+            "cutoff_percent_duplication": percent_duplication_cutoff,
         }
 
         new_search_sample = util.unique_set(df, PINERY_COL.SampleName)
