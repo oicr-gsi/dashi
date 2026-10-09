@@ -71,6 +71,9 @@ def get_ultima_data():
     ultima_df = util.get_ultima_library_metrics()
 
     pinery_samples = util.get_pinery_samples()
+    # Filter the Pinery samples for WG samples and others which will have BAM files generated.
+    pinery_samples = util.filter_by_library_design(pinery_samples,
+                                                   util.wgs_lib_designs)
 
     ultima_df = util.df_with_pinery_samples_lims_id(ultima_df, pinery_samples, ULTIMA_COL.PineryLimsID)
 
@@ -88,7 +91,7 @@ ALL_KITS = util.unique_set(ultima, PINERY_COL.PrepKit)
 ALL_TISSUE_MATERIALS = util.unique_set(ultima, PINERY_COL.TissuePreparation)
 ALL_TISSUE_ORIGIN = util.unique_set(ultima, PINERY_COL.TissueOrigin)
 ALL_LIBRARY_DESIGNS = util.unique_set(ultima, PINERY_COL.LibrarySourceTemplateType)
-ULTIMA_INSTRUMENT_MODELS = util.get_illumina_instruments(ultima)
+ULTIMA_INSTRUMENT_MODELS = util.get_ultima_instruments(ultima)
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
