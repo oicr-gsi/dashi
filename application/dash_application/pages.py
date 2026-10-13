@@ -23,7 +23,8 @@ ALL_REPORTS = [
     "single_lane_tar",
     "single_lane_rna",
     "single_lane_wgs",
-    'single_lane_cfmedip'
+    'single_lane_cfmedip',
+    "single_lane_wgs_ultima"
 ]
 
 _enabled_env = os.getenv("ENABLED_REPORTS")

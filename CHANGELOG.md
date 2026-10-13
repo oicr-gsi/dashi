@@ -23,6 +23,8 @@ and as of version 1.0.0, follows semantic versioning.
   * Add required `PENDING_URL_PATTERN` environment variable to control where each library in the
     landing page's "Processing" list links to, using `{lookup_name}`/`{lookup_value}` placeholders.
 
+  * Add `single_lane_wgs_ultima` report, showing Mean Coverage (Deduplicated), Duplication (%), Mean Read
+    Length, and PF Barcode Reads from the `ultimalibrarymetrics` qcetl cache, joined to Pinery by LIMS ID
   * Refresh landing/runs page styling
   * Fix graph colours/shapes sometimes repeating for different selected values
   * Extend graph colourblind-friendly palette from 6 to 9 colours
