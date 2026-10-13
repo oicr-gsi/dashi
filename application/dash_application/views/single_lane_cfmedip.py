@@ -120,19 +120,41 @@ def get_cfmedip_data():
     return cfmedip_df, util.cache.versions(["cfmedipqc"])
 
 
-(cfmedip, DATAVERSION) = get_cfmedip_data()
+def refresh():
+    global cfmedip, DATAVERSION, ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, \
+        ALL_TISSUE_ORIGIN, ILLUMINA_INSTRUMENT_MODELS, ALL_SAMPLE_TYPES, ALL_REFERENCES, \
+        ALL_INSTITUTES, shape_colour
+
+    cfmedip_df, data_version = get_cfmedip_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(cfmedip_df, PINERY_COL.StudyTitle)
+    runs = util.unique_set(cfmedip_df, PINERY_COL.SequencerRunName, True) # reverse order
+    kits = util.unique_set(cfmedip_df, PINERY_COL.PrepKit)
+    tissue_materials = util.unique_set(cfmedip_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(cfmedip_df, PINERY_COL.TissueOrigin)
+    instrument_models = util.get_illumina_instruments(cfmedip_df)
+    sample_types = util.unique_set(cfmedip_df, util.sample_type_col)
+    references = util.unique_set(cfmedip_df, CFMEDIP_COL.Reference)
+    institutes = util.unique_set(cfmedip_df, PINERY_COL.Institute)
+
+    new_shape_colour = ColourShapeCfMeDIP(
+        projects, runs, institutes, sample_types,
+        tissue_materials, tissue_origin, references
+    )
+    # Add shape, colour, and size cols to dataframe
+    cfmedip_df = add_graphable_cols(cfmedip_df, initial)
+
+    cfmedip, DATAVERSION = cfmedip_df, data_version
+    ALL_PROJECTS, ALL_RUNS, ALL_KITS = projects, runs, kits
+    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN = tissue_materials, tissue_origin
+    ILLUMINA_INSTRUMENT_MODELS, ALL_SAMPLE_TYPES = instrument_models, sample_types
+    ALL_REFERENCES, ALL_INSTITUTES = references, institutes
+    shape_colour = new_shape_colour
 
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(cfmedip, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(cfmedip, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_set(cfmedip, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_set(cfmedip, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(cfmedip, PINERY_COL.TissueOrigin)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(cfmedip)
-ALL_SAMPLE_TYPES = util.unique_set(cfmedip, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(cfmedip, CFMEDIP_COL.Reference)
-ALL_INSTITUTES = util.unique_set(cfmedip, PINERY_COL.Institute)
+refresh()
+
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -159,19 +181,6 @@ cfmedip_curated_columns = [
     CFMEDIP_COL.ATDropout,
     CFMEDIP_COL.MethylationBeta
 ]
-
-
-shape_colour = ColourShapeCfMeDIP(
-    ALL_PROJECTS, 
-    ALL_RUNS,
-    ALL_INSTITUTES, 
-    ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS,
-    ALL_TISSUE_ORIGIN,
-    ALL_REFERENCES
-)
-# Add shape, colour, and size cols to dataframe 
-cfmedip = add_graphable_cols(cfmedip, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Project",

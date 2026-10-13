@@ -296,6 +296,36 @@ Source: [single_lane_tar.py](../application/dash_application/views/single_lane_t
 
 Single-Lane reports use 'ius' pinery function calls, and Call-Ready reports use 'merged' pinery function calls.
 
+### Reloading data without a restart
+
+Dashi reloads Pinery and report data in the background every hour. For your report to be included, put its data loading inside a `refresh()` function rather than at the top level of the file:
+
+1. Build the dataframe and everything derived from it (`DATAVERSION`, the `ALL_` sets, `shape_colour`) into local variables.
+2. At the end, assign them to the module-level names. Every one of those names must be listed in the `global` statement.
+3. Call `refresh()` once at the top level of the file, below `initial`.
+
+```python
+def refresh():
+    global bamqc, DATAVERSION, ALL_PROJECTS, ALL_RUNS, shape_colour
+
+    bamqc_df, data_version = get_bamqc_data()
+    projects = util.unique_set(bamqc_df, PINERY_COL.StudyTitle)
+    runs = util.unique_set(bamqc_df, PINERY_COL.SequencerRunName, True)
+    new_shape_colour = ColourShapeSingleLane(projects, runs, ...)
+    bamqc_df = add_graphable_cols(bamqc_df, initial)
+
+    bamqc, DATAVERSION = bamqc_df, data_version
+    ALL_PROJECTS, ALL_RUNS = projects, runs
+    shape_colour = new_shape_colour
+
+
+refresh()
+```
+
+Source: [single_lane_tar.py](../application/dash_application/views/single_lane_tar.py)
+
+Building into local variables first means users keep seeing the previous data until the new data is ready. If a name is missing from the `global` statement, Python treats it as a local variable, and that part of the page silently stops refreshing. Reports without a `refresh()` function only get new data when Dashi restarts.
+
 ## Graph Generation
 
 Every graph that will appear in your report needs a function defining it. These most often call utility functions in [plot_builder.py](../application/dash_application/utility/plot_builder.py), generally *SingleLaneSubplot()* or *CallReadySubplot()*. 

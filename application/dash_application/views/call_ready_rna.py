@@ -100,7 +100,6 @@ def get_merged_rna_data():
     return rna_df, util.cache.versions(["rnaseqqc2merged"])
 
 
-(RNA_DF, DATAVERSION) = get_merged_rna_data()
 rna_curated_columns = [
     "Merged Library",
     PINERY_COL.GroupID,
@@ -140,16 +139,41 @@ initial["cutoff_percent_mapped_to_coding"] = 5
 cutoff_insert_mean_label = "Insert Size Mean + Intron"
 initial["cutoff_insert_mean"] = 150
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(RNA_DF, PINERY_COL.PrepKit)
-ALL_INSTITUTES = util.unique_set(RNA_DF, PINERY_COL.Institute)
-ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(RNA_DF, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
-ALL_SAMPLES = util.unique_set(RNA_DF, PINERY_COL.RootSampleName)
-ALL_REFERENCES = util.unique_set(RNA_DF, RNASEQQC2_COL.Reference)
+def refresh():
+    global RNA_DF, DATAVERSION, ALL_PROJECTS, ALL_KITS, ALL_INSTITUTES, ALL_TISSUE_MATERIALS, \
+        ALL_TISSUE_ORIGIN, ALL_LIBRARY_DESIGNS, ALL_SAMPLE_TYPES, ALL_SAMPLES, ALL_REFERENCES, \
+        shape_colour
+
+    rna_df, data_version = get_merged_rna_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(rna_df, PINERY_COL.StudyTitle)
+    kits = util.unique_set(rna_df, PINERY_COL.PrepKit)
+    institutes = util.unique_set(rna_df, PINERY_COL.Institute)
+    tissue_materials = util.unique_set(rna_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(rna_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(rna_df, PINERY_COL.LibrarySourceTemplateType)
+    sample_types = util.unique_set(rna_df, util.sample_type_col)
+    samples = util.unique_set(rna_df, PINERY_COL.RootSampleName)
+    references = util.unique_set(rna_df, RNASEQQC2_COL.Reference)
+
+    new_shape_colour = ColourShapeCallReady(
+        projects, library_designs, institutes, sample_types,
+        tissue_materials, tissue_origin, references
+    )
+    rna_df = add_graphable_cols(
+        rna_df, initial, None, REPORT_TYPE["Call-Ready"]
+    )
+
+    RNA_DF, DATAVERSION = rna_df, data_version
+    ALL_PROJECTS, ALL_KITS, ALL_INSTITUTES = projects, kits, institutes
+    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN = tissue_materials, tissue_origin
+    ALL_LIBRARY_DESIGNS, ALL_SAMPLE_TYPES = library_designs, sample_types
+    ALL_SAMPLES, ALL_REFERENCES = samples, references
+    shape_colour = new_shape_colour
+
+
+refresh()
 
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
@@ -159,13 +183,6 @@ collapsing_functions = {
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
 
-shape_colour = ColourShapeCallReady(
-    ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_REFERENCES
-)
-RNA_DF = add_graphable_cols(
-    RNA_DF, initial, None, REPORT_TYPE["Call-Ready"]
-)
 
 SORT_BY = shape_colour.dropdown() + [
     {"label":"Pipeline Filtered Clusters",

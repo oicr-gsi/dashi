@@ -85,8 +85,6 @@ def get_icametrics_data():
     return ica_df, util.cache.versions(["icametrics"])
 
 
-# Make the ICA dataframe
-(ICA_DF, DATAVERSION) = get_icametrics_data()
 ica_curated_columns = [
     ICA_COL.Project,
     ICA_COL.DeID,
@@ -163,11 +161,33 @@ initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(ICA_DF, ICA_COL.Project)
-ALL_TISSUE_MATERIALS = util.unique_set(ICA_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(ICA_DF, PINERY_COL.TissueOrigin)
-ALL_SAMPLE_TYPES = util.unique_set(ICA_DF, util.sample_type_col)
+def refresh():
+    global ICA_DF, DATAVERSION, ALL_PROJECTS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, \
+        ALL_SAMPLE_TYPES, shape_colour
+
+    # Make the ICA dataframe
+    ica_df, data_version = get_icametrics_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(ica_df, ICA_COL.Project)
+    tissue_materials = util.unique_set(ica_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(ica_df, PINERY_COL.TissueOrigin)
+    sample_types = util.unique_set(ica_df, util.sample_type_col)
+
+    new_shape_colour = ColourShapeICA(
+        projects, sample_types, tissue_materials, tissue_origin
+    )
+    ica_df = add_graphable_cols(
+        ica_df, initial, None, ICA_COL.DeID
+    )
+
+    ICA_DF, DATAVERSION = ica_df, data_version
+    ALL_PROJECTS, ALL_TISSUE_MATERIALS = projects, tissue_materials
+    ALL_TISSUE_ORIGIN, ALL_SAMPLE_TYPES = tissue_origin, sample_types
+    shape_colour = new_shape_colour
+
+
+refresh()
 
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected,
@@ -179,12 +199,6 @@ collapsing_functions = {
         selected, ALL_SAMPLE_TYPES, "all_sample_types"),
 }
 
-shape_colour = ColourShapeICA(
-    ALL_PROJECTS, ALL_SAMPLE_TYPES, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN
-)
-ICA_DF = add_graphable_cols(
-    ICA_DF, initial, None, ICA_COL.DeID
-)
 
 SORT_BY = shape_colour.dropdown() + [
     {"label": "Mean Coverage (Genome)", "value": ICA_COL.MeanCovGenome},

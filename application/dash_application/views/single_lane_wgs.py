@@ -190,19 +190,42 @@ def get_wgs_data():
     return wgs_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
 
 
-# Make the WGS dataframe
-(WGS_DF, DATAVERSION) = get_wgs_data()
+def refresh():
+    global WGS_DF, DATAVERSION, ALL_PROJECTS, ALL_KITS, ILLUMINA_INSTRUMENT_MODELS, \
+        ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_LIBRARY_DESIGNS, ALL_RUNS, \
+        ALL_SAMPLE_TYPES, ALL_REFERENCES, shape_colour
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(WGS_DF,PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(WGS_DF, PINERY_COL.PrepKit)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
-ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(WGS_DF, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_RUNS = util.unique_set(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
-ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(WGS_DF, BAMQC_COL.Reference)
+    # Make the WGS dataframe
+    wgs_df, data_version = get_wgs_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(wgs_df, PINERY_COL.StudyTitle)
+    kits = util.unique_set(wgs_df, PINERY_COL.PrepKit)
+    instrument_models = util.get_illumina_instruments(wgs_df)
+    tissue_materials = util.unique_set(wgs_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(wgs_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(wgs_df, PINERY_COL.LibrarySourceTemplateType)
+    runs = util.unique_set(wgs_df, PINERY_COL.SequencerRunName, True)  # reverse the list
+    sample_types = util.unique_set(wgs_df, util.sample_type_col)
+    references = util.unique_set(wgs_df, BAMQC_COL.Reference)
+
+    new_shape_colour = ColourShapeSingleLane(
+        projects, runs, kits, tissue_materials, tissue_origin,
+        library_designs, references,
+    )
+
+    # Add shape col to WG dataframe
+    wgs_df = add_graphable_cols(wgs_df, initial)
+
+    WGS_DF, DATAVERSION = wgs_df, data_version
+    ALL_PROJECTS, ALL_KITS, ILLUMINA_INSTRUMENT_MODELS = projects, kits, instrument_models
+    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN = tissue_materials, tissue_origin
+    ALL_LIBRARY_DESIGNS, ALL_RUNS = library_designs, runs
+    ALL_SAMPLE_TYPES, ALL_REFERENCES = sample_types, references
+    shape_colour = new_shape_colour
+
+
+refresh()
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
@@ -214,14 +237,6 @@ collapsing_functions = {
     "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
     "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
 }
-
-shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
-    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
-)
-
-# Add shape col to WG dataframe
-WGS_DF = add_graphable_cols(WGS_DF, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Clusters",
