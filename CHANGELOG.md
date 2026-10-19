@@ -7,6 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+  * Bump qc-etl to v1.49
   * bump qc-etl to 1.48
   * Rename `GSI_QC_ETL_ROOT_DIRECTORY` environment variable to `QC_ETL_ROOT_DIRECTORY`
   * Migrate dependency management from `pip`/`requirements.txt` to `uv`/`pyproject.toml`
