@@ -1,4 +1,6 @@
+import contextlib
 import os
+import threading
 import pandas
 from pandas import DataFrame, Series
 from typing import List
@@ -12,6 +14,8 @@ import qcetl.common.utility
 import qcetl.common
 import pinery
 import json
+
+from .data_store import DataStore
 
 ex_lib_designs = ["EX", "TS"]
 rna_lib_designs = ["MR", "SM", "TR", "WT"]
@@ -316,16 +320,62 @@ def _load_pinery():
     return samples, merged_samples, runs_with_instruments, active_projects
 
 
-def refresh_pinery():
-    global _pinery_samples, _pinery_merged_samples, _runs_with_instruments, _active_projects
+def _cache_files():
+    found = set()
+    for root in root_dirs:
+        if os.path.isdir(root):
+            for name in os.listdir(root):
+                latest = os.path.join(root, name, "latest")
+                if os.path.exists(latest):
+                    found.add(latest)
+    return found
+
+
+_startup_cache_files = _cache_files()
+
+
+def missing_sources():
+    missing = [root for root, ok in zip(root_dirs, cache.test_connection()) if not ok]
+    missing += sorted(
+        f for f in _startup_cache_files - _cache_files()
+        if not any(f.startswith(os.path.join(root, "")) for root in missing)
+    )
+    return missing
+
+
+pinery_store = DataStore()
+_staged = threading.local()
+
+
+def build_pinery():
     samples, merged_samples, runs_with_instruments, active_projects = _load_pinery()
-    _pinery_samples = samples
-    _pinery_merged_samples = merged_samples
-    _runs_with_instruments = runs_with_instruments
-    _active_projects = active_projects
+    return {
+        "samples": samples,
+        "merged_samples": merged_samples,
+        "runs_with_instruments": runs_with_instruments,
+        "active_projects": active_projects,
+    }
 
 
-refresh_pinery()
+def set_pinery(data):
+    pinery_store.set(data)
+
+
+@contextlib.contextmanager
+def staged_pinery(data):
+    _staged.pinery = data
+    try:
+        yield
+    finally:
+        _staged.pinery = None
+
+
+def _pinery():
+    staged = getattr(_staged, "pinery", None)
+    return staged if staged is not None else pinery_store.get()
+
+
+set_pinery(build_pinery())
 
 
 def get_bcl2barcodecaller_known():
@@ -412,25 +462,27 @@ def get_rnaseqqc2_merged():
 
 def get_pinery_samples(active_projects_only=True):
     """Get Pinery Sample Provenance DataFrame"""
-    samples = _pinery_samples.copy(deep=True)
+    pinery_data = _pinery()
+    samples = pinery_data["samples"].copy(deep=True)
     # Serve samples for active projects unless ALL projects are requested
     if (not active_projects_only or os.getenv("SAMPLES_FOR_PROJECTS", 'ACTIVE').lower() in ('all')):
         return samples
     else:
         return samples.loc[samples[PINERY_COL.StudyTitle].isin(
-            _active_projects)]
+            pinery_data["active_projects"])]
 
 
 def get_pinery_merged_samples(active_projects_only=True):
-    samples = _pinery_merged_samples.copy(deep=True)
+    pinery_data = _pinery()
+    samples = pinery_data["merged_samples"].copy(deep=True)
     if (active_projects_only):
         return samples.loc[samples[PINERY_COL.StudyTitle].isin(
-            _active_projects)]
+            pinery_data["active_projects"])]
     else:
         return samples
 
 def get_runs():
-    return _runs_with_instruments.copy(deep=True)
+    return _pinery()["runs_with_instruments"].copy(deep=True)
 
 def df_with_fastqc_data(df, merge_cols):
     group = get_fastqc().groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])
@@ -480,7 +532,7 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
 
 def df_with_run_info(df: DataFrame, run_col: str, right_suffix='_q'):
     """Add the instrument model column to a DataFrame."""
-    r_i = _runs_with_instruments.copy(deep=True)
+    r_i = _pinery()["runs_with_instruments"].copy(deep=True)
     return df.merge(
         r_i[[
             INSTRUMENTS_COL.ModelName,

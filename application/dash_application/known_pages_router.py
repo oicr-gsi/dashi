@@ -9,6 +9,7 @@ from dash import dcc as core
 from dash.dependencies import Input, Output
 
 from . import pages
+from . import refresh
 from ..routes import version
 
 
@@ -163,7 +164,7 @@ def init_callbacks(dash_app):
         requested = path[1:] # drop the leading slash
         if requested in pages_info.keys():
             page = pages_info[requested]
-            return [page.layout(qs), page.dataversion()]
+            return [page.layout(qs), page.dataversion() + " | " + refresh.status_text()]
         return '404', None
 
     @dash_app.callback(

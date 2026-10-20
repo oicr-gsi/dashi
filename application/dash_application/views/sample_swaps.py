@@ -7,6 +7,7 @@ import logging
 
 from ..dash_id import init_ids
 from ..utility import df_manipulation, sidebar_utils
+from ..utility.data_store import DataStore
 from ..utility.df_manipulation import CROSSCHECKFINGERPRINT_CALLER_COL as COL
 
 logger = logging.getLogger(__name__)
@@ -36,9 +37,10 @@ special_cols = {
     "miso_match": "miso_match",
 }
 
-def refresh():
-    global swap, ALL_PROJECTS, INITIAL
+store = DataStore()
 
+
+def build():
     swap_df = df_manipulation.get_crosscheckfingerprint_caller()
     swap_df = swap_df[swap_df[COL.Grouping] == "project"]
     swap_df.sort_values([COL.LibraryName, COL.SwapCall, COL.LODScore], inplace=True)
@@ -93,14 +95,13 @@ def refresh():
     # Pair-wise comparison is done within project (for now), so left project is sufficient
     projects = df_manipulation.unique_set(swap_df, COL.Project)
 
-    swap = swap_df
-    ALL_PROJECTS = projects
-    INITIAL = {
-        "projects": projects,
+    return {
+        "swap": swap_df,
+        "all_projects": projects,
     }
 
 
-refresh()
+store.set(build())
 
 DATA_COLUMN = [
     COL.Project,
@@ -139,10 +140,13 @@ def dataversion():
 
 
 def layout(query_string):
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
 
     if len(query["req_projects"]) > 0:
-        INITIAL["projects"] = query["req_projects"]
+        initial_projects = query["req_projects"]
+    else:
+        initial_projects = data["all_projects"]
 
     return core.Loading( fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -154,8 +158,8 @@ def layout(query_string):
                     sidebar_utils.select_projects(
                         ids["all-projects"],
                         ids["projects-list"],
-                        ALL_PROJECTS,
-                        INITIAL["projects"]
+                        data["all_projects"],
+                        initial_projects
                     ),
                     core.Checklist(
                         id=ids["checkbox_show_swaps"],
@@ -170,7 +174,7 @@ def layout(query_string):
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
                         hidden_columns=DOWNLOAD_ONLY_COLUMNS,
-                        data=swap[swap["swap_display"]].to_dict('records'),
+                        data=data["swap"][data["swap"]["swap_display"]].to_dict('records'),
                         sort_action="native",
                         sort_by=[
                             {"column_id": special_cols["latest_run"], "direction": "desc"},
@@ -211,6 +215,7 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(_click, projects, show_swap):
+        swap = store.get()["swap"]
         if "swap" in show_swap:
             df = swap[swap["swap_display"]]
         else:
@@ -224,4 +229,4 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]

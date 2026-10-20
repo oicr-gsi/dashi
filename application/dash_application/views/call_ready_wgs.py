@@ -9,6 +9,7 @@ from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..utility import sidebar_utils, log_utils
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 special_cols = {
@@ -175,10 +176,10 @@ initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
 
-def refresh():
-    global WGS_DF, DATAVERSION, ALL_PROJECTS, ALL_KITS, ALL_INSTITUTES, ALL_TISSUE_MATERIALS, \
-        ALL_TISSUE_ORIGIN, ALL_LIBRARY_DESIGNS, ALL_SAMPLE_TYPES, ALL_REFERENCES, shape_colour
+store = DataStore()
 
+
+def build():
     # Make the WGS dataframe
     wgs_df, data_version = get_merged_wgs_data()
 
@@ -200,31 +201,39 @@ def refresh():
         wgs_df, initial, None, REPORT_TYPE["Call-Ready"]
     )
 
-    WGS_DF, DATAVERSION = wgs_df, data_version
-    ALL_PROJECTS, ALL_KITS, ALL_INSTITUTES = projects, kits, institutes
-    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN = tissue_materials, tissue_origin
-    ALL_LIBRARY_DESIGNS, ALL_SAMPLE_TYPES, ALL_REFERENCES = library_designs, sample_types, references
-    shape_colour = new_shape_colour
+    return {
+        "df": wgs_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_kits": kits,
+        "all_institutes": institutes,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "all_library_designs": library_designs,
+        "all_sample_types": sample_types,
+        "all_references": references,
+        "shape_colour": new_shape_colour,
+    }
 
 
-refresh()
+store.set(build())
 
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected,
-                                                                    ALL_PROJECTS,
+                                                                    store.get()["all_projects"],
                                                                     "all_projects"),
     "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
+        selected, store.get()["all_tissue_materials"], "all_tissue_materials"),
     "sample_types": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_SAMPLE_TYPES, "all_sample_types"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+        selected, store.get()["all_sample_types"], "all_sample_types"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
 
 
-SORT_BY = shape_colour.dropdown() + [
+SORT_BY = ColourShapeCallReady.dropdown() + [
     {
         "label": "Pipeline Filtered Clusters",
         "value": BAMQC_COL.TotalClusters
@@ -356,13 +365,14 @@ GRAPHS = [
     generate_duplicate_rate,
 ]
 def layout(query_string):
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
         initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = ALL_PROJECTS
-        query["req_projects"] = ALL_PROJECTS  # fill in the projects dropdown
-    df = reshape_call_ready_df(WGS_DF, initial["projects"], initial["references"],
+        initial["projects"] = data["all_projects"]
+        query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
+    df = reshape_call_ready_df(data["df"], initial["projects"], initial["references"],
                                initial["tissue_materials"],
                                initial["sample_types"],
                                initial["first_sort"], initial["second_sort"],
@@ -381,18 +391,18 @@ def layout(query_string):
                     # Filters
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
-                                                  ALL_PROJECTS, 
+                                                  data["all_projects"], 
                                                   query["req_projects"]),
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
-                                                   ALL_REFERENCES),
+                                                   data["all_references"]),
                     sidebar_utils.select_tissue_materials(
                         ids["all-tissue-materials"],
                         ids["tissue-materials-list"],
-                        ALL_TISSUE_MATERIALS),
+                        data["all_tissue_materials"]),
                     sidebar_utils.select_sample_types(
                         ids["all-sample-types"], ids["sample-types-list"],
-                        ALL_SAMPLE_TYPES),
+                        data["all_sample_types"]),
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
@@ -409,11 +419,11 @@ def layout(query_string):
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
-                                                   shape_colour.dropdown(),
+                                                   data["shape_colour"].dropdown(),
                                                    initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
-                                                  shape_colour.dropdown(),
+                                                  data["shape_colour"].dropdown(),
                                                   initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
@@ -576,7 +586,7 @@ def init_callbacks(dash_app):
             search_sample += searchsampleext
         elif not search_sample and searchsampleext:
             search_sample = searchsampleext
-        df = reshape_call_ready_df(WGS_DF, projects, references, tissue_materials,
+        df = reshape_call_ready_df(store.get()["df"], projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
                                    search_sample)
@@ -630,14 +640,14 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
         [Input(ids['all-references'], 'n_clicks')]
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids['tissue-materials-list'], 'value'),
@@ -645,7 +655,7 @@ def init_callbacks(dash_app):
     )
     def all_tissue_materials_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_TISSUE_MATERIALS]
+        return [x for x in store.get()["all_tissue_materials"]]
 
     @dash_app.callback(
         Output(ids['sample-types-list'], 'value'),
@@ -653,7 +663,7 @@ def init_callbacks(dash_app):
     )
     def all_sample_types_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_SAMPLE_TYPES]
+        return [x for x in store.get()["all_sample_types"]]
 
     @dash_app.callback(
         Output(ids["show-data-labels"], "value"),
