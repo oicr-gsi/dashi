@@ -9,6 +9,7 @@ from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_iu
 from ..utility import df_manipulation as util
 from ..utility import sidebar_utils
 from ..utility import log_utils
+from ..utility.data_store import DataStore
 from qcetl.column import FastqcColumn
 import logging
 
@@ -190,38 +191,60 @@ def get_wgs_data():
     return wgs_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
 
 
-# Make the WGS dataframe
-(WGS_DF, DATAVERSION) = get_wgs_data()
+store = DataStore()
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(WGS_DF,PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(WGS_DF, PINERY_COL.PrepKit)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(WGS_DF)
-ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(WGS_DF, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_RUNS = util.unique_set(WGS_DF, PINERY_COL.SequencerRunName, True)# reverse the list
-ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(WGS_DF, BAMQC_COL.Reference)
+
+def build():
+    # Make the WGS dataframe
+    wgs_df, data_version = get_wgs_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(wgs_df, PINERY_COL.StudyTitle)
+    kits = util.unique_set(wgs_df, PINERY_COL.PrepKit)
+    instrument_models = util.get_illumina_instruments(wgs_df)
+    tissue_materials = util.unique_set(wgs_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(wgs_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(wgs_df, PINERY_COL.LibrarySourceTemplateType)
+    runs = util.unique_set(wgs_df, PINERY_COL.SequencerRunName, True)  # reverse the list
+    sample_types = util.unique_set(wgs_df, util.sample_type_col)
+    references = util.unique_set(wgs_df, BAMQC_COL.Reference)
+
+    new_shape_colour = ColourShapeSingleLane(
+        projects, runs, kits, tissue_materials, tissue_origin,
+        library_designs, references,
+    )
+
+    # Add shape col to WG dataframe
+    wgs_df = add_graphable_cols(wgs_df, initial)
+
+    return {
+        "df": wgs_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_kits": kits,
+        "instrument_models": instrument_models,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "all_library_designs": library_designs,
+        "all_runs": runs,
+        "all_sample_types": sample_types,
+        "all_references": references,
+        "shape_colour": new_shape_colour,
+    }
+
+
+store.set(build())
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
-    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
-    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_projects"], "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_runs"], "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_kits"], "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["instrument_models"], "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_library_designs"], "all_library_designs"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
-
-shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
-    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
-)
-
-# Add shape col to WG dataframe
-WGS_DF = add_graphable_cols(WGS_DF, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Clusters",
@@ -356,10 +379,11 @@ GRAPHS = [
 
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 # Layout elements
 def layout(query_string):
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     # intial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
@@ -367,12 +391,12 @@ def layout(query_string):
     if "req_runs" in query and query["req_runs"]:
         initial["runs"] = query["req_runs"]
     elif "req_start" in query and query["req_start"]:
-        initial["runs"] = ALL_RUNS
-        query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+        initial["runs"] = data["all_runs"]
+        query["req_runs"] = data["all_runs"]  # fill in the runs dropdown
     if "req_projects" in query and query["req_projects"]:
         initial["projects"] = query["req_projects"]
 
-    df = reshape_single_lane_df(WGS_DF, initial["runs"], initial["instruments"],
+    df = reshape_single_lane_df(data["df"], initial["runs"], initial["instruments"],
                                 initial["projects"], initial["references"], initial["kits"],
                                 initial["library_designs"], initial["start_date"],
                                 initial["end_date"], initial["first_sort"],
@@ -385,7 +409,7 @@ def layout(query_string):
             sidebar_utils.unknown_run_alert(
                 ids['alerts-unknown-run'],
                 initial["runs"],
-                ALL_RUNS
+                data["all_runs"]
             ),
         ]),
         html.Div(className="row flex-container", children=[
@@ -399,7 +423,7 @@ def layout(query_string):
 
                 # Filters
                 sidebar_utils.select_runs(ids["all-runs"],
-                                          ids["run-id-list"], ALL_RUNS,
+                                          ids["run-id-list"], data["all_runs"],
                                           query["req_runs"]),
 
                 sidebar_utils.run_range_input(ids["date-range"],
@@ -410,23 +434,23 @@ def layout(query_string):
 
                 sidebar_utils.select_projects(ids["all-projects"],
                                               ids["projects-list"],
-                                              ALL_PROJECTS,
+                                              data["all_projects"],
                                               query["req_projects"]),
 
                 sidebar_utils.select_reference(ids["all-references"],
                                                ids["references-list"],
-                                               ALL_REFERENCES),
+                                               data["all_references"]),
 
                 sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
-                                          ALL_KITS),
+                                          data["all_kits"]),
 
                 sidebar_utils.select_instruments(ids["all-instruments"],
                                                  ids["instruments-list"],
-                                                 ILLUMINA_INSTRUMENT_MODELS),
+                                                 data["instrument_models"]),
 
                 sidebar_utils.select_library_designs(
                     ids["all-library-designs"], ids["library-designs-list"],
-                    ALL_LIBRARY_DESIGNS),
+                    data["all_library_designs"]),
 
                 sidebar_utils.hr(),
 
@@ -444,11 +468,11 @@ def layout(query_string):
                 ),
 
                 sidebar_utils.select_colour_by(ids['colour-by'],
-                                              shape_colour.dropdown(),
+                                              data["shape_colour"].dropdown(),
                                               initial["colour_by"]),
 
                 sidebar_utils.select_shape_by(ids['shape-by'],
-                                             shape_colour.dropdown(),
+                                             data["shape_colour"].dropdown(),
                                              initial["shape_by"]),
 
                 sidebar_utils.highlight_samples_input(ids['search-sample'], []),
@@ -580,7 +604,7 @@ def init_callbacks(dash_app):
             searchsample += searchsampleext
         elif not searchsample and searchsampleext:
             searchsample = searchsampleext
-        df = reshape_single_lane_df(WGS_DF, runs, instruments, projects, references, kits, library_designs,
+        df = reshape_single_lane_df(store.get()["df"], runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, searchsample)
 
@@ -647,7 +671,7 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_RUNS]
+        return [x for x in store.get()["all_runs"]]
 
     @dash_app.callback(
         Output(ids['instruments-list'], 'value'),
@@ -655,7 +679,7 @@ def init_callbacks(dash_app):
     )
     def all_instruments_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+        return [x for x in store.get()["instrument_models"]]
 
     @dash_app.callback(
         Output(ids['projects-list'], 'value'),
@@ -663,7 +687,7 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
 
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
@@ -671,7 +695,7 @@ def init_callbacks(dash_app):
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),
@@ -679,7 +703,7 @@ def init_callbacks(dash_app):
     )
     def all_kits_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_KITS]
+        return [x for x in store.get()["all_kits"]]
 
     @dash_app.callback(
         Output(ids['library-designs-list'], 'value'),
@@ -687,7 +711,7 @@ def init_callbacks(dash_app):
     )
     def all_library_designs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_LIBRARY_DESIGNS]
+        return [x for x in store.get()["all_library_designs"]]
 
     @dash_app.callback(
         Output(ids['show-data-labels'], 'value'),

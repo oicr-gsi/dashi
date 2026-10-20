@@ -7,6 +7,7 @@ import logging
 
 from ..dash_id import init_ids
 from ..utility import df_manipulation, sidebar_utils
+from ..utility.data_store import DataStore
 from ..utility.df_manipulation import CROSSCHECKFINGERPRINT_CALLER_COL as COL
 
 logger = logging.getLogger(__name__)
@@ -36,56 +37,71 @@ special_cols = {
     "miso_match": "miso_match",
 }
 
-swap = df_manipulation.get_crosscheckfingerprint_caller()
-swap = swap[swap[COL.Grouping] == "project"]
-swap.sort_values([COL.LibraryName, COL.SwapCall, COL.LODScore], inplace=True)
+store = DataStore()
 
-pinery_samples = df_manipulation.get_pinery_samples()
-pinery_samples = pinery_samples[[
-    PINERY_COL.SequencerRunName,
-    PINERY_COL.LaneNumber,
-    PINERY_COL.IUSTag,
-    PINERY_COL.ParentSampleName,
-    PINERY_COL.SampleName,
-    PINERY_COL.RootSampleName,
-]]
 
-swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.Run, COL.Lane, COL.Barcode]
-)
-swap = df_manipulation.df_with_pinery_samples_ius(
-    swap, pinery_samples, [COL.RunMatch, COL.LaneMatch, COL.BarcodeMatch], "_MATCH"
-)
-swap = df_manipulation.df_with_run_info(swap, COL.Run)
-swap = df_manipulation.df_with_run_info(swap, COL.RunMatch, "_MATCH")
+def build():
+    swap_df = df_manipulation.get_crosscheckfingerprint_caller()
+    swap_df = swap_df[swap_df[COL.Grouping] == "project"]
+    swap_df.sort_values([COL.LibraryName, COL.SwapCall, COL.LODScore], inplace=True)
 
-# Take all the runs where a swap has been called for a given library and store the latest run
-swap["start_date_max"] = swap[[RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]].max(axis=1)
-latest_swap = swap[swap[COL.PairwiseSwap]].groupby(COL.LibraryName)["start_date_max"].max().rename(special_cols["latest_run"])
-swap = swap.merge(latest_swap, how="outer", left_on=COL.LibraryName, right_index=True)
-swap[special_cols["latest_run"]] = swap[special_cols["latest_run"]].fillna(swap["start_date_max"])
-swap[special_cols["latest_run"]] = swap[special_cols["latest_run"]].dt.date
-swap.drop(columns="start_date_max")
+    pinery_samples = df_manipulation.get_pinery_samples()
+    pinery_samples = pinery_samples[[
+        PINERY_COL.SequencerRunName,
+        PINERY_COL.LaneNumber,
+        PINERY_COL.IUSTag,
+        PINERY_COL.ParentSampleName,
+        PINERY_COL.SampleName,
+        PINERY_COL.RootSampleName,
+    ]]
 
-swap[special_cols["miso"]] = swap[COL.LibraryDesign] + "_" + swap[COL.TissueType] + "_" + swap[COL.TissueOrigin]
-swap[special_cols["miso_match"]] = swap[COL.LibraryDesignMatch] + "_" + swap[COL.TissueTypeMatch] + "_" + swap[COL.TissueOriginMatch]
+    swap_df = df_manipulation.df_with_pinery_samples_ius(
+        swap_df, pinery_samples, [COL.Run, COL.Lane, COL.Barcode]
+    )
+    swap_df = df_manipulation.df_with_pinery_samples_ius(
+        swap_df, pinery_samples, [COL.RunMatch, COL.LaneMatch, COL.BarcodeMatch], "_MATCH"
+    )
+    swap_df = df_manipulation.df_with_run_info(swap_df, COL.Run)
+    swap_df = df_manipulation.df_with_run_info(swap_df, COL.RunMatch, "_MATCH")
 
-# There is a row for each lib, lib_match, lane, run permutation
-# The LODs are stable between the lanes, so pick the highest one
-# If there is both a swap and a not swap call, both will be shown
-swap = swap.drop_duplicates(
-    [COL.LibraryName, COL.LibraryNameMatch, COL.PairwiseSwap], keep="last"
-)
+    # Take all the runs where a swap has been called for a given library and store the latest run
+    swap_df["start_date_max"] = swap_df[[RUN_COLS.StartDate, RUN_COLS.StartDate + "_MATCH"]].max(axis=1)
+    latest_swap = swap_df[swap_df[COL.PairwiseSwap]].groupby(COL.LibraryName)["start_date_max"].max().rename(special_cols["latest_run"])
+    swap_df = swap_df.merge(latest_swap, how="outer", left_on=COL.LibraryName, right_index=True)
+    swap_df[special_cols["latest_run"]] = swap_df[special_cols["latest_run"]].fillna(swap_df["start_date_max"])
+    swap_df[special_cols["latest_run"]] = swap_df[special_cols["latest_run"]].dt.date
+    swap_df.drop(columns="start_date_max")
 
-# The swaps to display. Basically all swaps and then the first expected match (if it exists)
-indx = []
-for _, g in swap.groupby(COL.LibraryName, sort=False):
-    indx.extend(g[g[COL.PairwiseSwap]].index)
-    mtch = g[~g[COL.PairwiseSwap]].index
-    if len(mtch) > 0 and any(g[COL.SwapCall]):
-        indx.append(mtch[0])
+    swap_df[special_cols["miso"]] = swap_df[COL.LibraryDesign] + "_" + swap_df[COL.TissueType] + "_" + swap_df[COL.TissueOrigin]
+    swap_df[special_cols["miso_match"]] = swap_df[COL.LibraryDesignMatch] + "_" + swap_df[COL.TissueTypeMatch] + "_" + swap_df[COL.TissueOriginMatch]
 
-swap['swap_display'] = swap.index.isin(indx)
+    # There is a row for each lib, lib_match, lane, run permutation
+    # The LODs are stable between the lanes, so pick the highest one
+    # If there is both a swap and a not swap call, both will be shown
+    swap_df = swap_df.drop_duplicates(
+        [COL.LibraryName, COL.LibraryNameMatch, COL.PairwiseSwap], keep="last"
+    )
+
+    # The swaps to display. Basically all swaps and then the first expected match (if it exists)
+    indx = []
+    for _, g in swap_df.groupby(COL.LibraryName, sort=False):
+        indx.extend(g[g[COL.PairwiseSwap]].index)
+        mtch = g[~g[COL.PairwiseSwap]].index
+        if len(mtch) > 0 and any(g[COL.SwapCall]):
+            indx.append(mtch[0])
+
+    swap_df['swap_display'] = swap_df.index.isin(indx)
+
+    # Pair-wise comparison is done within project (for now), so left project is sufficient
+    projects = df_manipulation.unique_set(swap_df, COL.Project)
+
+    return {
+        "swap": swap_df,
+        "all_projects": projects,
+    }
+
+
+store.set(build())
 
 DATA_COLUMN = [
     COL.Project,
@@ -117,12 +133,6 @@ for d in TABLE_COLUMNS:
     elif PINERY_COL.ParentSampleName in d["id"]:
         d["hideable"] = True
 
-# Pair-wise comparison is done within project (for now), so left project is sufficient
-ALL_PROJECTS = df_manipulation.unique_set(swap,COL.Project)
-
-INITIAL = {
-    "projects": ALL_PROJECTS,
-}
 
 
 def dataversion():
@@ -130,10 +140,13 @@ def dataversion():
 
 
 def layout(query_string):
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
 
     if len(query["req_projects"]) > 0:
-        INITIAL["projects"] = query["req_projects"]
+        initial_projects = query["req_projects"]
+    else:
+        initial_projects = data["all_projects"]
 
     return core.Loading( fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
@@ -145,8 +158,8 @@ def layout(query_string):
                     sidebar_utils.select_projects(
                         ids["all-projects"],
                         ids["projects-list"],
-                        ALL_PROJECTS,
-                        INITIAL["projects"]
+                        data["all_projects"],
+                        initial_projects
                     ),
                     core.Checklist(
                         id=ids["checkbox_show_swaps"],
@@ -161,7 +174,7 @@ def layout(query_string):
                         id=ids['table'],
                         columns=TABLE_COLUMNS,
                         hidden_columns=DOWNLOAD_ONLY_COLUMNS,
-                        data=swap[swap["swap_display"]].to_dict('records'),
+                        data=data["swap"][data["swap"]["swap_display"]].to_dict('records'),
                         sort_action="native",
                         sort_by=[
                             {"column_id": special_cols["latest_run"], "direction": "desc"},
@@ -202,6 +215,7 @@ def init_callbacks(dash_app):
         ]
     )
     def update_pressed(_click, projects, show_swap):
+        swap = store.get()["swap"]
         if "swap" in show_swap:
             df = swap[swap["swap_display"]]
         else:
@@ -215,4 +229,4 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]

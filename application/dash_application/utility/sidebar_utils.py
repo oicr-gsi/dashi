@@ -25,7 +25,6 @@ rrna_contamination_cutoff_label = "rRNA Contamination maximum"
 PINERY_COL = pinery.column.SampleProvenanceColumn
 RUNS_COL = pinery.column.RunsColumn
 COMMON_COL = qcetl.column.ColumnNames
-ALL_RUNS = df_tools.get_runs()
 
 def frange(range_min, range_max, step):
     given_range = []
@@ -67,7 +66,7 @@ def select_runs(all_runs_id: str, runs_id: str, runs: List[str], requested_runs:
 
 
 def start_and_end_dates(start_date: str = None, end_date: str = None):
-    start = start_date if start_date else ALL_RUNS[pinery.column.RunsColumn.StartDate].min(skipna=True)
+    start = start_date if start_date else df_tools.get_runs()[pinery.column.RunsColumn.StartDate].min(skipna=True)
     end = end_date if end_date else Timestamp.today(tz="UTC")
     return (start, end)
 
@@ -89,10 +88,11 @@ def run_range_input(run_range_id: str, start_date: str=None, end_date: str=None)
 
 
 def runs_in_range(start_date: str, end_date: str) -> Series:
+    all_runs = df_tools.get_runs()
     start, end = start_and_end_dates(start_date, end_date)
-    allowed_runs = ALL_RUNS[(ALL_RUNS[pinery.column.RunsColumn.StartDate] >=
+    allowed_runs = all_runs[(all_runs[pinery.column.RunsColumn.StartDate] >=
                           start) & (
-        ALL_RUNS[pinery.column.RunsColumn.CompletionDate] <= end)]
+        all_runs[pinery.column.RunsColumn.CompletionDate] <= end)]
     return allowed_runs[pinery.column.RunsColumn.Name]
 
 

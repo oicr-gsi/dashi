@@ -5,6 +5,7 @@ from dash.dependencies import Input, Output
 import pandas
 
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..dash_id import init_ids
 
 page_name = "bcl2barcode-index-qc"
@@ -25,14 +26,30 @@ ids = init_ids(
     ]
 )
 
-DATAVERSION = util.cache.versions(["bcl2barcodecaller"])
-known = util.get_bcl2barcodecaller_known()
-unknown = util.get_bcl2barcodecaller_unknown()
-summary = util.get_bcl2barcodecaller_summary()
+store = DataStore()
 
-# In case there is a run that is all unknown barcodes
-all_runs = pandas.concat([known[util.BCL_KNOWN.Run], unknown[util.BCL_UNKNOWN.Run]]).unique()
-all_runs = sorted(all_runs, reverse=True)
+
+def build():
+    data_version = util.cache.versions(["bcl2barcodecaller"])
+    known_df = util.get_bcl2barcodecaller_known()
+    unknown_df = util.get_bcl2barcodecaller_unknown()
+    summary_df = util.get_bcl2barcodecaller_summary()
+
+    # In case there is a run that is all unknown barcodes
+    runs = pandas.concat([known_df[util.BCL_KNOWN.Run], unknown_df[util.BCL_UNKNOWN.Run]]).unique()
+    runs = sorted(runs, reverse=True)
+
+    return {
+        "version": data_version,
+        "known": known_df,
+        "unknown": unknown_df,
+        "summary": summary_df,
+        "all_runs": runs,
+    }
+
+
+store.set(build())
+
 
 KNOWN_DATA_TABLE_COLS = [
     {"name": "Library", "id": util.BCL_KNOWN.LibraryAlias},
@@ -49,10 +66,11 @@ UNKNOWN_DATA_TABLE_COLS = [
 
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 def layout(qs):
+    all_runs = store.get()["all_runs"]
     return html.Div(
         children=[
             core.Dropdown(
@@ -128,13 +146,16 @@ def init_callbacks(dash_app):
             functions update_known_index_bar, update_unknown_index_bar,
             update_pie_chart's data value, and update_pie_chart's fraction value
         """
+        data = store.get()
+        known = data["known"]
+        unknown = data["unknown"]
         known_run = known[known[util.BCL_KNOWN.Run] == run_alias]
         unknown_run = unknown[unknown[util.BCL_UNKNOWN.Run] == run_alias]
 
         return (
             create_known_index_bar(known_run),
             create_unknown_index_bar(unknown_run),
-            create_pie_chart(run_alias),
+            create_pie_chart(run_alias, data["summary"]),
             known_run.to_dict("records"),
             unknown_run.to_dict("records")
         )
@@ -206,7 +227,7 @@ def create_unknown_index_bar(run):
     }
 
 
-def create_pie_chart(run_alias):
+def create_pie_chart(run_alias, summary):
     known_count = summary[summary[util.BCL_SUMMARY.Run] == run_alias][util.BCL_SUMMARY.KnownClusters]
     unknown_count = summary[summary[util.BCL_SUMMARY.Run] == run_alias][util.BCL_SUMMARY.UnknownClusters]
 
