@@ -7,6 +7,7 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+  * Bump qc-etl to v1.50
 ## [261109-1358] - 2026-11-09
 
   * Bump qc-etl to v1.49
