@@ -8,6 +8,7 @@ from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..utility import sidebar_utils
 from ..utility import log_utils
 
@@ -58,7 +59,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 special_cols = {
@@ -97,10 +98,9 @@ def get_merged_rna_data():
 
     rna_df = util.remove_suffixed_columns(rna_df, '_q')  # Pinery duplicate columns
 
-    return rna_df, util.cache.versions(["rnaseqqc2merged"])
+    return rna_df, util.cache_versions(CACHES)
 
 
-(RNA_DF, DATAVERSION) = get_merged_rna_data()
 rna_curated_columns = [
     "Merged Library",
     PINERY_COL.GroupID,
@@ -140,34 +140,60 @@ initial["cutoff_percent_mapped_to_coding"] = 5
 cutoff_insert_mean_label = "Insert Size Mean + Intron"
 initial["cutoff_insert_mean"] = 150
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(RNA_DF, PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(RNA_DF, PINERY_COL.PrepKit)
-ALL_INSTITUTES = util.unique_set(RNA_DF, PINERY_COL.Institute)
-ALL_TISSUE_MATERIALS = util.unique_set(RNA_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(RNA_DF, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(RNA_DF, PINERY_COL.LibrarySourceTemplateType)
-ALL_SAMPLE_TYPES = util.unique_set(RNA_DF, util.sample_type_col)
-ALL_SAMPLES = util.unique_set(RNA_DF, PINERY_COL.RootSampleName)
-ALL_REFERENCES = util.unique_set(RNA_DF, RNASEQQC2_COL.Reference)
+CACHES = ["rnaseqqc2merged"]
+store = DataStore()
+
+
+def build():
+    rna_df, data_version = get_merged_rna_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(rna_df, PINERY_COL.StudyTitle)
+    kits = util.unique_set(rna_df, PINERY_COL.PrepKit)
+    institutes = util.unique_set(rna_df, PINERY_COL.Institute)
+    tissue_materials = util.unique_set(rna_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(rna_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(rna_df, PINERY_COL.LibrarySourceTemplateType)
+    sample_types = util.unique_set(rna_df, util.sample_type_col)
+    samples = util.unique_set(rna_df, PINERY_COL.RootSampleName)
+    references = util.unique_set(rna_df, RNASEQQC2_COL.Reference)
+
+    new_shape_colour = ColourShapeCallReady(
+        projects, library_designs, institutes, sample_types,
+        tissue_materials, tissue_origin, references
+    )
+    rna_df = add_graphable_cols(
+        rna_df, initial, None, REPORT_TYPE["Call-Ready"]
+    )
+
+    return {
+        "df": rna_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_kits": kits,
+        "all_institutes": institutes,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "all_library_designs": library_designs,
+        "all_sample_types": sample_types,
+        "all_samples": samples,
+        "all_references": references,
+        "shape_colour": new_shape_colour,
+    }
+
+
+store.set(build())
 
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_projects"], "all_projects"),
     "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
-    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_SAMPLE_TYPES, "all_sample_types"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+        selected, store.get()["all_tissue_materials"], "all_tissue_materials"),
+    "sample_types": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_sample_types"], "all_sample_types"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
 
-shape_colour = ColourShapeCallReady(
-    ALL_PROJECTS, ALL_LIBRARY_DESIGNS, ALL_INSTITUTES, ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN, ALL_REFERENCES
-)
-RNA_DF = add_graphable_cols(
-    RNA_DF, initial, None, REPORT_TYPE["Call-Ready"]
-)
 
-SORT_BY = shape_colour.dropdown() + [
+SORT_BY = ColourShapeCallReady.dropdown() + [
     {"label":"Pipeline Filtered Clusters",
      "value": special_cols["Pipeline Filtered Clusters"]},
     {"label": "5 to 3 Prime Bias",
@@ -268,17 +294,19 @@ GRAPHS = [
 
 
 def layout(query_string):
+    page_initial = dict(initial)
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = ALL_PROJECTS
-        query["req_projects"] = ALL_PROJECTS  # fill in the projects dropdown
+        page_initial["projects"] = data["all_projects"]
+        query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
 
-    df = reshape_call_ready_df(RNA_DF, initial["projects"], initial["references"],
-                               initial["tissue_materials"], initial["sample_types"],
-                               initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"],
+    df = reshape_call_ready_df(data["df"], page_initial["projects"], page_initial["references"],
+                               page_initial["tissue_materials"], page_initial["sample_types"],
+                               page_initial["first_sort"], page_initial["second_sort"],
+                               page_initial["colour_by"], page_initial["shape_by"],
                                [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
@@ -292,61 +320,61 @@ def layout(query_string):
                     # Filters
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
-                                                  ALL_PROJECTS,
+                                                  data["all_projects"],
                                                   query["req_projects"]),
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
-                                                   ALL_REFERENCES),
+                                                   data["all_references"]),
                     sidebar_utils.select_tissue_materials(ids["all-tissue-materials"],
                                                      ids["tissue-materials-list"],
-                                                     ALL_TISSUE_MATERIALS),
+                                                     data["all_tissue_materials"]),
                     sidebar_utils.select_sample_types(ids["all-sample-types"],
                                                      ids["sample-types-list"],
-                                                     ALL_SAMPLE_TYPES),
+                                                     data["all_sample_types"]),
                     sidebar_utils.hr(),
 
                     # Sort, colour and shape
                     sidebar_utils.select_first_sort(
                         ids["first-sort"],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids["second-sort"],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
-                                                   shape_colour.dropdown(),
-                                                   initial["colour_by"]),
+                                                   data["shape_colour"].dropdown(),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
-                                                  shape_colour.dropdown(),
-                                                  initial["shape_by"]),
+                                                  data["shape_colour"].dropdown(),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
-                                                          ALL_SAMPLES),
+                                                          data["all_samples"]),
 
                     sidebar_utils.highlight_samples_by_ext_name_input_single_lane(ids['search-sample-ext'],
                                                           None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
-                                                                    initial["shownames_val"],
+                                                                    page_initial["shownames_val"],
                                                                     "ALL LABELS",
                                                                     ids["show-all-data-labels"]),
                     sidebar_utils.hr(),
 
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label, ids["insert-mean-cutoff"],
-                        initial["cutoff_insert_mean"]),
+                        page_initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
-                        initial["cutoff_clusters_per_sample"]),
+                        page_initial["cutoff_clusters_per_sample"]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
-                        initial["cutoff_rrna_contam"]),
+                        page_initial["cutoff_rrna_contam"]),
                     sidebar_utils.cutoff_input(cutoff_percent_mapped_to_coding_label,
-                        ids["percent-mapped-to-coding-cutoff"], initial["cutoff_percent_mapped_to_coding"]),
+                        ids["percent-mapped-to-coding-cutoff"], page_initial["cutoff_percent_mapped_to_coding"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button")
@@ -359,7 +387,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                            create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -373,16 +401,16 @@ def layout(query_string):
                                 rna_curated_columns,
                                 [
                                     (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean,
-                                    initial["cutoff_insert_mean"],
+                                    page_initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_clusters_per_sample_label, special_cols["Pipeline Filtered Clusters"],
-                                    initial["cutoff_clusters_per_sample"],
+                                    page_initial["cutoff_clusters_per_sample"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
-                                    initial["cutoff_rrna_contam"],
+                                    page_initial["cutoff_rrna_contam"],
                                     (lambda row, col, cutoff: row[col] > cutoff)),
                                     (cutoff_percent_mapped_to_coding_label, RNASEQQC2_COL.MetricsPercentCodingBases,
-                                    initial["cutoff_percent_mapped_to_coding"],
+                                    page_initial["cutoff_percent_mapped_to_coding"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )
@@ -450,7 +478,7 @@ def init_callbacks(dash_app):
             search_sample += searchsampleext
         elif not search_sample and searchsampleext:
             search_sample = searchsampleext
-        df = reshape_call_ready_df(RNA_DF, projects, references, tissue_materials,
+        df = reshape_call_ready_df(store.get()["df"], projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
                                    search_sample)
@@ -495,7 +523,7 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
 
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
@@ -503,7 +531,7 @@ def init_callbacks(dash_app):
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids["tissue-materials-list"], "value"),
@@ -511,7 +539,7 @@ def init_callbacks(dash_app):
     )
     def all_tissue_materials_selected(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_TISSUE_MATERIALS]
+        return [x for x in store.get()["all_tissue_materials"]]
 
     @dash_app.callback(
         Output(ids["sample-types-list"], "value"),
@@ -519,7 +547,7 @@ def init_callbacks(dash_app):
     )
     def all_sample_types_selected(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_SAMPLE_TYPES]
+        return [x for x in store.get()["all_sample_types"]]
 
     @dash_app.callback(
         Output(ids["show-data-labels"], "value"),

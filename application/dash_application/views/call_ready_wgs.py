@@ -9,6 +9,7 @@ from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_call_ready, cutoff_table_data_merged
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..utility import sidebar_utils, log_utils
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ PINERY_COL = pinery.column.SampleProvenanceColumn
 
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 special_cols = {
@@ -128,12 +129,9 @@ def get_merged_wgs_data():
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
 
-    return wgs_df, util.cache.versions(
-        ["mutectcallability", "bamqc4merged"])
+    return wgs_df, util.cache_versions(CACHES)
 
 
-# Make the WGS dataframe
-(WGS_DF, DATAVERSION) = get_merged_wgs_data()
 wgs_curated_columns = [
     "Merged Library",
     PINERY_COL.GroupID,
@@ -177,44 +175,65 @@ initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(WGS_DF, PINERY_COL.StudyTitle)
-ALL_KITS = util.unique_set(WGS_DF, PINERY_COL.PrepKit)
-ALL_INSTITUTES = util.unique_set(WGS_DF, PINERY_COL.Institute)
-ALL_TISSUE_MATERIALS = util.unique_set(WGS_DF, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(WGS_DF, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(WGS_DF,
-                                      PINERY_COL.LibrarySourceTemplateType)
-ALL_SAMPLE_TYPES = util.unique_set(WGS_DF, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(WGS_DF, BAMQC_COL.Reference)
+CACHES = ["bamqc4merged", "mutectcallability"]
+store = DataStore()
+
+
+def build():
+    # Make the WGS dataframe
+    wgs_df, data_version = get_merged_wgs_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(wgs_df, PINERY_COL.StudyTitle)
+    kits = util.unique_set(wgs_df, PINERY_COL.PrepKit)
+    institutes = util.unique_set(wgs_df, PINERY_COL.Institute)
+    tissue_materials = util.unique_set(wgs_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(wgs_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(wgs_df, PINERY_COL.LibrarySourceTemplateType)
+    sample_types = util.unique_set(wgs_df, util.sample_type_col)
+    references = util.unique_set(wgs_df, BAMQC_COL.Reference)
+
+    new_shape_colour = ColourShapeCallReady(
+        projects, library_designs, institutes, sample_types,
+        tissue_materials, tissue_origin, references
+    )
+    wgs_df = add_graphable_cols(
+        wgs_df, initial, None, REPORT_TYPE["Call-Ready"]
+    )
+
+    return {
+        "df": wgs_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_kits": kits,
+        "all_institutes": institutes,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "all_library_designs": library_designs,
+        "all_sample_types": sample_types,
+        "all_references": references,
+        "shape_colour": new_shape_colour,
+    }
+
+
+store.set(build())
+
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
     "projects": lambda selected: log_utils.collapse_if_all_selected(selected,
-                                                                    ALL_PROJECTS,
+                                                                    store.get()["all_projects"],
                                                                     "all_projects"),
     "tissue_materials": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_TISSUE_MATERIALS, "all_tissue_materials"),
+        selected, store.get()["all_tissue_materials"], "all_tissue_materials"),
     "sample_types": lambda selected: log_utils.collapse_if_all_selected(
-        selected, ALL_SAMPLE_TYPES, "all_sample_types"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+        selected, store.get()["all_sample_types"], "all_sample_types"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
 
-shape_colour = ColourShapeCallReady(
-    ALL_PROJECTS,
-    ALL_LIBRARY_DESIGNS,
-    ALL_INSTITUTES,
-    ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS,
-    ALL_TISSUE_ORIGIN,
-    ALL_REFERENCES
-)
-WGS_DF = add_graphable_cols(
-    WGS_DF, initial, None, REPORT_TYPE["Call-Ready"]
-)
 
-SORT_BY = shape_colour.dropdown() + [
+SORT_BY = ColourShapeCallReady.dropdown() + [
     {
         "label": "Pipeline Filtered Clusters",
         "value": BAMQC_COL.TotalClusters
@@ -346,18 +365,20 @@ GRAPHS = [
     generate_duplicate_rate,
 ]
 def layout(query_string):
+    page_initial = dict(initial)
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = ALL_PROJECTS
-        query["req_projects"] = ALL_PROJECTS  # fill in the projects dropdown
-    df = reshape_call_ready_df(WGS_DF, initial["projects"], initial["references"],
-                               initial["tissue_materials"],
-                               initial["sample_types"],
-                               initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"],
-                               initial["shape_by"],
+        page_initial["projects"] = data["all_projects"]
+        query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
+    df = reshape_call_ready_df(data["df"], page_initial["projects"], page_initial["references"],
+                               page_initial["tissue_materials"],
+                               page_initial["sample_types"],
+                               page_initial["first_sort"], page_initial["second_sort"],
+                               page_initial["colour_by"],
+                               page_initial["shape_by"],
                                [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
@@ -371,40 +392,40 @@ def layout(query_string):
                     # Filters
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
-                                                  ALL_PROJECTS, 
+                                                  data["all_projects"], 
                                                   query["req_projects"]),
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
-                                                   ALL_REFERENCES),
+                                                   data["all_references"]),
                     sidebar_utils.select_tissue_materials(
                         ids["all-tissue-materials"],
                         ids["tissue-materials-list"],
-                        ALL_TISSUE_MATERIALS),
+                        data["all_tissue_materials"]),
                     sidebar_utils.select_sample_types(
                         ids["all-sample-types"], ids["sample-types-list"],
-                        ALL_SAMPLE_TYPES),
+                        data["all_sample_types"]),
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(
                         ids["first-sort"],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids["second-sort"],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
-                                                   shape_colour.dropdown(),
-                                                   initial["colour_by"]),
+                                                   data["shape_colour"].dropdown(),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
-                                                  shape_colour.dropdown(),
-                                                  initial["shape_by"]),
+                                                  data["shape_colour"].dropdown(),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
@@ -414,7 +435,7 @@ def layout(query_string):
 
                     sidebar_utils.show_data_labels_input_call_ready(
                         ids["show-data-labels"],
-                        initial["shownames_val"],
+                        page_initial["shownames_val"],
                         "ALL LABELS",
                         ids["show-all-data-labels"]),
 
@@ -423,19 +444,19 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["cutoff-coverage-tumour"],
-                                               initial["cutoff_coverage_tumour"]),
+                                               page_initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
                                                ids["cutoff-coverage-normal"],
-                                               initial["cutoff_coverage_normal"]),
+                                               page_initial["cutoff_coverage_normal"]),
                     sidebar_utils.cutoff_input(cutoff_callability_label,
                                                ids["cutoff-callability"],
-                                               initial["cutoff_callability"]),
+                                               page_initial["cutoff_callability"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
                                                ids["cutoff-mean-insert"],
-                                               initial["cutoff_insert_mean"]),
+                                               page_initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
-                                               initial["cutoff_duplicate_rate"]),
+                                               page_initial["cutoff_duplicate_rate"]),
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
@@ -447,7 +468,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -463,7 +484,7 @@ def layout(query_string):
                                                       (
                                                       cutoff_coverage_tumour_label,
                                                       BAMQC_COL.CoverageDeduplicated,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_coverage_tumour"],
                                                       (lambda row, col, cutoff:
                                                        row[
@@ -472,7 +493,7 @@ def layout(query_string):
                                                       (
                                                       cutoff_coverage_normal_label,
                                                       BAMQC_COL.CoverageDeduplicated,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_coverage_normal"],
                                                       (lambda row, col, cutoff:
                                                        row[
@@ -481,20 +502,20 @@ def layout(query_string):
                                                       (cutoff_callability_label,
                                                        special_cols[
                                                            "Percent Callability"],
-                                                       initial[
+                                                       page_initial[
                                                            "cutoff_callability"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (cutoff_insert_mean_label,
                                                        BAMQC_COL.InsertMean,
-                                                       initial[
+                                                       page_initial[
                                                            "cutoff_insert_mean"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (
                                                       cutoff_duplicate_rate_label,
                                                       BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_duplicate_rate"],
                                                       (lambda row, col, cutoff:
                                                        row[col] > cutoff)),
@@ -566,7 +587,7 @@ def init_callbacks(dash_app):
             search_sample += searchsampleext
         elif not search_sample and searchsampleext:
             search_sample = searchsampleext
-        df = reshape_call_ready_df(WGS_DF, projects, references, tissue_materials,
+        df = reshape_call_ready_df(store.get()["df"], projects, references, tissue_materials,
                                    sample_types, first_sort, second_sort,
                                    colour_by, shape_by,
                                    search_sample)
@@ -620,14 +641,14 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
         [Input(ids['all-references'], 'n_clicks')]
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids['tissue-materials-list'], 'value'),
@@ -635,7 +656,7 @@ def init_callbacks(dash_app):
     )
     def all_tissue_materials_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_TISSUE_MATERIALS]
+        return [x for x in store.get()["all_tissue_materials"]]
 
     @dash_app.callback(
         Output(ids['sample-types-list'], 'value'),
@@ -643,7 +664,7 @@ def init_callbacks(dash_app):
     )
     def all_sample_types_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_SAMPLE_TYPES]
+        return [x for x in store.get()["all_sample_types"]]
 
     @dash_app.callback(
         Output(ids["show-data-labels"], "value"),

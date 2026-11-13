@@ -6,6 +6,7 @@ from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..utility import sidebar_utils
 from ..utility import log_utils
 from qcetl.column import BamQc4Column, FastqcColumn
@@ -121,31 +122,62 @@ def get_bamqc_data():
 
     bamqc_df = util.filter_by_library_design(bamqc_df, util.ex_lib_designs)
 
-    return bamqc_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
+    return bamqc_df, util.cache_versions(CACHES)
 
 
-(bamqc, DATAVERSION) = get_bamqc_data()
+CACHES = ["bamqc4", "dnaseqqc", "fastqc"]
+store = DataStore()
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(bamqc, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(bamqc, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_set(bamqc, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_set(bamqc, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(bamqc, PINERY_COL.TissueOrigin)
-ALL_LIBRARY_DESIGNS = util.unique_set(bamqc, PINERY_COL.LibrarySourceTemplateType)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(bamqc)
-ALL_SAMPLE_TYPES = util.unique_set(bamqc, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(bamqc, BAMQC_COL.Reference)
+
+def build():
+    bamqc_df, data_version = get_bamqc_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(bamqc_df, PINERY_COL.StudyTitle)
+    runs = util.unique_set(bamqc_df, PINERY_COL.SequencerRunName, True) # reverse order
+    kits = util.unique_set(bamqc_df, PINERY_COL.PrepKit)
+    tissue_materials = util.unique_set(bamqc_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(bamqc_df, PINERY_COL.TissueOrigin)
+    library_designs = util.unique_set(bamqc_df, PINERY_COL.LibrarySourceTemplateType)
+    instrument_models = util.get_illumina_instruments(bamqc_df)
+    sample_types = util.unique_set(bamqc_df, util.sample_type_col)
+    references = util.unique_set(bamqc_df, BAMQC_COL.Reference)
+
+    new_shape_colour = ColourShapeSingleLane(
+        projects, runs, kits, tissue_materials, tissue_origin,
+        library_designs, references,
+    )
+    # Add shape, colour, and size cols to dataframe
+    bamqc_df = add_graphable_cols(bamqc_df, initial)
+
+    return {
+        "df": bamqc_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_runs": runs,
+        "all_kits": kits,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "all_library_designs": library_designs,
+        "instrument_models": instrument_models,
+        "all_sample_types": sample_types,
+        "all_references": references,
+        "shape_colour": new_shape_colour,
+    }
+
+
+store.set(build())
+
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
-    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
-    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
-    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_LIBRARY_DESIGNS, "all_library_designs"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_projects"], "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_runs"], "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_kits"], "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["instrument_models"], "all_instruments"),
+    "library_designs": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_library_designs"], "all_library_designs"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
 
 tar_curated_columns = [
@@ -175,13 +207,6 @@ tar_curated_columns = [
     special_cols["Unmapped Reads (%)"],
     special_cols["Non-Primary Reads (%)"],
 ]
-
-shape_colour = ColourShapeSingleLane(
-    ALL_PROJECTS, ALL_RUNS, ALL_KITS, ALL_TISSUE_MATERIALS, ALL_TISSUE_ORIGIN,
-    ALL_LIBRARY_DESIGNS, ALL_REFERENCES,
-)
-# Add shape, colour, and size cols to dataframe
-bamqc = add_graphable_cols(bamqc, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Total Clusters",
@@ -298,36 +323,38 @@ GRAPHS = [
 ]
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 def layout(query_string):
+    page_initial = dict(initial)
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     # initial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
     if "req_runs" in query and query["req_runs"]:
-        initial["runs"] = query["req_runs"]
+        page_initial["runs"] = query["req_runs"]
     elif "req_start" in query and query["req_start"]:
-        initial["runs"] = ALL_RUNS
-        query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+        page_initial["runs"] = data["all_runs"]
+        query["req_runs"] = data["all_runs"]  # fill in the runs dropdown
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
 
-    df = reshape_single_lane_df(bamqc, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["references"], initial["kits"],
-                                initial["library_designs"], initial["start_date"],
-                                initial["end_date"], initial["first_sort"],
-                                initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], [])
+    df = reshape_single_lane_df(data["df"], page_initial["runs"], page_initial["instruments"],
+                                page_initial["projects"], page_initial["references"], page_initial["kits"],
+                                page_initial["library_designs"], page_initial["start_date"],
+                                page_initial["end_date"], page_initial["first_sort"],
+                                page_initial["second_sort"], page_initial["colour_by"],
+                                page_initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.unknown_run_alert(
                     ids['alerts-unknown-run'],
-                    initial["runs"],
-                    ALL_RUNS
+                    page_initial["runs"],
+                    data["all_runs"]
                 ),
             ]),
             html.Div(className='row flex-container', children=[
@@ -340,7 +367,7 @@ def layout(query_string):
 
                     # Filters
                     sidebar_utils.select_runs(ids["all-runs"],
-                                              ids["run-id-list"], ALL_RUNS,
+                                              ids["run-id-list"], data["all_runs"],
                                               query["req_runs"]),
 
                     sidebar_utils.run_range_input(ids["date-range"],
@@ -351,46 +378,46 @@ def layout(query_string):
 
                     sidebar_utils.select_projects(ids["all-projects"],
                                                   ids["projects-list"],
-                                                  ALL_PROJECTS,
+                                                  data["all_projects"],
                                                   query["req_projects"]),
 
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
-                                                   ALL_REFERENCES),
+                                                   data["all_references"]),
 
                     sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
-                                              ALL_KITS),
+                                              data["all_kits"]),
 
                     sidebar_utils.select_instruments(ids["all-instruments"],
                                                      ids["instruments-list"],
-                                                     ILLUMINA_INSTRUMENT_MODELS),
+                                                     data["instrument_models"]),
 
                     sidebar_utils.select_library_designs(
                         ids["all-library-designs"], ids["library-designs-list"],
-                        ALL_LIBRARY_DESIGNS),
+                        data["all_library_designs"]),
 
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(
                         ids['first-sort'],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],
-                                                   shape_colour.dropdown(),
-                                                   initial["colour_by"]),
+                                                   data["shape_colour"].dropdown(),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids['shape-by'],
-                                                  shape_colour.dropdown(),
-                                                  initial["shape_by"]),
+                                                  data["shape_colour"].dropdown(),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
@@ -399,7 +426,7 @@ def layout(query_string):
                                                                                   None),
 
                     sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
-                                                                     initial["shownames_val"],
+                                                                     page_initial["shownames_val"],
                                                                      'ALL LABELS',
                                                                      ids['show-all-data-labels']),
 
@@ -407,9 +434,9 @@ def layout(query_string):
 
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_pf_clusters_label,
-                                               ids['passed-filter-clusters-cutoff'], initial["cutoff_pf_clusters"]),
+                                               ids['passed-filter-clusters-cutoff'], page_initial["cutoff_pf_clusters"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
-                                               ids['insert-size-mean-cutoff'], initial["cutoff_insert_mean"]),
+                                               ids['insert-size-mean-cutoff'], page_initial["cutoff_insert_mean"]),
 
                     html.Br(),
                     html.Button('Update', id=ids['update-button-bottom'], className="update-button"),
@@ -422,7 +449,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -435,10 +462,10 @@ def layout(query_string):
                                                   df,
                                                   tar_curated_columns,
                                                   [
-                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, page_initial["cutoff_insert_mean"],
                                                        (lambda row, col, cutoff: row[col] < cutoff)),
                                                       (cutoff_pf_clusters_label,
-                                                       special_cols["Total Clusters (Passed Filter)"], initial["cutoff_pf_clusters"],
+                                                       special_cols["Total Clusters (Passed Filter)"], page_initial["cutoff_pf_clusters"],
                                                        (lambda row, col, cutoff: row[col] < cutoff)),
                                                   ]
                                               ),
@@ -514,7 +541,7 @@ def init_callbacks(dash_app):
             searchsample += searchsampleext
         elif not searchsample and searchsampleext:
             searchsample = searchsampleext
-        df = reshape_single_lane_df(bamqc, runs, instruments, projects, references, kits, library_designs,
+        df = reshape_single_lane_df(store.get()["df"], runs, instruments, projects, references, kits, library_designs,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, searchsample)
 
@@ -573,7 +600,7 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_RUNS]
+        return [x for x in store.get()["all_runs"]]
 
     @dash_app.callback(
         Output(ids['instruments-list'], 'value'),
@@ -581,7 +608,7 @@ def init_callbacks(dash_app):
     )
     def all_instruments_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+        return [x for x in store.get()["instrument_models"]]
 
     @dash_app.callback(
         Output(ids['projects-list'], 'value'),
@@ -589,7 +616,7 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
 
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
@@ -597,7 +624,7 @@ def init_callbacks(dash_app):
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),
@@ -605,7 +632,7 @@ def init_callbacks(dash_app):
     )
     def all_kits_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_KITS]
+        return [x for x in store.get()["all_kits"]]
 
     @dash_app.callback(
         Output(ids['library-designs-list'], 'value'),
@@ -613,7 +640,7 @@ def init_callbacks(dash_app):
     )
     def all_library_designs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_LIBRARY_DESIGNS]
+        return [x for x in store.get()["all_library_designs"]]
 
     @dash_app.callback(
         Output(ids['show-data-labels'], 'value'),

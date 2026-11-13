@@ -39,5 +39,8 @@ def add_dash(server, debug):
     for page in pages.pages:
         page.init_callbacks(dash_app)
 
+    from . import refresh
+    refresh.start_refresh_timer()
+
     # Return the server object from Dash to overwrite Flask server object
     return dash_app.server
