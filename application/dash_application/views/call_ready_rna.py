@@ -98,7 +98,7 @@ def get_merged_rna_data():
 
     rna_df = util.remove_suffixed_columns(rna_df, '_q')  # Pinery duplicate columns
 
-    return rna_df, util.cache.versions(["rnaseqqc2merged"])
+    return rna_df, util.cache_versions(CACHES)
 
 
 rna_curated_columns = [
@@ -140,6 +140,7 @@ initial["cutoff_percent_mapped_to_coding"] = 5
 cutoff_insert_mean_label = "Insert Size Mean + Intron"
 initial["cutoff_insert_mean"] = 150
 
+CACHES = ["rnaseqqc2merged"]
 store = DataStore()
 
 
@@ -293,18 +294,19 @@ GRAPHS = [
 
 
 def layout(query_string):
+    page_initial = dict(initial)
     data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = data["all_projects"]
+        page_initial["projects"] = data["all_projects"]
         query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
 
-    df = reshape_call_ready_df(data["df"], initial["projects"], initial["references"],
-                               initial["tissue_materials"], initial["sample_types"],
-                               initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"],
+    df = reshape_call_ready_df(data["df"], page_initial["projects"], page_initial["references"],
+                               page_initial["tissue_materials"], page_initial["sample_types"],
+                               page_initial["first_sort"], page_initial["second_sort"],
+                               page_initial["colour_by"], page_initial["shape_by"],
                                [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
@@ -334,23 +336,23 @@ def layout(query_string):
                     # Sort, colour and shape
                     sidebar_utils.select_first_sort(
                         ids["first-sort"],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids["second-sort"],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    data["shape_colour"].dropdown(),
-                                                   initial["colour_by"]),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   data["shape_colour"].dropdown(),
-                                                  initial["shape_by"]),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
                                                           data["all_samples"]),
@@ -359,20 +361,20 @@ def layout(query_string):
                                                           None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
-                                                                    initial["shownames_val"],
+                                                                    page_initial["shownames_val"],
                                                                     "ALL LABELS",
                                                                     ids["show-all-data-labels"]),
                     sidebar_utils.hr(),
 
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label, ids["insert-mean-cutoff"],
-                        initial["cutoff_insert_mean"]),
+                        page_initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label, ids["clusters-per-sample-cutoff"],
-                        initial["cutoff_clusters_per_sample"]),
+                        page_initial["cutoff_clusters_per_sample"]),
                     sidebar_utils.cutoff_input(cutoff_rrna_contam_label, ids["rrna-contam-cutoff"],
-                        initial["cutoff_rrna_contam"]),
+                        page_initial["cutoff_rrna_contam"]),
                     sidebar_utils.cutoff_input(cutoff_percent_mapped_to_coding_label,
-                        ids["percent-mapped-to-coding-cutoff"], initial["cutoff_percent_mapped_to_coding"]),
+                        ids["percent-mapped-to-coding-cutoff"], page_initial["cutoff_percent_mapped_to_coding"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button")
@@ -385,7 +387,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                            create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -399,16 +401,16 @@ def layout(query_string):
                                 rna_curated_columns,
                                 [
                                     (cutoff_insert_mean_label, RNASEQQC2_COL.InsertMean,
-                                    initial["cutoff_insert_mean"],
+                                    page_initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_clusters_per_sample_label, special_cols["Pipeline Filtered Clusters"],
-                                    initial["cutoff_clusters_per_sample"],
+                                    page_initial["cutoff_clusters_per_sample"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_rrna_contam_label, special_cols["% rRNA Contamination"],
-                                    initial["cutoff_rrna_contam"],
+                                    page_initial["cutoff_rrna_contam"],
                                     (lambda row, col, cutoff: row[col] > cutoff)),
                                     (cutoff_percent_mapped_to_coding_label, RNASEQQC2_COL.MetricsPercentCodingBases,
-                                    initial["cutoff_percent_mapped_to_coding"],
+                                    page_initial["cutoff_percent_mapped_to_coding"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )

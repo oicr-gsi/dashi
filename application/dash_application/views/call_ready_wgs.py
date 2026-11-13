@@ -129,8 +129,7 @@ def get_merged_wgs_data():
     wgs_df = util.remove_suffixed_columns(wgs_df, '_q')  # Pinery duplicate columns
     wgs_df = util.remove_suffixed_columns(wgs_df, '_x')  # Callability duplicate columns
 
-    return wgs_df, util.cache.versions(
-        ["mutectcallability", "bamqc4merged"])
+    return wgs_df, util.cache_versions(CACHES)
 
 
 wgs_curated_columns = [
@@ -176,6 +175,7 @@ initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
 
+CACHES = ["bamqc4merged", "mutectcallability"]
 store = DataStore()
 
 
@@ -365,19 +365,20 @@ GRAPHS = [
     generate_duplicate_rate,
 ]
 def layout(query_string):
+    page_initial = dict(initial)
     data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = data["all_projects"]
+        page_initial["projects"] = data["all_projects"]
         query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
-    df = reshape_call_ready_df(data["df"], initial["projects"], initial["references"],
-                               initial["tissue_materials"],
-                               initial["sample_types"],
-                               initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"],
-                               initial["shape_by"],
+    df = reshape_call_ready_df(data["df"], page_initial["projects"], page_initial["references"],
+                               page_initial["tissue_materials"],
+                               page_initial["sample_types"],
+                               page_initial["first_sort"], page_initial["second_sort"],
+                               page_initial["colour_by"],
+                               page_initial["shape_by"],
                                [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
@@ -408,23 +409,23 @@ def layout(query_string):
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(
                         ids["first-sort"],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids["second-sort"],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    data["shape_colour"].dropdown(),
-                                                   initial["colour_by"]),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   data["shape_colour"].dropdown(),
-                                                  initial["shape_by"]),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
@@ -434,7 +435,7 @@ def layout(query_string):
 
                     sidebar_utils.show_data_labels_input_call_ready(
                         ids["show-data-labels"],
-                        initial["shownames_val"],
+                        page_initial["shownames_val"],
                         "ALL LABELS",
                         ids["show-all-data-labels"]),
 
@@ -443,19 +444,19 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["cutoff-coverage-tumour"],
-                                               initial["cutoff_coverage_tumour"]),
+                                               page_initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
                                                ids["cutoff-coverage-normal"],
-                                               initial["cutoff_coverage_normal"]),
+                                               page_initial["cutoff_coverage_normal"]),
                     sidebar_utils.cutoff_input(cutoff_callability_label,
                                                ids["cutoff-callability"],
-                                               initial["cutoff_callability"]),
+                                               page_initial["cutoff_callability"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
                                                ids["cutoff-mean-insert"],
-                                               initial["cutoff_insert_mean"]),
+                                               page_initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
                                                ids["cutoff-duplicate-rate"],
-                                               initial["cutoff_duplicate_rate"]),
+                                               page_initial["cutoff_duplicate_rate"]),
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
                 ]),
@@ -467,7 +468,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -483,7 +484,7 @@ def layout(query_string):
                                                       (
                                                       cutoff_coverage_tumour_label,
                                                       BAMQC_COL.CoverageDeduplicated,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_coverage_tumour"],
                                                       (lambda row, col, cutoff:
                                                        row[
@@ -492,7 +493,7 @@ def layout(query_string):
                                                       (
                                                       cutoff_coverage_normal_label,
                                                       BAMQC_COL.CoverageDeduplicated,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_coverage_normal"],
                                                       (lambda row, col, cutoff:
                                                        row[
@@ -501,20 +502,20 @@ def layout(query_string):
                                                       (cutoff_callability_label,
                                                        special_cols[
                                                            "Percent Callability"],
-                                                       initial[
+                                                       page_initial[
                                                            "cutoff_callability"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (cutoff_insert_mean_label,
                                                        BAMQC_COL.InsertMean,
-                                                       initial[
+                                                       page_initial[
                                                            "cutoff_insert_mean"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff)),
                                                       (
                                                       cutoff_duplicate_rate_label,
                                                       BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                                      initial[
+                                                      page_initial[
                                                           "cutoff_duplicate_rate"],
                                                       (lambda row, col, cutoff:
                                                        row[col] > cutoff)),

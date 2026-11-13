@@ -6,7 +6,7 @@ import random
 import dash_bootstrap_components as dbc
 from dash import html
 from dash import dcc as core
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
 from . import pages
 from . import refresh
@@ -120,6 +120,16 @@ layout = html.Div([
         color="danger",
         style={"margin-left": "15px", "margin-right": "15px"},
     ),
+    dbc.Alert(
+        "New data is available. Reload the page to see it.",
+        id="new-data-alert",
+        is_open=False,
+        color="warning",
+        style={"margin-left": "15px", "margin-right": "15px"},
+    ),
+    core.Store(id="loaded-version"),
+    core.Interval(id="new-data-check", interval=5 * 60 * 1000),
+
     core.Loading(id='page-content', type='dot'),
     html.Footer(id='footer', children=[
         html.Hr(), 
@@ -151,6 +161,7 @@ def init_callbacks(dash_app):
         [
             Output('page-content', 'children'),
             Output('data-version', 'children'),
+            Output('loaded-version', 'data'),
         ],
         [
             Input('url', 'pathname'),
@@ -160,12 +171,17 @@ def init_callbacks(dash_app):
         """Get the requested page content and fill in the ETL
         data version info at the bottom of the page"""
         if path == '/None' or path is None:
-            return '404', None
+            return '404', None, None
         requested = path[1:] # drop the leading slash
         if requested in pages_info.keys():
             page = pages_info[requested]
-            return [page.layout(qs), page.dataversion() + " | " + refresh.status_text()]
-        return '404', None
+            return [
+                page.layout(qs),
+                page.dataversion() + " | " + refresh.status_text(requested),
+                refresh.updated_at(requested),
+            ]
+        return '404', None, None
+
 
     @dash_app.callback(
         [
@@ -188,3 +204,14 @@ def init_callbacks(dash_app):
             return "", False
         else:
             return message, True
+
+    @dash_app.callback(
+        Output('new-data-alert', 'is_open'),
+        [Input('new-data-check', 'n_intervals')],
+        [State('url', 'pathname'), State('loaded-version', 'data')],
+    )
+    def show_new_data_alert(_, path, loaded):
+        if path is None or loaded is None:
+            return False
+        return refresh.updated_at(path[1:]) != loaded
+

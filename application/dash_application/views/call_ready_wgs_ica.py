@@ -83,7 +83,7 @@ def get_icametrics_data():
         right_on=PINERY_COL.SampleProvenanceID,
     )
 
-    return ica_df, util.cache.versions(["icametrics"])
+    return ica_df, util.cache_versions(CACHES)
 
 
 ica_curated_columns = [
@@ -162,6 +162,7 @@ initial["cutoff_coverage_tumour"] = 80
 cutoff_coverage_normal_label = "Coverage (Normal) minimum"
 initial["cutoff_coverage_normal"] = 30
 
+CACHES = ["icametrics"]
 store = DataStore()
 
 
@@ -456,18 +457,19 @@ GRAPHS = [
 
 
 def layout(query_string):
+    page_initial = dict(initial)
     data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = data["all_projects"]
+        page_initial["projects"] = data["all_projects"]
         query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
 
-    df = reshape_ica_df(data["df"], initial["projects"], initial["tissue_materials"],
-                        initial["sample_types"], initial["first_sort"],
-                        initial["second_sort"], initial["colour_by"],
-                        initial["shape_by"], [])
+    df = reshape_ica_df(data["df"], page_initial["projects"], page_initial["tissue_materials"],
+                        page_initial["sample_types"], page_initial["first_sort"],
+                        page_initial["second_sort"], page_initial["colour_by"],
+                        page_initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -493,15 +495,15 @@ def layout(query_string):
 
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(
-                        ids["first-sort"], initial["first_sort"], SORT_BY),
+                        ids["first-sort"], page_initial["first_sort"], SORT_BY),
                     sidebar_utils.select_second_sort(
-                        ids["second-sort"], initial["second_sort"], SORT_BY),
+                        ids["second-sort"], page_initial["second_sort"], SORT_BY),
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    data["shape_colour"].dropdown(),
-                                                   initial["colour_by"]),
+                                                   page_initial["colour_by"]),
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   data["shape_colour"].dropdown(),
-                                                  initial["shape_by"]),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
@@ -526,7 +528,7 @@ def layout(query_string):
                                     {'label': 'Tissue Origin', 'value': PINERY_COL.TissueOrigin},
                                     {'label': 'Tissue Type', 'value': PINERY_COL.TissueType},
                                 ],
-                                value=initial["shownames_val"],
+                                value=page_initial["shownames_val"],
                                 searchable=False,
                                 multi=True,
                             )
@@ -538,10 +540,10 @@ def layout(query_string):
                     # Cutoffs
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
                                                ids["cutoff-coverage-tumour"],
-                                               initial["cutoff_coverage_tumour"]),
+                                               page_initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
                                                ids["cutoff-coverage-normal"],
-                                               initial["cutoff_coverage_normal"]),
+                                               page_initial["cutoff_coverage_normal"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
@@ -554,7 +556,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -569,12 +571,12 @@ def layout(query_string):
                                                   [
                                                       (cutoff_coverage_tumour_label,
                                                        ICA_COL.MeanCovGenome,
-                                                       initial["cutoff_coverage_tumour"],
+                                                       page_initial["cutoff_coverage_tumour"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff and util.is_tumour(row))),
                                                       (cutoff_coverage_normal_label,
                                                        ICA_COL.MeanCovGenome,
-                                                       initial["cutoff_coverage_normal"],
+                                                       page_initial["cutoff_coverage_normal"],
                                                        (lambda row, col, cutoff:
                                                         row[col] < cutoff and util.is_normal(row))),
                                                   ]

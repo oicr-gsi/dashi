@@ -37,6 +37,7 @@ special_cols = {
     "miso_match": "miso_match",
 }
 
+CACHES = ["crosscheckfingerprint_caller"]
 store = DataStore()
 
 
@@ -98,6 +99,7 @@ def build():
     return {
         "swap": swap_df,
         "all_projects": projects,
+        "version": df_manipulation.cache_versions(CACHES),
     }
 
 
@@ -136,7 +138,7 @@ for d in TABLE_COLUMNS:
 
 
 def dataversion():
-    return df_manipulation.cache.versions(["crosscheckfingerprints"])
+    return store.get()["version"]
 
 
 def layout(query_string):

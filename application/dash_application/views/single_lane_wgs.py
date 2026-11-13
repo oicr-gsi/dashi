@@ -188,9 +188,10 @@ def get_wgs_data():
     illumina_models = util.get_illumina_instruments(wgs_df)
     wgs_df = wgs_df[wgs_df[INSTRUMENT_COLS.ModelName].isin(illumina_models)]
 
-    return wgs_df, util.cache.versions(["bamqc4", "dnaseqqc", "fastqc"])
+    return wgs_df, util.cache_versions(CACHES)
 
 
+CACHES = ["bamqc4", "dnaseqqc", "fastqc"]
 store = DataStore()
 
 
@@ -383,32 +384,33 @@ def dataversion():
 
 # Layout elements
 def layout(query_string):
+    page_initial = dict(initial)
     data = store.get()
     query = sidebar_utils.parse_query(query_string)
     # intial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
     if "req_runs" in query and query["req_runs"]:
-        initial["runs"] = query["req_runs"]
+        page_initial["runs"] = query["req_runs"]
     elif "req_start" in query and query["req_start"]:
-        initial["runs"] = data["all_runs"]
+        page_initial["runs"] = data["all_runs"]
         query["req_runs"] = data["all_runs"]  # fill in the runs dropdown
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
 
-    df = reshape_single_lane_df(data["df"], initial["runs"], initial["instruments"],
-                                initial["projects"], initial["references"], initial["kits"],
-                                initial["library_designs"], initial["start_date"],
-                                initial["end_date"], initial["first_sort"],
-                                initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], [])
+    df = reshape_single_lane_df(data["df"], page_initial["runs"], page_initial["instruments"],
+                                page_initial["projects"], page_initial["references"], page_initial["kits"],
+                                page_initial["library_designs"], page_initial["start_date"],
+                                page_initial["end_date"], page_initial["first_sort"],
+                                page_initial["second_sort"], page_initial["colour_by"],
+                                page_initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
     html.Div(className="body", children=[
         html.Div(className="row jira-buttons", children=[
             sidebar_utils.unknown_run_alert(
                 ids['alerts-unknown-run'],
-                initial["runs"],
+                page_initial["runs"],
                 data["all_runs"]
             ),
         ]),
@@ -457,23 +459,23 @@ def layout(query_string):
                 # Sort, colour, and shape
                 sidebar_utils.select_first_sort(
                     ids['first-sort'],
-                    initial["first_sort"],
+                    page_initial["first_sort"],
                     SORT_BY,
                 ),
 
                 sidebar_utils.select_second_sort(
                     ids["second-sort"],
-                    initial["second_sort"],
+                    page_initial["second_sort"],
                     SORT_BY,
                 ),
 
                 sidebar_utils.select_colour_by(ids['colour-by'],
                                               data["shape_colour"].dropdown(),
-                                              initial["colour_by"]),
+                                              page_initial["colour_by"]),
 
                 sidebar_utils.select_shape_by(ids['shape-by'],
                                              data["shape_colour"].dropdown(),
-                                             initial["shape_by"]),
+                                             page_initial["shape_by"]),
 
                 sidebar_utils.highlight_samples_input(ids['search-sample'], []),
 
@@ -481,7 +483,7 @@ def layout(query_string):
                                                           None),
 
                 sidebar_utils.show_data_labels_input_single_lane(ids["show-data-labels"],
-                                                     initial["shownames_val"],
+                                                     page_initial["shownames_val"],
                                                      "ALL LABELS",
                                                      ids["show-all-data-labels"]),
 
@@ -489,11 +491,11 @@ def layout(query_string):
 
                 # Cutoffs
                 sidebar_utils.cutoff_input(cutoff_insert_mean_label,
-                    ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
+                    ids["insert-mean-cutoff"], page_initial["cutoff_insert_mean"]),
                 sidebar_utils.cutoff_input(cutoff_percent_duplication_label, 
-                    ids["percent-duplication-cutoff"], initial["cutoff_percent_duplication"]),
+                    ids["percent-duplication-cutoff"], page_initial["cutoff_percent_duplication"]),
                 sidebar_utils.cutoff_input(cutoff_clusters_per_sample_label,
-                    ids["clusters-per-sample-cutoff"], initial["cutoff_clusters_per_sample"]),
+                    ids["clusters-per-sample-cutoff"], page_initial["cutoff_clusters_per_sample"]),
 
                 html.Br(),
                 html.Button("Update", id=ids['update-button-bottom'], className="update-button"),
@@ -507,7 +509,7 @@ def layout(query_string):
                         core.Tab(
                             label="Graphs",
                             children=[
-                                create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                             ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -520,11 +522,11 @@ def layout(query_string):
                                 df,
                                 wgs_curated_columns,
                                 [
-                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
+                                    (cutoff_insert_mean_label, BAMQC_COL.InsertMean, page_initial["cutoff_insert_mean"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
-                                    (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, initial["cutoff_percent_duplication"],
+                                    (cutoff_percent_duplication_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION, page_initial["cutoff_percent_duplication"],
                                     (lambda row, col, cutoff: row[col] >= cutoff)),
-                                    (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], initial["cutoff_clusters_per_sample"],
+                                    (cutoff_clusters_per_sample_label, special_cols["Total Clusters (Passed Filter)"], page_initial["cutoff_clusters_per_sample"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                 ]
                             )                    

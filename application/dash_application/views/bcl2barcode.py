@@ -26,11 +26,12 @@ ids = init_ids(
     ]
 )
 
+CACHES = ["bcl2barcodecaller"]
 store = DataStore()
 
 
 def build():
-    data_version = util.cache.versions(["bcl2barcodecaller"])
+    data_version = util.cache_versions(CACHES)
     known_df = util.get_bcl2barcodecaller_known()
     unknown_df = util.get_bcl2barcodecaller_unknown()
     summary_df = util.get_bcl2barcodecaller_summary()

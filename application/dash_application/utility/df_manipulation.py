@@ -1,6 +1,4 @@
-import contextlib
 import os
-import threading
 import pandas
 from pandas import DataFrame, Series
 from typing import List
@@ -320,31 +318,26 @@ def _load_pinery():
     return samples, merged_samples, runs_with_instruments, active_projects
 
 
-def _cache_files():
-    found = set()
-    for root in root_dirs:
-        if os.path.isdir(root):
-            for name in os.listdir(root):
-                latest = os.path.join(root, name, "latest")
-                if os.path.exists(latest):
-                    found.add(latest)
-    return found
+_sources_with_table = {}
 
 
-_startup_cache_files = _cache_files()
+def _load_from_all_sources(cache_name, table):
+    loaded = cache.load_same_version(cache_name).remove_missing(table)
+    count = len(loaded.versions())
+    expected = _sources_with_table.get((cache_name, table), 0)
+    if count < expected:
+        raise RuntimeError(f"{cache_name} {table} is missing from {expected - count} source(s)")
+    _sources_with_table[(cache_name, table)] = count
+    return loaded
 
 
-def missing_sources():
-    missing = [root for root, ok in zip(root_dirs, cache.test_connection()) if not ok]
-    missing += sorted(
-        f for f in _startup_cache_files - _cache_files()
-        if not any(f.startswith(os.path.join(root, "")) for root in missing)
-    )
-    return missing
+# A new QCETLMultiCache each time, because qc-etl remembers versions it has already read
+def cache_versions(caches):
+    return QCETLMultiCache(root_dirs).versions(caches)
 
 
+# Pinery data that reports and clicks read. refresh.py replaces it before rebuilding changed reports
 pinery_store = DataStore()
-_staged = threading.local()
 
 
 def build_pinery():
@@ -361,33 +354,19 @@ def set_pinery(data):
     pinery_store.set(data)
 
 
-@contextlib.contextmanager
-def staged_pinery(data):
-    _staged.pinery = data
-    try:
-        yield
-    finally:
-        _staged.pinery = None
-
-
-def _pinery():
-    staged = getattr(_staged, "pinery", None)
-    return staged if staged is not None else pinery_store.get()
-
-
 set_pinery(build_pinery())
 
 
 def get_bcl2barcodecaller_known():
-    return cache.load_same_version("bcl2barcodecaller").remove_missing("known").unique("known").copy(deep=True)
+    return _load_from_all_sources("bcl2barcodecaller", "known").unique("known").copy(deep=True)
 
 
 def get_bcl2barcodecaller_unknown():
-    return cache.load_same_version("bcl2barcodecaller").remove_missing("unknown").unique("unknown").copy(deep=True)
+    return _load_from_all_sources("bcl2barcodecaller", "unknown").unique("unknown").copy(deep=True)
 
 
 def get_bcl2barcodecaller_summary():
-    return cache.load_same_version("bcl2barcodecaller").remove_missing("summary").unique("summary").copy(deep=True)
+    return _load_from_all_sources("bcl2barcodecaller", "summary").unique("summary").copy(deep=True)
 
 
 def get_dnaseqqc_and_bamqc4():
@@ -395,7 +374,7 @@ def get_dnaseqqc_and_bamqc4():
     return qcetl.common.utility.concat_workflow_versions(
         [
             normalized_ius(
-                cache.load_same_version("dnaseqqc").remove_missing("dnaseqqc").unique("dnaseqqc"),
+                _load_from_all_sources("dnaseqqc", "dnaseqqc").unique("dnaseqqc"),
                 dnaseqqc_ius_columns
             ),
             normalized_ius(cache.load_same_version("bamqc4").unique("bamqc4"), bamqc4_ius_columns),
@@ -412,12 +391,8 @@ def get_cfmedip_insert_metrics():
     return cache.load_same_version("cfmedipqc").unique("insert_metrics").copy(deep=True)
 
 def get_crosscheckfingerprint_caller():
-    return cache.load_same_version(
-        "crosscheckfingerprint_caller"
-        # crosscheckfingerprints caches won't be archived
-    ).remove_missing(
-        "detailed"
-    ).unique("detailed").copy(deep=True)
+    # crosscheckfingerprints caches won't be archived
+    return _load_from_all_sources("crosscheckfingerprint_caller", "detailed").unique("detailed").copy(deep=True)
 
 def get_fastqc():
     return normalized_ius(cache.load_same_version("fastqc").unique("fastqc"), fastqc_ius_columns)
@@ -462,7 +437,7 @@ def get_rnaseqqc2_merged():
 
 def get_pinery_samples(active_projects_only=True):
     """Get Pinery Sample Provenance DataFrame"""
-    pinery_data = _pinery()
+    pinery_data = pinery_store.get()
     samples = pinery_data["samples"].copy(deep=True)
     # Serve samples for active projects unless ALL projects are requested
     if (not active_projects_only or os.getenv("SAMPLES_FOR_PROJECTS", 'ACTIVE').lower() in ('all')):
@@ -473,7 +448,7 @@ def get_pinery_samples(active_projects_only=True):
 
 
 def get_pinery_merged_samples(active_projects_only=True):
-    pinery_data = _pinery()
+    pinery_data = pinery_store.get()
     samples = pinery_data["merged_samples"].copy(deep=True)
     if (active_projects_only):
         return samples.loc[samples[PINERY_COL.StudyTitle].isin(
@@ -482,7 +457,7 @@ def get_pinery_merged_samples(active_projects_only=True):
         return samples
 
 def get_runs():
-    return _pinery()["runs_with_instruments"].copy(deep=True)
+    return pinery_store.get()["runs_with_instruments"].copy(deep=True)
 
 def df_with_fastqc_data(df, merge_cols):
     group = get_fastqc().groupby([FASTQC_COL.Run, FASTQC_COL.Lane, FASTQC_COL.Barcodes])
@@ -532,7 +507,7 @@ def df_with_pinery_samples_merged(df: DataFrame, pinery_samples: DataFrame,
 
 def df_with_run_info(df: DataFrame, run_col: str, right_suffix='_q'):
     """Add the instrument model column to a DataFrame."""
-    r_i = _pinery()["runs_with_instruments"].copy(deep=True)
+    r_i = pinery_store.get()["runs_with_instruments"].copy(deep=True)
     return df.merge(
         r_i[[
             INSTRUMENTS_COL.ModelName,

@@ -162,7 +162,7 @@ def get_merged_ts_data():
     ts_df = util.remove_suffixed_columns(ts_df, '_y')  # Callability duplicate columns
     ts_df = util.remove_suffixed_columns(ts_df, '_z')  # BamQC duplicate columns
 
-    return ts_df, util.cache.versions(["bamqc4merged", "mutectcallability", "hsmetrics"])
+    return ts_df, util.cache_versions(CACHES)
 
 
 ts_curated_columns = [
@@ -214,6 +214,7 @@ initial["cutoff_callability"] = 50
 cutoff_insert_mean_label = sidebar_utils.insert_mean_cutoff_label
 initial["cutoff_insert_mean"] = 150
 
+CACHES = ["bamqc4merged", "mutectcallability", "hsmetrics", "hsmetrics_consensus_cruncher"]
 store = DataStore()
 
 
@@ -432,18 +433,19 @@ GRAPHS = [
 
 
 def layout(query_string):
+    page_initial = dict(initial)
     data = store.get()
     query = sidebar_utils.parse_query(query_string)
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
     elif "req_start" in query and query["req_start"]:
-        initial["projects"] = data["all_projects"]
+        page_initial["projects"] = data["all_projects"]
         query["req_projects"] = data["all_projects"]  # fill in the projects dropdown
 
-    df = reshape_call_ready_df(data["df"], initial["projects"], initial["references"],
-                               initial["tissue_materials"], initial["sample_types"],
-                               initial["first_sort"], initial["second_sort"],
-                               initial["colour_by"], initial["shape_by"], [])
+    df = reshape_call_ready_df(data["df"], page_initial["projects"], page_initial["references"],
+                               page_initial["tissue_materials"], page_initial["sample_types"],
+                               page_initial["first_sort"], page_initial["second_sort"],
+                               page_initial["colour_by"], page_initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className="body", children=[
@@ -474,23 +476,23 @@ def layout(query_string):
                     # Sort, colour and shape
                     sidebar_utils.select_first_sort(
                         ids["first-sort"],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids["second-sort"],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids["colour-by"],
                                                    data["shape_colour"].dropdown(),
-                                                   initial["colour_by"]),
+                                                   page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids["shape-by"],
                                                   data["shape_colour"].dropdown(),
-                                                  initial["shape_by"]),
+                                                  page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids["search-sample"],
                                                           []),
@@ -498,26 +500,26 @@ def layout(query_string):
                                                                                   None),
 
                     sidebar_utils.show_data_labels_input_call_ready(ids["show-data-labels"],
-                                                                    initial["shownames_val"],
+                                                                    page_initial["shownames_val"],
                                                                     "ALL LABELS",
                                                                     ids["show-all-data-labels"]),
                     sidebar_utils.hr(),
 
                     # Cutoffs
                     sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_tumour_label),
-                                               ids["pf-tumour-cutoff"], initial["cutoff_pf_clusters_tumour"]),
+                                               ids["pf-tumour-cutoff"], page_initial["cutoff_pf_clusters_tumour"]),
                     sidebar_utils.cutoff_input("{} (*10^6)".format(cutoff_pf_clusters_normal_label),
-                                               ids["pf-normal-cutoff"], initial["cutoff_pf_clusters_normal"]),
+                                               ids["pf-normal-cutoff"], page_initial["cutoff_pf_clusters_normal"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_tumour_label,
-                                               ids["tumour-coverage-cutoff"], initial["cutoff_coverage_tumour"]),
+                                               ids["tumour-coverage-cutoff"], page_initial["cutoff_coverage_tumour"]),
                     sidebar_utils.cutoff_input(cutoff_coverage_normal_label,
-                                               ids["normal-coverage-cutoff"], initial["cutoff_coverage_normal"]),
+                                               ids["normal-coverage-cutoff"], page_initial["cutoff_coverage_normal"]),
                     sidebar_utils.cutoff_input(cutoff_callability_label,
-                                               ids["callability-cutoff"], initial["cutoff_callability"]),
+                                               ids["callability-cutoff"], page_initial["cutoff_callability"]),
                     sidebar_utils.cutoff_input(cutoff_insert_mean_label,
-                                               ids["insert-mean-cutoff"], initial["cutoff_insert_mean"]),
+                                               ids["insert-mean-cutoff"], page_initial["cutoff_insert_mean"]),
                     sidebar_utils.cutoff_input(cutoff_duplicate_rate_label,
-                                               ids["duplicate-rate-max"], initial["cutoff_duplicate_rate"]),
+                                               ids["duplicate-rate-max"], page_initial["cutoff_duplicate_rate"]),
 
                     html.Br(),
                     html.Button("Update", id=ids["update-button-bottom"], className="update-button"),
@@ -530,7 +532,7 @@ def layout(query_string):
                                  # Graphs tab
                                  core.Tab(label="Graphs",
                                           children=[
-                                              create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                                              create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                                           ]),
                                  # Tables tab
                                  core.Tab(label="Tables",
@@ -544,24 +546,24 @@ def layout(query_string):
                                                   ts_curated_columns,
                                                   [
                                                       (cutoff_pf_clusters_tumour_label, special_cols["Pipeline Filtered Clusters"],
-                                                       initial["cutoff_pf_clusters_tumour"],
+                                                       page_initial["cutoff_pf_clusters_tumour"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
                                                       (cutoff_pf_clusters_normal_label, special_cols["Pipeline Filtered Clusters"],
-                                                       initial["cutoff_pf_clusters_normal"],
+                                                       page_initial["cutoff_pf_clusters_normal"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                                       (cutoff_coverage_tumour_label, HSMETRICS_COL.MeanBaitCoverage,
-                                                       initial["cutoff_coverage_tumour"],
+                                                       page_initial["cutoff_coverage_tumour"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_tumour(row))),
                                                       (cutoff_coverage_normal_label, HSMETRICS_COL.MeanBaitCoverage,
-                                                       initial["cutoff_coverage_normal"],
+                                                       page_initial["cutoff_coverage_normal"],
                                                        (lambda row, col, cutoff: row[col] < cutoff and util.is_normal(row))),
                                                       (cutoff_callability_label, special_cols["Callability"],
-                                                       initial["cutoff_callability"],
+                                                       page_initial["cutoff_callability"],
                                                        (lambda row, col, cutoff: row[col] < cutoff)),
-                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, initial["cutoff_insert_mean"],
+                                                      (cutoff_insert_mean_label, BAMQC_COL.InsertMean, page_initial["cutoff_insert_mean"],
                                                        (lambda row, col, cutoff: row[col] < cutoff)),
                                                       (cutoff_duplicate_rate_label, BAMQC_COL.MarkDuplicates_PERCENT_DUPLICATION,
-                                                       initial["cutoff_duplicate_rate"], (lambda row, col, cutoff: row[col] > cutoff)),
+                                                       page_initial["cutoff_duplicate_rate"], (lambda row, col, cutoff: row[col] > cutoff)),
                                                   ]
                                               )
                                           ])
