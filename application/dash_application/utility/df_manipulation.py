@@ -318,17 +318,11 @@ def _load_pinery():
     return samples, merged_samples, runs_with_instruments, active_projects
 
 
-_sources_with_table = {}
-
-
 def _load_from_all_sources(cache_name, table):
-    loaded = cache.load_same_version(cache_name).remove_missing(table)
-    count = len(loaded.versions())
-    expected = _sources_with_table.get((cache_name, table), 0)
-    if count < expected:
-        raise RuntimeError(f"{cache_name} {table} is missing from {expected - count} source(s)")
-    _sources_with_table[(cache_name, table)] = count
-    return loaded
+    unreachable = [root for root, ok in zip(root_dirs, cache.test_connection()) if not ok]
+    if unreachable:
+        raise RuntimeError(f"Can't load {cache_name}: source(s) unreachable: {', '.join(unreachable)}")
+    return cache.load_same_version(cache_name).remove_missing(table)
 
 
 # A new QCETLMultiCache each time, because qc-etl remembers versions it has already read

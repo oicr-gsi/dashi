@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import threading
 import time
 
@@ -11,7 +12,9 @@ from .utility.data_store import DataStore
 
 logger = logging.getLogger(__name__)
 
-REFRESH_INTERVAL_SECONDS = 60 * 60
+REFRESH_INTERVAL_SECONDS = int(os.getenv("DATA_REFRESH_INTERVAL_SECONDS") or 60 * 60)
+if REFRESH_INTERVAL_SECONDS <= 0:
+    raise ValueError("DATA_REFRESH_INTERVAL_SECONDS must be a positive number of seconds")
 
 last_success = Gauge(
     "dashi_data_refresh_last_success_timestamp_seconds",
