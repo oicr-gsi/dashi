@@ -6,6 +6,7 @@ from ..dash_id import init_ids
 from ..utility.plot_builder import *
 from ..utility.table_builder import table_tabs_single_lane, cutoff_table_data_ius
 from ..utility import df_manipulation as util
+from ..utility.data_store import DataStore
 from ..utility import sidebar_utils
 from ..utility import log_utils
 from qcetl.column import CfMeDipQcColumn, InsertSizeMetricsColumn
@@ -117,31 +118,61 @@ def get_cfmedip_data():
 
     cfmedip_df = util.df_with_run_info(cfmedip_df, PINERY_COL.SequencerRunName)
 
-    return cfmedip_df, util.cache.versions(["cfmedipqc"])
+    return cfmedip_df, util.cache_versions(CACHES)
 
 
-(cfmedip, DATAVERSION) = get_cfmedip_data()
+CACHES = ["cfmedipqc", "fastqc"]
+store = DataStore()
 
 
-# Build lists of attributes for sorting, shaping, and filtering on
-ALL_PROJECTS = util.unique_set(cfmedip, PINERY_COL.StudyTitle)
-ALL_RUNS = util.unique_set(cfmedip, PINERY_COL.SequencerRunName, True) # reverse order
-ALL_KITS = util.unique_set(cfmedip, PINERY_COL.PrepKit)
-ALL_TISSUE_MATERIALS = util.unique_set(cfmedip, PINERY_COL.TissuePreparation)
-ALL_TISSUE_ORIGIN = util.unique_set(cfmedip, PINERY_COL.TissueOrigin)
-ILLUMINA_INSTRUMENT_MODELS = util.get_illumina_instruments(cfmedip)
-ALL_SAMPLE_TYPES = util.unique_set(cfmedip, util.sample_type_col)
-ALL_REFERENCES = util.unique_set(cfmedip, CFMEDIP_COL.Reference)
-ALL_INSTITUTES = util.unique_set(cfmedip, PINERY_COL.Institute)
+def build():
+    cfmedip_df, data_version = get_cfmedip_data()
+
+    # Build lists of attributes for sorting, shaping, and filtering on
+    projects = util.unique_set(cfmedip_df, PINERY_COL.StudyTitle)
+    runs = util.unique_set(cfmedip_df, PINERY_COL.SequencerRunName, True) # reverse order
+    kits = util.unique_set(cfmedip_df, PINERY_COL.PrepKit)
+    tissue_materials = util.unique_set(cfmedip_df, PINERY_COL.TissuePreparation)
+    tissue_origin = util.unique_set(cfmedip_df, PINERY_COL.TissueOrigin)
+    instrument_models = util.get_illumina_instruments(cfmedip_df)
+    sample_types = util.unique_set(cfmedip_df, util.sample_type_col)
+    references = util.unique_set(cfmedip_df, CFMEDIP_COL.Reference)
+    institutes = util.unique_set(cfmedip_df, PINERY_COL.Institute)
+
+    new_shape_colour = ColourShapeCfMeDIP(
+        projects, runs, institutes, sample_types,
+        tissue_materials, tissue_origin, references
+    )
+    # Add shape, colour, and size cols to dataframe
+    cfmedip_df = add_graphable_cols(cfmedip_df, initial)
+
+    return {
+        "df": cfmedip_df,
+        "version": data_version,
+        "all_projects": projects,
+        "all_runs": runs,
+        "all_kits": kits,
+        "all_tissue_materials": tissue_materials,
+        "all_tissue_origin": tissue_origin,
+        "instrument_models": instrument_models,
+        "all_sample_types": sample_types,
+        "all_references": references,
+        "all_institutes": institutes,
+        "shape_colour": new_shape_colour,
+    }
+
+
+store.set(build())
+
 
 # N.B. The keys in this object must match the argument names for
 # the `update_pressed` function in the views.
 collapsing_functions = {
-    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_PROJECTS, "all_projects"),
-    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_RUNS, "all_runs"),
-    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_KITS, "all_kits"),
-    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, ILLUMINA_INSTRUMENT_MODELS, "all_instruments"),
-    "references": lambda selected: log_utils.collapse_if_all_selected(selected, ALL_REFERENCES, "all_references"),
+    "projects": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_projects"], "all_projects"),
+    "runs": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_runs"], "all_runs"),
+    "kits": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_kits"], "all_kits"),
+    "instruments": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["instrument_models"], "all_instruments"),
+    "references": lambda selected: log_utils.collapse_if_all_selected(selected, store.get()["all_references"], "all_references"),
 }
 
 cfmedip_curated_columns = [
@@ -159,19 +190,6 @@ cfmedip_curated_columns = [
     CFMEDIP_COL.ATDropout,
     CFMEDIP_COL.MethylationBeta
 ]
-
-
-shape_colour = ColourShapeCfMeDIP(
-    ALL_PROJECTS, 
-    ALL_RUNS,
-    ALL_INSTITUTES, 
-    ALL_SAMPLE_TYPES,
-    ALL_TISSUE_MATERIALS,
-    ALL_TISSUE_ORIGIN,
-    ALL_REFERENCES
-)
-# Add shape, colour, and size cols to dataframe 
-cfmedip = add_graphable_cols(cfmedip, initial)
 
 SORT_BY = sidebar_utils.default_first_sort + [
     {"label": "Project",
@@ -340,36 +358,38 @@ GRAPHS = [
 ]
 
 def dataversion():
-    return DATAVERSION
+    return store.get()["version"]
 
 
 def layout(query_string):
+    page_initial = dict(initial)
+    data = store.get()
     query = sidebar_utils.parse_query(query_string)
     # initial runs: should be empty unless query requests otherwise:
     #  * if query.req_run: use query.req_run
     #  * if query.req_start/req_end: use all runs, so that the start/end filters will be applied
     if "req_runs" in query and query["req_runs"]:
-        initial["runs"] = query["req_runs"]
+        page_initial["runs"] = query["req_runs"]
     elif "req_start" in query and query["req_start"]:
-        initial["runs"] = ALL_RUNS
-        query["req_runs"] = ALL_RUNS  # fill in the runs dropdown
+        page_initial["runs"] = data["all_runs"]
+        query["req_runs"] = data["all_runs"]  # fill in the runs dropdown
     if "req_projects" in query and query["req_projects"]:
-        initial["projects"] = query["req_projects"]
+        page_initial["projects"] = query["req_projects"]
 
-    df = reshape_cfmedip_df(cfmedip, initial["runs"], initial["instruments"],
-                                initial["projects"], initial["references"], initial["kits"],
-                                initial["institutes"], initial["start_date"],
-                                initial["end_date"], initial["first_sort"],
-                                initial["second_sort"], initial["colour_by"],
-                                initial["shape_by"], [])
+    df = reshape_cfmedip_df(data["df"], page_initial["runs"], page_initial["instruments"],
+                                page_initial["projects"], page_initial["references"], page_initial["kits"],
+                                page_initial["institutes"], page_initial["start_date"],
+                                page_initial["end_date"], page_initial["first_sort"],
+                                page_initial["second_sort"], page_initial["colour_by"],
+                                page_initial["shape_by"], [])
 
     return core.Loading(fullscreen=True, type="dot", children=[
         html.Div(className='body', children=[
             html.Div(className="row jira-buttons", children=[
                 sidebar_utils.unknown_run_alert(
                     ids['alerts-unknown-run'],
-                    initial["runs"],
-                    ALL_RUNS
+                    page_initial["runs"],
+                    data["all_runs"]
                 ),
             ]),
             html.Div(className='row flex-container', children=[
@@ -382,7 +402,7 @@ def layout(query_string):
 
                     # Filters
                     sidebar_utils.select_runs(ids["all-runs"],
-                                            ids["run-id-list"], ALL_RUNS,
+                                            ids["run-id-list"], data["all_runs"],
                                             query["req_runs"]),
 
                     sidebar_utils.run_range_input(ids["date-range"],
@@ -393,46 +413,46 @@ def layout(query_string):
 
                     sidebar_utils.select_projects(ids["all-projects"],
                                                 ids["projects-list"],
-                                                ALL_PROJECTS,
+                                                data["all_projects"],
                                                 query["req_projects"]),
 
                     sidebar_utils.select_reference(ids["all-references"],
                                                    ids["references-list"],
-                                                   ALL_REFERENCES),
+                                                   data["all_references"]),
 
                     sidebar_utils.select_kits(ids["all-kits"], ids["kits-list"],
-                                            ALL_KITS),
+                                            data["all_kits"]),
 
                     sidebar_utils.select_instruments(ids["all-instruments"],
                                                     ids["instruments-list"],
-                                                    ILLUMINA_INSTRUMENT_MODELS),
+                                                    data["instrument_models"]),
 
                     sidebar_utils.select_with_select_all("All Institutes", ids['all-institutes'],
                                   "Filter by Institute", ids['institutes-list'],
-                                  ALL_INSTITUTES),
+                                  data["all_institutes"]),
 
                     sidebar_utils.hr(),
 
                     # Sort, colour, and shape
                     sidebar_utils.select_first_sort(
                         ids['first-sort'],
-                        initial["first_sort"],
+                        page_initial["first_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_second_sort(
                         ids['second-sort'],
-                        initial["second_sort"],
+                        page_initial["second_sort"],
                         SORT_BY,
                     ),
 
                     sidebar_utils.select_colour_by(ids['colour-by'],
-                                                shape_colour.dropdown(),
-                                                initial["colour_by"]),
+                                                data["shape_colour"].dropdown(),
+                                                page_initial["colour_by"]),
 
                     sidebar_utils.select_shape_by(ids['shape-by'],
-                                                shape_colour.dropdown(),
-                                                initial["shape_by"]),
+                                                data["shape_colour"].dropdown(),
+                                                page_initial["shape_by"]),
 
                     sidebar_utils.highlight_samples_input(ids['search-sample'],
                                                           []),
@@ -441,7 +461,7 @@ def layout(query_string):
                                                           None),
                     
                     sidebar_utils.show_data_labels_input_single_lane(ids['show-data-labels'],
-                                                        initial["shownames_val"],
+                                                        page_initial["shownames_val"],
                                                         'ALL LABELS',
                                                         ids['show-all-data-labels']),
 
@@ -455,7 +475,7 @@ def layout(query_string):
                     # sidebar_utils.cutoff_input(cutoff_at_dropout_label,
                     #     ids['at-dropout-cutoff'], initial["cutoff_at_dropout"]),
                     sidebar_utils.cutoff_input(cutoff_percent_thaliana_label,
-                        ids['percent-thaliana-cutoff'], initial["cutoff_percent_thaliana"]),
+                        ids['percent-thaliana-cutoff'], page_initial["cutoff_percent_thaliana"]),
                     # sidebar_utils.cutoff_input(cutoff_methylation_beta_label,
                     #     ids['methylation-beta-cutoff'], initial["cutoff_methylation_beta"]),
                     
@@ -470,7 +490,7 @@ def layout(query_string):
                         # Graphs tab
                         core.Tab(label="Graphs",
                         children=[
-                            create_graph_element_with_subplots(ids["graphs"], df, initial, GRAPHS),
+                            create_graph_element_with_subplots(ids["graphs"], df, page_initial, GRAPHS),
                         ]),
                         # Tables tab
                         core.Tab(label="Tables",
@@ -493,7 +513,7 @@ def layout(query_string):
                                     # CFMEDIP_COL.ATDropout, initial["cutoff_at_dropout"],
                                     # (lambda row, col, cutoff: row[col] < cutoff)),
                                     (cutoff_percent_thaliana_label,
-                                    CFMEDIP_COL.PercentageAthaliana, initial["cutoff_percent_thaliana"],
+                                    CFMEDIP_COL.PercentageAthaliana, page_initial["cutoff_percent_thaliana"],
                                     (lambda row, col, cutoff: row[col] < cutoff)),
                                     # (cutoff_methylation_beta_label,
                                     # CFMEDIP_COL.MethylationBeta, initial["cutoff_methylation_beta"],
@@ -578,7 +598,7 @@ def init_callbacks(dash_app):
             searchsample += searchsampleext
         elif not searchsample and searchsampleext:
             searchsample = searchsampleext
-        df = reshape_cfmedip_df(cfmedip, runs, instruments, projects, references, kits, institutes,
+        df = reshape_cfmedip_df(store.get()["df"], runs, instruments, projects, references, kits, institutes,
                                     start_date, end_date, first_sort, second_sort, colour_by,
                                     shape_by, searchsample)
 
@@ -646,7 +666,7 @@ def init_callbacks(dash_app):
     )
     def all_runs_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_RUNS]
+        return [x for x in store.get()["all_runs"]]
 
     @dash_app.callback(
         Output(ids['instruments-list'], 'value'),
@@ -654,7 +674,7 @@ def init_callbacks(dash_app):
     )
     def all_instruments_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ILLUMINA_INSTRUMENT_MODELS]
+        return [x for x in store.get()["instrument_models"]]
 
     @dash_app.callback(
         Output(ids['projects-list'], 'value'),
@@ -662,7 +682,7 @@ def init_callbacks(dash_app):
     )
     def all_projects_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_PROJECTS]
+        return [x for x in store.get()["all_projects"]]
 
     @dash_app.callback(
         Output(ids['references-list'], 'value'),
@@ -670,7 +690,7 @@ def init_callbacks(dash_app):
     )
     def all_references_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_REFERENCES]
+        return [x for x in store.get()["all_references"]]
 
     @dash_app.callback(
         Output(ids['kits-list'], 'value'),
@@ -678,7 +698,7 @@ def init_callbacks(dash_app):
     )
     def all_kits_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_KITS]
+        return [x for x in store.get()["all_kits"]]
 
     @dash_app.callback(
         Output(ids['institutes-list'], 'value'),
@@ -686,7 +706,7 @@ def init_callbacks(dash_app):
     )
     def all_institutes_requested(click):
         sidebar_utils.update_only_if_clicked(click)
-        return [x for x in ALL_INSTITUTES]
+        return [x for x in store.get()["all_institutes"]]
 
     @dash_app.callback(
         Output(ids['show-data-labels'], 'value'),
