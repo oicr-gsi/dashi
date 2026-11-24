@@ -7,8 +7,11 @@ and as of version 1.0.0, follows semantic versioning.
 
 ## [Unreleased]
 
+## [261124-1332] - 2026-11-24
+
   * Bump qc-etl to v1.50
   * Added `/health` endpoint for monitoring
+  * refresh hourly without restart
 
 ## [261109-1358] - 2026-11-09
 
